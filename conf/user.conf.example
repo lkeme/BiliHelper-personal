@@ -1,0 +1,114 @@
+#######################
+#       账户设置       #
+#######################
+
+# 帐号|密码
+APP_USER=
+APP_PASS=
+
+# 令牌(自动生成)
+ACCESS_TOKEN=
+REFRESH_TOKEN=
+COOKIE=
+
+#######################
+#       功能设置       #
+#######################
+
+# 推送服务器
+USE_SERVER=true
+SERVER_ADDR=
+SERVER_KEY=
+
+# 舰长总督
+USE_GUARD=true
+
+# 主站助手
+USE_MASTER_SITE=true
+
+# 活跃弹幕|弹幕房间(为空则随机)|弹幕内容(为空随机,但是URL不能为空)
+USE_DANMU=true
+DANMU_ROOMID=9522051
+DANMU_CONTENT=
+CONTENT_FETCH="https://v1.hitokoto.cn/?encode=text"
+
+# 视频投币|投币稿件数(每日任务最大5)|自定义稿件ID,空则随机(AV_NUM=1生效)
+USE_ADD_COIN=false
+ADD_COIN_AV_NUM=1
+ADD_COIN_AV=33492180
+
+# SERVER酱,用于推送消息
+USE_SCKEY=
+
+# 切换HTTPS,为真则使用https协议
+USE_HTTPS=true
+
+# 是否使用代理(前提保证有效代理)
+USE_PROXY=false
+PROXY_IP=127.0.0.1
+PROXY_PORT=8888
+
+# 直播间ID，用于礼物赠送
+ROOM_ID=9522051
+
+# 弹幕监控房间(为空则随机)
+SOCKET_ROOM_ID=9522051
+
+# 节奏风暴|丢弃率(0-100)|尝试数(范围值)
+USE_STORM=true
+STORM_DROPRATE=0
+STORM_ATTEMPT=30,50
+
+# 统一活动
+USE_ACTIVE=true
+
+# 银瓜子兑换硬币
+USE_SILVER2COIN=true
+
+# 实物抽奖
+USE_MO=true
+
+#######################
+#       日志设置       #
+#######################
+
+# 写入日志
+APP_WRITELOG=false
+
+# 日志路径
+APP_WRITELOGPATH=log
+
+# 调试模式
+APP_DEBUG=false
+
+# 用户名,可自定义
+APP_UNAME=
+
+# 多账号区别输出
+APP_MULTIPLE=false
+
+# 账号别名，如果为空则默认使用登陆账号作为标示
+APP_USER_IDENTITY=
+
+# 日志回调地址
+APP_CALLBACK="http://www.example.com/api.send?text={account}[{level}]: {message}"
+
+# 错误回调级别
+#
+#   DEBUG   100
+#   INFO    200
+#   NOTICE  250
+#   WARNING 300
+#   ERROR   400
+#
+APP_CALLBACK_LEVEL=400
+
+#######################
+#       固定设置       #
+#######################
+
+# 用于打包请求
+ACTIONENTRY=7
+
+# 用于发送心跳
+ACTIONHEARTBEAT=2

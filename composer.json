@@ -1,0 +1,31 @@
+{
+  "name": "lkeme/bilihelper",
+  "description": "B 站自动领瓜子、直播助手、直播挂机脚本、主站助手 - PHP 版（Personal）",
+  "type": "project",
+  "require": {
+    "php": ">=7.0.0",
+    "ext-curl": "*",
+    "ext-openssl": "*",
+    "ext-sockets": "*",
+    "ext-json": "*",
+    "ext-zlib": "*",
+    "ext-mbstring": "*",
+    "vlucas/phpdotenv": "^2.4",
+    "monolog/monolog": "^1.23",
+    "bramus/monolog-colored-line-formatter": "^2.0",
+    "clue/socket-raw": "1.4"
+  },
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Lkeme",
+      "email": "Useri@live.cn",
+      "homepage": "https://mudew.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "lkeme\\BiliHelper\\": "src/"
+    }
+  }
+}
