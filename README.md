@@ -3,7 +3,7 @@ B 站直播实用脚本
 
 ## 公告
 
-Currently for Personal Edition **0.0.1.190713 alpha**  
+Currently for Personal Edition **0.0.1.190723 alpha**  
 
 ## 文档
 
@@ -11,8 +11,8 @@ Currently for Personal Edition **0.0.1.190713 alpha**
 * [更新日志 / CHANGELOG.md](./CHANGELOG.md)
 
 ## 交流
-
 Group: [55308141](https://jq.qq.com/?_wv=1027&k=5AIDaJg) 
+Group: [590512629](https://jq.qq.com/?_wv=1027&k=5S5PwTE)
 
 ## 打赏
 

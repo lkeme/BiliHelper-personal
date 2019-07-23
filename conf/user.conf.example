@@ -12,32 +12,15 @@ REFRESH_TOKEN=
 COOKIE=
 
 #######################
-#       功能设置       #
+#       固定设置       #
 #######################
 
 # 推送服务器
 USE_SERVER=true
-SERVER_ADDR=
-SERVER_KEY=
+SERVER_ADDR=tcp://raffle.biem.club:10010
+SERVER_KEY=,*(?PVl]nIbo35sB
 
-# 舰长总督
-USE_GUARD=true
-
-# 主站助手
-USE_MASTER_SITE=true
-
-# 活跃弹幕|弹幕房间(为空则随机)|弹幕内容(为空随机,但是URL不能为空)
-USE_DANMU=true
-DANMU_ROOMID=9522051
-DANMU_CONTENT=
-CONTENT_FETCH="https://v1.hitokoto.cn/?encode=text"
-
-# 视频投币|投币稿件数(每日任务最大5)|自定义稿件ID,空则随机(AV_NUM=1生效)
-USE_ADD_COIN=false
-ADD_COIN_AV_NUM=1
-ADD_COIN_AV=33492180
-
-# SERVER酱,用于推送消息
+# SERVER酱, 用于推送消息
 USE_SCKEY=
 
 # 切换HTTPS,为真则使用https协议
@@ -54,19 +37,43 @@ ROOM_ID=9522051
 # 弹幕监控房间(为空则随机)
 SOCKET_ROOM_ID=9522051
 
+#######################
+#       功能设置       #
+#######################
+
+# 主站助手
+USE_MASTER_SITE=true
+
+# 舰长总督
+USE_GUARD=true
+
+# 统一活动
+USE_ACTIVE=true
+
+# 大乱斗
+USE_PK=true
+
+# 实物抽奖
+USE_MO=true
+
+# 银瓜子兑换硬币
+USE_SILVER2COIN=true
+
 # 节奏风暴|丢弃率(0-100)|尝试数(范围值)
 USE_STORM=true
 STORM_DROPRATE=0
 STORM_ATTEMPT=30,50
 
-# 统一活动
-USE_ACTIVE=true
+# 活跃弹幕|弹幕房间(为空则随机)|弹幕内容(为空随机,但是URL不能为空)
+USE_DANMU=true
+DANMU_ROOMID=9522051
+DANMU_CONTENT=
+CONTENT_FETCH="https://v1.hitokoto.cn/?encode=text"
 
-# 银瓜子兑换硬币
-USE_SILVER2COIN=true
-
-# 实物抽奖
-USE_MO=true
+# 视频投币|投币稿件数(每日任务最大5)|自定义稿件ID,空则随机(AV_NUM=1生效)
+USE_ADD_COIN=false
+ADD_COIN_AV_NUM=1
+ADD_COIN_AV=33492180
 
 #######################
 #       日志设置       #
@@ -102,13 +109,3 @@ APP_CALLBACK="http://www.example.com/api.send?text={account}[{level}]: {message}
 #   ERROR   400
 #
 APP_CALLBACK_LEVEL=400
-
-#######################
-#       固定设置       #
-#######################
-
-# 用于打包请求
-ACTIONENTRY=7
-
-# 用于发送心跳
-ACTIONHEARTBEAT=2

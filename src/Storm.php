@@ -12,21 +12,23 @@ namespace lkeme\BiliHelper;
 
 class Storm
 {
-    const KEY = '节奏风暴';
-    const SWITCH = 'USE_STORM';
+    const ACTIVE_TITLE = '节奏风暴';
+    const ACTIVE_SWITCH = 'USE_STORM';
 
     public static $lock = 0;
+
+    protected static $wait_list = [];
+    protected static $all_list = [];
+
     private static $drop_rate = null;
     private static $attempt = null;
-    private static $wait_list = [];
-    private static $all_list = [];
 
     /**
      * @throws \Exception
      */
     public static function run()
     {
-        if (getenv(self::SWITCH) == 'false') {
+        if (getenv(self::ACTIVE_SWITCH) == 'false') {
             return;
         }
         if (self::$lock > time()) {
@@ -65,7 +67,7 @@ class Storm
             $storm_lid = $storm['lid'];
             $storm_rid = $storm['rid'];
             Live::goToRoom($storm_rid);
-            Statistics::addJoinList(self::KEY);
+            Statistics::addJoinList(self::ACTIVE_TITLE);
             $num = random_int((int)self::$attempt[0], (int)self::$attempt[1]);
             for ($i = 1; $i < $num; $i++) {
                 if (!self::lottery($storm_rid, $storm_lid, $i)) {
@@ -119,7 +121,7 @@ class Storm
             return false;
         }
         if ($de_raw['code'] == 0) {
-            Statistics::addSuccessList(self::KEY);
+            Statistics::addSuccessList(self::ACTIVE_TITLE);
             Log::notice(self::formatInfo($lid, $num, $de_raw['data']['mobile_content']));
             return false;
         }
@@ -182,17 +184,17 @@ class Storm
      */
     public static function pushToQueue(array $data): bool
     {
-        if (getenv(self::SWITCH) == 'false') {
+        if (getenv(self::ACTIVE_SWITCH) == 'false') {
             return false;
         }
         if (self::toRepeatLid($data['lid'])) {
             return false;
         }
-        Statistics::addPushList(self::KEY);
+        Statistics::addPushList(self::ACTIVE_TITLE);
         self::$wait_list = array_merge(self::$wait_list, [['rid' => $data['rid'], 'lid' => $data['lid']]]);
         $wait_num = count(self::$wait_list);
         if ($wait_num > 2) {
-            Log::info("当前队列中共有 {$wait_num} 个" . self::KEY . "待抽奖");
+            Log::info("当前队列中共有 {$wait_num} 个" . self::ACTIVE_TITLE . "待抽奖");
         }
         return true;
     }
