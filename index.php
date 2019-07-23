@@ -49,9 +49,10 @@ class Index
             GiftHeart::run();
             Winning::run();
             MaterialObject::run();
-            TcpClinet::run();
+            TcpClient::run();
             Storm::run();
-            RaffleHandler::run();
+            PkRaffle::run();
+            UnifyRaffle::run();
             Guard::run();
             Statistics::run();
             usleep(0.1 * 1000000);

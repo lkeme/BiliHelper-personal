@@ -13,7 +13,7 @@ namespace lkeme\BiliHelper;
 use Exception;
 use Socket\Raw\Factory;
 
-class TcpClinet
+class TcpClient
 {
     public static $lock = 0;
     private static $heart_lock = 0;
@@ -216,8 +216,8 @@ class TcpClinet
                 break;
             case 'error':
                 // 致命错误
-                Log::warning($body);
-                exit("推送服务器发生致命错误 {$raw_data['data']['msg']}");
+                Log::error("推送服务器发生致命错误 {$raw_data['data']['msg']}");
+                exit();
                 break;
             case 'heartbeat':
                 // 服务端心跳推送

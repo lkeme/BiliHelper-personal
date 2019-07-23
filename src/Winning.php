@@ -18,7 +18,7 @@ class Winning
     public static function run()
     {
         // 活动统一
-        RaffleHandler::resultWeb();
+        UnifyRaffle::resultWeb();
 
         // 实物
         self::winningRecords();

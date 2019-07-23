@@ -32,15 +32,19 @@ class DataTreating
                 break;
             case "raffle":
                 // 礼物
-                RaffleHandler::pushToQueue($info);
+                UnifyRaffle::pushToQueue($info);
                 break;
             case "guard":
                 // 舰长
                 Guard::pushToQueue($info);
                 break;
             case "small_tv":
-                // 小电视
-                RaffleHandler::pushToQueue($info);
+                // 电视
+                UnifyRaffle::pushToQueue($info);
+                break;
+            case 'pk':
+                // 乱斗
+                PkRaffle::pushToQueue($info);
                 break;
             default:
                 break;

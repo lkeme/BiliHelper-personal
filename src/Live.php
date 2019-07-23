@@ -146,12 +146,8 @@ class Live
 
         Silver::$lock = $second;
         MaterialObject::$lock = $second;
-        Websocket::$lock = $second;
         GiftHeart::$lock = $second;
-        Guard::$lock = $second;
-        RaffleHandler::$lock = $second;
-        RaffleHandler::$rw_lock = $second;
-
+        TcpClient::$lock = $second;
         return;
     }
 

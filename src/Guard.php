@@ -12,19 +12,17 @@ namespace lkeme\BiliHelper;
 
 class Guard
 {
-    const KEY = '总督舰长';
-    const SWITCH = 'USE_GUARD';
+    const ACTIVE_TITLE = '总督舰长';
+    const ACTIVE_SWITCH = 'USE_GUARD';
 
     public static $lock = 0;
 
-    private static $wait_list = [];
-    private static $finsh_list = [];
-    private static $all_list = [];
-
+    protected static $wait_list = [];
+    protected static $all_list = [];
 
     public static function run()
     {
-        if (getenv(self::SWITCH) == 'false') {
+        if (getenv(self::ACTIVE_SWITCH) == 'false') {
             return;
         }
         if (self::$lock > time()) {
@@ -48,15 +46,15 @@ class Guard
             $guard_lid = $guard['lid'];
             $guard_rid = $guard['rid'];
             Live::goToRoom($guard_rid);
-            Statistics::addJoinList(self::KEY);
+            Statistics::addJoinList(self::ACTIVE_TITLE);
             $data = self::lottery($guard_rid, $guard_lid);
             if ($data['code'] == 0) {
-                Statistics::addSuccessList(self::KEY);
-                Log::notice("房间 {$guard_rid} 编号 {$guard_lid} " . self::KEY . ": {$data['data']['message']}");
+                Statistics::addSuccessList(self::ACTIVE_TITLE);
+                Log::notice("房间 {$guard_rid} 编号 {$guard_lid} " . self::ACTIVE_TITLE . ": {$data['data']['message']}");
             } elseif ($data['code'] == 400 && $data['msg'] == '你已经领取过啦') {
-                Log::info("房间 {$guard_rid} 编号 {$guard_lid} " . self::KEY . ": {$data['msg']}");
+                Log::info("房间 {$guard_rid} 编号 {$guard_lid} " . self::ACTIVE_TITLE . ": {$data['msg']}");
             } else {
-                Log::warning("房间 {$guard_rid} 编号 {$guard_lid} " . self::KEY . ": {$data['msg']}");
+                Log::warning("房间 {$guard_rid} 编号 {$guard_lid} " . self::ACTIVE_TITLE . ": {$data['msg']}");
             }
             $max_num--;
         }
@@ -109,17 +107,17 @@ class Guard
      */
     public static function pushToQueue(array $data): bool
     {
-        if (getenv(self::SWITCH) == 'false') {
+        if (getenv(self::ACTIVE_SWITCH) == 'false') {
             return false;
         }
         if (self::toRepeatLid($data['lid'])) {
             return false;
         }
-        Statistics::addPushList(self::KEY);
+        Statistics::addPushList(self::ACTIVE_TITLE);
         self::$wait_list = array_merge(self::$wait_list, [['rid' => $data['rid'], 'lid' => $data['lid']]]);
         $wait_num = count(self::$wait_list);
         if ($wait_num > 2) {
-            Log::info("当前队列中共有 {$wait_num} 个" . self::KEY . "待抽奖");
+            Log::info("当前队列中共有 {$wait_num} 个" . self::ACTIVE_TITLE . "待抽奖");
         }
         return true;
     }
