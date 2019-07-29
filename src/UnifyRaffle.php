@@ -129,12 +129,17 @@ class UnifyRaffle extends BaseRaffle
      */
     protected static function lottery(array $data): bool
     {
+        $user_info = User::parseCookies();
         $payload = [
             'raffleId' => $data['raffle_id'],
             'roomid' => $data['room_id'],
+            'type' => 'Gift',
+            'csrf_token' => $user_info['token'],
+            'csrf' => $user_info['token'],
+            'visit_id' => null,
         ];
-        $url = 'https://api.live.bilibili.com/gift/v3/smalltv/join';
-        $raw = Curl::get($url, Sign::api($payload));
+        $url = 'https://api.live.bilibili.com/xlive/lottery-interface/v3/smalltv/join';
+        $raw = Curl::post($url, Sign::api($payload));
         $de_raw = json_decode($raw, true);
         if (isset($de_raw['code']) && $de_raw['code']) {
             Log::notice("房间 {$data['room_id']} 编号 {$data['raffle_id']} " . static::ACTIVE_TITLE . ": {$de_raw['message']}");
