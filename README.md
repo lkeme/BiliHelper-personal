@@ -3,7 +3,7 @@ B 站直播实用脚本
 
 ## 公告
 
-Currently for Personal Edition **0.0.1.190723 alpha**  
+Currently for Personal Edition **0.0.1.190730 alpha**  
 
 ## 文档
 
