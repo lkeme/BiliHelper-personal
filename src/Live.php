@@ -5,7 +5,8 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2019
+ *  Updated: 20190731
+ *  LastAPIChecked: 20190731
  */
 
 namespace lkeme\BiliHelper;
@@ -25,7 +26,7 @@ class Live
     public static function getUserRecommend()
     {
         while (1) {
-            $raw = Curl::get('https://api.live.bilibili.com/area/liveList?area=all&order=online&page=' . random_int(0, 5));
+            $raw = Curl::get('https://api.live.bilibili.com/room/v3/area/getRoomList?sort_type=online&page_size=30&page=' . random_int(0, 5));
             $de_raw = json_decode($raw, true);
             if ($de_raw['code'] != '0') {
                 continue;
@@ -34,7 +35,7 @@ class Live
         }
         $rand_num = random_int(1, 29);
 
-        return $de_raw['data'][$rand_num]['roomid'];
+        return $de_raw['data']['list'][$rand_num]['roomid'];
     }
 
     // GET REALROOM_ID
@@ -79,8 +80,12 @@ class Live
     //TO ROOM
     public static function goToRoom($room_id): bool
     {
+        $user_info = User::parseCookies();
         $payload = [
             'room_id' => $room_id,
+            'csrf_token' => $user_info['token'],
+            'csrf' => $user_info['token'],
+            'visit_id' => null,
         ];
         Curl::post('https://api.live.bilibili.com/room/v1/Room/room_entry_action', Sign::api($payload));
         // Log::info('进入直播间[' . $room_id . ']抽奖!');

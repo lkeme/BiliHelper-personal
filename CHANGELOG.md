@@ -1,6 +1,17 @@
 # Release Notes
 # 本项目Log
 
+## v0.0.1.190731 alpha (2019-07-31)
+
+### Added
+- 
+
+### Changed
+- gift send, guard, live, task and user api
+
+### Fixed
+-
+
 ## v0.0.1.190730 alpha (2019-07-30)
 
 ### Added

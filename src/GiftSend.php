@@ -5,7 +5,8 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2019
+ *  Updated: 20190731
+ *  LastAPIChecked: 20190731
  */
 
 namespace lkeme\BiliHelper;
@@ -22,7 +23,7 @@ class GiftSend
         Log::info('正在生成直播间信息...');
 
         $payload = [];
-        $data = Curl::get('https://account.bilibili.com/api/myinfo/v2', Sign::api($payload));
+        $data = Curl::get('https://api.live.bilibili.com/xlive/web-ucenter/user/get_user_info', Sign::api($payload));
         $data = json_decode($data, true);
 
         if (isset($data['code']) && $data['code']) {
@@ -37,7 +38,7 @@ class GiftSend
         $payload = [
             'id' => getenv('ROOM_ID'),
         ];
-        $data = Curl::get('https://api.live.bilibili.com/room/v1/Room/get_info', Sign::api($payload));
+        $data = Curl::get('https://api.live.bilibili.com/room/v1/Room/room_init', Sign::api($payload));
         $data = json_decode($data, true);
 
         if (isset($data['code']) && $data['code']) {
@@ -64,7 +65,7 @@ class GiftSend
         }
 
         $payload = [];
-        $data = Curl::get('https://api.live.bilibili.com/gift/v2/gift/bag_list', Sign::api($payload));
+        $data = Curl::get('https://api.live.bilibili.com/xlive/web-room/v1/gift/bag_list', Sign::api($payload));
         $data = json_decode($data, true);
 
         if (isset($data['code']) && $data['code']) {

@@ -5,7 +5,8 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2019
+ *  Updated: 20190731
+ *  LastAPIChecked: 20190731
  */
 
 namespace lkeme\BiliHelper;
@@ -83,8 +84,11 @@ class Task
             return;
         }
 
+        $user_info = User::parseCookies();
         $payload = [
             'task_id' => 'double_watch_task',
+            'csrf_token' => $user_info['token'],
+            'csrf' => $user_info['token'],
         ];
         $data = Curl::post('https://api.live.bilibili.com/activity/v1/task/receive_award', Sign::api($payload));
         $data = json_decode($data, true);

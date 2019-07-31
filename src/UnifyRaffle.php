@@ -5,7 +5,8 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2019
+ *  Updated: 20190730
+ *  LastAPIChecked: 20190730
  */
 
 namespace lkeme\BiliHelper;
