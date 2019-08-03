@@ -73,6 +73,9 @@ class GiftSend
 
         if (isset($data['data']['list'])) {
             foreach ($data['data']['list'] as $vo) {
+                if ($vo['corner_mark'] == '永久'){
+                    continue;
+                }
                 if ($vo['expire_at'] >= $data['data']['time'] && $vo['expire_at'] <= $data['data']['time'] + 3600) {
                     self::send($vo);
                     sleep(3);
