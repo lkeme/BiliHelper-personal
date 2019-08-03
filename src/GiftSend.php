@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 20190731
+ *  Updated: 20190803
  *  LastAPIChecked: 20190731
  */
 
@@ -33,7 +33,7 @@ class GiftSend
             return;
         }
 
-        self::$uid = $data['mid'];
+        self::$uid = $data['data']['uid'];
 
         $payload = [
             'id' => getenv('ROOM_ID'),
