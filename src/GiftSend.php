@@ -65,7 +65,7 @@ class GiftSend
         }
 
         $payload = [];
-        $data = Curl::get('https://api.live.bilibili.com/xlive/web-room/v1/gift/bag_list', Sign::api($payload));
+        $data = Curl::get('https://api.live.bilibili.com/gift/v2/gift/bag_list', Sign::api($payload));
         $data = json_decode($data, true);
 
         if (isset($data['code']) && $data['code']) {
@@ -74,6 +74,9 @@ class GiftSend
 
         if (isset($data['data']['list'])) {
             foreach ($data['data']['list'] as $vo) {
+                if ($vo['corner_mark'] == '永久'){
+                    continue;
+                }
                 if ($vo['expire_at'] >= $data['data']['time'] && $vo['expire_at'] <= $data['data']['time'] + 3600) {
                     self::send($vo);
                     sleep(3);
