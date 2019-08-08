@@ -5,8 +5,8 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 20190731
- *  LastAPIChecked: 20190731
+ *  Updated: 20190808
+ *  LastAPIChecked: 20190808
  */
 
 namespace lkeme\BiliHelper;
@@ -58,7 +58,7 @@ class Task
         }
 
         $payload = [];
-        $data = Curl::get('https://api.live.bilibili.com/appUser/getSignInfo', Sign::api($payload));
+        $data = Curl::get('https://api.live.bilibili.com/sign/doSign', Sign::api($payload));
         $data = json_decode($data, true);
 
         if (isset($data['code']) && $data['code']) {
