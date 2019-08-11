@@ -57,7 +57,7 @@ class Task
         }
 
         $payload = [];
-        $data = Curl::get('https://api.live.bilibili.com/appUser/getSignInfo', Sign::api($payload));
+        $data = Curl::get('https://api.live.bilibili.com/sign/doSign', Sign::api($payload));
         $data = json_decode($data, true);
 
         if (isset($data['code']) && $data['code']) {
