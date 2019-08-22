@@ -17,7 +17,7 @@ COOKIE=
 
 # 推送服务器
 USE_SERVER=true
-SERVER_ADDR=tcp://raffle.biem.club:10010
+SERVER_ADDR=tcp://47.102.120.84:10010
 SERVER_KEY=,*(?PVl]nIbo35sB
 
 # SERVER酱, 用于推送消息
