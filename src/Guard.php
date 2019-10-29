@@ -5,8 +5,8 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 20190731
- *  LastAPIChecked: 20190731
+ *  Updated: 20191014
+ *  LastAPIChecked: 20191014
  */
 
 namespace lkeme\BiliHelper;
@@ -51,7 +51,7 @@ class Guard
             $data = self::lottery($guard_rid, $guard_lid);
             if ($data['code'] == 0) {
                 Statistics::addSuccessList(self::ACTIVE_TITLE);
-                Log::notice("房间 {$guard_rid} 编号 {$guard_lid} " . self::ACTIVE_TITLE . ": {$data['data']['message']}");
+                Log::notice("房间 {$guard_rid} 编号 {$guard_lid} " . self::ACTIVE_TITLE . ": {$data['data']['award_text']}");
             } elseif ($data['code'] == 400 && $data['msg'] == '你已经领取过啦') {
                 Log::info("房间 {$guard_rid} 编号 {$guard_lid} " . self::ACTIVE_TITLE . ": {$data['msg']}");
             } else {
@@ -71,7 +71,7 @@ class Guard
     private static function lottery($rid, $lid): array
     {
         $user_info = User::parseCookies();
-        $url = "https://api.live.bilibili.com/lottery/v2/Lottery/join";
+        $url = "https://api.live.bilibili.com/xlive/lottery-interface/v3/guard/join";
         $payload = [
             "roomid" => $rid,
             "id" => $lid,

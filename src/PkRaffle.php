@@ -5,8 +5,8 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2019
- *  LastAPIChecked: null
+ *  Updated: 20191014
+ *  LastAPIChecked: 20191014
  */
 
 namespace lkeme\BiliHelper;
@@ -73,7 +73,7 @@ class PkRaffle extends BaseRaffle
             'csrf_token' => $user_info['token'],
             "csrf" => $user_info['token'],
         ];
-        $url = 'https://api.live.bilibili.com/xlive/lottery-interface/v1/pk/join';
+        $url = 'https://api.live.bilibili.com/xlive/lottery-interface/v2/pk/join';
         $raw = Curl::post($url, Sign::api($payload));
         $de_raw = json_decode($raw, true);
         /*
