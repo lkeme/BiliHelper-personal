@@ -18,7 +18,7 @@ class User
     }
 
     // 实名检测
-    public static function realnameCheck(): bool
+    public static function realNameCheck(): bool
     {
         $payload = [];
         $raw = Curl::get('https://account.bilibili.com/identify/index', Sign::api($payload));

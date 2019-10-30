@@ -40,16 +40,23 @@ abstract class BaseRaffle
      */
     protected static function startLottery(): bool
     {
-        $max_num = mt_rand(5, 10);
-        while ($max_num) {
+        $max_num = mt_rand(10, 20);
+        if (count(static::$wait_list) == 0) {
+            return false;
+        }
+        static::$wait_list = static::arrKeySort(static::$wait_list, 'wait');
+        for ($i = 0; $i <= $max_num; $i++) {
             $raffle = array_shift(static::$wait_list);
             if (is_null($raffle)) {
                 break;
             }
+            if ($raffle['wait'] > strtotime(date("Y-m-d H:i:s"))) {
+                array_push(static::$wait_list, $raffle);
+                continue;
+            }
             Live::goToRoom($raffle['room_id']);
             Statistics::addJoinList(static::ACTIVE_TITLE);
             static::lottery($raffle);
-            $max_num--;
         }
         return true;
     }
@@ -69,6 +76,27 @@ abstract class BaseRaffle
      * @return bool
      */
     abstract protected static function lottery(array $data): bool;
+
+    /**
+     * @use 二维数组按key排序
+     * @param $arr
+     * @param $key
+     * @param string $type
+     * @return array
+     */
+    protected static function arrKeySort($arr, $key, $type = 'asc')
+    {
+        switch ($type) {
+            case 'desc':
+                array_multisort(array_column($arr, $key), SORT_DESC, $arr);
+                return $arr;
+            case 'asc':
+                array_multisort(array_column($arr, $key), SORT_ASC, $arr);
+                return $arr;
+            default:
+                return $arr;
+        }
+    }
 
 
     /**

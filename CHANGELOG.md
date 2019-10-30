@@ -1,6 +1,19 @@
 # Release Notes
 # 本项目Log
 
+## v0.0.1.191030 alpha (2019-10-30)
+
+### Added
+- 
+
+### Changed
+- unify raffle api
+- danmu
+- captcha ocr api
+
+### Fixed
+- 
+
 ## v0.0.1.190730 alpha (2019-07-30)
 
 ### Added

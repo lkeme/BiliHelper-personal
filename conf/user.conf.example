@@ -64,11 +64,10 @@ USE_STORM=true
 STORM_DROPRATE=0
 STORM_ATTEMPT=30,50
 
-# 活跃弹幕|弹幕房间(为空则随机)|弹幕内容(为空随机,但是URL不能为空)
+# 活跃弹幕|弹幕房间(为空则随机)|弹幕内容(为空则随机)
 USE_DANMU=true
 DANMU_ROOMID=9522051
 DANMU_CONTENT=
-CONTENT_FETCH="https://v1.hitokoto.cn/?encode=text"
 
 # 视频投币|投币稿件数(每日任务最大5)|自定义稿件ID,空则随机(AV_NUM=1生效)
 USE_ADD_COIN=false
