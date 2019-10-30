@@ -18,7 +18,7 @@ class Curl
         'Accept-Language' => 'zh-cn',
         'Connection' => 'keep-alive',
         'Content-Type' => 'application/x-www-form-urlencoded',
-        'User-Agent' => 'bili-universal/8230 CFNetwork/975.0.3 Darwin/18.2.0',
+        'User-Agent' => 'bili-universal/8470 CFNetwork/978.0.7 Darwin/18.5.0',
         // 'Referer' => 'https://live.bilibili.com/',
     );
 
@@ -159,7 +159,55 @@ class Curl
         return self::post($url, null, $headers);
     }
 
-    protected static function http2https($url)
+
+    /**
+     * @use 单次请求
+     * @param $method
+     * @param $url
+     * @param array $payload
+     * @param array $headers
+     * @param int $timeout
+     * @return false|string
+     */
+    public static function singleRequest($method, $url, $payload = [], $headers = [], $timeout = 10)
+    {
+        $url = self::http2https($url);
+        Log::debug($url);
+        $options = array(
+            'http' => array(
+                'method' => strtoupper($method),
+                'header' => self::arr2str($headers),
+                'content' => http_build_query($payload),
+                'timeout' => $timeout,
+            ),
+        );
+        $result = @file_get_contents($url, false, stream_context_create($options));
+        Log::debug($result);
+        return $result ? $result : null;
+    }
+
+    /**
+     * @use 关联数组转字符串
+     * @param array $array
+     * @param string $separator
+     * @return string
+     */
+    private static function arr2str(array $array, string $separator = "\r\n"): string
+    {
+        $tmp = '';
+        foreach ($array as $key => $value) {
+            $tmp .= "{$key}:{$value}{$separator}";
+        }
+        return $tmp;
+    }
+
+
+    /**
+     * @use http(s)转换
+     * @param string $url
+     * @return string
+     */
+    private static function http2https(string $url): string
     {
         switch (getenv('USE_HTTPS')) {
             case 'false':

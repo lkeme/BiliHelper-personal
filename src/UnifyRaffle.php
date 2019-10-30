@@ -52,7 +52,8 @@ class UnifyRaffle extends BaseRaffle
                 'raffle_id' => $de_raw['data']['list'][$i]['raffleId'],
                 'title' => $de_raw['data']['list'][$i]['title'],
                 'type' => $de_raw['data']['list'][$i]['type'],
-                'room_id' => $rid
+                'wait' => $de_raw['data']['list'][$i]['time_wait'] + strtotime(date("Y-m-d H:i:s")),
+                'room_id' => $rid,
             ];
             if (static::toRepeatLid($data['raffle_id'])) {
                 continue;
@@ -97,8 +98,8 @@ class UnifyRaffle extends BaseRaffle
             $de_raw = json_decode($raw, true);
             // 判断
             switch ($de_raw['data']['status']) {
-                case 3:
-                    break;
+                // case 3:
+                //     break;
                 case 2:
                     Statistics::addSuccessList(static::ACTIVE_TITLE);
                     // 提示信息
@@ -121,7 +122,6 @@ class UnifyRaffle extends BaseRaffle
         return;
     }
 
-
     /**
      * @use 请求抽奖
      * @param array $data
@@ -138,8 +138,10 @@ class UnifyRaffle extends BaseRaffle
             'csrf' => $user_info['token'],
             'visit_id' => null,
         ];
-
-        $url = 'https://api.live.bilibili.com/xlive/lottery-interface/v3/smalltv/Join';
+        // V3接口 暂做保留处理
+        // $url = 'https://api.live.bilibili.com/gift/v3/smalltv/join';
+        // $url = 'https://api.live.bilibili.com/xlive/lottery-interface/v5/smalltv/Join';
+        $url = 'https://api.live.bilibili.com/gift/v4/smalltv/getAward';
         $raw = Curl::post($url, Sign::api($payload));
         $de_raw = json_decode($raw, true);
         if (isset($de_raw['code']) && $de_raw['code']) {

@@ -46,7 +46,8 @@ class PkRaffle extends BaseRaffle
             $data = [
                 'raffle_id' => $de_raw['data'][$i]['pk_id'],
                 'title' => $de_raw['data'][$i]['title'],
-                'room_id' => $de_raw['data'][$i]['room_id']
+                'room_id' => $de_raw['data'][$i]['room_id'],
+                'wait' => strtotime(date("Y-m-d H:i:s"))
             ];
             if (static::toRepeatLid($data['raffle_id'])) {
                 continue;

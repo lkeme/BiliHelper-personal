@@ -126,16 +126,16 @@ class MasterSite
     // 获取随机AID
     private static function getRandomAid(): string
     {
-        $page = random_int(1, 100000);
-        $payload = [];
-        $url = "https://api.bilibili.com/x/web-interface/newlist?&pn={$page}&ps=1";
-        $raw = Curl::get($url, Sign::api($payload));
-        $de_raw = json_decode($raw, true);
+        do {
+            $page = mt_rand(1, 1000);
+            $payload = [];
+            $url = "https://api.bilibili.com/x/web-interface/newlist?&pn={$page}&ps=1";
+            $raw = Curl::get($url, Sign::api($payload));
+            $de_raw = json_decode($raw, true);
+            // echo "getRandomAid " . count($de_raw['data']['archives']) . PHP_EOL;
+            // $aid = array_rand($de_raw['data']['archives'])['aid'];
+        } while (count($de_raw['data']['archives']) == 0);
         $aid = $de_raw['data']['archives'][0]['aid'];
-
-        if (is_null($aid) || empty($aid) || $aid == '') {
-            $aid = random_int(10000000, 30000000);
-        }
         return (string)$aid;
     }
 
