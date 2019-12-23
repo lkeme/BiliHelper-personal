@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2019
+ *  Updated: 2019 ~ 2020
  */
 
 namespace lkeme\BiliHelper;
@@ -45,6 +45,10 @@ class DataTreating
             case 'pk':
                 // 乱斗
                 PkRaffle::pushToQueue($info);
+                break;
+            case 'anchor':
+                // 天选时刻
+                Anchor::pushToQueue($info);
                 break;
             default:
                 break;

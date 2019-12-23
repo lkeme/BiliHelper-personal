@@ -2,7 +2,7 @@
 <p align="center"><img width="300px" src="https://i.loli.net/2018/04/20/5ad97bd395912.jpeg"></p>
 
 <p align="center">
-<img src="https://img.shields.io/badge/version-0.0.1.190713 alpha-green.svg?longCache=true&style=for-the-badge">
+<img src="https://img.shields.io/badge/version-0.0.1.191213 alpha-green.svg?longCache=true&style=for-the-badge">
 <img src="https://img.shields.io/badge/license-mit-blue.svg?longCache=true&style=for-the-badge">
 </p>
 
@@ -17,22 +17,23 @@ B 站直播实用脚本
 
 |plugin              |version             |description         |
 |--------------------|--------------------|--------------------|
-|Daily               |19.07.13            |每日背包奖励         |
-|GiftSend            |19.07.13            |自动清空过期礼物     |
-|Heart               |19.07.13            |双端直播间心跳       |
-|Login               |19.07.13            |帐号登录组件         |
-|Silver              |19.07.13            |自动领宝箱           |
-|Task                |19.07.13            |每日任务             |
-|GiftHeart           |19.07.13            |心跳礼物             |
-|Silver2Coin         |19.07.13            |银瓜子换硬币         |
-|MaterialObject      |19.07.13            |实物抽奖             |
-|GroupSignIn         |19.07.13            |应援团签到           |
-|Storm               |19.07.13           |节奏风暴             |
-|Notice              |19.07.13           |Server酱             |          
-|UnifyRaffle         |19.07.23            |统一活动抽奖          |
-|MasterSite          |19.07.13            |主站(观看、分享、投币)|
-|Guard               |19.07.23           |舰长上船亲密度        |
-|PkRaffle            |19.07.23           |大乱斗                |
+|Daily               |19.12.23            |每日背包奖励         |
+|GiftSend            |19.12.23            |自动清空过期礼物     |
+|Heart               |19.12.23            |双端直播间心跳       |
+|Login               |19.12.23            |帐号登录组件         |
+|Silver              |19.12.23            |自动领宝箱           |
+|Task                |19.12.23            |每日任务             |
+|GiftHeart           |19.12.23            |心跳礼物             |
+|Silver2Coin         |19.12.23            |银瓜子换硬币         |
+|MaterialObject      |19.12.23            |实物抽奖             |
+|GroupSignIn         |19.12.23            |应援团签到           |
+|Storm               |19.12.23            |节奏风暴             |
+|Notice              |19.12.23            |Server酱             |          
+|UnifyRaffle         |19.12.23            |统一活动抽奖          |
+|MasterSite          |19.12.23            |主站(观看、分享、投币)|
+|Guard               |19.12.23            |舰长上船亲密度        |
+|PkRaffle            |19.12.23            |大乱斗                |
+|Anchor              |19.12.23            |天选时刻              |
 
 ## 打赏赞助
 

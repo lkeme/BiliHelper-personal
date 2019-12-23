@@ -4,7 +4,7 @@
  *  Website: https://mudew.com/
  *  Author: Lkeme
  *  License: The MIT License
- *  Updated: 2019
+ *  Updated: 2019 ~ 2020
  */
 
 namespace lkeme\BiliHelper;
@@ -134,6 +134,11 @@ class Login
                 $headers = $captcha_data['headers'];
                 continue;
             }
+            // https://passport.bilibili.com/mobile/verifytel_h5.html
+            if (!$data['code'] && $data['data']['status']) {
+                Log::error('登录失败', ['msg' => '登录异常, 账号启用了设备锁或异地登录需验证手机!']);
+                die();
+            }
             break;
         }
         if (isset($data['code']) && $data['code']) {
@@ -155,10 +160,10 @@ class Login
 
     protected static function loginWithCaptcha()
     {
-        Log::info('登陆需要验证 ,启动验证码登陆!');
+        Log::info('登录需要验证, 启动验证码登录!');
         $headers = [
             'Accept' => 'application/json, text/plain, */*',
-            'User-Agent' => 'bili-universal/8230 CFNetwork/975.0.3 Darwin/18.2.0',
+            'User-Agent' => 'bili-universal/8470 CFNetwork/978.0.7 Darwin/18.5.0',
             'Host' => 'passport.bilibili.com',
             'Cookie' => 'sid=blhelper'
         ];

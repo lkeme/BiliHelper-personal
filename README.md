@@ -7,7 +7,7 @@ Group: [55308141](https://jq.qq.com/?_wv=1027&k=5AIDaJg)
 
 ## 公告
 
-Currently for Personal Edition **0.0.1.190822 alpha**  
+Currently for Personal Edition **0.0.1.191213 alpha**  
 
 ## 文档
 

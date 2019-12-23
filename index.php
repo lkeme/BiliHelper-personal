@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2019
+ *  Updated: 2019 ~ 2020
  */
 
 namespace lkeme\BiliHelper;
@@ -54,8 +54,9 @@ class Index
             PkRaffle::run();
             UnifyRaffle::run();
             Guard::run();
+            Anchor::run();
             Statistics::run();
-            usleep(0.1 * 1000000);
+            usleep(0.2 * 1000000);
         }
     }
 
