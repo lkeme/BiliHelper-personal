@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2019
+ *  Updated: 2019 ~ 2020
  */
 
 namespace lkeme\BiliHelper;
@@ -20,6 +20,7 @@ class TcpClient
     private static $client = null;
     private static $server_addr = null;
     private static $server_key = null;
+    private static $socket_timeout = 0;
 
     /**
      * @desc 入口
@@ -102,7 +103,7 @@ class TcpClient
         if (self::$heart_lock <= time()) {
             if (self::writer("")) {
                 // 心跳默认35s 调整数据错开错误
-                self::$heart_lock = time() + 20;
+                self::$heart_lock = time() + 25;
             }
         }
     }
@@ -116,11 +117,14 @@ class TcpClient
     {
         $data = false;
         try {
-            $data = self::$client->read($length);
-            if (!$data) {
-                throw new Exception("Connection failure");
+            while (self::$client->selectRead(self::$socket_timeout)) {
+                $data = self::$client->read($length);
+                if (!$data) {
+                    throw new Exception("Connection failure");
+                }
+                if ($length == 4) $data = self::unPackMsg($data);
+                break;
             }
-            if ($length == 4) $data = self::unPackMsg($data);
         } catch (Exception $exception) {
             self::reConnect();
         }
@@ -136,8 +140,11 @@ class TcpClient
     {
         $status = false;
         try {
-            $data = self::packMsg($data);
-            $status = self::$client->write($data);
+            while (self::$client->selectWrite(self::$socket_timeout)) {
+                $data = self::packMsg($data);
+                $status = self::$client->write($data);
+                break;
+            }
         } catch (Exception $exception) {
             self::reConnect();
         }
@@ -153,6 +160,7 @@ class TcpClient
         if (!self::$client) {
             try {
                 $socket = (new Factory())->createClient(self::$server_addr, 40);
+                $socket->setBlocking(false);
                 self::$client = $socket;
                 self::handShake();
                 Log::info("连接到 {$socket->getPeerName()} 推送服务器");

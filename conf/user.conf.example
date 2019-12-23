@@ -44,14 +44,18 @@ SOCKET_ROOM_ID=9522051
 # 主站助手
 USE_MASTER_SITE=true
 
-# 舰长总督
-USE_GUARD=true
-
 # 统一活动
 USE_ACTIVE=true
 
+# 舰长总督
+USE_GUARD=true
+
 # 大乱斗
 USE_PK=true
+
+# 天选时刻|抽取类型(0: 无限制; 1: 关注主播; 2: 粉丝勋章; 3大航海； 4用户等级；5主站等级)|逗号分隔
+USE_ANCHOR=false
+ANCHOR_TYPE=0,1
 
 # 实物抽奖
 USE_MO=true
@@ -93,7 +97,7 @@ APP_UNAME=
 # 多账号区别输出
 APP_MULTIPLE=false
 
-# 账号别名，如果为空则默认使用登陆账号作为标示
+# 账号别名，如果为空则默认使用登录账号作为标示
 APP_USER_IDENTITY=
 
 # 日志回调地址

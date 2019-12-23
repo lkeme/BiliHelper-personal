@@ -1,6 +1,18 @@
 # Release Notes
 # 本项目Log
 
+## v0.0.1.191223 alpha (2019-12-23)
+
+### Added
+- anchor(beta)
+- 
+
+### Changed
+-
+
+### Fixed
+- 
+
 ## v0.0.1.191030 alpha (2019-10-30)
 
 ### Added

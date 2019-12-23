@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2019
+ *  Updated: 2019 ~ 2020
  */
 
 namespace lkeme\BiliHelper;
@@ -65,7 +65,7 @@ class Task
         } else {
             Log::info('签到成功');
             // 推送签到信息
-            Notice::run('todaySign', $data['msg']);
+            Notice::run('todaySign', $data['message']);
         }
     }
 
