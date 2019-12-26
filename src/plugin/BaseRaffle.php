@@ -1,0 +1,173 @@
+<?php
+
+
+/**
+ *  Website: https://mudew.com/
+ *  Author: Lkeme
+ *  License: The MIT License
+ *  Email: Useri@live.cn
+ *  Updated: 2019 ~ 2020
+ */
+
+namespace BiliHelper\Plugin;
+
+use BiliHelper\Core\Log;
+use BiliHelper\Core\Curl;
+
+abstract class BaseRaffle
+{
+    const ACTIVE_TITLE = '';
+    const ACTIVE_SWITCH = '';
+
+    protected static $wait_list;
+    protected static $finish_list;
+    protected static $all_list;
+
+    public static function run()
+    {
+        if (getenv(static::ACTIVE_SWITCH) == 'false') {
+            return;
+        }
+        if (static::getLock() > time()) {
+            return;
+        }
+        static::startLottery();
+    }
+
+    /**
+     * @use 抽奖逻辑
+     * @return bool
+     */
+    protected static function startLottery(): bool
+    {
+
+        if (count(static::$wait_list) == 0) {
+            return false;
+        }
+        if (count(static::$wait_list) < 100) {
+            $max_num = mt_rand(10, 20);
+        } else {
+            $max_num = mt_rand(45, 90);
+        }
+        static::$wait_list = static::arrKeySort(static::$wait_list, 'wait');
+        for ($i = 0; $i <= $max_num; $i++) {
+            $raffle = array_shift(static::$wait_list);
+            if (is_null($raffle)) {
+                break;
+            }
+            if ($raffle['wait'] > time()) {
+                array_push(static::$wait_list, $raffle);
+                continue;
+            }
+            Live::goToRoom($raffle['room_id']);
+            Statistics::addJoinList(static::ACTIVE_TITLE);
+            static::lottery($raffle);
+        }
+        return true;
+    }
+
+    /**
+     * @use 返回抽奖数据
+     * @param int $room_id
+     * @return array
+     */
+    protected static function check(int $room_id): array
+    {
+        $payload = [
+            'roomid' => $room_id
+        ];
+        $url = 'https://api.live.bilibili.com/xlive/lottery-interface/v1/lottery/getLotteryInfo';
+        $raw = Curl::get($url, Sign::api($payload));
+        $de_raw = json_decode($raw, true);
+        if (!isset($de_raw['data']) || $de_raw['code']) {
+            Log::error("获取抽奖数据错误，{$de_raw['message']}");
+            return [];
+        }
+        return $de_raw;
+    }
+
+
+    /**
+     * @use 解析抽奖数据
+     * @param int $room_id
+     * @param array $data
+     * @return bool
+     */
+    abstract protected static function parse(int $room_id, array $data): bool;
+
+
+    /**
+     * @use 请求抽奖
+     * @param array $data
+     * @return bool
+     */
+    abstract protected static function lottery(array $data): bool;
+
+    /**
+     * @use 二维数组按key排序
+     * @param $arr
+     * @param $key
+     * @param string $type
+     * @return array
+     */
+    protected static function arrKeySort($arr, $key, $type = 'asc')
+    {
+        switch ($type) {
+            case 'desc':
+                array_multisort(array_column($arr, $key), SORT_DESC, $arr);
+                return $arr;
+            case 'asc':
+                array_multisort(array_column($arr, $key), SORT_ASC, $arr);
+                return $arr;
+            default:
+                return $arr;
+        }
+    }
+
+
+    /**
+     * @use 去重检测
+     * @param $lid
+     * @return bool
+     */
+    protected static function toRepeatLid($lid): bool
+    {
+        $lid = (int)$lid;
+        if (in_array($lid, static::$all_list)) {
+            return true;
+        }
+        if (count(static::$all_list) > 2000) {
+            static::$all_list = [];
+        }
+        array_push(static::$all_list, $lid);
+        return false;
+    }
+
+    /**
+     * @use 数据推入队列
+     * @param array $data
+     * @return bool
+     */
+    public static function pushToQueue(array $data): bool
+    {
+        if (getenv(static::ACTIVE_SWITCH) == 'false') {
+            return false;
+        }
+
+        if (Live::fishingDetection($data['rid'])) {
+            return false;
+        }
+        $raffles_info = static::check($data['rid']);
+        if (!empty($raffles_info)) {
+            static::parse($data['rid'], $raffles_info);
+        }
+        $wait_num = count(static::$wait_list);
+        if ($wait_num > 4 && ($wait_num % 2)) {
+            Log::info("当前队列中共有 {$wait_num} 个" . static::ACTIVE_TITLE . "待抽奖");
+        }
+        return true;
+    }
+
+}
+
+

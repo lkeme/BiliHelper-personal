@@ -2,7 +2,7 @@
 <p align="center"><img width="300px" src="https://i.loli.net/2018/04/20/5ad97bd395912.jpeg"></p>
 
 <p align="center">
-<img src="https://img.shields.io/badge/version-0.0.1.191213 alpha-green.svg?longCache=true&style=for-the-badge">
+<img src="https://img.shields.io/badge/version-0.1.0.191227 alpha-green.svg?longCache=true&style=for-the-badge">
 <img src="https://img.shields.io/badge/license-mit-blue.svg?longCache=true&style=for-the-badge">
 </p>
 
@@ -17,35 +17,40 @@ B 站直播实用脚本
 
 |plugin              |version             |description         |
 |--------------------|--------------------|--------------------|
-|Daily               |19.12.23            |每日背包奖励         |
-|GiftSend            |19.12.23            |自动清空过期礼物     |
-|Heart               |19.12.23            |双端直播间心跳       |
-|Login               |19.12.23            |帐号登录组件         |
-|Silver              |19.12.23            |自动领宝箱           |
-|Task                |19.12.23            |每日任务             |
-|GiftHeart           |19.12.23            |心跳礼物             |
-|Silver2Coin         |19.12.23            |银瓜子换硬币         |
-|MaterialObject      |19.12.23            |实物抽奖             |
-|GroupSignIn         |19.12.23            |应援团签到           |
-|Storm               |19.12.23            |节奏风暴             |
-|Notice              |19.12.23            |Server酱             |          
-|UnifyRaffle         |19.12.23            |统一活动抽奖          |
-|MasterSite          |19.12.23            |主站(观看、分享、投币)|
-|Guard               |19.12.23            |舰长上船亲密度        |
-|PkRaffle            |19.12.23            |大乱斗                |
-|Anchor              |19.12.23            |天选时刻              |
+|Login               |19.12.27            |账号登录            |
+|Sleep               |19.12.27            |休眠控制            |
+|MasterSite          |19.12.27            |主站助手            |
+|Daily               |19.12.27            |每日礼包            |
+|Heart               |19.12.27            |双端心跳            |
+|Task                |19.12.27            |每日任务            |
+|Silver              |19.12.27            |银瓜子宝箱          |
+|Barrage             |19.12.27            |活跃弹幕            |
+|Silver2Coin         |19.12.27            |银瓜子换硬币        |
+|GiftSend            |19.12.27            |礼物赠送            |
+|GroupSignIn         |19.12.27            |友爱社签到          |
+|GiftHeart           |19.12.27            |心跳礼物            |          
+|MaterialObject      |19.12.27            |实物抽奖            |
+|AloneTcpClient      |19.12.27            |独立监控            |
+|ZoneTcpClient       |19.12.27            |分区监控            |
+|StormRaffle         |19.12.27            |节奏风暴            |
+|GiftRaffle          |19.12.27            |活动礼物            |
+|PkRaffle            |19.12.27            |大乱斗              |
+|GuardRaffle         |19.12.27            |舰长总督            |
+|AnchorRaffle        |19.12.27            |天选时刻            |
+|AwardRecord         |19.12.27            |获奖通知            |
+|Statistics          |19.12.27            |数据统计            |
 
 ## 打赏赞助
 
-![](https://i.loli.net/2018/04/07/5ac79ff8c2900.png)
+![](https://i.loli.net/2019/07/13/5d2963e5cc1eb22973.png)
 
+> 待添加
 
 ## 未完成功能
 
 |待续       |
 |-----------|
-|添加多用户 |
-|待添加     |
+|多用户     |
 
 ## 环境依赖
 
@@ -58,7 +63,6 @@ B 站直播实用脚本
 |php_json            |
 |php_zlib            |
 |php_mbstring        |
-|待添加              |
 
 通常使用 `composer` 工具会自动检测上述依赖问题。  
 
@@ -79,11 +83,7 @@ https://mirrors.cloud.tencent.com/composer/
 composer config -g repos.packagist composer https://mirrors.cloud.tencent.com/composer/
 ```
 
-## 打赏赞助
 
-![](https://i.loli.net/2019/07/13/5d2963e5cc1eb22973.png)
-
-> 待添加
 
 ## 使用指南
 
@@ -196,22 +196,36 @@ APP_CALLBACK="https://api.telegram.org/bot<TOKEN>/sendMessage?chat_id=<CHAR_ID>&
 
 ## 直播间 ID 问题
 
-`user.conf` 文件中有个 `ROOM_ID` 配置，填写此项可以清空临过期礼物给指定直播间。
+文件 `user.conf` 里
+
+`ROOM_ID` 配置，填写此项可以清空临过期礼物给指定直播间。
+
+`ROOM_LIST` 配置，使用长位直播间，填写此项可以清空临礼物给指定有勋章的直播间。
+
+`FEED_FILL` 配置，搭配上一条使用，使用过期礼物或者倒序使用正常礼物。
+
+`SOCKET_ROOM_ID` 配置，监控使用，暂时没用到。
 
 通常可以在直播间页面的 url 获取到它
 ```
 http://live.bilibili.com/9522051
 ```
 
-所有直播间号码小于 1000 的直播间为短号，该脚本在每次启动会自动修正，无需关心，
+长位直播间ID获取
+```
+https://api.live.bilibili.com/room/v1/Room/room_init?id=3
+```
+
+所有直播间号码小于 1000 的直播间为短号，该脚本在每次启动会自动修正部分功能，特殊标注的请留意，
 
 ## 相关
 
- > 本项目基于[BilibiliHelper](https://github.com/metowolf/BilibiliHelper)项目
+ >  [BilibiliHelper](https://github.com/metowolf/BilibiliHelper) 
+ 
+ > [BiliHelper](https://github.com/lkeme/BiliHelper)
+ 
+ >  [Github](https://github.com/)
 
- > 基于父项目的架构开发，在此感谢父项目的开发
-
- > 保留父项目没必要修改的信息，另外欢迎重构(Haha)
 
 ## License 许可证
 

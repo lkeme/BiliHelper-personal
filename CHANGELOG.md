@@ -1,62 +1,40 @@
 # Release Notes
 # 本项目Log
 
-## v0.0.1.191223 alpha (2019-12-23)
+## v0.1.0.191227 alpha (2019-12-27)
 
 ### Added
-- anchor(beta)
-- 
+- 新增备用官方分区监控
+- 新增按勋章亲密度赠送
+- 新增天选时刻获奖推送
+-
 
 ### Changed
+- 优化部分架构
+- 优化独立监控
+- 优化监控逻辑
+- 优化礼物赠送
+- 优化通用抽奖
+- 优化推送逻辑
 -
 
 ### Fixed
-- 
+- 修复部分日志显示
+- 修复数据统计异常
+- 修复瓜子宝箱异常
+- 修复Server酱异常
+- 修复天选时刻异常
+- 修复抽奖数据异常
+- 修复部分已知BUG
+- 修复获奖推送通知
+-
 
-## v0.0.1.191030 alpha (2019-10-30)
+## v0.0.5.191223 alpha (2019-12-23)
 
-### Added
-- 
+## v0.0.4.191030 alpha (2019-10-30)
 
-### Changed
-- unify raffle api
-- danmu
-- captcha ocr api
+## v0.0.3.190730 alpha (2019-07-30)
 
-### Fixed
-- 
-
-## v0.0.1.190730 alpha (2019-07-30)
-
-### Added
-- 
-
-### Changed
-- unify raffle api
-
-### Fixed
-- 
-
-## v0.0.1.190723 alpha (2019-07-23)
-
-### Added
-- pk lottery
-
-### Changed
-- 
-
-### Fixed
-- 
-
-
+## v0.0.2.190723 alpha (2019-07-23)
 
 ## v0.0.1.190713 alpha (2019-07-13)
-
-### Added
-- Initialization
-
-### Changed
-- Initialization
-
-### Fixed
-- Initialization
