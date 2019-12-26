@@ -28,24 +28,33 @@ class Sleep
     {
         if (getenv('USE_SLEEP') == 'false' || self::getLock() > time()) {
             return;
+        };
+        if (!self::isPause() && !self::isRefuse()) {
+            self::setLock(5 * 60);
         }
-        self::isPause();
-        self::isRefuse();
-        self::setLock(5 * 60);
     }
 
-    private static function isPause()
+    /**
+     * @use 检查休眠
+     * @return bool
+     */
+    private static function isPause(): bool
     {
         self::$sleep_section = empty(self::$filter_type) ? explode(',', getenv('SLEEP_SECTION')) : self::$sleep_section;
         if (in_array(date('H'), self::$sleep_section)) {
             $unlock_time = 60 * 60;
             self::stopProc($unlock_time);
             Log::warning('进入自定义休眠时间范围，暂停非必要任务，自动开启！');
+            return true;
         }
-        return;
+        return false;
     }
 
-    private static function isRefuse()
+    /**
+     * @use 检查封禁
+     * @return bool
+     */
+    private static function isRefuse(): bool
     {
         $payload = [];
         $raw = Curl::get('https://api.live.bilibili.com/mobile/freeSilverAward', Sign::api($payload));
@@ -56,8 +65,9 @@ class Sleep
             Log::warning('账号拒绝访问，暂停非必要任务，自动开启！');
             // 推送被ban信息
             Notice::push('banned', floor($unlock_time / 60 / 60));
+            return true;
         }
-        return;
+        return false;
     }
 
     /**
