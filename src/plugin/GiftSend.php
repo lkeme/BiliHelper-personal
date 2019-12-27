@@ -10,8 +10,8 @@
 
 namespace BiliHelper\Plugin;
 
-use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
+use BiliHelper\Core\Log;
 use BiliHelper\Util\TimeLock;
 
 class GiftSend
@@ -55,13 +55,13 @@ class GiftSend
         self::getMedalList();
         foreach (self::$medal_list as $key => $val) {
             $bag_list = self::fetchBagList();
-            array_multisort(array_column($bag_list, "expire_at"), SORT_ASC, $bag_list);
             if (getenv('FEED_FILL') == 'false') {
                 $bag_list = self::checkExpireGift($bag_list);
             }
             if (count($bag_list)) {
                 self::$tid = $key;
                 self::getRoomInfo();
+                array_multisort(array_column($bag_list, "expire_at"), SORT_ASC, $bag_list);
             } else {
                 break;
             }
@@ -119,26 +119,28 @@ class GiftSend
      */
     protected static function fetchBagList(): array
     {
-        $bag_list = [];
+        $new_bag_list = [];
         $payload = [];
         $data = Curl::get('https://api.live.bilibili.com/gift/v2/gift/bag_list', Sign::api($payload));
         $data = json_decode($data, true);
         if (isset($data['code']) && $data['code']) {
             Log::warning('背包查看失败!', ['msg' => $data['message']]);
-            return $bag_list;
+            return $new_bag_list;
         }
         if (isset($data['data']['list'])) {
             $bag_list = $data['data']['list'];
-            array_multisort(array_column($bag_list, "gift_id"), SORT_DESC, $bag_list);
+            if (count($bag_list)) {
+                array_multisort(array_column($bag_list, "gift_id"), SORT_DESC, $bag_list);
+            }
             foreach ($bag_list as $vo) {
                 // 去除永久礼物
                 if ($vo['corner_mark'] == '永久') {
                     continue;
                 }
-                array_push($bag_list, $vo);
+                array_push($new_bag_list, $vo);
             }
         }
-        return $bag_list;
+        return $new_bag_list;
     }
 
 

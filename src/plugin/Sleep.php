@@ -18,7 +18,9 @@ use BiliHelper\Util\TimeLock;
 class Sleep
 {
     use TimeLock;
-    // TODO 黑白名单 考虑添加到每个插件内部自动添加
+    // TODO 黑白名单|考虑添加到每个插件内部自动添加|优化RUN逻辑代码
+    private static $unlock_hour = 24;
+    private static $unlock_time = 0;
     private static $fillable = ['Login', 'Sleep', 'Daily', 'MasterSite', 'GiftSend', 'Task', 'Silver2Coin', 'GroupSignIn', 'GiftHeart', 'AwardRecord', 'Statistics'];
     private static $guarded = ['Barrage', 'Heart', 'Silver', 'MaterialObject', 'AloneTcpClient', 'ZoneTcpClient', 'StormRaffle', 'GuardRaffle', 'PkRaffle', 'GiftRaffle', 'AnchorRaffle'];
     private static $sleep_section = [];
@@ -26,12 +28,29 @@ class Sleep
 
     public static function run()
     {
-        if (getenv('USE_SLEEP') == 'false' || self::getLock() > time()) {
+        if (self::getLock() > time()) {
             return;
-        };
-        if (!self::isPause() && !self::isRefuse()) {
-            self::setLock(5 * 60);
+        } else {
+            self::setLock(1 * 60);
         }
+        // 封禁逻辑
+        if (self::$unlock_time < time()) {
+            if (!self::isRefuse()) {
+                self::setLock(5 * 60);
+            } else {
+                self::setLock(1 * 60);
+                return;
+            }
+        }
+        // 休眠逻辑
+        if (getenv('USE_SLEEP') != 'false' && self::$unlock_time < time() && self::$unlock_hour != date('H')) {
+            if (!self::isPause()) {
+                self::setLock(5 * 60);
+            } else {
+                self::setLock(1 * 60);
+                return;
+            }
+        };
     }
 
     /**
@@ -76,15 +95,14 @@ class Sleep
      */
     private static function stopProc(int $unlock_time)
     {
-        $unlock_time = $unlock_time + 1 * 60;
-        // 检测时间提前5分钟
-        self::setLock($unlock_time - 5 * 60);
+        self::$unlock_time = time() + $unlock_time;
+        self::$unlock_hour = date('H');
         foreach (self::$fillable as $classname) {
             Log::info("插件 {$classname} 白名单，保持当前状态继续");
         }
         foreach (self::$guarded as $classname) {
             Log::info("插件 {$classname} 黑名单，锁定状态将于" . date("Y-m-d H:i", time() + $unlock_time) . "解除");
-            call_user_func(array(__NAMESPACE__ . '\\' . $classname, 'setLock'), $unlock_time);
+            call_user_func(array(__NAMESPACE__ . '\\' . $classname, 'setLock'), $unlock_time + 3 * 60);
         }
     }
 }
