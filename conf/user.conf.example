@@ -60,12 +60,12 @@ SLEEP_SECTION=2,3,4,5,6
 #       基础设置       #
 #######################
 
-# 独立推送服务(主)
+# 独立推送服务(主)|主备冲突
 USE_ALONE_SERVER=true
 ALONE_SERVER_ADDR=tcp://47.102.120.84:10010
 ALONE_SERVER_KEY=,*(?PVl]nIbo35sB
 
-# 分区推送服务(备)
+# 分区推送服务(备)|主备冲突
 USE_ZONE_SERVER=false
 ZONE_SERVER_ADDR=tcp://broadcastlv.chat.bilibili.com:2243/sub
 
@@ -87,8 +87,9 @@ USE_SCKEY=
 # 直播间ID，用于礼物赠送
 ROOM_ID=9522051
 
-# 勋章亲密度，测试功能，使用长位房间号，左侧优先，仅支持辣条和亿元
-# 是否填满(按时间投喂正常礼物，否则过期礼物)|直播间ID列表|逗号分隔
+# 勋章亲密度，测试功能，有短位使用短位反之长位，左侧优先，仅支持辣条和亿元
+# 当列表中所有ID都已达到每日上限，剩余礼物赠送ROOM_ID指定的直播间
+# 是否填满(按时间投喂正常礼物，否则过期礼物)|直播间ID列表|逗号分隔|
 FEED_FILL=false
 ROOM_LIST=9522051
 

@@ -21,6 +21,7 @@ class GiftSend
     protected static $tid = 0;
     protected static $r_uid = 0;
     protected static $room_id = 0;
+    protected static $short_id = 0;
     protected static $room_list = [];
     protected static $medal_list = [];
 
@@ -53,28 +54,30 @@ class GiftSend
             return false;
         }
         self::getMedalList();
-        foreach (self::$medal_list as $key => $val) {
+        foreach (self::$medal_list as $room_id => $total_intimacy) {
             $bag_list = self::fetchBagList();
             if (getenv('FEED_FILL') == 'false') {
                 $bag_list = self::checkExpireGift($bag_list);
             }
             if (count($bag_list)) {
-                self::$tid = $key;
+                self::$tid = $room_id;
                 self::getRoomInfo();
-                array_multisort(array_column($bag_list, "expire_at"), SORT_ASC, $bag_list);
+                // array_multisort(array_column($bag_list, "expire_at"), SORT_ASC, $bag_list);
             } else {
                 break;
             }
+            $current_intimacy = 0;
             foreach ($bag_list as $gift) {
                 // 是辣条、亿元 && 不是过期礼物
-                if (!in_array($gift['gift_id'], [1, 6]) && getenv('FEED_FILL') != 'false') {
+                if (!in_array($gift['gift_id'], [1, 6])) {
                     continue;
                 }
-                $amt = self::calcAmt($gift);
+                Log::notice("直播间 {$room_id} 需赠送亲密度 {$total_intimacy} 剩余亲密度 " . ($total_intimacy - $current_intimacy));
+                $amt = self::calcAmt($gift, $total_intimacy - $current_intimacy);
                 self::sendGift($gift, $amt);
-                $val -= $amt;
-                if (!$val) {
-                    Log::notice("直播间 {$key} 亲密度 {$val} 送满啦~送满啦~");
+                $current_intimacy += ($gift['gift_id'] == 6) ? ($amt * 10) : $amt;
+                if (!($current_intimacy - $total_intimacy)) {
+                    Log::notice("直播间 {$room_id} 亲密度 {$total_intimacy} 送满啦~送满啦~");
                     break;
                 }
             }
@@ -227,24 +230,26 @@ class GiftSend
         Log::info('直播间信息生成完毕!');
         self::$r_uid = (string)$data['data']['uid'];
         self::$room_id = (string)$data['data']['room_id'];
+        self::$short_id = $data['data']['short_id'] ? (string)$data['data']['short_id'] : self::$room_id;
     }
 
 
     /**
      * @use 计算赠送数量
      * @param array $gift
+     * @param int $surplus_num
      * @return int
      */
-    protected static function calcAmt(array $gift): int
+    protected static function calcAmt(array $gift, int $surplus_num): int
     {
         $amt = $gift['gift_num'];
         if ($gift['gift_id'] == 1) {
-            $amt = (self::$medal_list[self::$room_id] > $gift['gift_num']) ? $gift['gift_num'] : self::$medal_list[self::$room_id];
+            $amt = ($surplus_num > $gift['gift_num']) ? $gift['gift_num'] : floor($surplus_num);
         }
         if ($gift['gift_id'] == 6) {
-            $amt = (floor(self::$medal_list[self::$room_id] / 10) > $gift['gift_num']) ? $gift['gift_num'] : floor(self::$medal_list[self::$room_id] / 10);
+            $amt = (floor($surplus_num / 10) > $gift['gift_num']) ? $gift['gift_num'] : floor($surplus_num / 10);
         }
-        return $amt;
+        return ($amt < 1) ? 1 : $amt;
     }
 
 
