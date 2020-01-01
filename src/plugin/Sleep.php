@@ -21,8 +21,8 @@ class Sleep
     // TODO 黑白名单|考虑添加到每个插件内部自动添加|优化RUN逻辑代码
     private static $unlock_hour = 24;
     private static $unlock_time = 0;
-    private static $fillable = ['Login', 'Sleep', 'Daily', 'MasterSite', 'GiftSend', 'Task', 'Silver2Coin', 'GroupSignIn', 'GiftHeart', 'AwardRecord', 'Statistics'];
-    private static $guarded = ['Barrage', 'Heart', 'Silver', 'MaterialObject', 'AloneTcpClient', 'ZoneTcpClient', 'StormRaffle', 'GuardRaffle', 'PkRaffle', 'GiftRaffle', 'AnchorRaffle'];
+    private static $fillable = ['Login', 'Sleep', 'Daily', 'MasterSite', 'GiftSend', 'Task', 'Silver2Coin', 'GroupSignIn', 'AwardRecord', 'Statistics'];
+    private static $guarded = ['Barrage', 'GiftHeart', 'Heart', 'Silver', 'MaterialObject', 'AloneTcpClient', 'ZoneTcpClient', 'StormRaffle', 'GuardRaffle', 'PkRaffle', 'GiftRaffle', 'AnchorRaffle'];
     private static $sleep_section = [];
 
 

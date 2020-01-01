@@ -10,7 +10,9 @@
 
 namespace BiliHelper\Core;
 
-use BiliHelper\Plugin;
+use Amp\Delayed;
+use Amp\Loop;
+use function Amp\asyncCall;
 
 class App
 {
@@ -39,34 +41,53 @@ class App
     }
 
     /**
+     * @use 新任务
+     * @param string $classname
+     */
+    public function newTask(string $classname)
+    {
+        asyncCall(function () use ($classname) {
+            while (true) {
+                call_user_func(array('BiliHelper\Plugin\\' . $classname, 'run'), []);
+                yield new Delayed(1000);
+            }
+        });
+
+    }
+
+
+    /**
      * @use 核心运行
      */
     public function start()
     {
-        while (true) {
-            Plugin\Login::run();
-            Plugin\Sleep::run();
-            Plugin\MasterSite::run();
-            Plugin\Daily::run();
-            Plugin\Heart::run();
-            Plugin\Task::run();
-            Plugin\Silver::run();
-            Plugin\Barrage::run();
-            Plugin\Silver2Coin::run();
-            Plugin\GiftSend::run();
-            Plugin\GroupSignIn::run();
-            Plugin\GiftHeart::run();
-            Plugin\MaterialObject::run();
-            Plugin\AloneTcpClient::run();
-            Plugin\ZoneTcpClient::run();
-            Plugin\StormRaffle::run();
-            Plugin\GiftRaffle::run();
-            Plugin\PkRaffle::run();
-            Plugin\GuardRaffle::run();
-            Plugin\AnchorRaffle::run();
-            Plugin\AwardRecord::run();
-            Plugin\Statistics::run();
-            usleep(0.1 * 1000000);
+        $plugins = [
+            'Login',
+            'Sleep',
+            'MasterSite',
+            'Daily',
+            'Heart',
+            'Task',
+            'Silver',
+            'Barrage',
+            'Silver2Coin',
+            'GiftSend',
+            'GroupSignIn',
+            'GiftHeart',
+            'MaterialObject',
+            'AloneTcpClient',
+            'ZoneTcpClient',
+            'StormRaffle',
+            'GiftRaffle',
+            'PkRaffle',
+            'GuardRaffle',
+            'AnchorRaffle',
+            'AwardRecord',
+            'Statistics',
+        ];
+        foreach ($plugins as $plugin) {
+            $this->newTask($plugin);
         }
+        Loop::run();
     }
 }

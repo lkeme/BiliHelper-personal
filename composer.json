@@ -13,7 +13,8 @@
     "monolog/monolog": "^1.23",
     "bramus/monolog-colored-line-formatter": "^2.0",
     "clue/socket-raw": "^1.4.1",
-    "vlucas/phpdotenv": "^4.1"
+    "vlucas/phpdotenv": "^4.1",
+    "amphp/amp": "^2.4"
   },
   "license": "MIT",
   "authors": [
