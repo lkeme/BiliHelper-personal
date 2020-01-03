@@ -33,7 +33,7 @@ class PkRaffle extends BaseRaffle
      * @param array $data
      * @return bool
      */
-    protected static function parse(int $room_id, array $data): bool
+    protected static function parseLotteryInfo(int $room_id, array $data): bool
     {
         // 防止异常
         if (!array_key_exists('pk', $data['data'])) {
@@ -68,34 +68,59 @@ class PkRaffle extends BaseRaffle
 
 
     /**
-     * @use 请求抽奖
-     * @param array $data
-     * @return bool
+     * @use 创建抽奖任务
+     * @param array $raffles
+     * @return array
      */
-    protected static function lottery(array $data): bool
+    protected static function createLottery(array $raffles): array
     {
-        $user_info = User::parseCookies();
-        $payload = [
-            'id' => $data['raffle_id'],
-            'roomid' => $data['room_id'],
-            'csrf_token' => $user_info['token'],
-            "csrf" => $user_info['token'],
-        ];
         $url = 'https://api.live.bilibili.com/xlive/lottery-interface/v1/pk/join';
-        $raw = Curl::post($url, Sign::api($payload));
-        $de_raw = json_decode($raw, true);
-        /*
-         * {'code': 0, 'message': '0', 'ttl': 1, 'data': {'id': 343560, 'gift_type': 0, 'award_id': '1', 'award_text': '辣条X1', 'award_image': 'https://i0.hdslb.com/bfs/live/da6656add2b14a93ed9eb55de55d0fd19f0fc7f6.png', 'award_num': 0, 'title': '大乱斗获胜抽奖'}}
-         * {'code': -1, 'message': '抽奖已结束', 'ttl': 1}
-         * {'code': -2, 'message': '您已参加过抽奖', 'ttl': 1}
-         * {"code":-403,"data":null,"message":"访问被拒绝","msg":"访问被拒绝"}
-         */
-        if (isset($de_raw['code']) && $de_raw['code'] == 0) {
-            Log::notice("房间 {$data['room_id']} 编号 {$data['raffle_id']} " . self::ACTIVE_TITLE . ": {$de_raw['data']['award_text']}");
-            Statistics::addSuccessList(self::ACTIVE_TITLE);
-        } else {
-            Log::notice("房间 {$data['room_id']} 编号 {$data['raffle_id']} " . self::ACTIVE_TITLE . ": {$de_raw['message']}");
+        $tasks = [];
+        $results = [];
+        $user_info = User::parseCookies();
+        foreach ($raffles as $raffle) {
+            $payload = [
+                'id' => $raffle['raffle_id'],
+                'roomid' => $raffle['room_id'],
+                'csrf_token' => $user_info['token'],
+                "csrf" => $user_info['token'],
+            ];
+            array_push($tasks, [
+                'payload' => Sign::api($payload),
+                'source' => [
+                    'room_id' => $raffle['room_id'],
+                    'raffle_id' => $raffle['raffle_id']
+                ]
+            ]);
         }
-        return true;
+        $results = Curl::asyncPost($url, $tasks);
+        # print_r($results);
+        return $results;
+    }
+
+    /**
+     * @use 解析抽奖信息
+     * @param array $results
+     * @return mixed|void
+     */
+    protected static function parseLottery(array $results)
+    {
+        foreach ($results as $result) {
+            $data = $result['source'];
+            $content = $result['content'];
+            $de_raw = json_decode($content, true);
+            /*
+             * {'code': 0, 'message': '0', 'ttl': 1, 'data': {'id': 343560, 'gift_type': 0, 'award_id': '1', 'award_text': '辣条X1', 'award_image': 'https://i0.hdslb.com/bfs/live/da6656add2b14a93ed9eb55de55d0fd19f0fc7f6.png', 'award_num': 0, 'title': '大乱斗获胜抽奖'}}
+             * {'code': -1, 'message': '抽奖已结束', 'ttl': 1}
+             * {'code': -2, 'message': '您已参加过抽奖', 'ttl': 1}
+             * {"code":-403,"data":null,"message":"访问被拒绝","msg":"访问被拒绝"}
+             */
+            if (isset($de_raw['code']) && $de_raw['code'] == 0) {
+                Log::notice("房间 {$data['room_id']} 编号 {$data['raffle_id']} " . self::ACTIVE_TITLE . ": {$de_raw['data']['award_text']}");
+                Statistics::addSuccessList(self::ACTIVE_TITLE);
+            } else {
+                Log::notice("房间 {$data['room_id']} 编号 {$data['raffle_id']} " . self::ACTIVE_TITLE . ": {$de_raw['message']}");
+            }
+        }
     }
 }
