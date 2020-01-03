@@ -42,19 +42,18 @@ class App
 
     /**
      * @use 新任务
-     * @param string $classname
+     * @param string $taskName
      */
-    public function newTask(string $classname)
+    public function newTask(string $taskName)
     {
-        asyncCall(function () use ($classname) {
+        asyncCall(function () use ($taskName) {
             while (true) {
-                call_user_func(array('BiliHelper\Plugin\\' . $classname, 'run'), []);
+                call_user_func(array('BiliHelper\Plugin\\' . $taskName, 'run'), []);
                 yield new Delayed(1000);
             }
         });
 
     }
-
 
     /**
      * @use 核心运行

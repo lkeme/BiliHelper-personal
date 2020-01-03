@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "bc4f20d52292405305a8aa3bd6dcf4bd",
+    "content-hash": "6e83be077b5af9863dab5c4affd54c0b",
     "packages": [
         {
             "name": "amphp/amp",
@@ -243,6 +243,45 @@
                 "unix"
             ],
             "time": "2019-10-28T12:32:07+00:00"
+        },
+        {
+            "name": "lkeme/curl-future",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/lkeme/CurlFuture.git",
+                "reference": "084f1004ba722b72755c7519932117d7fb72c214"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/lkeme/CurlFuture/zipball/084f1004ba722b72755c7519932117d7fb72c214",
+                "reference": "084f1004ba722b72755c7519932117d7fb72c214",
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "CurlFuture\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "leo",
+                    "email": "263068280@qq.com"
+                }
+            ],
+            "description": "Parallel CURL Requests with PHP",
+            "time": "2020-01-03T16:39:17+00:00"
         },
         {
             "name": "monolog/monolog",
@@ -574,7 +613,9 @@
     "packages-dev": [],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {
+        "lkeme/curl-future": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {

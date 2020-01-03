@@ -32,7 +32,7 @@ class GuardRaffle extends BaseRaffle
      * @param array $data
      * @return bool
      */
-    protected static function parse(int $room_id, array $data): bool
+    protected static function parseLotteryInfo(int $room_id, array $data): bool
     {
         // 防止异常
         if (!array_key_exists('guard', $data['data'])) {
@@ -82,32 +82,56 @@ class GuardRaffle extends BaseRaffle
 
 
     /**
-     * @use 请求抽奖
-     * @param array $data
-     * @return bool
+     * @use 创建抽奖任务
+     * @param array $raffles
+     * @return array
      */
-    protected static function lottery(array $data): bool
+    protected static function createLottery(array $raffles): array
     {
+        $url = 'https://api.live.bilibili.com/xlive/lottery-interface/v3/guard/join';
+        $tasks = [];
+        $results = [];
         $user_info = User::parseCookies();
-        $payload = [
-            'id' => $data['raffle_id'],
-            'roomid' => $data['room_id'],
-            "type" => "guard",
-            'csrf_token' => $user_info['token'],
-            'csrf' => $user_info['token']
-        ];
-        $url = 'https://api.live.bilibili.com/lottery/v2/lottery/join';
-        $raw = Curl::post($url, Sign::api($payload));
-        $de_raw = json_decode($raw, true);
-
-        if (isset($de_raw['code']) && $de_raw['code'] == 0) {
-            Log::notice("房间 {$data['room_id']} 编号 {$data['raffle_id']} " . self::ACTIVE_TITLE . ": {$de_raw['data']['message']}");
-            Statistics::addSuccessList(self::ACTIVE_TITLE);
-        } else {
-            Log::notice("房间 {$data['room_id']} 编号 {$data['raffle_id']} " . self::ACTIVE_TITLE . ": {$de_raw['msg']}");
+        foreach ($raffles as $raffle) {
+            $payload = [
+                'id' => $raffle['raffle_id'],
+                'roomid' => $raffle['room_id'],
+                "type" => "guard",
+                'csrf_token' => $user_info['token'],
+                'csrf' => $user_info['token'],
+                'visit_id' => ''
+            ];
+            array_push($tasks, [
+                'payload' => Sign::api($payload),
+                'source' => [
+                    'room_id' => $raffle['room_id'],
+                    'raffle_id' => $raffle['raffle_id']
+                ]
+            ]);
         }
-        return true;
+        $results = Curl::asyncPost($url, $tasks);
+        # print_r($results);
+        return $results;
     }
 
+    /**
+     * @use 解析抽奖信息
+     * @param array $results
+     * @return mixed|void
+     */
+    protected static function parseLottery(array $results)
+    {
+        foreach ($results as $result) {
+            $data = $result['source'];
+            $content = $result['content'];
+            $de_raw = json_decode($content, true);
+            if (isset($de_raw['code']) && $de_raw['code'] == 0) {
+                Log::notice("房间 {$data['room_id']} 编号 {$data['raffle_id']} " . self::ACTIVE_TITLE . ": " . $de_raw['data']['award_name'] . "x" . $de_raw['data']['award_num']);
+                Statistics::addSuccessList(self::ACTIVE_TITLE);
+            } else {
+                Log::notice("房间 {$data['room_id']} 编号 {$data['raffle_id']} " . self::ACTIVE_TITLE . ": {$de_raw['msg']}");
+            }
+        }
+    }
 
 }

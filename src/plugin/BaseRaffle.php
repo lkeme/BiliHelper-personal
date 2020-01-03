@@ -22,6 +22,7 @@ abstract class BaseRaffle
     protected static $wait_list;
     protected static $finish_list;
     protected static $all_list;
+    protected static $room_stats = ['room_id' => 0, 'status' => false];
 
     public static function run()
     {
@@ -40,16 +41,13 @@ abstract class BaseRaffle
      */
     protected static function startLottery(): bool
     {
-
         if (count(static::$wait_list) == 0) {
             return false;
         }
-        if (count(static::$wait_list) < 100) {
-            $max_num = mt_rand(10, 20);
-        } else {
-            $max_num = mt_rand(45, 90);
-        }
+        $raffle_list = [];
+        $room_list = [];
         static::$wait_list = static::arrKeySort(static::$wait_list, 'wait');
+        $max_num = count(static::$wait_list);
         for ($i = 0; $i <= $max_num; $i++) {
             $raffle = array_shift(static::$wait_list);
             if (is_null($raffle)) {
@@ -57,11 +55,22 @@ abstract class BaseRaffle
             }
             if ($raffle['wait'] > time()) {
                 array_push(static::$wait_list, $raffle);
-                continue;
+                break;
             }
-            Live::goToRoom($raffle['room_id']);
+            if (count($raffle_list) > 200) {
+                break;
+            }
+            array_push($room_list, $raffle['room_id']);
+            array_push($raffle_list, $raffle);
             Statistics::addJoinList(static::ACTIVE_TITLE);
-            static::lottery($raffle);
+        }
+        if (count($raffle_list) && count($room_list)) {
+            $room_list = array_unique($room_list);
+            foreach ($room_list as $room_id) {
+                Live::goToRoom($room_id);
+            }
+            $results = static::createLottery($raffle_list);
+            static::parseLottery($results);
         }
         return true;
     }
@@ -88,20 +97,28 @@ abstract class BaseRaffle
 
 
     /**
-     * @use 解析抽奖数据
+     * @use 解析抽奖信息
      * @param int $room_id
      * @param array $data
      * @return bool
      */
-    abstract protected static function parse(int $room_id, array $data): bool;
+    abstract protected static function parseLotteryInfo(int $room_id, array $data): bool;
 
 
     /**
-     * @use 请求抽奖
-     * @param array $data
-     * @return bool
+     * @use 创建抽奖
+     * @param array $raffles
+     * @return array
      */
-    abstract protected static function lottery(array $data): bool;
+    abstract protected static function createLottery(array $raffles): array;
+
+
+    /**
+     * @use 解析抽奖返回
+     * @param array $results
+     * @return mixed
+     */
+    abstract protected static function parseLottery(array $results);
 
     /**
      * @use 二维数组按key排序
@@ -128,9 +145,10 @@ abstract class BaseRaffle
     /**
      * @use 去重检测
      * @param $lid
+     * @param bool $filter
      * @return bool
      */
-    protected static function toRepeatLid($lid): bool
+    protected static function toRepeatLid($lid, $filter = true): bool
     {
         $lid = (int)$lid;
         if (in_array($lid, static::$all_list)) {
@@ -139,7 +157,9 @@ abstract class BaseRaffle
         if (count(static::$all_list) > 2000) {
             static::$all_list = [];
         }
-        array_push(static::$all_list, $lid);
+        if ($filter) {
+            array_push(static::$all_list, $lid);
+        }
         return false;
     }
 
@@ -150,19 +170,28 @@ abstract class BaseRaffle
      */
     public static function pushToQueue(array $data): bool
     {
+        // 开关
         if (getenv(static::ACTIVE_SWITCH) == 'false') {
             return false;
         }
-
-        if (Live::fishingDetection($data['rid'])) {
+        // 去重
+        if (static::toRepeatLid($data['lid'], false)) {
             return false;
         }
+        // 钓鱼&&防止重复请求
+        if ($data['rid'] != static::$room_stats['room_id']) {
+            static::$room_stats = ['room_id' => $data['rid'], 'status' => Live::fishingDetection($data['rid'])];
+        }
+        if (static::$room_stats['status']) {
+            return false;
+        }
+        // 实际检测
         $raffles_info = static::check($data['rid']);
         if (!empty($raffles_info)) {
-            static::parse($data['rid'], $raffles_info);
+            static::parseLotteryInfo($data['rid'], $raffles_info);
         }
         $wait_num = count(static::$wait_list);
-        if ($wait_num > 4 && ($wait_num % 2)) {
+        if ($wait_num > 10 && ($wait_num % 2)) {
             Log::info("当前队列中共有 {$wait_num} 个" . static::ACTIVE_TITLE . "待抽奖");
         }
         return true;

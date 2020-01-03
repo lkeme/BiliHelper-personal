@@ -32,11 +32,11 @@ B 站直播实用脚本
 |MaterialObject      |19.12.27            |实物抽奖            |
 |AloneTcpClient      |19.12.27            |独立监控            |
 |ZoneTcpClient       |19.12.27            |分区监控            |
-|StormRaffle         |19.12.27            |节奏风暴            |
-|GiftRaffle          |19.12.27            |活动礼物            |
-|PkRaffle            |19.12.27            |大乱斗              |
-|GuardRaffle         |19.12.27            |舰长总督            |
-|AnchorRaffle        |19.12.27            |天选时刻            |
+|StormRaffle         |20.01.03            |节奏风暴            |
+|GiftRaffle          |20.01.03           |活动礼物            |
+|PkRaffle            |20.01.03            |大乱斗              |
+|GuardRaffle         |20.01.03            |舰长总督            |
+|AnchorRaffle        |20.01.03            |天选时刻            |
 |AwardRecord         |19.12.27            |获奖通知            |
 |Statistics          |19.12.27            |数据统计            |
 
@@ -90,7 +90,7 @@ composer config -g repos.packagist composer https://mirrors.cloud.tencent.com/co
  1. 下载（克隆）项目代码，初始化项目
 ```
 $ git clone https://github.com/lkeme/BiliHelper-personal.git
-$ cd BiliHelper/conf
+$ cd BiliHelper-personal/conf
 $ cp user.conf.example user.conf
 ```
  2. 使用 [composer](https://getcomposer.org/download/) 工具进行安装

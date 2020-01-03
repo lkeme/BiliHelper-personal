@@ -10,6 +10,8 @@
 
 namespace BiliHelper\Core;
 
+use CurlFuture\HttpFuture;
+
 class Curl
 {
     public static $headers = array(
@@ -27,6 +29,45 @@ class Curl
         return array_map(function ($k, $v) {
             return $k . ': ' . $v;
         }, array_keys($headers), $headers);
+    }
+
+    public static function asyncPost($url, $tasks = null, $headers = null, $timeout = 30)
+    {
+        $new_tasks = [];
+        $results = [];
+        $url = self::http2https($url);
+        foreach ($tasks as $task) {
+            $payload = $task['payload'];
+            $header = is_null($headers) ? self::getHeaders(self::$headers) : self::getHeaders($headers);
+            $options = [
+                'header' => $header,
+                'timeout' => $timeout,
+                'post_data' => is_array($payload) ? http_build_query($payload) : $payload
+            ];
+//            $options['proxy_url'] = "127.0.0.1:8888";
+            if (getenv('USE_PROXY') == 'true') {
+                $options['proxy_url'] = "http://" . getenv('PROXY_IP') . ":" . getenv('PROXY_PORT');
+            }
+            if (($cookie = getenv('COOKIE')) != "") {
+                $options['header']['Cookie'] = $cookie;
+            }
+            $new_task = new HttpFuture($url, $options);
+            array_push($new_tasks, [
+                'task' => $new_task,
+                'source' => $task['source']
+            ]);
+        }
+        foreach ($new_tasks as $new_task) {
+            Log::debug($url);
+            $result = $new_task['task']->fetch();
+            // var_dump($result);
+            array_push($results, [
+                'content' => $result,
+                'source' => $new_task['source']
+            ]);
+            Log::debug($result);
+        }
+        return $results;
     }
 
     public static function post($url, $payload = null, $headers = null, $timeout = 30)

@@ -35,7 +35,7 @@ class StormRaffle extends BaseRaffle
      * @param array $data
      * @return bool
      */
-    protected static function parse(int $room_id, array $data): bool
+    protected static function parseLotteryInfo(int $room_id, array $data): bool
     {
         // 防止异常
         if (!array_key_exists('storm', $data['data'])) {
@@ -85,57 +85,73 @@ class StormRaffle extends BaseRaffle
 
 
     /**
-     * @use 请求抽奖
-     * @param array $data
-     * @return bool
+     * @use 创建抽奖任务
+     * @param array $raffles
+     * @return array
      * @throws \Exception
      */
-    protected static function lottery(array $data): bool
+    protected static function createLottery(array $raffles): array
     {
-        self::$attempt = getenv('STORM_ATTEMPT') !== "" ? explode(',', getenv('STORM_ATTEMPT')) : [30, 50];
-        $num = random_int((int)self::$attempt[0], (int)self::$attempt[1]);
-        $user_info = User::parseCookies();
-        $payload = [
-            'id' => $data['raffle_id'],
-            'roomid' => $data['room_id'],
-            "color" => "16772431",
-            "captcha_token" => "",
-            "captcha_phrase" => "",
-            "token" => $user_info['token'],
-            "csrf_token" => $user_info['token'],
-            "visit_id" => "",
-        ];
         $url = 'https://api.live.bilibili.com/lottery/v1/Storm/join';
-        for ($i = 1; $i < $num; $i++) {
-            $raw = Curl::post($url, Sign::api($payload));
-            $de_raw = json_decode($raw, true);
-            if ($de_raw['code'] == 429 || $de_raw['code'] == -429) {
-                Log::notice(self::formatInfo($data['raffle_id'], $num, '节奏风暴未实名或异常验证码'));
-                break;
-            }
-            if (isset($de_raw['data']) && empty($de_raw['data'])) {
-                Log::notice(self::formatInfo($data['raffle_id'], $num, '节奏风暴在小黑屋'));
-                break;
-            }
-            if ($de_raw['code'] == 0) {
-                Statistics::addSuccessList(self::ACTIVE_TITLE);
-                Log::notice(self::formatInfo($data['raffle_id'], $num, $de_raw['data']['mobile_content']));
-                break;
-            }
-            if ($de_raw['msg'] == '节奏风暴不存在') {
-                Log::notice(self::formatInfo($data['raffle_id'], $num, '节奏风暴已结束'));
-                break;
-            }
-            if ($de_raw['msg'] == '已经领取奖励') {
-                Log::notice(self::formatInfo($data['raffle_id'], $num, '节奏风暴已经领取'));
-                break;
-            }
-            if ($de_raw['msg'] == '你错过了奖励，下次要更快一点哦~') {
+        $user_info = User::parseCookies();
+        foreach ($raffles as $raffle) {
+            self::$attempt = getenv('STORM_ATTEMPT') !== "" ? explode(',', getenv('STORM_ATTEMPT')) : [30, 50];
+            $num = random_int((int)self::$attempt[0], (int)self::$attempt[1]);
+            $payload = [
+                'id' => $raffle['raffle_id'],
+                'roomid' => $raffle['room_id'],
+                "color" => "16772431",
+                "captcha_token" => "",
+                "captcha_phrase" => "",
+                "token" => $user_info['token'],
+                "csrf_token" => $user_info['token'],
+                "visit_id" => ""
+            ];
+            for ($i = 1; $i < $num; $i++) {
+                $raw = Curl::post($url, Sign::api($payload));
+                $de_raw = json_decode($raw, true);
+                if ($de_raw['code'] == 429 || $de_raw['code'] == -429) {
+                    Log::notice(self::formatInfo($raffle['raffle_id'], $num, '节奏风暴未实名或异常验证码'));
+                    break;
+                }
+                if (isset($de_raw['data']) && empty($de_raw['data'])) {
+                    Log::notice(self::formatInfo($raffle['raffle_id'], $num, '节奏风暴在小黑屋'));
+                    break;
+                }
+                if ($de_raw['code'] == 0) {
+                    Statistics::addSuccessList(self::ACTIVE_TITLE);
+                    Log::notice(self::formatInfo($raffle['raffle_id'], $num, $de_raw['data']['mobile_content']));
+                    break;
+                }
+                if ($de_raw['msg'] == '节奏风暴不存在') {
+                    Log::notice(self::formatInfo($raffle['raffle_id'], $num, '节奏风暴已结束'));
+                    break;
+                }
+                if ($de_raw['msg'] == '已经领取奖励') {
+                    Log::notice(self::formatInfo($raffle['raffle_id'], $num, '节奏风暴已经领取'));
+                    break;
+                }
+                if ($de_raw['msg'] == '你错过了奖励，下次要更快一点哦~') {
+                    continue;
+                }
+                Log::notice(self::formatInfo($raffle['raffle_id'], $num, $de_raw['msg']));
                 continue;
             }
-            Log::notice(self::formatInfo($data['raffle_id'], $num, $de_raw['msg']));
-            continue;
         }
-        return true;
+        return [];
+    }
+
+    /**
+     * @use 解析抽奖信息
+     * @param array $results
+     * @return mixed|void
+     */
+    protected static function parseLottery(array $results)
+    {
+        foreach ($results as $result) {
+            $data = $result['source'];
+            $content = $result['content'];
+            echo '';
+        }
     }
 }
