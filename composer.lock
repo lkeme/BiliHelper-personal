@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6e83be077b5af9863dab5c4affd54c0b",
+    "content-hash": "94b2a09fe75ecf7401a6694e164b252c",
     "packages": [
         {
             "name": "amphp/amp",
@@ -246,16 +246,16 @@
         },
         {
             "name": "lkeme/curl-future",
-            "version": "dev-master",
+            "version": "v0.0.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/lkeme/CurlFuture.git",
-                "reference": "084f1004ba722b72755c7519932117d7fb72c214"
+                "reference": "f588d890eee745d8ecd3ee1135ac6de899381e15"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/lkeme/CurlFuture/zipball/084f1004ba722b72755c7519932117d7fb72c214",
-                "reference": "084f1004ba722b72755c7519932117d7fb72c214",
+                "url": "https://api.github.com/repos/lkeme/CurlFuture/zipball/f588d890eee745d8ecd3ee1135ac6de899381e15",
+                "reference": "f588d890eee745d8ecd3ee1135ac6de899381e15",
                 "shasum": "",
                 "mirrors": [
                     {
@@ -280,8 +280,8 @@
                     "email": "263068280@qq.com"
                 }
             ],
-            "description": "Parallel CURL Requests with PHP",
-            "time": "2020-01-03T16:39:17+00:00"
+            "description": "Parallel CURL Requests with PHP --Fork",
+            "time": "2020-01-04T13:16:47+00:00"
         },
         {
             "name": "monolog/monolog",
@@ -613,9 +613,7 @@
     "packages-dev": [],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "lkeme/curl-future": 20
-    },
+    "stability-flags": [],
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {

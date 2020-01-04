@@ -36,22 +36,30 @@ class Curl
         $new_tasks = [];
         $results = [];
         $url = self::http2https($url);
+        $curl_options = [
+            CURLOPT_HEADER => 0,
+            CURLOPT_ENCODING => 'gzip',
+            CURLOPT_IPRESOLVE => 1,
+            CURLOPT_RETURNTRANSFER => 1,
+            CURLOPT_SSL_VERIFYPEER => 0,
+            CURLOPT_TIMEOUT => $timeout,
+            CURLOPT_CONNECTTIMEOUT => $timeout,
+        ];
+        if (($cookie = getenv('COOKIE')) != "") {
+            $curl_options[CURLOPT_COOKIE] = $cookie;
+        }
+        if (getenv('USE_PROXY') == 'true') {
+            $curl_options[CURLOPT_PROXY] = getenv('PROXY_IP');
+            $curl_options[CURLOPT_PROXYPORT] = getenv('PROXY_PORT');
+        }
         foreach ($tasks as $task) {
             $payload = $task['payload'];
             $header = is_null($headers) ? self::getHeaders(self::$headers) : self::getHeaders($headers);
             $options = [
                 'header' => $header,
-                'timeout' => $timeout,
                 'post_data' => is_array($payload) ? http_build_query($payload) : $payload
             ];
-//            $options['proxy_url'] = "127.0.0.1:8888";
-            if (getenv('USE_PROXY') == 'true') {
-                $options['proxy_url'] = "http://" . getenv('PROXY_IP') . ":" . getenv('PROXY_PORT');
-            }
-            if (($cookie = getenv('COOKIE')) != "") {
-                $options['header']['Cookie'] = $cookie;
-            }
-            $new_task = new HttpFuture($url, $options);
+            $new_task = new HttpFuture($url, $options, $curl_options);
             array_push($new_tasks, [
                 'task' => $new_task,
                 'source' => $task['source']
