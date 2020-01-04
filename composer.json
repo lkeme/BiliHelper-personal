@@ -15,7 +15,7 @@
     "clue/socket-raw": "^1.4.1",
     "vlucas/phpdotenv": "^4.1",
     "amphp/amp": "^2.4",
-    "lkeme/curl-future": "dev-master"
+    "lkeme/curl-future": "^0.0.1"
   },
   "license": "MIT",
   "authors": [
