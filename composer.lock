@@ -250,12 +250,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/lkeme/CurlFuture.git",
-                "reference": "f588d890eee745d8ecd3ee1135ac6de899381e15"
+                "reference": "ea91acf250d2519cbd187d91fa6d01e9cfa9c6c5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/lkeme/CurlFuture/zipball/f588d890eee745d8ecd3ee1135ac6de899381e15",
-                "reference": "f588d890eee745d8ecd3ee1135ac6de899381e15",
+                "url": "https://api.github.com/repos/lkeme/CurlFuture/zipball/ea91acf250d2519cbd187d91fa6d01e9cfa9c6c5",
+                "reference": "ea91acf250d2519cbd187d91fa6d01e9cfa9c6c5",
                 "shasum": "",
                 "mirrors": [
                     {
@@ -281,7 +281,7 @@
                 }
             ],
             "description": "Parallel CURL Requests with PHP --Fork",
-            "time": "2020-01-04T13:16:47+00:00"
+            "time": "2020-01-04T14:29:53+00:00"
         },
         {
             "name": "monolog/monolog",

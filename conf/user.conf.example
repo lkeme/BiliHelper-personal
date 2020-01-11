@@ -27,9 +27,10 @@ USE_GUARD=true
 # 大乱斗
 USE_PK=true
 
-# 天选时刻|抽取类型(0: 无限制; 1: 关注主播; 2: 粉丝勋章; 3大航海； 4用户等级；5主站等级)|逗号分隔
+# 天选时刻|抽取类型(0: 无限制; 1: 关注主播; 2: 粉丝勋章; 3大航海； 4用户等级；5主站等级)|过滤关键词|逗号分隔
 USE_ANCHOR=false
 ANCHOR_TYPE=0,1
+ANCHOR_FILTER_WORDS=
 
 # 实物抽奖
 USE_MO=true
