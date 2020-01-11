@@ -1,6 +1,17 @@
 # Release Notes
 # 本项目Log
 
+## v0.1.0.200111 alpha (2020-01-11)
+
+### Added
+- 天选时刻奖品过滤
+
+### Changed
+-
+
+### Fixed
+-
+
 ## v0.1.0.200103 alpha (2020-01-03)
 
 ### Added

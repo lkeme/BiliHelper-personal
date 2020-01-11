@@ -29,6 +29,32 @@ class AnchorRaffle extends BaseRaffle
 
 
     /**
+     * @use 过滤奖品
+     * @param string $prize_name
+     * @return bool
+     */
+    protected static function filterPrizeWords(string $prize_name): bool
+    {
+        $default_words = [
+            '拉黑', '黑名单', '脸皮厚', '没有奖品', '无奖', '脸皮厚', 'ceshi', '测试', '测试', '测试', '脚本',
+            '抽奖号', '星段位', '星段位', '圣晶石', '圣晶石', '水晶', '水晶', '万兴神剪手', '万兴神剪手',
+            '自付邮费', '自付邮费', "test", "Test", "TEST", "加密", "QQ", "测试", "測試", "VX", "vx",
+            "ce", "shi", "这是一个", "lalall", "第一波", "第二波", "第三波", "测试用", "抽奖标题", "策是",
+            "房间抽奖", "CESHI", "ceshi", "奖品A", "奖品B", "奖品C", "硬币", "无奖品", "白名单", "我是抽奖",
+            "0.1", "五毛二", "一分", "一毛", "0.52", "0.66", "0.01", "0.77", "0.16", "照片", "穷", "0.5",
+            "0.88", "双排"
+        ];
+        $custom_words = empty(getenv('ANCHOR_TYPE')) ? [] : explode(',', getenv('ANCHOR_TYPE'));
+        $total_words = array_merge($default_words, $custom_words);
+        foreach ($total_words as $word) {
+            if (strpos($prize_name, $word) !== false) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * @use 解析数据
      * @param int $room_id
      * @param array $data
@@ -51,6 +77,10 @@ class AnchorRaffle extends BaseRaffle
         // 过滤抽奖范围
         self::$filter_type = empty(self::$filter_type) ? explode(',', getenv('ANCHOR_TYPE')) : self::$filter_type;
         if (!in_array((string)$de_raw['require_type'], self::$filter_type)) {
+            return false;
+        }
+        // 过滤奖品关键词
+        if (self::filterPrizeWords($de_raw['award_name'])) {
             return false;
         }
         // 去重

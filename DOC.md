@@ -2,7 +2,7 @@
 <p align="center"><img width="300px" src="https://i.loli.net/2018/04/20/5ad97bd395912.jpeg"></p>
 
 <p align="center">
-<img src="https://img.shields.io/badge/version-0.1.0.191227 alpha-green.svg?longCache=true&style=for-the-badge">
+<img src="https://img.shields.io/badge/version-0.1.0.200111 alpha-green.svg?longCache=true&style=for-the-badge">
 <img src="https://img.shields.io/badge/license-mit-blue.svg?longCache=true&style=for-the-badge">
 </p>
 
@@ -36,7 +36,7 @@ B 站直播实用脚本
 |GiftRaffle          |20.01.03           |活动礼物            |
 |PkRaffle            |20.01.03            |大乱斗              |
 |GuardRaffle         |20.01.03            |舰长总督            |
-|AnchorRaffle        |20.01.03            |天选时刻            |
+|AnchorRaffle        |20.01.11            |天选时刻            |
 |AwardRecord         |19.12.27            |获奖通知            |
 |Statistics          |19.12.27            |数据统计            |
 
