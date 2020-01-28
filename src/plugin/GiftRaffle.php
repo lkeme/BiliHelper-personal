@@ -114,7 +114,7 @@ class GiftRaffle extends BaseRaffle
             if (isset($de_raw['code']) && !$de_raw['code']) {
                 // 推送中奖信息
                 if ($de_raw['data']['award_name'] != '辣条' && $de_raw['data']['award_name'] != '') {
-                    $info = $de_raw['data']['gift_name'] . 'x' . $de_raw['data']['gift_num'];
+                    $info = $de_raw['data']['award_name'] . 'x' . $de_raw['data']['award_name'];
                     Notice::push('gift', $info);
                 }
                 Log::notice("房间 {$data['room_id']} 编号 {$data['raffle_id']} " . self::ACTIVE_TITLE . ": {$de_raw['data']['award_name']}x{$de_raw['data']['award_num']}");

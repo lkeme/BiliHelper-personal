@@ -29,18 +29,36 @@ class Notice
      */
     public static function push(string $type, string $result = '')
     {
-        if (getenv('USE_SCKEY') == "") {
+        if (getenv('USE_SC') == 'false' || getenv('SC_KEY') == "") {
             return;
         }
-
         self::$type = $type;
         self::$result = $result;
-        self::$sckey = getenv('USE_SCKEY');
+        self::$sckey = getenv('SC_KEY');
         self::$uname = User::userInfo() ? getenv('APP_UNAME') : getenv('APP_USER');
-
+        if (self::filterResultWords($result)) {
+            return;
+        }
         self::sendInfoHandle();
     }
 
+    /**
+     * @use 过滤信息
+     * @param string $result
+     * @return bool
+     */
+    private static function filterResultWords(string $result): bool
+    {
+        $default_words = [];
+        $custom_words = empty(getenv('SC_FILTER_WORDS')) ? [] : explode(',', getenv('SC_FILTER_WORDS'));
+        $total_words = array_merge($default_words, $custom_words);
+        foreach ($total_words as $word) {
+            if (strpos($result, $word) !== false) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     /**
      * @use 处理信息
