@@ -70,7 +70,7 @@ ALONE_SERVER_KEY=,*(?PVl]nIbo35sB
 USE_ZONE_SERVER=false
 ZONE_SERVER_ADDR=tcp://broadcastlv.chat.bilibili.com:2243/sub
 
-# 切换HTTPS,为真则使用https协议
+# 切换HTTPS|为真则使用https协议
 USE_HTTPS=true
 
 # 是否使用代理(前提保证有效代理)
@@ -78,8 +78,10 @@ USE_PROXY=false
 PROXY_IP=127.0.0.1
 PROXY_PORT=8888
 
-# SERVER酱, 用于推送消息
-USE_SCKEY=
+# SERVER酱|令牌KEY|过滤关键词|逗号分隔
+USE_SC=false
+SC_KEY=
+SC_FILTER_WORDS=
 
 #######################
 #       房间设置       #

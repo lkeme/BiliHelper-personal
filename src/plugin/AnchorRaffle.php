@@ -44,7 +44,7 @@ class AnchorRaffle extends BaseRaffle
             "0.1", "五毛二", "一分", "一毛", "0.52", "0.66", "0.01", "0.77", "0.16", "照片", "穷", "0.5",
             "0.88", "双排"
         ];
-        $custom_words = empty(getenv('ANCHOR_TYPE')) ? [] : explode(',', getenv('ANCHOR_TYPE'));
+        $custom_words = empty(getenv('ANCHOR_FILTER_WORDS')) ? [] : explode(',', getenv('ANCHOR_FILTER_WORDS'));
         $total_words = array_merge($default_words, $custom_words);
         foreach ($total_words as $word) {
             if (strpos($prize_name, $word) !== false) {

@@ -2,7 +2,7 @@
 <p align="center"><img width="300px" src="https://i.loli.net/2018/04/20/5ad97bd395912.jpeg"></p>
 
 <p align="center">
-<img src="https://img.shields.io/badge/version-0.1.0.200111 alpha-green.svg?longCache=true&style=for-the-badge">
+<img src="https://img.shields.io/badge/version-0.1.0.200128 alpha-green.svg?longCache=true&style=for-the-badge">
 <img src="https://img.shields.io/badge/license-mit-blue.svg?longCache=true&style=for-the-badge">
 </p>
 
@@ -33,7 +33,7 @@ B 站直播实用脚本
 |AloneTcpClient      |19.12.27            |独立监控            |
 |ZoneTcpClient       |19.12.27            |分区监控            |
 |StormRaffle         |20.01.03            |节奏风暴            |
-|GiftRaffle          |20.01.03           |活动礼物            |
+|GiftRaffle          |20.01.28           |活动礼物            |
 |PkRaffle            |20.01.03            |大乱斗              |
 |GuardRaffle         |20.01.03            |舰长总督            |
 |AnchorRaffle        |20.01.11            |天选时刻            |
