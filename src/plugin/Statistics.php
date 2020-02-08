@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2019 ~ 2020
+ *  Updated: 2020 ~ 2021
  */
 
 namespace BiliHelper\Plugin;
@@ -41,14 +41,8 @@ class Statistics
      */
     public static function addPushList(string $key): bool
     {
-        // 初始化三个必要值
-        if (!array_key_exists($key, self::$push_list)) {
-            self::$push_list[$key] = [];
-            self::$join_list[$key] = [];
-            self::$success_list[$key] = [];
-        }
-
-        array_push(self::$push_list[$key], 1);
+        self::initKeyValue(self::$push_list, $key);
+        self::$push_list[$key]++;
         return true;
     }
 
@@ -60,7 +54,8 @@ class Statistics
      */
     public static function addJoinList(string $key): bool
     {
-        array_push(self::$join_list[$key], 1);
+        self::initKeyValue(self::$join_list, $key);
+        self::$join_list[$key]++;
         return true;
     }
 
@@ -72,7 +67,23 @@ class Statistics
      */
     public static function addSuccessList(string $key): bool
     {
-        array_push(self::$success_list[$key], 1);
+        self::initKeyValue(self::$success_list, $key);
+        self::$success_list[$key]++;
+        return true;
+    }
+
+    /**
+     * @use 初始化键值
+     * @param array $target
+     * @param string $key
+     * @param int $value
+     * @return bool
+     */
+    private static function initKeyValue(array &$target, string $key, $value = 0): bool
+    {
+        if (!array_key_exists($key, $target)) {
+            $target[$key] = $value;
+        }
         return true;
     }
 
@@ -85,14 +96,13 @@ class Statistics
     {
         if (empty(self::$push_list)) {
             return false;
-        } else {
-            Log::info("-----------密----------封---------线------------");
         }
+        Log::info("-----------密----------封---------线------------");
         foreach (self::$push_list as $key => $val) {
             $title = $key;
-            $push_num = count(self::$push_list[$key]);
-            $join_num = count(self::$join_list[$key]);
-            $success_num = count(self::$success_list[$key]);
+            $push_num = isset(self::$push_list[$key]) ? self::$push_list[$key] : 0;
+            $join_num = isset(self::$join_list[$key]) ? self::$join_list[$key] : 0;
+            $success_num = isset(self::$success_list[$key]) ? self::$success_list[$key] : 0;
             $content = "{$title}: #推送 {$push_num} #参与 {$join_num} #成功 {$success_num}";
             Log::notice($content);
         }
