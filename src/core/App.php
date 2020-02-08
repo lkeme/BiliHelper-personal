@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2019 ~ 2020
+ *  Updated: 2020 ~ 2021
  */
 
 namespace BiliHelper\Core;
@@ -65,6 +65,7 @@ class App
             'Sleep',
             'MasterSite',
             'Daily',
+            'ManGa',
             'Heart',
             'Task',
             'Silver',
