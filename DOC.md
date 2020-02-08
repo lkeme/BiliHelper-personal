@@ -113,6 +113,23 @@ $ php index.php
 
 <p align="center"><img width="680px" src="https://i.loli.net/2018/04/21/5adb497dc3ece.png"></p>
 
+## Docker使用指南
+
+  1. 安装好[Docker](https://yeasy.gitbooks.io/docker_practice/content/install/)
+  2. 直接命令行拉取镜像后运行
+
+```
+  docker run -itd --rm -e USER_NAME=你的B站登陆账号 -e USER_PASSWORD=你的B站密码 zsnmwy/bilihelper-personal
+```
+
+  ```
+相关参数
+
+  -it 前台运行
+  -itd 后台运行
+  ```
+
+- 注意: Docker镜像已经包含了所有所需的运行环境，无需在本地环境弄composer。每次启动容器时，都会与项目进行同步以确保版本最新。
 
 ## 升级指南
 > 注意新版本的配置文件是否变动，则需要重新覆盖配置文件，并重新填写设置
