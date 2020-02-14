@@ -309,7 +309,7 @@ class ZoneTcpClient
     private static function genHandshakePkg($room_id): string
     {
         return self::packMsg(json_encode([
-            'uid' => mt_rand(1000000, 2999999),
+            'uid' => random_int(1000000, 2999999),
             'roomid' => intval($room_id),
         ]), 0x0007);
     }

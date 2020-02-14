@@ -51,7 +51,7 @@ class StormRaffle extends BaseRaffle
         }
         // 过滤抽奖范围
         self::$drop_rate = getenv('STORM_DROPRATE') !== "" ? (int)getenv('STORM_DROPRATE') : 0;
-        if (mt_rand(1, 100) <= (int)self::$drop_rate) {
+        if (random_int(1, 100) <= (int)self::$drop_rate) {
             return false;
         }
         // 去重

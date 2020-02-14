@@ -92,7 +92,7 @@ class Curl
             // 网络断开判断 延时方便连接网络
             if ($ret_count < $waring) {
                 Log::warning("正常等待网络连接状态恢复正常...");
-                sleep(mt_rand(5, 10));
+                sleep(random_int(5, 10));
             }
             try {
                 $curl = curl_init();

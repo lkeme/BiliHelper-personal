@@ -139,7 +139,7 @@ class Live
      */
     public static function randDelay($min = 0, $max = 3): bool
     {
-        $rand = $min + mt_rand() / mt_getrandmax() * ($max - $min);
+        $rand = $min + random_int() / mt_getrandmax() * ($max - $min);
         sleep($rand);
         return true;
     }
