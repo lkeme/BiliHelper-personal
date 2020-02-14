@@ -149,7 +149,7 @@ class MasterSite
     private static function getRandomAid(): string
     {
         do {
-            $page = mt_rand(1, 1000);
+            $page = random_int(1, 1000);
             $payload = [];
             $url = "https://api.bilibili.com/x/web-interface/newlist?&pn={$page}&ps=1";
             $raw = Curl::get($url, Sign::api($payload));
