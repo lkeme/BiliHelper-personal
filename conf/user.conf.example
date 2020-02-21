@@ -6,10 +6,11 @@
 APP_USER=
 APP_PASS=
 
-# 令牌(自动生成)
+# 令牌(自动生成)|最后投币记录(自动生成)
 ACCESS_TOKEN=
 REFRESH_TOKEN=
 COOKIE=
+LAST_ADD_COIN=
 
 #######################
 #       功能设置       #

@@ -13,10 +13,12 @@ namespace BiliHelper\Plugin;
 use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
 use BiliHelper\Util\TimeLock;
+use BiliHelper\Core\Config;
 
 class MasterSite
 {
     use TimeLock;
+    protected static $count = 0;
 
     public static function run()
     {
@@ -56,6 +58,7 @@ class MasterSite
         $de_raw = json_decode($raw, true);
         if ($de_raw['code'] == 0) {
             Log::notice("主站任务: av{$aid}投币成功!");
+            self::$count++;
             return true;
         } else {
             Log::warning("主站任务: av{$aid}投币失败!");
@@ -114,6 +117,9 @@ class MasterSite
             case 'true':
                 $av_num = getenv('ADD_COIN_AV_NUM');
                 $av_num = (int)$av_num;
+                $day = date('Y-m-d');
+                $last_coin = explode(',', empty(getenv('LAST_ADD_COIN'))?',':getenv('LAST_ADD_COIN'));
+                self::$count = ($last_coin[1] == $day?(int)$last_coin[0]:0);
                 if ($av_num == 0) {
                     Log::warning('当前视频投币设置不正确,请检查配置文件!');
                     die();
@@ -122,15 +128,16 @@ class MasterSite
                     $aid = !empty(getenv('ADD_COIN_AV')) ? getenv('ADD_COIN_AV') : self::getRandomAid();
                     self::reward($aid);
                 } else {
-                    $coins = $av_num - self::coinLog();
+                    $coins = $av_num - self::$count;
                     if ($coins <= 0) {
                         Log::info('今日投币上限已满!');
                         break;
                     }
-                    $aids = self::getDayRankingAids($av_num);
+                    $aids = self::getDayRankingAids($coins);
                     foreach ($aids as $aid) {
                         self::reward($aid);
                     }
+                    Config::put('LAST_ADD_COIN', self::$count . ',' . $day);
                 }
                 break;
             default:
