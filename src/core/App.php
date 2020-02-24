@@ -24,6 +24,9 @@ class App
         set_time_limit(0);
         header("Content-Type:text/html; charset=utf-8");
         date_default_timezone_set('Asia/Shanghai');
+        if (PHP_SAPI != 'cli') {
+            die("Please run this script from command line");
+        }
     }
 
     /**

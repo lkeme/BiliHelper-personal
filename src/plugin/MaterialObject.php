@@ -121,6 +121,7 @@ class MaterialObject
             // 过滤敏感词
             $title = $response['data']['title'];
             if (self::filterTitleWords($title)) {
+                array_push(self::$invalid_aids, $probe_aid);
                 continue;
             }
             // 过滤抽奖轮次

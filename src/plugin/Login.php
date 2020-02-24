@@ -196,7 +196,7 @@ class Login
             'Host' => 'passport.bilibili.com',
             'Cookie' => 'sid=blhelper'
         ];
-        $data = Curl::other('https://passport.bilibili.com/captcha', null, $headers);
+        $data = Curl::request('https://passport.bilibili.com/captcha', null, $headers);
         $data = base64_encode($data);
         $captcha = self::ocrCaptcha($data);
         return [
@@ -219,7 +219,7 @@ class Login
         $headers = [
             'Content-Type' => 'application/json',
         ];
-        $data = Curl::other('http://47.102.120.84:19951/', json_encode($payload), $headers);
+        $data = Curl::request('http://47.102.120.84:19951/', json_encode($payload), $headers);
         $de_raw = json_decode($data, true);
         Log::info("验证码识别结果 {$de_raw['message']}");
 

@@ -2,7 +2,7 @@
 <p align="center"><img width="300px" src="https://i.loli.net/2018/04/20/5ad97bd395912.jpeg"></p>
 
 <p align="center">
-<img src="https://img.shields.io/badge/version-0.2.0.200214 alpha-green.svg?longCache=true&style=for-the-badge">
+<img src="https://img.shields.io/badge/version-0.2.0.200224 alpha-green.svg?longCache=true&style=for-the-badge">
 <img src="https://img.shields.io/badge/license-mit-blue.svg?longCache=true&style=for-the-badge">
 </p>
 
@@ -15,29 +15,29 @@ B 站直播实用脚本
 
 |plugin              |version             |description         |
 |--------------------|--------------------|--------------------|
-|Login               |20.02.14            |账号登录            |
-|Sleep               |20.02.14            |休眠控制            |
-|MasterSite          |20.02.14            |主站助手            |
-|Daily               |20.02.14            |每日礼包            |
-|Heart               |20.02.14            |双端心跳            |
-|Task                |20.02.14            |每日任务            |
-|Silver              |20.02.14            |银瓜子宝箱          |
-|Barrage             |20.02.14            |活跃弹幕            |
-|Silver2Coin         |20.02.14            |银瓜子换硬币        |
-|GiftSend            |20.02.14            |礼物赠送            |
-|GroupSignIn         |20.02.14            |友爱社签到          |
-|ManGa               |20.02.14            |漫画签到分享        |
-|GiftHeart           |20.02.14            |心跳礼物            |          
-|MaterialObject      |20.02.14            |实物抽奖            |
-|AloneTcpClient      |20.02.14            |独立监控            |
-|ZoneTcpClient       |20.02.14            |分区监控            |
-|StormRaffle         |20.02.14            |节奏风暴            |
-|GiftRaffle          |20.02.14            |活动礼物            |
-|PkRaffle            |20.02.14            |大乱斗              |
-|GuardRaffle         |20.02.14            |舰长总督            |
-|AnchorRaffle        |20.02.14            |天选时刻            |
-|AwardRecord         |20.02.14            |获奖通知            |
-|Statistics          |20.02.14            |数据统计            |
+|Login               |20.02.24            |账号登录            |
+|Sleep               |20.02.24            |休眠控制            |
+|MasterSite          |20.02.24            |主站助手            |
+|Daily               |20.02.24            |每日礼包            |
+|Heart               |20.02.24            |双端心跳            |
+|Task                |20.02.24            |每日任务            |
+|Silver              |20.02.24            |银瓜子宝箱          |
+|Barrage             |20.02.24            |活跃弹幕            |
+|Silver2Coin         |20.02.24            |银瓜子换硬币        |
+|GiftSend            |20.02.24            |礼物赠送            |
+|GroupSignIn         |20.02.24            |友爱社签到          |
+|ManGa               |20.02.24            |漫画签到分享        |
+|GiftHeart           |20.02.24            |心跳礼物            |          
+|MaterialObject      |20.02.24            |实物抽奖            |
+|AloneTcpClient      |20.02.24            |独立监控            |
+|ZoneTcpClient       |20.02.24            |分区监控            |
+|StormRaffle         |20.02.24            |节奏风暴            |
+|GiftRaffle          |20.02.24            |活动礼物            |
+|PkRaffle            |20.02.24            |大乱斗              |
+|GuardRaffle         |20.02.24            |舰长总督            |
+|AnchorRaffle        |20.02.24            |天选时刻            |
+|AwardRecord         |20.02.24            |获奖通知            |
+|Statistics          |20.02.24            |数据统计            |
 
 ## 打赏赞助
 

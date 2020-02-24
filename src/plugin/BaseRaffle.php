@@ -22,7 +22,7 @@ abstract class BaseRaffle
     protected static $wait_list;
     protected static $finish_list;
     protected static $all_list;
-    protected static $room_stats = ['room_id' => 0, 'status' => false];
+    protected static $banned_rids = [];
 
     public static function run()
     {
@@ -174,21 +174,24 @@ abstract class BaseRaffle
         if (getenv(static::ACTIVE_SWITCH) == 'false') {
             return false;
         }
+        $current_rid = (int)$data['rid'];
         // 去重
-        if (static::toRepeatLid($data['lid'], false)) {
+        if (static::toRepeatLid($current_rid, false)) {
             return false;
         }
-        // 钓鱼&&防止重复请求
-        if ($data['rid'] != static::$room_stats['room_id']) {
-            static::$room_stats = ['room_id' => $data['rid'], 'status' => Live::fishingDetection($data['rid'])];
+        // 拒绝钓鱼 防止重复请求
+        if (in_array($current_rid, static::$banned_rids)) {
+            return false;
         }
-        if (static::$room_stats['status']) {
+        $banned_status = Live::fishingDetection($current_rid);
+        if ($banned_status) {
+            array_push(static::$banned_rids, $current_rid);
             return false;
         }
         // 实际检测
-        $raffles_info = static::check($data['rid']);
+        $raffles_info = static::check($current_rid);
         if (!empty($raffles_info)) {
-            static::parseLotteryInfo($data['rid'], $raffles_info);
+            static::parseLotteryInfo($current_rid, $raffles_info);
         }
         $wait_num = count(static::$wait_list);
         if ($wait_num > 10 && ($wait_num % 2)) {
@@ -196,7 +199,4 @@ abstract class BaseRaffle
         }
         return true;
     }
-
 }
-
-
