@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "94b2a09fe75ecf7401a6694e164b252c",
+    "content-hash": "687175b9d9d6f818c02bd5174b036b19",
     "packages": [
         {
             "name": "amphp/amp",
-            "version": "v2.4.0",
+            "version": "v2.4.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/amphp/amp.git",
-                "reference": "13930a582947831bb66ff1aeac28672fd91c38ea"
+                "reference": "2ac3b550c4997f2ec304faa63c8b2885079a2dc4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/amphp/amp/zipball/13930a582947831bb66ff1aeac28672fd91c38ea",
-                "reference": "13930a582947831bb66ff1aeac28672fd91c38ea",
+                "url": "https://api.github.com/repos/amphp/amp/zipball/2ac3b550c4997f2ec304faa63c8b2885079a2dc4",
+                "reference": "2ac3b550c4997f2ec304faa63c8b2885079a2dc4",
                 "shasum": "",
                 "mirrors": [
                     {
@@ -87,7 +87,56 @@
                 "non-blocking",
                 "promise"
             ],
-            "time": "2019-11-11T19:32:05+00:00"
+            "time": "2020-02-10T18:10:57+00:00"
+        },
+        {
+            "name": "ares333/php-curl",
+            "version": "v4.6.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/ares333/php-curl.git",
+                "reference": "580025300c3cbf7cafe825bd454018ffc62233cf"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/ares333/php-curl/zipball/580025300c3cbf7cafe825bd454018ffc62233cf",
+                "reference": "580025300c3cbf7cafe825bd454018ffc62233cf",
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
+            },
+            "require": {
+                "ext-curl": "*",
+                "php": ">=5.3.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Ares333\\Curl\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "Ares",
+                    "homepage": "http://phpdr.net"
+                }
+            ],
+            "description": "The best php curl library.",
+            "keywords": [
+                "PHP cURL",
+                "aysnc http",
+                "curl",
+                "curlmulti"
+            ],
+            "time": "2018-12-13T03:47:27+00:00"
         },
         {
             "name": "bramus/ansi-php",
@@ -243,45 +292,6 @@
                 "unix"
             ],
             "time": "2019-10-28T12:32:07+00:00"
-        },
-        {
-            "name": "lkeme/curl-future",
-            "version": "v0.0.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/lkeme/CurlFuture.git",
-                "reference": "ea91acf250d2519cbd187d91fa6d01e9cfa9c6c5"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/lkeme/CurlFuture/zipball/ea91acf250d2519cbd187d91fa6d01e9cfa9c6c5",
-                "reference": "ea91acf250d2519cbd187d91fa6d01e9cfa9c6c5",
-                "shasum": "",
-                "mirrors": [
-                    {
-                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
-                        "preferred": true
-                    }
-                ]
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "CurlFuture\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "leo",
-                    "email": "263068280@qq.com"
-                }
-            ],
-            "description": "Parallel CURL Requests with PHP --Fork",
-            "time": "2020-01-04T14:29:53+00:00"
         },
         {
             "name": "monolog/monolog",
@@ -483,16 +493,16 @@
         },
         {
             "name": "symfony/polyfill-ctype",
-            "version": "v1.13.1",
+            "version": "v1.14.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-ctype.git",
-                "reference": "f8f0b461be3385e56d6de3dbb5a0df24c0c275e3"
+                "reference": "fbdeaec0df06cf3d51c93de80c7eb76e271f5a38"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/polyfill-ctype/zipball/f8f0b461be3385e56d6de3dbb5a0df24c0c275e3",
-                "reference": "f8f0b461be3385e56d6de3dbb5a0df24c0c275e3",
+                "url": "https://api.github.com/repos/symfony/polyfill-ctype/zipball/fbdeaec0df06cf3d51c93de80c7eb76e271f5a38",
+                "reference": "fbdeaec0df06cf3d51c93de80c7eb76e271f5a38",
                 "shasum": "",
                 "mirrors": [
                     {
@@ -510,7 +520,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "1.13-dev"
+                    "dev-master": "1.14-dev"
                 }
             },
             "autoload": {
@@ -543,7 +553,7 @@
                 "polyfill",
                 "portable"
             ],
-            "time": "2019-11-27T13:56:44+00:00"
+            "time": "2020-01-13T11:15:53+00:00"
         },
         {
             "name": "vlucas/phpdotenv",

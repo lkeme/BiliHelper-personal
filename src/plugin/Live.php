@@ -18,16 +18,10 @@ class Live
 {
     use TimeLock;
 
-
-    public static function run()
-    {
-        return;
-    }
-
-
     /**
      * @use 获取分区列表
      * @return array
+     * @throws \Exception
      */
     public static function fetchLiveAreas(): array
     {
@@ -47,10 +41,12 @@ class Live
         return $areas;
     }
 
+
     /**
      * @use AREA_ID转ROOM_ID
      * @param $area_id
      * @return array
+     * @throws \Exception
      */
     public static function areaToRid($area_id): array
     {
@@ -94,6 +90,7 @@ class Live
      * @use 获取直播房间号
      * @param $room_id
      * @return bool
+     * @throws \Exception
      */
     public static function getRealRoomID($room_id)
     {
@@ -132,22 +129,10 @@ class Live
 
 
     /**
-     * @use 随机延迟
-     * @param int $min
-     * @param int $max
-     * @return bool
-     */
-    public static function randDelay($min = 0, $max = 3): bool
-    {
-        $rand = $min + random_int() / mt_getrandmax() * ($max - $min);
-        sleep($rand);
-        return true;
-    }
-
-    /**
      * @use 访问直播间
      * @param $room_id
      * @return bool
+     * @throws \Exception
      */
     public static function goToRoom($room_id): bool
     {

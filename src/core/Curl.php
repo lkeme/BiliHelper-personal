@@ -10,8 +10,6 @@
 
 namespace BiliHelper\Core;
 
-use CurlFuture\HttpFuture;
-
 class Curl
 {
     public static $headers = array(
@@ -21,9 +19,40 @@ class Curl
         'Connection' => 'keep-alive',
         'Content-Type' => 'application/x-www-form-urlencoded',
         'User-Agent' => 'bili-universal/8470 CFNetwork/978.0.7 Darwin/18.5.0',
-        // 'Referer' => 'https://live.bilibili.com/',
+//        'Referer' => 'https://live.bilibili.com/',
     );
 
+    private static $results = [];
+    private static $result = [];
+
+    /**
+     * @use 数组
+     * @return array
+     */
+    private static function getResults()
+    {
+        $results = self::$results;
+        self::$results = [];
+        return $results;
+    }
+
+
+    /**
+     * @use 字符串or其他
+     * @return array
+     */
+    private static function getResult()
+    {
+        $result = self::$result;
+        self::$result = [];
+        return array_shift($result);
+    }
+
+    /**
+     * @use 获取Headers
+     * @param $headers
+     * @return array
+     */
     private static function getHeaders($headers)
     {
         return array_map(function ($k, $v) {
@@ -31,53 +60,110 @@ class Curl
         }, array_keys($headers), $headers);
     }
 
-    public static function asyncPost($url, $tasks = null, $headers = null, $timeout = 30)
+
+    /**
+     * @use 初始化Curl
+     * @param int $tasks_num
+     * @param bool $bar
+     * @return \Ares333\Curl\Curl
+     */
+    private static function getMultiClient(int $tasks_num = 1, bool $bar = false)
     {
-        $new_tasks = [];
-        $results = [];
-        $url = self::http2https($url);
-        $curl_options = [
+        $toolkit = new \Ares333\Curl\Toolkit();
+        $toolkit->setCurl();
+        $curl = $toolkit->getCurl();
+        $curl->maxThread = $tasks_num < 10 ? $tasks_num : 10;
+        if (!$bar) {
+            $curl->onInfo = null;
+        }
+        return $curl;
+    }
+
+
+    /**
+     * @use 填充CURL_OPT
+     * @param $url
+     * @param $payload
+     * @param $headers
+     * @param $timeout
+     * @return array
+     */
+    private static function fillCurlOpts($url, $payload, $headers, $timeout): array
+    {
+        $default_opts = [
+            CURLOPT_URL => self::http2https($url),
             CURLOPT_HEADER => 0,
             CURLOPT_ENCODING => 'gzip',
             CURLOPT_IPRESOLVE => 1,
-            CURLOPT_RETURNTRANSFER => 1,
-            CURLOPT_SSL_VERIFYPEER => 0,
+            CURLINFO_HEADER_OUT => true,
             CURLOPT_TIMEOUT => $timeout,
-            CURLOPT_CONNECTTIMEOUT => $timeout,
+            CURLOPT_USERAGENT => self::$headers['User-Agent'],
+            CURLOPT_HTTPHEADER => is_null($headers) ? self::getHeaders(self::$headers) : self::getHeaders($headers),
+            CURLOPT_COOKIE => getenv('COOKIE') != "" ? getenv('COOKIE') : "",
+            // CURLOPT_CONNECTTIMEOUT => 10,
+            // CURLOPT_AUTOREFERER => true,
+            // CURLOPT_RETURNTRANSFER => true,
+            // CURLOPT_FOLLOWLOCATION => true,
+            // CURLOPT_SSL_VERIFYHOST => false,
+            // CURLOPT_SSL_VERIFYPEER => false,
+            // CURLOPT_MAXREDIRS => 5
         ];
-        if (($cookie = getenv('COOKIE')) != "") {
-            $curl_options[CURLOPT_COOKIE] = $cookie;
+        if ($payload) {
+            $default_opts[CURLOPT_POST] = 1;
+            $payload = is_bool($payload) ? [] : (is_array($payload) ? http_build_query($payload) : $payload);
+            $default_opts[CURLOPT_POSTFIELDS] = $payload;
         }
         if (getenv('USE_PROXY') == 'true') {
-            $curl_options[CURLOPT_PROXY] = getenv('PROXY_IP');
-            $curl_options[CURLOPT_PROXYPORT] = getenv('PROXY_PORT');
+            $default_opts[CURLOPT_PROXY] = getenv('PROXY_IP');
+            $default_opts[CURLOPT_PROXYPORT] = getenv('PROXY_PORT');
         }
-        foreach ($tasks as $task) {
-            $payload = $task['payload'];
-            $header = is_null($headers) ? self::getHeaders(self::$headers) : self::getHeaders($headers);
-            $options = [
-                'header' => $header,
-                'post_data' => is_array($payload) ? http_build_query($payload) : $payload
-            ];
-            $new_task = new HttpFuture($url, $options, $curl_options);
-            array_push($new_tasks, [
-                'task' => $new_task,
-                'source' => $task['source']
-            ]);
-        }
-        foreach ($new_tasks as $new_task) {
-            Log::debug($url);
-            $result = $new_task['task']->fetch();
-            // var_dump($result);
-            array_push($results, [
-                'content' => $result,
-                'source' => $new_task['source']
-            ]);
-            Log::debug($result);
-        }
-        return $results;
+        return $default_opts;
     }
 
+    /**
+     * @use async
+     * @param $url
+     * @param array $tasks
+     * @param null $headers
+     * @param int $timeout
+     * @return array
+     */
+    public static function asyncPost($url, $tasks = [], $headers = null, $timeout = 30)
+    {
+        $curl = self::getMultiClient(count($tasks));
+        $curl_options = self::fillCurlOpts($url, true, $headers, $timeout);
+        $curl->onTask = function ($curl) use ($curl_options, &$tasks) {
+            $task = array_shift($tasks);
+            if (is_null($task)) {
+                return;
+            }
+            $payload = $task['payload'];
+            $curl_options[CURLOPT_POSTFIELDS] = is_array($payload) ? http_build_query($payload) : $payload;
+            $curl->add([
+                'opt' => $curl_options,
+                'args' => $task['source'],
+            ], function ($response, $args) {
+                Log::debug($response['info']['url']);
+                array_push(self::$results, [
+                    'content' => $response['body'],
+                    'source' => $args
+                ]);
+                Log::debug($response['body']);
+            });
+        };
+        $curl->start();
+        return self::getResults();
+    }
+
+    /**
+     * @use post
+     * @param $url
+     * @param $payload
+     * @param null $headers
+     * @param int $timeout
+     * @return bool|string
+     * @throws \Exception
+     */
     public static function post($url, $payload = null, $headers = null, $timeout = 30)
     {
         $url = self::http2https($url);
@@ -124,7 +210,7 @@ class Curl
                 }
 
                 if ($raw === false || strpos($raw, 'timeout') !== false) {
-                    Log::warning('重试，获取的资源无效!');
+                    Log::warning('获取的资源无效!');
                     $ret_count--;
                     continue;
                 }
@@ -134,7 +220,7 @@ class Curl
                 return $raw;
 
             } catch (\Exception $e) {
-                Log::warning("重试,Curl请求出错,{$e->getMessage()}!");
+                Log::warning("Curl请求出错, {$e->getMessage()}!");
                 $ret_count--;
                 continue;
             }
@@ -142,7 +228,16 @@ class Curl
         exit('重试次数过多，请检查代码，退出!');
     }
 
-    public static function other($url, $payload = null, $headers = null, $cookie = null, $timeout = 30)
+    /**
+     * @use request
+     * @param $url
+     * @param null $payload
+     * @param null $headers
+     * @param null $cookie
+     * @param int $timeout
+     * @return bool|string
+     */
+    public static function request($url, $payload = null, $headers = null, $cookie = null, $timeout = 30)
     {
         Log::debug($url);
         $header = is_null($headers) ? self::getHeaders(self::$headers) : self::getHeaders($headers);
@@ -181,7 +276,7 @@ class Curl
                 }
 
                 if ($raw === false || strpos($raw, 'timeout') !== false) {
-                    Log::warning('重试，获取的资源无效!');
+                    Log::warning('获取的资源无效!');
                     $ret_count--;
                     continue;
                 }
@@ -191,7 +286,7 @@ class Curl
                 return $raw;
 
             } catch (\Exception $e) {
-                Log::warning("重试,Curl请求出错,{$e->getMessage()}!");
+                Log::warning("Curl请求出错, {$e->getMessage()}!");
                 $ret_count--;
                 continue;
             }
@@ -200,6 +295,14 @@ class Curl
     }
 
 
+    /**
+     * @use get
+     * @param $url
+     * @param null $payload
+     * @param null $headers
+     * @return bool|string
+     * @throws \Exception
+     */
     public static function get($url, $payload = null, $headers = null)
     {
         if (!is_null($payload)) {

@@ -24,10 +24,10 @@ class MasterSite
             return;
         }
         if (self::watchAid() && self::shareAid() && self::coinAdd()) {
-            self::setLock( 24 * 60 * 60);
+            self::setLock(24 * 60 * 60);
             return;
         }
-        self::setLock( 3600);
+        self::setLock(3600);
     }
 
 
@@ -122,12 +122,12 @@ class MasterSite
                     $aid = !empty(getenv('ADD_COIN_AV')) ? getenv('ADD_COIN_AV') : self::getRandomAid();
                     self::reward($aid);
                 } else {
-                    $coins = $av_num - self::coinLog();
-                    if ($coins <= 0) {
+                    $need_coins = $av_num - self::coinLog();
+                    if ($need_coins <= 0) {
                         Log::info('今日投币上限已满!');
                         break;
                     }
-                    $aids = self::getDayRankingAids($av_num);
+                    $aids = self::getDayRankingAids($need_coins);
                     foreach ($aids as $aid) {
                         self::reward($aid);
                     }
@@ -145,6 +145,7 @@ class MasterSite
     /**
      * @use 获取随机AID
      * @return string
+     * @throws \Exception
      */
     private static function getRandomAid(): string
     {
@@ -198,6 +199,7 @@ class MasterSite
     /**
      * @use 分享视频
      * @return bool
+     * @throws \Exception
      */
     private static function shareAid(): bool
     {
@@ -231,6 +233,7 @@ class MasterSite
     /**
      * @use 观看视频
      * @return bool
+     * @throws \Exception
      */
     private static function watchAid(): bool
     {
@@ -299,6 +302,7 @@ class MasterSite
     /**
      * @use 解析AID到CID
      * @return array
+     * @throws \Exception
      */
     private static function parseAid(): array
     {
@@ -316,14 +320,12 @@ class MasterSite
             }
             $cid = $de_raw['data']['cid'];
             $duration = $de_raw['data']['duration'];
-            break;
+            return [
+                'aid' => $aid,
+                'cid' => $cid,
+                'duration' => $duration
+            ];
         }
-
-        return [
-            'aid' => $aid,
-            'cid' => $cid,
-            'duration' => $duration
-        ];
     }
 
 }

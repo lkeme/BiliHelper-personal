@@ -38,11 +38,11 @@ class Heart
         $payload = [
             'room_id' => getenv('ROOM_ID'),
         ];
-        $data = Curl::post('https://api.live.bilibili.com/User/userOnlineHeart', Sign::api($payload));
+        $data = Curl::post('https://api.live.bilibili.com/relation/v1/Feed/heartBeat', Sign::api($payload));
         $data = json_decode($data, true);
 
         if (isset($data['code']) && $data['code']) {
-            Log::warning('WEB端 直播间心跳停止惹～', ['msg' => $data['message']]);
+            Log::warning('WEB端 发送心跳异常!', ['msg' => $data['message']]);
         } else {
             Log::info('WEB端 发送心跳正常!');
         }
@@ -60,7 +60,7 @@ class Heart
         $data = json_decode($data, true);
 
         if (isset($data['code']) && $data['code']) {
-            Log::warning('APP端 直播间心跳停止惹～', ['msg' => $data['message']]);
+            Log::warning('APP端 发送心跳异常!', ['msg' => $data['message']]);
         } else {
             Log::info('APP端 发送心跳正常!');
         }
