@@ -23,18 +23,17 @@ class Heart
         if (self::getLock() > time()) {
             return;
         }
-
-        self::pc();
-        self::mobile();
-
+        self::webHeart();
+        self::appHeart();
         self::setLock(5 * 60);
     }
 
     /**
-     * @use pc端心跳
+     * @use Web 心跳
      */
-    protected static function pc()
+    protected static function webHeart()
     {
+        User::webGetUserInfo();
         $payload = [
             'room_id' => getenv('ROOM_ID'),
         ];
@@ -51,8 +50,9 @@ class Heart
     /**
      * @use 手机端心跳
      */
-    protected static function mobile()
+    protected static function appHeart()
     {
+        User::appGetUserInfo();
         $payload = [
             'room_id' => getenv('ROOM_ID'),
         ];

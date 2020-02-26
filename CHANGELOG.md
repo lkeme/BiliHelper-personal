@@ -1,6 +1,19 @@
 # Release Notes
 # 本项目Log
 
+## v0.2.0.200226 alpha (2020-02-26)
+
+### Added
+- 
+
+### Changed
+- 
+
+### Fixed
+- 修复节奏风暴
+- 修复双端心跳
+- 
+
 ## v0.2.0.200224 alpha (2020-02-24)
 
 ### Added
