@@ -23,6 +23,7 @@ class User
     /**
      * @use 实名检测
      * @return bool
+     * @throws \Exception
      */
     public static function realNameCheck(): bool
     {
@@ -38,8 +39,9 @@ class User
 
 
     /**
-     * @use 是否是老爷
+     * @use 老爷检测
      * @return bool
+     * @throws \Exception
      */
     public static function isMaster(): bool
     {
@@ -60,6 +62,7 @@ class User
     /**
      * @use 用户名写入
      * @return bool
+     * @throws \Exception
      */
     public static function userInfo(): bool
     {
@@ -98,5 +101,37 @@ class User
             'uid' => $uid,
             'sid' => $sid,
         ];
+    }
+
+
+    /**
+     * @use Web User
+     * @param null $room_id
+     * @return mixed
+     * @throws \Exception
+     */
+    public static function webGetUserInfo($room_id = null)
+    {
+        $url = 'https://api.live.bilibili.com/xlive/web-room/v1/index/getInfoByUser';
+        $payload = [
+            'room_id' => $room_id ?? getenv('ROOM_ID')
+        ];
+        $raw = Curl::get($url, Sign::api($payload));
+        return json_decode($raw, true);;
+    }
+
+    /**
+     * @use App User
+     * @return mixed
+     * @throws \Exception
+     */
+    public static function appGetUserInfo()
+    {
+        $url = 'https://api.live.bilibili.com/xlive/app-room/v1/index/getInfoByUser';
+        $payload = [
+            'room_id' => $room_id ?? getenv('ROOM_ID')
+        ];
+        $raw = Curl::get($url, Sign::api($payload));
+        return json_decode($raw, true);;
     }
 }
