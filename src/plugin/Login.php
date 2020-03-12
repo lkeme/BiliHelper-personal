@@ -11,8 +11,8 @@ namespace BiliHelper\Plugin;
 
 use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
-use BiliHelper\Util\TimeLock;
 use BiliHelper\Core\Config;
+use BiliHelper\Util\TimeLock;
 
 
 class Login
@@ -71,11 +71,11 @@ class Login
      */
     protected static function info()
     {
-        $access_token = getenv('ACCESS_TOKEN');
+        $url = 'https://passport.bilibili.com/api/v2/oauth2/info';
         $payload = [
-            'access_token' => $access_token,
+            'access_token' => getenv('ACCESS_TOKEN'),
         ];
-        $data = Curl::get('https://passport.bilibili.com/api/v2/oauth2/info', Sign::api($payload));
+        $data = Curl::get('app', $url, Sign::common($payload));
         $data = json_decode($data, true);
         if (isset($data['code']) && $data['code']) {
             Log::error('检查令牌失败', ['msg' => $data['message']]);
@@ -91,13 +91,12 @@ class Login
      */
     public static function refresh()
     {
-        $access_token = getenv('ACCESS_TOKEN');
-        $refresh_token = getenv('REFRESH_TOKEN');
+        $url = 'https://passport.bilibili.com/api/oauth2/refreshToken';
         $payload = [
-            'access_token' => $access_token,
-            'refresh_token' => $refresh_token,
+            'access_token' => getenv('ACCESS_TOKEN'),
+            'refresh_token' => getenv('REFRESH_TOKEN'),
         ];
-        $data = Curl::post('https://passport.bilibili.com/api/oauth2/refreshToken', Sign::api($payload));
+        $data = Curl::post('app', $url, Sign::common($payload));
         $data = json_decode($data, true);
         if (isset($data['code']) && $data['code']) {
             Log::error('重新生成令牌失败', ['msg' => $data['message']]);
@@ -106,12 +105,17 @@ class Login
         Log::info('令牌生成完毕!');
         $access_token = $data['data']['access_token'];
         Config::put('ACCESS_TOKEN', $access_token);
-        Log::info(' > access token: ' . $access_token);
+        Log::info(" > access token: {$access_token}");
         $refresh_token = $data['data']['refresh_token'];
         Config::put('REFRESH_TOKEN', $refresh_token);
-        Log::info(' > refresh token: ' . $refresh_token);
+        Log::info(" > refresh token: {$refresh_token}");
+        if (!self::saveCookie()) {
+            self::clearAccount();
+            die();
+        };
         return true;
     }
+
 
     /**
      * @use 普通登陆
@@ -126,11 +130,12 @@ class Login
             Log::error('空白的帐号和口令!');
             die();
         }
-
+        self::clearAccount();
         // get PublicKey
         Log::info('正在载入安全模块...');
+        $url = 'https://passport.snm0516.aisee.tv/api/oauth2/getKey';
         $payload = [];
-        $data = Curl::post('https://passport.bilibili.com/api/oauth2/getKey', Sign::api($payload));
+        $data = Curl::post('app', $url, Sign::login($payload));
         $data = json_decode($data, true);
         if (isset($data['code']) && $data['code']) {
             Log::error('公钥获取失败', ['msg' => $data['message']]);
@@ -144,14 +149,16 @@ class Login
         for ($i = 0; $i < 30; $i++) {
             // login
             Log::info('正在获取令牌...');
+            $url = 'https://passport.snm0516.aisee.tv/api/tv/login';
             $payload = [
-                'subid' => 1,
-                'permission' => 'ALL',
+                'channel' => 'master',
+                'token' => '5598158bcd8511e2',
+                'guid' => 'XYEBAA3E54D502E37BD606F0589A356902FCF',
                 'username' => $user,
                 'password' => base64_encode($crypt),
                 'captcha' => $captcha,
             ];
-            $data = Curl::post('https://passport.bilibili.com/api/v2/oauth2/login', Sign::api($payload), $headers);
+            $data = Curl::post('app', $url, Sign::login($payload), $headers);
             $data = json_decode($data, true);
             if (isset($data['code']) && $data['code'] == -105) {
                 $captcha_data = self::loginWithCaptcha();
@@ -160,7 +167,7 @@ class Login
                 continue;
             }
             // https://passport.bilibili.com/mobile/verifytel_h5.html
-            if (!$data['code'] && $data['data']['status']) {
+            if ($data['code'] == -2100) {
                 Log::error('登录失败', ['msg' => '登录异常, 账号启用了设备锁或异地登录需验证手机!']);
                 die();
             }
@@ -170,15 +177,17 @@ class Login
             Log::error('登录失败', ['msg' => $data['message']]);
             die();
         }
-        self::saveCookie($data);
         Log::info('令牌获取成功!');
         $access_token = $data['data']['token_info']['access_token'];
         Config::put('ACCESS_TOKEN', $access_token);
-        Log::info(' > access token: ' . $access_token);
+        Log::info(" > access token: {$access_token}");
         $refresh_token = $data['data']['token_info']['refresh_token'];
         Config::put('REFRESH_TOKEN', $refresh_token);
-        Log::info(' > refresh token: ' . $refresh_token);
-
+        Log::info(" > refresh token: {$refresh_token}");
+        if (!self::saveCookie()) {
+            self::clearAccount();
+            die();
+        };
         return;
     }
 
@@ -190,13 +199,16 @@ class Login
     protected static function loginWithCaptcha()
     {
         Log::info('登录需要验证, 启动验证码登录!');
+        $url = 'https://passport.snm0516.aisee.tv/api/captcha';
+        $payload = [
+            'token' => '5598158bcd8511e2'
+        ];
         $headers = [
             'Accept' => 'application/json, text/plain, */*',
-            'User-Agent' => 'bili-universal/8470 CFNetwork/978.0.7 Darwin/18.5.0',
-            'Host' => 'passport.bilibili.com',
+            'Host' => 'passport.snm0516.aisee.tv',
             'Cookie' => 'sid=blhelper'
         ];
-        $data = Curl::request('https://passport.bilibili.com/captcha', null, $headers);
+        $data = Curl::get('other', $url, $payload, $headers);
         $data = base64_encode($data);
         $captcha = self::ocrCaptcha($data);
         return [
@@ -213,35 +225,66 @@ class Login
      */
     private static function ocrCaptcha($captcha_img)
     {
+        $url = 'http://47.102.120.84:19951/';
         $payload = [
             'image' => (string)$captcha_img
         ];
         $headers = [
             'Content-Type' => 'application/json',
         ];
-        $data = Curl::request('http://47.102.120.84:19951/', json_encode($payload), $headers);
+        $data = Curl::put('other', $url, $payload, $headers);
         $de_raw = json_decode($data, true);
         Log::info("验证码识别结果 {$de_raw['message']}");
-
         return $de_raw['message'];
     }
 
     /**
-     * @use 保存cookie
-     * @param $data
+     * @use token转cookie
+     * @return string
      */
-    private static function saveCookie($data)
+    private static function token2cookie(): string
     {
-        Log::info('COOKIE获取成功!');
-        //临时保存cookie
-        $temp = '';
-        $cookies = $data['data']['cookie_info']['cookies'];
-        foreach ($cookies as $cookie) {
-            $temp .= $cookie['name'] . '=' . $cookie['value'] . ';';
+        $url = 'https://passport.bilibili.com/api/login/sso';
+        $payload = [
+            'gourl' => 'https%3A%2F%2Faccount.bilibili.com%2Faccount%2Fhome'
+        ];
+        $response = Curl::headers('app', $url, Sign::common($payload));
+        $headers = $response['Set-Cookie'];
+        $cookies = [];
+        foreach ($headers as $header) {
+            preg_match_all('/^(.*);/iU', $header, $cookie);
+            array_push($cookies, $cookie[0][0]);
         }
-        Config::put('COOKIE', $temp);
-        Log::info(' > auth cookie: ' . $temp);
-        return;
+        return implode("", array_reverse($cookies));
+    }
+
+
+    /**
+     * @use 保存cookie
+     * @return bool
+     */
+    private static function saveCookie(): bool
+    {
+        $cookies = self::token2cookie();
+        if ($cookies == '') {
+            Log::error("COOKIE获取失败 {$cookies}");
+            return false;
+        }
+        Log::info("COOKIE获取成功 !");
+        Log::info(" > cookie: {$cookies}");
+        Config::put('COOKIE', $cookies);
+        return true;
+    }
+
+    /**
+     * @use 清除已有
+     */
+    private static function clearAccount()
+    {
+        $accounts = ['ACCESS_TOKEN', 'REFRESH_TOKEN', 'COOKIE'];
+        foreach ($accounts as $account) {
+            Config::put($account, '');
+        }
     }
 
 }

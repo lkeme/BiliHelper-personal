@@ -48,11 +48,11 @@ class AwardRecord
      */
     private static function anchorAward()
     {
+        $url = 'https://api.live.bilibili.com/xlive/lottery-interface/v1/Anchor/AwardRecord';
         $payload = [
             'page' => '1',
         ];
-        $url = 'https://api.live.bilibili.com/xlive/lottery-interface/v1/Anchor/AwardRecord';
-        $raw = Curl::get($url, Sign::api($payload));
+        $raw = Curl::get('app', $url, Sign::common($payload));
         $de_raw = json_decode($raw, true);
         // 防止异常
         if (!isset($de_raw['data']) || !isset($de_raw['data']['list'])) {
@@ -84,12 +84,12 @@ class AwardRecord
      */
     private static function raffleAward()
     {
+        $url = 'https://api.live.bilibili.com/lottery/v1/award/award_list';
         $payload = [
             'page' => '1',
             'month' => '',
         ];
-        $url = 'https://api.live.bilibili.com/lottery/v1/award/award_list';
-        $raw = Curl::get($url, Sign::api($payload));
+        $raw = Curl::get('app', $url, Sign::common($payload));
         $de_raw = json_decode($raw, true);
 
         // 防止异常
@@ -122,14 +122,14 @@ class AwardRecord
      */
     private static function giftAward()
     {
+        // Web V3 Notice
+        $url = 'https://api.live.bilibili.com/xlive/lottery-interface/v3/smalltv/Notice';
         $payload = [
             'type' => 'type',
             'raffleId' => 'raffle_id'
         ];
-        // Web V3 Notice
-        $url = 'https://api.live.bilibili.com/xlive/lottery-interface/v3/smalltv/Notice';
         // 请求 && 解码
-        $raw = Curl::get($url, Sign::api($payload));
+        $raw = Curl::get('app', $url, Sign::common($payload));
         $de_raw = json_decode($raw, true);
     }
 }

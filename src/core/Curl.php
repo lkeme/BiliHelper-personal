@@ -12,30 +12,257 @@ namespace BiliHelper\Core;
 
 class Curl
 {
-    public static $headers = array(
-        'Accept' => '*/*',
-        'Accept-Encoding' => 'gzip',
-        'Accept-Language' => 'zh-cn',
-        'Connection' => 'keep-alive',
-        'Content-Type' => 'application/x-www-form-urlencoded',
-        'User-Agent' => 'bili-universal/8470 CFNetwork/978.0.7 Darwin/18.5.0',
-//        'Referer' => 'https://live.bilibili.com/',
-    );
-
+    private static $client;
+    private static $async_opt;
     private static $results = [];
     private static $result = [];
 
     /**
-     * @use 数组
-     * @return array
+     * @use POST请求
+     * @param $os
+     * @param $url
+     * @param array $params
+     * @param array $headers
+     * @param int $timeout
+     * @return mixed
      */
-    private static function getResults()
+    public static function post($os, $url, $params = [], $headers = [], $timeout = 30)
     {
-        $results = self::$results;
-        self::$results = [];
-        return $results;
+        Log::debug("POST: {$url}");
+        $headers = self::getHeaders($os, $headers);
+        $payload['form_params'] = count($params) ? $params : [];
+        $options = self::getClientOpt($payload, $headers);
+        $request = self::clientHandle($url, 'post', $options);
+        $body = $request->getBody();
+        Log::debug($body);
+        return $body;
     }
 
+    /**
+     * @use GET请求
+     * @param $os
+     * @param $url
+     * @param array $params
+     * @param array $headers
+     * @param int $timeout
+     * @return mixed
+     */
+    public static function get($os, $url, $params = [], $headers = [], $timeout = 30)
+    {
+        Log::debug("GET: {$url}");
+        $headers = self::getHeaders($os, $headers);
+        $payload['query'] = count($params) ? $params : [];
+        $options = self::getClientOpt($payload, $headers);
+        $request = self::clientHandle($url, 'get', $options);
+        $body = $request->getBody();
+        Log::debug($body);
+        return $body;
+    }
+
+    /**
+     * @use PUT请求
+     * @param $os
+     * @param $url
+     * @param array $params
+     * @param array $headers
+     * @param int $timeout
+     * @return mixed
+     */
+    public static function put($os, $url, $params = [], $headers = [], $timeout = 30)
+    {
+        Log::debug("PUT: {$url}");
+        $headers = self::getHeaders($os, $headers);
+        $payload['json'] = count($params) ? $params : [];
+        $options = self::getClientOpt($payload, $headers);
+        $request = self::clientHandle($url, 'post', $options);
+        $body = $request->getBody();
+        Log::debug($body);
+        return $body;
+    }
+
+    /**
+     * @use 并发POST请求
+     * @param $os
+     * @param $url
+     * @param array $tasks
+     * @param array $headers
+     * @param int $timeout
+     * @return array
+     */
+    public static function async($os, $url, $tasks = [], $headers = [], $timeout = 30)
+    {
+        self::$async_opt = [
+            'tasks' => $tasks,
+            'counter' => 1,
+            'count' => count($tasks),
+            'concurrency' => count($tasks) < 10 ? count($tasks) : 10
+        ];
+        Log::debug("ASYNC: {$url}");
+        $headers = self::getHeaders($os, $headers);
+        $requests = function ($total) use ($url, $headers, $tasks) {
+            foreach ($tasks as $task) {
+                yield function () use ($url, $headers, $task) {
+                    $payload['form_params'] = $task['payload'];
+                    $options = self::getClientOpt($payload, $headers);
+                    return self::clientHandle($url, 'postAsync', $options);
+                };
+            }
+        };
+        $pool = new \GuzzleHttp\Pool(self::$client, $requests(self::$async_opt['count']), [
+            'concurrency' => self::$async_opt['concurrency'],
+            'fulfilled' => function ($response, $index) {
+                $res = $response->getBody();
+                // Log::notice("启动多线程 {$index}");
+                array_push(self::$results, [
+                    'content' => $res,
+                    'source' => self::$async_opt['tasks'][$index]['source']
+                ]);
+                self::countedAndCheckEnded();
+            },
+            'rejected' => function ($reason, $index) {
+                Log::error("多线程第{$index}个请求失败, ERROR: {$reason}");
+                self::countedAndCheckEnded();
+            },
+        ]);
+        // 开始发送请求
+        $promise = $pool->promise();
+        $promise->wait();
+        return self::getResults();
+    }
+
+    /**
+     * @use 单次请求
+     * @param $method
+     * @param $url
+     * @param array $payload
+     * @param array $headers
+     * @param int $timeout
+     * @return false|string|null
+     */
+    public static function request($method, $url, $payload = [], $headers = [], $timeout = 10)
+    {
+        Log::debug("REQUEST: {$url}");
+        $options = array(
+            'http' => array(
+                'method' => strtoupper($method),
+                'header' => self::arr2str($headers),
+                'content' => http_build_query($payload),
+                'timeout' => $timeout,
+            ),
+        );
+        $result = @file_get_contents($url, false, stream_context_create($options));
+        Log::debug($result);
+        return $result ? $result : null;
+    }
+
+    /**
+     * @use 计数搭配并发使用
+     */
+    private static function countedAndCheckEnded()
+    {
+        if (self::$async_opt['counter'] < self::$async_opt['count']) {
+            self::$async_opt['counter']++;
+            return;
+        }
+        # 请求结束！
+        self::$async_opt = [];
+    }
+
+    /**
+     * @use 请求中心异常处理
+     * @param string $url
+     * @param string $method
+     * @param array $options
+     * @return mixed
+     */
+    private static function clientHandle(string $url, string $method, array $options)
+    {
+        $max_retry = range(0, 30);
+        foreach ($max_retry as $retry) {
+            try {
+                return call_user_func_array([self::$client, $method], [$url, $options]);
+            } catch (\GuzzleHttp\Exception\RequestException $e) {
+                Log::warning("CURl -> RETRY: {$retry} ERROR: {$e->getMessage()} ERRNO: {$e->getCode()}");
+                // var_dump($e->getRequest());
+                if ($e->hasResponse()) {
+                    var_dump($e->getResponse());
+                }
+                Log::warning("尝试重试第 {$retry} 次，等待网络恢复...");
+                sleep(10);
+            }
+        }
+        exit('网络异常，超出最大尝试次数，退出程序~');
+    }
+
+    /**
+     * @use 获取请求配置
+     * @param array $add_options
+     * @param array $headers
+     * @param float $timeout
+     * @return array
+     */
+    private static function getClientOpt(array $add_options, array $headers = [], float $timeout = 30.0)
+    {
+        self::$client = new \GuzzleHttp\Client();
+        $default_options = [
+            'headers' => $headers,
+            'timeout' => $timeout,
+            'http_errors' => false,
+            'verify' => getenv('VERIFY_SSL') == 'false' ? false : true,
+        ];
+        if (getenv('USE_PROXY') == 'true') {
+            $default_options['proxy'] = getenv('NETWORK_PROXY');
+        }
+        return array_merge($default_options, $add_options);
+    }
+
+    /**
+     * @use 获取Headers
+     * @param string $os
+     * @param array $headers
+     * @return array
+     */
+    private static function getHeaders(string $os = 'app', array $headers = []): array
+    {
+        $app_headers = [
+            'Accept' => '*/*',
+            'Accept-Encoding' => 'gzip',
+            'Accept-Language' => 'zh-cn',
+            'Connection' => 'keep-alive',
+            'Content-Type' => 'application/x-www-form-urlencoded',
+            'User-Agent' => 'Mozilla/5.0 BiliDroid/5.51.1 (bbcallen@gmail.com)',
+            // 'Referer' => 'https://live.bilibili.com/',
+        ];
+        $pc_headers = [
+            'Accept' => "application/json, text/plain, */*",
+            'Accept-Encoding' => 'gzip, deflate',
+            'Accept-Language' => "zh-CN,zh;q=0.9",
+            'Content-Type' => 'application/x-www-form-urlencoded',
+            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/82.0.4056.0 Safari/537.36 Edg/82.0.431.0',
+            // 'Referer' => 'https://live.bilibili.com/',
+        ];
+        $other_headers = [
+            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36',
+        ];
+        $default_headers = isset(${$os . "_headers"}) ? ${$os . "_headers"} : $other_headers;
+        if (in_array($os, ['app', 'pc']) && getenv('COOKIE') != "") {
+            $default_headers['Cookie'] = getenv('COOKIE');
+        }
+        // return self::formatHeaders(array_merge($default_headers, $headers));
+        return array_merge($default_headers, $headers);
+    }
+
+    /**
+     * @use 格式化Headers
+     * @param $headers
+     * @return array
+     */
+    private static function formatHeaders(array $headers): array
+    {
+        return array_map(function ($k, $v) {
+            return $k . ': ' . $v;
+        }, array_keys($headers), $headers);
+    }
 
     /**
      * @use 字符串or其他
@@ -49,293 +276,14 @@ class Curl
     }
 
     /**
-     * @use 获取Headers
-     * @param $headers
+     * @use 数组
      * @return array
      */
-    private static function getHeaders($headers)
+    private static function getResults(): array
     {
-        return array_map(function ($k, $v) {
-            return $k . ': ' . $v;
-        }, array_keys($headers), $headers);
-    }
-
-
-    /**
-     * @use 初始化Curl
-     * @param int $tasks_num
-     * @param bool $bar
-     * @return \Ares333\Curl\Curl
-     */
-    private static function getMultiClient(int $tasks_num = 1, bool $bar = false)
-    {
-        $toolkit = new \Ares333\Curl\Toolkit();
-        $toolkit->setCurl();
-        $curl = $toolkit->getCurl();
-        $curl->maxThread = $tasks_num < 10 ? $tasks_num : 10;
-        if (!$bar) {
-            $curl->onInfo = null;
-        }
-        return $curl;
-    }
-
-
-    /**
-     * @use 填充CURL_OPT
-     * @param $url
-     * @param $payload
-     * @param $headers
-     * @param $timeout
-     * @return array
-     */
-    private static function fillCurlOpts($url, $payload, $headers, $timeout): array
-    {
-        $default_opts = [
-            CURLOPT_URL => self::http2https($url),
-            CURLOPT_HEADER => 0,
-            CURLOPT_ENCODING => 'gzip',
-            CURLOPT_IPRESOLVE => 1,
-            CURLINFO_HEADER_OUT => true,
-            CURLOPT_TIMEOUT => $timeout,
-            CURLOPT_USERAGENT => self::$headers['User-Agent'],
-            CURLOPT_HTTPHEADER => is_null($headers) ? self::getHeaders(self::$headers) : self::getHeaders($headers),
-            CURLOPT_COOKIE => getenv('COOKIE') != "" ? getenv('COOKIE') : "",
-            // CURLOPT_CONNECTTIMEOUT => 10,
-            // CURLOPT_AUTOREFERER => true,
-            // CURLOPT_RETURNTRANSFER => true,
-            // CURLOPT_FOLLOWLOCATION => true,
-            // CURLOPT_SSL_VERIFYHOST => false,
-            // CURLOPT_SSL_VERIFYPEER => false,
-            // CURLOPT_MAXREDIRS => 5
-        ];
-        if ($payload) {
-            $default_opts[CURLOPT_POST] = 1;
-            $payload = is_bool($payload) ? [] : (is_array($payload) ? http_build_query($payload) : $payload);
-            $default_opts[CURLOPT_POSTFIELDS] = $payload;
-        }
-        if (getenv('USE_PROXY') == 'true') {
-            $default_opts[CURLOPT_PROXY] = getenv('PROXY_IP');
-            $default_opts[CURLOPT_PROXYPORT] = getenv('PROXY_PORT');
-        }
-        return $default_opts;
-    }
-
-    /**
-     * @use async
-     * @param $url
-     * @param array $tasks
-     * @param null $headers
-     * @param int $timeout
-     * @return array
-     */
-    public static function asyncPost($url, $tasks = [], $headers = null, $timeout = 30)
-    {
-        $curl = self::getMultiClient(count($tasks));
-        $curl_options = self::fillCurlOpts($url, true, $headers, $timeout);
-        $curl->onTask = function ($curl) use ($curl_options, &$tasks) {
-            $task = array_shift($tasks);
-            if (is_null($task)) {
-                return;
-            }
-            $payload = $task['payload'];
-            $curl_options[CURLOPT_POSTFIELDS] = is_array($payload) ? http_build_query($payload) : $payload;
-            $curl->add([
-                'opt' => $curl_options,
-                'args' => $task['source'],
-            ], function ($response, $args) {
-                Log::debug($response['info']['url']);
-                array_push(self::$results, [
-                    'content' => $response['body'],
-                    'source' => $args
-                ]);
-                Log::debug($response['body']);
-            });
-        };
-        $curl->start();
-        return self::getResults();
-    }
-
-    /**
-     * @use post
-     * @param $url
-     * @param $payload
-     * @param null $headers
-     * @param int $timeout
-     * @return bool|string
-     * @throws \Exception
-     */
-    public static function post($url, $payload = null, $headers = null, $timeout = 30)
-    {
-        $url = self::http2https($url);
-        Log::debug($url);
-        $header = is_null($headers) ? self::getHeaders(self::$headers) : self::getHeaders($headers);
-
-        // 重试次数
-        $ret_count = 300;
-        $waring = 280;
-
-        while ($ret_count) {
-            // 网络断开判断 延时方便连接网络
-            if ($ret_count < $waring) {
-                Log::warning("正常等待网络连接状态恢复正常...");
-                sleep(random_int(5, 10));
-            }
-            try {
-                $curl = curl_init();
-                if (!is_null($payload)) {
-                    curl_setopt($curl, CURLOPT_POST, 1);
-                    curl_setopt($curl, CURLOPT_POSTFIELDS, is_array($payload) ? http_build_query($payload) : $payload);
-                }
-                curl_setopt($curl, CURLOPT_URL, $url);
-                curl_setopt($curl, CURLOPT_HTTPHEADER, $header);
-                curl_setopt($curl, CURLOPT_HEADER, 0);
-                curl_setopt($curl, CURLOPT_ENCODING, 'gzip');
-                curl_setopt($curl, CURLOPT_IPRESOLVE, 1);
-                curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
-                curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, 0);
-                // 超时 重要
-                curl_setopt($curl, CURLOPT_TIMEOUT, $timeout);
-                curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, $timeout);
-                if (($cookie = getenv('COOKIE')) != "") {
-                    curl_setopt($curl, CURLOPT_COOKIE, $cookie);
-                }
-                if (getenv('USE_PROXY') == 'true') {
-                    curl_setopt($curl, CURLOPT_PROXY, getenv('PROXY_IP'));
-                    curl_setopt($curl, CURLOPT_PROXYPORT, getenv('PROXY_PORT'));
-                }
-                $raw = curl_exec($curl);
-
-                if ($err_no = curl_errno($curl)) {
-                    throw new \Exception(curl_error($curl));
-                }
-
-                if ($raw === false || strpos($raw, 'timeout') !== false) {
-                    Log::warning('获取的资源无效!');
-                    $ret_count--;
-                    continue;
-                }
-
-                Log::debug($raw);
-                curl_close($curl);
-                return $raw;
-
-            } catch (\Exception $e) {
-                Log::warning("Curl请求出错, {$e->getMessage()}!");
-                $ret_count--;
-                continue;
-            }
-        }
-        exit('重试次数过多，请检查代码，退出!');
-    }
-
-    /**
-     * @use request
-     * @param $url
-     * @param null $payload
-     * @param null $headers
-     * @param null $cookie
-     * @param int $timeout
-     * @return bool|string
-     */
-    public static function request($url, $payload = null, $headers = null, $cookie = null, $timeout = 30)
-    {
-        Log::debug($url);
-        $header = is_null($headers) ? self::getHeaders(self::$headers) : self::getHeaders($headers);
-
-        // 重试次数
-        $ret_count = 30;
-        while ($ret_count) {
-            try {
-                $curl = curl_init();
-                if (!is_null($payload)) {
-                    curl_setopt($curl, CURLOPT_POST, 1);
-                    curl_setopt($curl, CURLOPT_POSTFIELDS, is_array($payload) ? http_build_query($payload) : $payload);
-                }
-                curl_setopt($curl, CURLOPT_URL, $url);
-                curl_setopt($curl, CURLOPT_HTTPHEADER, $header);
-                curl_setopt($curl, CURLOPT_HEADER, 0);
-                curl_setopt($curl, CURLOPT_ENCODING, 'gzip');
-                curl_setopt($curl, CURLOPT_IPRESOLVE, 1);
-                curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
-                curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, 0);
-                // 超时 重要
-                curl_setopt($curl, CURLOPT_TIMEOUT, $timeout);
-                curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, $timeout);
-                // 认证
-                if (!is_null($cookie)) {
-                    curl_setopt($curl, CURLOPT_COOKIE, $cookie);
-                }
-                if (getenv('USE_PROXY') == 'true') {
-                    curl_setopt($curl, CURLOPT_PROXY, getenv('PROXY_IP'));
-                    curl_setopt($curl, CURLOPT_PROXYPORT, getenv('PROXY_PORT'));
-                }
-                $raw = curl_exec($curl);
-
-                if ($err_no = curl_errno($curl)) {
-                    throw new \Exception(curl_error($curl));
-                }
-
-                if ($raw === false || strpos($raw, 'timeout') !== false) {
-                    Log::warning('获取的资源无效!');
-                    $ret_count--;
-                    continue;
-                }
-
-                Log::debug($raw);
-                curl_close($curl);
-                return $raw;
-
-            } catch (\Exception $e) {
-                Log::warning("Curl请求出错, {$e->getMessage()}!");
-                $ret_count--;
-                continue;
-            }
-        }
-        exit('重试次数过多，请检查代码，退出!');
-    }
-
-
-    /**
-     * @use get
-     * @param $url
-     * @param null $payload
-     * @param null $headers
-     * @return bool|string
-     * @throws \Exception
-     */
-    public static function get($url, $payload = null, $headers = null)
-    {
-        if (!is_null($payload)) {
-            $url .= '?' . http_build_query($payload);
-        }
-        return self::post($url, null, $headers);
-    }
-
-
-    /**
-     * @use 单次请求
-     * @param $method
-     * @param $url
-     * @param array $payload
-     * @param array $headers
-     * @param int $timeout
-     * @return false|string
-     */
-    public static function singleRequest($method, $url, $payload = [], $headers = [], $timeout = 10)
-    {
-        $url = self::http2https($url);
-        Log::debug($url);
-        $options = array(
-            'http' => array(
-                'method' => strtoupper($method),
-                'header' => self::arr2str($headers),
-                'content' => http_build_query($payload),
-                'timeout' => $timeout,
-            ),
-        );
-        $result = @file_get_contents($url, false, stream_context_create($options));
-        Log::debug($result);
-        return $result ? $result : null;
+        $results = self::$results;
+        self::$results = [];
+        return $results;
     }
 
     /**
@@ -353,31 +301,24 @@ class Curl
         return $tmp;
     }
 
-
     /**
-     * @use http(s)转换
-     * @param string $url
-     * @return string
+     * @use GET请求
+     * @param $os
+     * @param $url
+     * @param array $params
+     * @param array $headers
+     * @param int $timeout
+     * @return mixed
      */
-    private static function http2https(string $url): string
+    public static function headers($os, $url, $params = [], $headers = [], $timeout = 30)
     {
-        switch (getenv('USE_HTTPS')) {
-            case 'false':
-                if (strpos($url, 'ttps://')) {
-                    $url = str_replace('https://', 'http://', $url);
-                }
-                break;
-            case 'true':
-                if (strpos($url, 'ttp://')) {
-                    $url = str_replace('http://', 'https://', $url);
-                }
-                break;
-            default:
-                Log::warning('当前协议设置不正确,请检查配置文件!');
-                die();
-                break;
-        }
-
-        return $url;
+        Log::debug('HEADERS: ' . $url);
+        $headers = self::getHeaders($os, $headers);
+        $payload['query'] = count($params) ? $params : [];
+        $payload['allow_redirects'] = false;
+        $options = self::getClientOpt($payload, $headers);
+        $request = self::clientHandle($url, 'get', $options);
+        Log::debug("获取Headers");
+        return $request->getHeaders();
     }
 }

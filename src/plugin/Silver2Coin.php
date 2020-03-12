@@ -38,8 +38,9 @@ class Silver2Coin
     protected static function appSilver2coin(): bool
     {
         sleep(1);
+        $url = 'https://api.live.bilibili.com/AppExchange/silver2coin';
         $payload = [];
-        $raw = Curl::get('https://api.live.bilibili.com/AppExchange/silver2coin', Sign::api($payload));
+        $raw = Curl::get('app', $url, Sign::common($payload));
         $de_raw = json_decode($raw, true);
 
         if (!$de_raw['code'] && $de_raw['msg'] == '兑换成功') {
@@ -64,8 +65,8 @@ class Silver2Coin
         $payload = [];
         $url = "https://api.live.bilibili.com/exchange/silver2coin";
         $url = "https://api.live.bilibili.com/pay/v1/Exchange/silver2coin";
-        
-        $raw = Curl::get($url, Sign::api($payload));
+
+        $raw = Curl::get('pc', $url, $payload);
         $de_raw = json_decode($raw, true);
         if ($de_raw['code'] == -403) {
             return false;

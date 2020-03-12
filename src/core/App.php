@@ -74,6 +74,7 @@ class App
             'Silver',
             'Barrage',
             'Silver2Coin',
+            'Judge',
             'GiftSend',
             'GroupSignIn',
             'GiftHeart',

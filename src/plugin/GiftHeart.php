@@ -34,13 +34,15 @@ class GiftHeart
     /**
      * @use 礼物心跳
      * @return bool
+     * @throws \Exception
      */
     private static function giftHeart(): bool
     {
+        $url = 'https://api.live.bilibili.com/gift/v2/live/heart_gift_receive';
         $payload = [
             'roomid' => getenv('ROOM_ID'),
         ];
-        $raw = Curl::get('https://api.live.bilibili.com/gift/v2/live/heart_gift_receive', Sign::api($payload));
+        $raw = Curl::get('app', $url, Sign::common($payload));
         $de_raw = json_decode($raw, true);
 
         if ($de_raw['code'] == -403) {
@@ -48,7 +50,8 @@ class GiftHeart
             $payload = [
                 'ruid' => 17561885,
             ];
-            Curl::get('https://api.live.bilibili.com/eventRoom/index', Sign::api($payload));
+            $url = 'https://api.live.bilibili.com/eventRoom/index';
+            Curl::get('app', $url, Sign::common($payload));
             return true;
         }
 

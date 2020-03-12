@@ -12,9 +12,7 @@
 namespace BiliHelper\Plugin;
 
 use BiliHelper\Core\Log;
-use BiliHelper\Core\Curl;
-
-abstract class BaseRaffle
+use BiliHelper\Core\Curl;abstract class BaseRaffle
 {
     const ACTIVE_TITLE = '';
     const ACTIVE_SWITCH = '';
@@ -82,11 +80,11 @@ abstract class BaseRaffle
      */
     protected static function check(int $room_id): array
     {
+        $url = 'https://api.live.bilibili.com/xlive/lottery-interface/v1/lottery/getLotteryInfo';
         $payload = [
             'roomid' => $room_id
         ];
-        $url = 'https://api.live.bilibili.com/xlive/lottery-interface/v1/lottery/getLotteryInfo';
-        $raw = Curl::get($url, Sign::api($payload));
+        $raw = Curl::get('app', $url, Sign::common($payload));
         $de_raw = json_decode($raw, true);
         if (!isset($de_raw['data']) || $de_raw['code']) {
             Log::error("获取抽奖数据错误，{$de_raw['message']}");

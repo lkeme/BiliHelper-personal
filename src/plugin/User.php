@@ -18,8 +18,6 @@ use BiliHelper\Core\Config;
 
 class User
 {
-
-
     /**
      * @use 实名检测
      * @return bool
@@ -27,8 +25,9 @@ class User
      */
     public static function realNameCheck(): bool
     {
+        $url = 'https://account.bilibili.com/identify/index';
         $payload = [];
-        $raw = Curl::get('https://account.bilibili.com/identify/index', Sign::api($payload));
+        $raw = Curl::get('pc', $url, $payload);
         $de_raw = json_decode($raw, true);
         //检查有没有名字，没有则没实名
         if (!$de_raw['data']['memberPerson']['realname']) {
@@ -45,13 +44,9 @@ class User
      */
     public static function isMaster(): bool
     {
-        $payload = [
-            'ts' => Live::getMillisecond(),
-        ];
-        $raw = Curl::get('https://api.live.bilibili.com/User/getUserInfo', Sign::api($payload));
-        $de_raw = json_decode($raw, true);
-        if ($de_raw['msg'] == 'ok') {
-            if ($de_raw['data']['vip'] || $de_raw['data']['svip']) {
+        $data = self::getUserInfo();
+        if ($data['msg'] == 'ok') {
+            if ($data['data']['vip'] || $data['data']['svip']) {
                 return true;
             }
         }
@@ -60,28 +55,69 @@ class User
 
 
     /**
-     * @use 用户名写入
+     * @use 写入用户名
      * @return bool
      * @throws \Exception
      */
     public static function userInfo(): bool
     {
-        $payload = [
-            'ts' => Live::getMillisecond(),
-        ];
-        $raw = Curl::get('https://api.live.bilibili.com/User/getUserInfo', Sign::api($payload));
-        $de_raw = json_decode($raw, true);
-
+        $data = self::getUserInfo();
         if (getenv('APP_UNAME') != "") {
             return true;
         }
-        if ($de_raw['msg'] == 'ok') {
-            Config::put('APP_UNAME', $de_raw['data']['uname']);
+        if ($data['msg'] == 'ok') {
+            Config::put('APP_UNAME', $data['data']['uname']);
             return true;
         }
         return false;
     }
 
+
+    /**
+     * @use UserInfo
+     * @return array
+     */
+    public static function getUserInfo(): array
+    {
+        $url = 'https://api.live.bilibili.com/User/getUserInfo';
+        $payload = [
+            'ts' => Live::getMillisecond(),
+        ];
+        $raw = Curl::get('app', $url, Sign::common($payload));
+        return json_decode($raw, true);
+    }
+
+    /**
+     * @use Web User
+     * @param null $room_id
+     * @return mixed
+     * @throws \Exception
+     */
+    public static function webGetUserInfo($room_id = null)
+    {
+        $url = 'https://api.live.bilibili.com/xlive/web-room/v1/index/getInfoByUser';
+        $payload = [
+            'room_id' => $room_id ?? getenv('ROOM_ID')
+        ];
+        $raw = Curl::get('pc', $url, $payload);
+        return json_decode($raw, true);;
+    }
+
+
+    /**
+     * @use App User
+     * @param null $room_id
+     * @return mixed
+     */
+    public static function appGetUserInfo($room_id = null)
+    {
+        $url = 'https://api.live.bilibili.com/xlive/app-room/v1/index/getInfoByUser';
+        $payload = [
+            'room_id' => $room_id ?? getenv('ROOM_ID')
+        ];
+        $raw = Curl::get('app', $url, Sign::common($payload));
+        return json_decode($raw, true);;
+    }
 
     /**
      * @use 转换信息
@@ -101,37 +137,5 @@ class User
             'uid' => $uid,
             'sid' => $sid,
         ];
-    }
-
-
-    /**
-     * @use Web User
-     * @param null $room_id
-     * @return mixed
-     * @throws \Exception
-     */
-    public static function webGetUserInfo($room_id = null)
-    {
-        $url = 'https://api.live.bilibili.com/xlive/web-room/v1/index/getInfoByUser';
-        $payload = [
-            'room_id' => $room_id ?? getenv('ROOM_ID')
-        ];
-        $raw = Curl::get($url, Sign::api($payload));
-        return json_decode($raw, true);;
-    }
-
-    /**
-     * @use App User
-     * @return mixed
-     * @throws \Exception
-     */
-    public static function appGetUserInfo()
-    {
-        $url = 'https://api.live.bilibili.com/xlive/app-room/v1/index/getInfoByUser';
-        $payload = [
-            'room_id' => $room_id ?? getenv('ROOM_ID')
-        ];
-        $raw = Curl::get($url, Sign::api($payload));
-        return json_decode($raw, true);;
     }
 }
