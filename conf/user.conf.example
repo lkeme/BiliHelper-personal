@@ -60,6 +60,9 @@ SLEEP_SECTION=2,3,4,5,6
 # 漫画助手
 USE_MANGA=false
 
+# 风纪(测试)
+USE_JUDGE=false
+
 #######################
 #       基础设置       #
 #######################
@@ -72,14 +75,6 @@ ALONE_SERVER_KEY=,*(?PVl]nIbo35sB
 # 分区推送服务(备)|主备冲突
 USE_ZONE_SERVER=false
 ZONE_SERVER_ADDR=tcp://broadcastlv.chat.bilibili.com:2243/sub
-
-# 切换HTTPS|为真则使用https协议
-USE_HTTPS=true
-
-# 是否使用代理(前提保证有效代理)
-USE_PROXY=false
-PROXY_IP=127.0.0.1
-PROXY_PORT=8888
 
 # SERVER酱|令牌KEY|过滤关键词|逗号分隔
 USE_SC=false
@@ -101,6 +96,17 @@ ROOM_LIST=9522051
 
 # 弹幕监控房间(为空则随机)
 SOCKET_ROOM_ID=9522051
+
+#######################
+#       网络设置       #
+#######################
+
+# 验证SSL证书|请求时验证SSL证书行为
+VERIFY_SSL=true
+
+# 是否使用代理|(http\https)
+USE_PROXY=false
+NETWORK_PROXY=http://127.0.0.1:8888
 
 #######################
 #       程序设置       #

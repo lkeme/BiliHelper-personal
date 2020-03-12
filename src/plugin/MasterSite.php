@@ -52,7 +52,7 @@ class MasterSite
             'Referer' => "https://www.bilibili.com/video/av{$aid}",
             'User-Agent' => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.81 Safari/537.36",
         ];
-        $raw = Curl::post($url, Sign::api($payload), $headers);
+        $raw = Curl::post('app', $url, Sign::common($payload), $headers);
         $de_raw = json_decode($raw, true);
         if ($de_raw['code'] == 0) {
             Log::notice("主站任务: av{$aid}投币成功!");
@@ -72,7 +72,7 @@ class MasterSite
     {
         $url = "https://api.bilibili.com/x/member/web/coin/log";
         $payload = [];
-        $raw = Curl::get($url, Sign::api($payload));
+        $raw = Curl::get('pc', $url, $payload);
         $de_raw = json_decode($raw, true);
 
         $logs = $de_raw['data']['list'];
@@ -150,10 +150,12 @@ class MasterSite
     private static function getRandomAid(): string
     {
         do {
-            $page = random_int(1, 1000);
-            $payload = [];
-            $url = "https://api.bilibili.com/x/web-interface/newlist?&pn={$page}&ps=1";
-            $raw = Curl::get($url, Sign::api($payload));
+            $url = "https://api.bilibili.com/x/web-interface/newlist";
+            $payload = [
+                'pn' => random_int(1, 1000),
+                'ps' => 1,
+            ];
+            $raw = Curl::get('other', $url, $payload);
             $de_raw = json_decode($raw, true);
             // echo "getRandomAid " . count($de_raw['data']['archives']) . PHP_EOL;
             // $aid = array_rand($de_raw['data']['archives'])['aid'];
@@ -172,11 +174,16 @@ class MasterSite
     private static function getDayRankingAids($num): array
     {
         // day: 日榜1 三榜3 周榜7 月榜30
-        $payload = [];
         $aids = [];
         $rand_nums = [];
-        $url = "https://api.bilibili.com/x/web-interface/ranking?rid=0&day=1&type=1&arc_type=0";
-        $raw = Curl::get($url, Sign::api($payload));
+        $url = "https://api.bilibili.com/x/web-interface/ranking";
+        $payload = [
+            'rid' => 0,
+            'day' => 1,
+            'type' => 1,
+            'arc_type' => 0
+        ];
+        $raw = Curl::get('other', $url, $payload);
         $de_raw = json_decode($raw, true);
         for ($i = 0; $i < $num; $i++) {
             while (true) {
@@ -218,7 +225,7 @@ class MasterSite
             'Referer' => "https://www.bilibili.com/video/av{$av_info['aid']}",
             'User-Agent' => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.81 Safari/537.36",
         ];
-        $raw = Curl::post($url, Sign::api($payload), $headers);
+        $raw = Curl::post('pc', $url, $payload, $headers);
         $de_raw = json_decode($raw, true);
         if ($de_raw['code'] == 0) {
             Log::notice("主站任务: av{$av_info['aid']}分享成功!");
@@ -259,8 +266,7 @@ class MasterSite
             'Referer' => "https://www.bilibili.com/video/av{$av_info['aid']}",
             'User-Agent' => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.81 Safari/537.36",
         ];
-
-        $raw = Curl::post($url, Sign::api($payload), $headers);
+        $raw = Curl::post('pc', $url, $payload, $headers);
         $de_raw = json_decode($raw, true);
 
         if ($de_raw['code'] == 0) {
@@ -278,7 +284,7 @@ class MasterSite
                 "play_type" => "1",
                 'start_ts' => time()
             ];
-            $raw = Curl::post($url, Sign::api($payload), $headers);
+            $raw = Curl::post('pc', $url, $payload, $headers);
             $de_raw = json_decode($raw, true);
 
             if ($de_raw['code'] == 0) {
@@ -286,7 +292,7 @@ class MasterSite
                 $payload['played_time'] = $av_info['duration'] - 1;
                 $payload['play_type'] = 0;
                 $payload['start_ts'] = time();
-                $raw = Curl::post($url, Sign::api($payload), $headers);
+                $raw = Curl::post('pc', $url, $payload, $headers);
                 $de_raw = json_decode($raw, true);
                 if ($de_raw['code'] == 0) {
                     Log::notice("主站任务: av{$av_info['aid']}观看成功!");
@@ -308,8 +314,11 @@ class MasterSite
     {
         while (true) {
             $aid = self::getRandomAid();
-            $url = "https://api.bilibili.com/x/web-interface/view?aid={$aid}";
-            $raw = Curl::get($url);
+            $url = "https://api.bilibili.com/x/web-interface/view";
+            $payload = [
+                'aid' => $aid
+            ];
+            $raw = Curl::get('other', $url, $payload);
             $de_raw = json_decode($raw, true);
             if ($de_raw['code'] != 0) {
                 continue;

@@ -15,7 +15,7 @@
     "clue/socket-raw": "^1.4.1",
     "vlucas/phpdotenv": "^4.1",
     "amphp/amp": "^2.4",
-    "ares333/php-curl": "^4.6"
+    "guzzlehttp/guzzle": "^6.5"
   },
   "license": "MIT",
   "authors": [
@@ -30,7 +30,8 @@
       "BiliHelper\\Core\\": "src/core",
       "BiliHelper\\Plugin\\": "src/plugin",
       "BiliHelper\\Util\\": "src/util",
-      "BiliHelper\\Tool\\": "src/tool"
+      "BiliHelper\\Tool\\": "src/tool",
+      "BiliHelper\\Backup\\": "src/backup"
     }
   }
 }

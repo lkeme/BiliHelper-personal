@@ -44,8 +44,9 @@ class GroupSignIn
      */
     protected static function getGroupList(): array
     {
+        $url = 'https://api.vc.bilibili.com/link_group/v1/member/my_groups';
         $payload = [];
-        $raw = Curl::get('https://api.vc.bilibili.com/link_group/v1/member/my_groups', Sign::api($payload));
+        $raw = Curl::get('app', $url, Sign::common($payload));
         $de_raw = json_decode($raw, true);
 
         if (empty($de_raw['data']['list'])) {
@@ -63,11 +64,12 @@ class GroupSignIn
      */
     protected static function signInGroup(array $groupInfo): bool
     {
+        $url = 'https://api.vc.bilibili.com/link_setting/v1/link_setting/sign_in';
         $payload = [
             'group_id' => $groupInfo['group_id'],
             'owner_id' => $groupInfo['owner_uid'],
         ];
-        $raw = Curl::get('https://api.vc.bilibili.com/link_setting/v1/link_setting/sign_in', Sign::api($payload));
+        $raw = Curl::get('app', $url, Sign::common($payload));
         $de_raw = json_decode($raw, true);
 
         if ($de_raw['code'] != '0') {

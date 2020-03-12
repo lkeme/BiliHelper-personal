@@ -108,7 +108,7 @@ class StormRaffle extends BaseRaffle
                 "visit_id" => ""
             ];
             for ($i = 1; $i < $num; $i++) {
-                $raw = Curl::post($url, Sign::api($payload));
+                $raw = Curl::post('app', $url, Sign::common($payload));
                 $de_raw = json_decode($raw, true);
                 if ($de_raw['code'] == 429 || $de_raw['code'] == -429) {
                     Log::notice(self::formatInfo($raffle['raffle_id'], $num, '节奏风暴未实名或异常验证码'));

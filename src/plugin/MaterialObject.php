@@ -66,10 +66,11 @@ class MaterialObject
      */
     private static function boxStatus(int $aid, $reply = 'bool')
     {
+        $url = 'https://api.live.bilibili.com/lottery/v1/box/getStatus';
         $payload = [
             'aid' => $aid,
         ];
-        $raw = Curl::get('https://api.live.bilibili.com/lottery/v1/box/getStatus', Sign::api($payload));
+        $raw = Curl::get('pc', $url, $payload);
         $de_raw = json_decode($raw, true);
         switch ($reply) {
             // 等于0是有抽奖返回false
@@ -96,7 +97,7 @@ class MaterialObject
     private static function fetchLottery(): array
     {
         $lottery_list = [];
-        $max_probe = 5;
+        $max_probe = 10;
         $probes = range(self::$start_aid, self::$end_aid);
         foreach ($probes as $probe_aid) {
             // 最大试探
@@ -173,11 +174,12 @@ class MaterialObject
             $aid = $lottery['aid'];
             $num = $lottery['num'];
             Log::notice("实物抽奖 {$aid} 轮次 {$num} 可参与抽奖~");
+            $url = 'https://api.live.bilibili.com/lottery/v1/Box/draw';
             $payload = [
                 'aid' => $aid,
                 'number' => $num,
             ];
-            $raw = Curl::get('https://api.live.bilibili.com/lottery/v1/Box/draw', Sign::api($payload));
+            $raw = Curl::get('pc', $url, $payload);
             $de_raw = json_decode($raw, true);
             if ($de_raw['code'] == 0) {
                 Log::notice("实物抽奖 {$aid} 轮次 {$num} 参与抽奖成功~");

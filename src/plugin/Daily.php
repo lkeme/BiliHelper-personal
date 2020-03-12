@@ -24,7 +24,7 @@ class Daily
             return;
         }
         self::dailyBag();
-        self::setLock( 8 * 60 * 60);
+        self::setLock(8 * 60 * 60);
     }
 
     /**
@@ -32,8 +32,9 @@ class Daily
      */
     private static function dailyBag()
     {
+        $url = 'https://api.live.bilibili.com/gift/v2/live/receive_daily_bag';
         $payload = [];
-        $data = Curl::get('https://api.live.bilibili.com/gift/v2/live/receive_daily_bag', Sign::api($payload));
+        $data = Curl::get('app', $url, Sign::common($payload));
         $data = json_decode($data, true);
 
         if (isset($data['code']) && $data['code']) {

@@ -130,7 +130,7 @@ class Notice
     private static function scSend(array $info)
     {
         $url = "https://sc.ftqq.com/" . self::$sckey . ".send?text=" . urlencode($info['title']) . "&desp=" . urlencode($info['content']);
-        $data = Curl::singleRequest('get', $url);
+        $data = Curl::request('get', $url);
         if (is_null($data)) {
             Log::warning('Server酱推送信息失败,请检查!');
         };

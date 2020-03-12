@@ -37,13 +37,14 @@ class Silver
      */
     private static function getSilverBox()
     {
+        $url = 'https://api.live.bilibili.com/lottery/v1/SilverBox/getCurrentTask';
         $payload = [];
-        $data = Curl::get('https://api.live.bilibili.com/lottery/v1/SilverBox/getCurrentTask', Sign::api($payload));
+        $data = Curl::get('app', $url, Sign::common($payload));
         $data = json_decode($data, true);
 
         if (isset($data['code']) && $data['code'] == -10017) {
             Log::notice($data['message']);
-            self::setLock( 24 * 60 * 60);
+            self::setLock(24 * 60 * 60);
             return;
         }
 
@@ -59,7 +60,7 @@ class Silver
             'time_start' => $data['data']['time_start'],
             'time_end' => $data['data']['time_end'],
         ];
-        self::setLock( $data['data']['minute'] * 60 + 5);
+        self::setLock($data['data']['minute'] * 60 + 5);
     }
 
 
@@ -68,15 +69,16 @@ class Silver
      */
     private static function openSilverBox()
     {
+        $url = 'https://api.live.bilibili.com/mobile/freeSilverAward';
         $payload = [
             'time_end' => self::$task['time_end'],
             'time_start' => self::$task['time_start']
         ];
-        $data = Curl::get('https://api.live.bilibili.com/mobile/freeSilverAward', Sign::api($payload));
+        $data = Curl::get('app',$url, Sign::common($payload));
         $data = json_decode($data, true);
 
         if ($data['code'] == -800) {
-            self::setLock( 12 * 60 * 60);
+            self::setLock(12 * 60 * 60);
             Log::warning("领取宝箱失败，{$data['message']}!");
             return;
         }
@@ -84,19 +86,19 @@ class Silver
         if ($data['code'] == -903) {
             Log::warning("领取宝箱失败，{$data['message']}!");
             self::$task = [];
-            self::setLock( 60);
+            self::setLock(60);
             return;
         }
 
         if (isset($data['code']) && $data['code']) {
             Log::warning("领取宝箱失败，{$data['message']}!");
-            self::setLock( 60);
+            self::setLock(60);
             return;
         }
 
         Log::notice("领取宝箱成功，Silver: {$data['data']['silver']}(+{$data['data']['awardSilver']})");
 
         self::$task = [];
-        self::setLock( 10);
+        self::setLock(10);
     }
 }

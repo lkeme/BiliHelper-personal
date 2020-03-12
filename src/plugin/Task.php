@@ -41,8 +41,9 @@ class Task
      */
     private static function check()
     {
+        $url = 'https://api.live.bilibili.com/i/api/taskInfo';
         $payload = [];
-        $data = Curl::get('https://api.live.bilibili.com/i/api/taskInfo', Sign::api($payload));
+        $data = Curl::get('app',$url, Sign::common($payload));
         $data = json_decode($data, true);
         Log::info('正在检查每日任务...');
         if (isset($data['code']) && $data['code']) {
@@ -64,9 +65,9 @@ class Task
             Log::notice('该任务已完成');
             return;
         }
-
+        $url = 'https://api.live.bilibili.com/sign/doSign';
         $payload = [];
-        $data = Curl::get('https://api.live.bilibili.com/sign/doSign', Sign::api($payload));
+        $data = Curl::get('app',$url, Sign::common($payload));
         $data = json_decode($data, true);
 
         if (isset($data['code']) && $data['code']) {
@@ -94,10 +95,11 @@ class Task
             Log::notice('任务未完成，请等待');
             return;
         }
+        $url = 'https://api.live.bilibili.com/activity/v1/task/receive_award';
         $payload = [
             'task_id' => 'double_watch_task',
         ];
-        $data = Curl::post('https://api.live.bilibili.com/activity/v1/task/receive_award', Sign::api($payload));
+        $data = Curl::post('app',$url, Sign::common($payload));
         $data = json_decode($data, true);
 
         if (isset($data['code']) && $data['code']) {

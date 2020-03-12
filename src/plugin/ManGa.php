@@ -34,11 +34,12 @@ class ManGa
     private static function sign(): bool
     {
         sleep(1);
+        $url = 'https://manga.bilibili.com/twirp/activity.v1.Activity/ClockIn';
         $payload = [
             'access_key' => getenv('ACCESS_TOKEN'),
             'ts' => time()
         ];
-        $raw = Curl::post('https://manga.bilibili.com/twirp/activity.v1.Activity/ClockIn', Sign::api($payload));
+        $raw = Curl::post('app', $url, Sign::common($payload));
         $de_raw = json_decode($raw, true);
         # {"code":0,"msg":"","data":{}}
         # {"code":"invalid_argument","msg":"clockin clockin is duplicate","meta":{"argument":"clockin"}}
@@ -56,8 +57,7 @@ class ManGa
         sleep(1);
         $payload = [];
         $url = "https://manga.bilibili.com/twirp/activity.v1.Activity/ShareComic";
-
-        $raw = Curl::post($url, Sign::api($payload));
+        $raw = Curl::post('app', $url, Sign::common($payload));
         $de_raw = json_decode($raw, true);
         # {"code":0,"msg":"","data":{"point":5}}
         # {"code":1,"msg":"","data":{"point":0}}

@@ -72,7 +72,7 @@ class Barrage
         shuffle($apis);
         try {
             foreach ($apis as $url) {
-                $data = Curl::singleRequest('get', $url);
+                $data = Curl::request('get', $url);
                 if (is_null($data)) continue;
                 foreach ($punctuations as $punctuation) {
                     if (strpos($data, $punctuation)) {
@@ -96,21 +96,19 @@ class Barrage
     private static function sendMsg($info)
     {
         $user_info = User::parseCookies();
-        $raw = Curl::get('https://api.live.bilibili.com/room/v1/Room/room_init?id=' . $info['roomid']);
-        $de_raw = json_decode($raw, true);
-
+        $url = 'https://api.live.bilibili.com/msg/send';
+        $data = Live::getRoomInfo($info['roomid']);
         $payload = [
             'color' => '16777215',
             'fontsize' => 25,
             'mode' => 1,
             'msg' => $info['content'],
             'rnd' => 0,
-            'roomid' => $de_raw['data']['room_id'],
+            'roomid' => $data['data']['room_id'],
             'csrf' => $user_info['token'],
             'csrf_token' => $user_info['token'],
         ];
-
-        return Curl::post('https://api.live.bilibili.com/msg/send', Sign::api($payload));
+        return Curl::post('app', $url, Sign::common($payload));
     }
 
     /**

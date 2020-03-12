@@ -11,6 +11,7 @@
 namespace BiliHelper\Plugin;
 
 use BiliHelper\Core\Log;
+use BiliHelper\Core\Curl;
 use BiliHelper\Util\TimeLock;
 
 

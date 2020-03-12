@@ -86,14 +86,14 @@ class PkRaffle extends BaseRaffle
                 "csrf" => $user_info['token'],
             ];
             array_push($tasks, [
-                'payload' => Sign::api($payload),
+                'payload' => Sign::common($payload),
                 'source' => [
                     'room_id' => $raffle['room_id'],
                     'raffle_id' => $raffle['raffle_id']
                 ]
             ]);
         }
-        $results = Curl::asyncPost($url, $tasks);
+        $results = Curl::async('app', $url, $tasks);
         # print_r($results);
         return $results;
     }

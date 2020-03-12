@@ -21,7 +21,7 @@ class Sleep
     // TODO 黑白名单|考虑添加到每个插件内部自动添加|优化RUN逻辑代码
     private static $unlock_hour = 24;
     private static $unlock_time = 0;
-    private static $fillable = ['Login', 'Sleep', 'Daily', 'MasterSite', 'GiftSend', 'Task', 'Silver2Coin', 'GroupSignIn', 'AwardRecord', 'Statistics'];
+    private static $fillable = ['Login', 'Sleep', 'Daily', 'Judge', 'MasterSite', 'GiftSend', 'Task', 'Silver2Coin', 'GroupSignIn', 'AwardRecord', 'Statistics'];
     private static $guarded = ['Barrage', 'GiftHeart', 'Heart', 'Silver', 'MaterialObject', 'AloneTcpClient', 'ZoneTcpClient', 'StormRaffle', 'GuardRaffle', 'PkRaffle', 'GiftRaffle', 'AnchorRaffle'];
     private static $sleep_section = [];
 
@@ -75,8 +75,9 @@ class Sleep
      */
     private static function isRefuse(): bool
     {
+        $url = 'https://api.live.bilibili.com/mobile/freeSilverAward';
         $payload = [];
-        $raw = Curl::get('https://api.live.bilibili.com/mobile/freeSilverAward', Sign::api($payload));
+        $raw = Curl::get('app', $url, Sign::common($payload));
         $de_raw = json_decode($raw, true);
         if ($de_raw['msg'] == '访问被拒绝') {
             $unlock_time = strtotime(date("Y-m-d", strtotime("+1 day", time()))) - time();

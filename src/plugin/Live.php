@@ -27,7 +27,8 @@ class Live
     {
         $areas = [];
         $url = "http://api.live.bilibili.com/room/v1/Area/getList";
-        $raw = Curl::get($url);
+        $payload = [];
+        $raw = Curl::get('other', $url, $payload);
         $de_raw = json_decode($raw, true);
         // 防止异常
         if (!isset($de_raw['data']) || $de_raw['code']) {
@@ -50,8 +51,17 @@ class Live
      */
     public static function areaToRid($area_id): array
     {
-        $url = "https://api.live.bilibili.com/room/v1/area/getRoomList?platform=web&parent_area_id={$area_id}&cate_id=0&area_id=0&sort_type=online&page=1&page_size=30";
-        $raw = Curl::get($url);
+        $url = "https://api.live.bilibili.com/room/v1/area/getRoomList";
+        $payload = [
+            'platform' => 'web',
+            'parent_area_id' => $area_id,
+            'cate_id' => 0,
+            'area_id' => 0,
+            'sort_type' => 'online',
+            'page' => 1,
+            'page_size' => 30
+        ];
+        $raw = Curl::get('other', $url, $payload);
         $de_raw = json_decode($raw, true);
         // 防止异常
         if (!isset($de_raw['data']) || $de_raw['code']) {
@@ -77,7 +87,14 @@ class Live
      */
     public static function getUserRecommend()
     {
-        $raw = Curl::get('https://api.live.bilibili.com/room/v1/Area/getListByAreaID?areaId=0&sort=online&pageSize=30&page=1');
+        $url = 'https://api.live.bilibili.com/room/v1/Area/getListByAreaID';
+        $payload = [
+            'areaId' => 0,
+            'sort' => 'online',
+            'pageSize' => 30,
+            'page' => 1
+        ];
+        $raw = Curl::get('other', $url, $payload);
         $de_raw = json_decode($raw, true);
         if ($de_raw['code'] != '0') {
             return 23058;
@@ -94,23 +111,36 @@ class Live
      */
     public static function getRealRoomID($room_id)
     {
-        $raw = Curl::get('https://api.live.bilibili.com/room/v1/Room/room_init?id=' . $room_id);
-        $de_raw = json_decode($raw, true);
-        if ($de_raw['code']) {
-            Log::warning($room_id . ' : ' . $de_raw['msg']);
+        $data = self::getRoomInfo($room_id);
+        if ($data['code']) {
+            Log::warning($room_id . ' : ' . $data['msg']);
             return false;
         }
-        if ($de_raw['data']['is_hidden']) {
+        if ($data['data']['is_hidden']) {
             return false;
         }
-        if ($de_raw['data']['is_locked']) {
+        if ($data['data']['is_locked']) {
             return false;
         }
-        if ($de_raw['data']['encrypted']) {
+        if ($data['data']['encrypted']) {
             return false;
         }
-        return $de_raw['data']['room_id'];
+        return $data['data']['room_id'];
+    }
 
+    /**
+     * @use 获取直播间信息
+     * @param $room_id
+     * @return array
+     */
+    public static function getRoomInfo($room_id): array
+    {
+        $url = 'https://api.live.bilibili.com/room/v1/Room/room_init';
+        $payload = [
+            'id' => $room_id
+        ];
+        $raw = Curl::get('other', $url, $payload);
+        return json_decode($raw, true);;
     }
 
 
@@ -118,6 +148,7 @@ class Live
      * @use 钓鱼检测
      * @param $room_id
      * @return bool
+     * @throws \Exception
      */
     public static function fishingDetection($room_id): bool
     {
@@ -136,11 +167,12 @@ class Live
      */
     public static function goToRoom($room_id): bool
     {
+        $url = 'https://api.live.bilibili.com/room/v1/Room/room_entry_action';
         $payload = [
             'room_id' => $room_id,
         ];
         // Log::info('进入直播间[' . $room_id . ']抽奖!');
-        Curl::post('https://api.live.bilibili.com/room/v1/Room/room_entry_action', Sign::api($payload));
+        Curl::post('app', $url, Sign::common($payload));
         return true;
     }
 

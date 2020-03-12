@@ -170,7 +170,7 @@ class AloneTcpClient
                 Log::info("连接到 {$socket->getPeerName()} 推送服务器");
             } catch (Exception $e) {
                 Log::error("连接到推送服务器失败, {$e->getMessage()}");
-                self::setLock( 60);
+                self::setLock(60);
             }
         }
     }
@@ -219,7 +219,7 @@ class AloneTcpClient
         switch ($data_type) {
             case 'raffle':
                 // 抽奖推送
-                // Log::notice($body);
+                Log::debug("(receive={$body})");
                 DataTreating::distribute($raw_data['data']);
                 break;
             case 'entered':
