@@ -110,6 +110,12 @@ class Notice
                     'content' => '[' . $now_time . ']' . ' 用户: ' . self::$uname . ' 账号被封禁: 程序开始睡眠，凌晨自动唤醒，距离唤醒还有' . self::$result . '小时',
                 ];
                 break;
+            case 'error':
+                $info = [
+                    'title' => '程序错误',
+                    'content' => '[' . $now_time . ']' . ' 用户: ' . self::$uname . ' 程序运行错误: ' . self::$result,
+                ];
+                break;
             default:
                 $info = [
                     'title' => '推送消息异常记录',

@@ -75,7 +75,7 @@ class MasterSite
         $raw = Curl::get('pc', $url, $payload);
         $de_raw = json_decode($raw, true);
 
-        $logs = $de_raw['data']['list'];
+        $logs = isset($de_raw['data']['list']) ? $de_raw['data']['list'] : [];
         $coins = 0;
         foreach ($logs as $log) {
             $log_ux = strtotime($log['time']);
@@ -100,9 +100,8 @@ class MasterSite
         return $coins;
     }
 
-
     /**
-     * @use 投币视频
+     * @use 视频投币 TODO : 处理视频投币硬币少于需要投币数
      * @return bool
      * @throws \Exception
      */

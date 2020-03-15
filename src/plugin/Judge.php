@@ -36,11 +36,11 @@ class Judge
             return;
         }
         //  self::judgementIndex();
-        self::setLock(mt_rand(6, 10) * 60);
+        self::setLock(mt_rand(15, 30) * 60);
     }
 
     /**
-     * @use 判案
+     * @use 判案 TODO: 处理案例已满(MAX20例) / 尝试已实名续期风纪
      * @param $case_id
      * @return bool
      */
@@ -173,8 +173,10 @@ class Judge
         ];
         $raw = Curl::post('pc', $url, $payload);
         $de_raw = json_decode($raw, true);
+        // {"code":25008,"message":"真给力 , 移交众裁的举报案件已经被处理完了","ttl":1}
+        // {"code":25014,"message":"25014","ttl":1}
+        // {"code":25005,"message":"请成为风纪委员后再试","ttl":1}
         if (isset($de_raw['code']) && $de_raw['code'] == 25005) {
-            // {"code":25005,"message":"请成为风纪委员后再试","ttl":1}
             Log::warning($de_raw['message']);
             self::setLock(24 * 60 * 60);
             return null;
