@@ -116,10 +116,10 @@ $ php index.php
 ## Docker使用指南
 
   1. 安装好[Docker](https://yeasy.gitbooks.io/docker_practice/content/install/)
-  2. 直接命令行拉取镜像后运行
+  2. 下载模板配置文件[user.conf.example](https://raw.githubusercontent.com/lkeme/BiliHelper-personal/master/conf/user.conf.example)并设置好以后，直接命令行拉取镜像后运行
 
 ```
-  docker run -itd --rm -e USER_NAME=你的B站登陆账号 -e USER_PASSWORD=你的B站密码 zsnmwy/bilihelper-personal
+  docker run -itd --rm -v 本地配置文件相对路径:/app/conf/user.conf lkeme/bilihelper-personal
 ```
 
   ```
@@ -127,6 +127,7 @@ $ php index.php
 
   -it 前台运行
   -itd 后台运行
+  -v 挂载目录或文件（参数为，本地相对路径:容器绝对路径）
   ```
 
 - 注意: Docker镜像已经包含了所有所需的运行环境，无需在本地环境弄composer。每次启动容器时，都会与项目进行同步以确保版本最新。
