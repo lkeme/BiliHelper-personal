@@ -112,6 +112,9 @@ class Live
     public static function getRealRoomID($room_id)
     {
         $data = self::getRoomInfo($room_id);
+        if (!isset($data['code']) || !isset($data['data'])) {
+            return false;
+        }
         if ($data['code']) {
             Log::warning($room_id . ' : ' . $data['msg']);
             return false;
@@ -140,7 +143,7 @@ class Live
             'id' => $room_id
         ];
         $raw = Curl::get('other', $url, $payload);
-        return json_decode($raw, true);;
+        return json_decode($raw, true);
     }
 
 

@@ -91,9 +91,9 @@ class Barrage
     /**
      * @use 弹幕通用模块
      * @param $info
-     * @return bool|string
+     * @return array
      */
-    private static function sendMsg($info)
+    private static function sendMsg($info): array
     {
         $user_info = User::parseCookies();
         $url = 'https://api.live.bilibili.com/msg/send';
@@ -108,7 +108,8 @@ class Barrage
             'csrf' => $user_info['token'],
             'csrf_token' => $user_info['token'],
         ];
-        return Curl::post('app', $url, Sign::common($payload));
+        $raw = Curl::post('app', $url, Sign::common($payload));
+        return json_decode($raw, true) ?? ['code' => 404, 'msg' => '上层数据为空!'];
     }
 
     /**
@@ -116,21 +117,16 @@ class Barrage
      * @param $info
      * @return bool
      */
-    private static function privateSendMsg($info)
+    private static function privateSendMsg($info): bool
     {
         //TODO 暂时性功能 有需求就修改
-        $raw = self::sendMsg($info);
-        $de_raw = json_decode($raw, true);
-        if ($de_raw['code'] == 1001) {
-            Log::warning($de_raw['msg']);
-            return false;
-        }
-        if (!$de_raw['code']) {
+        $response = self::sendMsg($info);
+        if (isset($response['code']) && $response['code'] == 0) {
             Log::info('活跃弹幕发送成功!');
             return true;
+        } else {
+            Log::warning("活跃代码发送失败, CODE -> {$response['code']} MSG -> {$response['msg']} ");
+            return false;
         }
-        Log::error("活跃弹幕发送失败！, {$de_raw['msg']}");
-
-        return false;
     }
 }
