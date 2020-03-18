@@ -15,7 +15,6 @@ trait TimeLock
 {
     public static $lock = 0;
 
-
     /**
      * @use 设置时间
      * @param int $lock
@@ -25,7 +24,6 @@ trait TimeLock
         static::$lock = time() + $lock;
     }
 
-
     /**
      * @use 获取时间
      * @return int
@@ -33,6 +31,17 @@ trait TimeLock
     public static function getLock(): int
     {
         return static::$lock;
+    }
+
+    /**
+     * @use 定时
+     * @param int $hour
+     * @return int
+     */
+    public static function timing(int $hour): int
+    {
+        // now today tomorrow yesterday
+        return strtotime('tomorrow') + ($hour * 60 * 60) - time();
     }
 
 }

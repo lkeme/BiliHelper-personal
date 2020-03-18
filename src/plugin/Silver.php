@@ -44,7 +44,11 @@ class Silver
 
         if (isset($data['code']) && $data['code'] == -10017) {
             Log::notice($data['message']);
-            self::setLock(24 * 60 * 60);
+            if (User::isMaster()) {
+                self::setLock(self::timing(6));
+            } else {
+                self::setLock(self::timing(10));
+            }
             return;
         }
 
@@ -74,7 +78,7 @@ class Silver
             'time_end' => self::$task['time_end'],
             'time_start' => self::$task['time_start']
         ];
-        $data = Curl::get('app',$url, Sign::common($payload));
+        $data = Curl::get('app', $url, Sign::common($payload));
         $data = json_decode($data, true);
 
         if ($data['code'] == -800) {

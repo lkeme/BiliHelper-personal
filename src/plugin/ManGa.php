@@ -24,7 +24,7 @@ class ManGa
             return;
         }
         if (self::sign() && self::share()) {
-            self::setLock(24 * 60 * 60);
+            self::setLock(self::timing(10));
             return;
         }
         self::setLock(3600);

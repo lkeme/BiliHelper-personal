@@ -104,7 +104,7 @@ class Log
             $url = str_replace('{account}', self::prefix(), getenv('APP_CALLBACK'));
             $url = str_replace('{level}', $level, $url);
             $url = str_replace('{message}', urlencode($message), $url);
-            Curl::get('other', $url);
+            Curl::request('get', $url);
         }
     }
 }

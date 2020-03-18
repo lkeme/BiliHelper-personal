@@ -34,7 +34,6 @@ class GiftHeart
     /**
      * @use 礼物心跳
      * @return bool
-     * @throws \Exception
      */
     private static function giftHeart(): bool
     {

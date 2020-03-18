@@ -34,11 +34,18 @@ class Heart
     protected static function webHeart()
     {
         User::webGetUserInfo();
-        $url = 'https://api.live.bilibili.com/relation/v1/Feed/heartBeat';
+        $url = 'https://api.live.bilibili.com/User/userOnlineHeart';
+        $user_info = User::parseCookies();
         $payload = [
+            'csrf' => $user_info['token'],
+            'csrf_token' => $user_info['token'],
             'room_id' => getenv('ROOM_ID'),
+            '_' => time() * 1000,
         ];
-        $data = Curl::post('app', $url, Sign::common($payload));
+        $headers = [
+            'Referer' => 'https://live.bilibili.com/' . getenv('ROOM_ID')
+        ];
+        $data = Curl::post('app', $url, $payload, $headers);
         $data = json_decode($data, true);
 
         if (isset($data['code']) && $data['code']) {
