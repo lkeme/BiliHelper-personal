@@ -26,7 +26,7 @@ class GroupSignIn
 
         $groups = self::getGroupList();
         if (empty($groups)) {
-            self::setLock(24 * 60 * 60);
+            self::setLock(self::timing(10));
             return;
         }
 

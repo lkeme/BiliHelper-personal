@@ -168,28 +168,31 @@ class Curl
         self::$async_opt = [];
     }
 
+
     /**
      * @use 请求中心异常处理
      * @param string $url
      * @param string $method
      * @param array $options
      * @return mixed
+     * @throws \Exception
      */
     private static function clientHandle(string $url, string $method, array $options)
     {
-        $max_retry = range(0, 30);
+        $max_retry = range(1, 40);
         foreach ($max_retry as $retry) {
             try {
-                return call_user_func_array([self::$client, $method], [$url, $options]);
+                $response = call_user_func_array([self::$client, $method], [$url, $options]);
+                if (is_null($response) or empty($response)) throw new \Exception("Value IsEmpty");
+                return $response;
             } catch (\GuzzleHttp\Exception\RequestException $e) {
-                Log::warning("CURl -> RETRY: {$retry} ERROR: {$e->getMessage()} ERRNO: {$e->getCode()}");
                 // var_dump($e->getRequest());
-                if ($e->hasResponse()) {
-                    var_dump($e->getResponse());
-                }
-                Log::warning("尝试重试第 {$retry} 次，等待网络恢复...");
-                sleep(10);
+                if ($e->hasResponse()) var_dump($e->getResponse());
+            } catch (\Exception $e) {
+                // var_dump($e);
             }
+            Log::warning("CURl -> RETRY: {$retry} ERROR: {$e->getMessage()} ERRNO: {$e->getCode()} STATUS:  Waiting for recovery!");
+            sleep(15);
         }
         exit('网络异常，超出最大尝试次数，退出程序~');
     }

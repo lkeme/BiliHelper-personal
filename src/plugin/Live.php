@@ -21,7 +21,6 @@ class Live
     /**
      * @use 获取分区列表
      * @return array
-     * @throws \Exception
      */
     public static function fetchLiveAreas(): array
     {
@@ -47,7 +46,6 @@ class Live
      * @use AREA_ID转ROOM_ID
      * @param $area_id
      * @return array
-     * @throws \Exception
      */
     public static function areaToRid($area_id): array
     {
@@ -83,7 +81,6 @@ class Live
     /**
      * @use 获取随机直播房间号
      * @return int
-     * @throws \Exception
      */
     public static function getUserRecommend()
     {
@@ -99,7 +96,7 @@ class Live
         if ($de_raw['code'] != '0') {
             return 23058;
         }
-        return $de_raw['data'][random_int(1, 29)]['roomid'];
+        return $de_raw['data'][mt_rand(1, 29)]['roomid'];
     }
 
 
@@ -107,7 +104,6 @@ class Live
      * @use 获取直播房间号
      * @param $room_id
      * @return bool
-     * @throws \Exception
      */
     public static function getRealRoomID($room_id)
     {
@@ -151,7 +147,6 @@ class Live
      * @use 钓鱼检测
      * @param $room_id
      * @return bool
-     * @throws \Exception
      */
     public static function fishingDetection($room_id): bool
     {
@@ -166,7 +161,6 @@ class Live
      * @use 访问直播间
      * @param $room_id
      * @return bool
-     * @throws \Exception
      */
     public static function goToRoom($room_id): bool
     {

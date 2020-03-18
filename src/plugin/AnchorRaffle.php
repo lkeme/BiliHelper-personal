@@ -93,7 +93,7 @@ class AnchorRaffle extends BaseRaffle
             'room_id' => $room_id,
             'raffle_id' => $de_raw['id'],
             'raffle_name' => $de_raw['award_name'],
-            'wait' => time() + random_int(5, 25)
+            'wait' => time() + mt_rand(5, 25)
         ];
         Statistics::addPushList(self::ACTIVE_TITLE);
         array_push(self::$wait_list, $data);

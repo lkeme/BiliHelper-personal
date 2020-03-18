@@ -178,7 +178,7 @@ class Judge
         // {"code":25005,"message":"请成为风纪委员后再试","ttl":1}
         if (isset($de_raw['code']) && $de_raw['code'] == 25005) {
             Log::warning($de_raw['message']);
-            self::setLock(24 * 60 * 60);
+            self::setLock(self::timing(10));
             return null;
         }
         if (isset($de_raw['code']) && $de_raw['code']) {

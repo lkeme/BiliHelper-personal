@@ -32,7 +32,7 @@ class Barrage
         ];
 
         if (self::privateSendMsg($info)) {
-            self::setLock(3600);
+            self::setLock(mt_rand(15, 30) * 60);
             return;
         }
 
@@ -42,7 +42,7 @@ class Barrage
 
     /**
      * @use 获取随机弹幕
-     * @return \Exception|false|mixed|string
+     * @return \Exception|false|mixed|string|null
      */
     private static function getMsgInfo()
     {
@@ -53,15 +53,12 @@ class Barrage
          */
         $punctuations = ['，', ',', '。', '!', '.', ';', '——'];
         $apis = [
-            'https://api.lwl12.com/hitokoto/v1?encode=realjso',
             'https://api.ly522.com/yan.php?format=text',
             'https://v1.hitokoto.cn/?encode=text',
             'https://api.jysafe.cn/yy/',
-            'https://m.mom1.cn/api/yan/api.php',
             'https://api.ooopn.com/yan/api.php?type=text',
             'https://api.imjad.cn/hitokoto/',
             'https://www.ly522.com/hitokoto/',
-            'https://www.tddiao.online/word/',
             'https://api.guoch.xyz/',
             'http://www.ooomg.cn/dutang/',
             'https://api.gushi.ci/rensheng.txt',

@@ -34,7 +34,7 @@ class MaterialObject
         self::calcAid(470, 770);
         $lottery_list = self::fetchLottery();
         self::drawLottery($lottery_list);
-        self::setLock(random_int(5, 10) * 60);
+        self::setLock(mt_rand(6, 10) * 60);
     }
 
 
@@ -196,7 +196,6 @@ class MaterialObject
      * @param $min
      * @param $max
      * @return bool
-     * @throws \Exception
      */
     private static function calcAid($min, $max): bool
     {
@@ -206,7 +205,7 @@ class MaterialObject
         while (true) {
             $middle = round(($min + $max) / 2);
             if (self::boxStatus($middle)) {
-                if (self::boxStatus($middle + random_int(0, 3))) {
+                if (self::boxStatus($middle + mt_rand(0, 3))) {
                     $max = $middle;
                 } else {
                     $min = $middle;
@@ -218,8 +217,8 @@ class MaterialObject
                 break;
             }
         }
-        self::$start_aid = $min - random_int(15, 30);
-        self::$end_aid = $min + random_int(15, 30);
+        self::$start_aid = $min - mt_rand(15, 30);
+        self::$end_aid = $min + mt_rand(15, 30);
         Log::info("实物抽奖起始值[" . self::$start_aid . "]，结束值[" . self::$end_aid . "]");
         return true;
     }

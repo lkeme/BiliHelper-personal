@@ -59,7 +59,7 @@ class App
                 } catch (\Throwable  $e) {
                     $error_msg = "MSG: {$e->getMessage()} CODE: {$e->getCode()} FILE: {$e->getFile()} LINE: {$e->getLine()}";
                     Log::error($error_msg);
-                    Notice::push('error', $error_msg);
+                    // Notice::push('error', $error_msg);
                 }
                 yield new Delayed(1000);
             }
@@ -73,7 +73,7 @@ class App
     {
         $plugins = [
             'Login',
-            'Sleep',
+            'Schedule',
             'MasterSite',
             'Daily',
             'ManGa',

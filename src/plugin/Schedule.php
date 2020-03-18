@@ -15,13 +15,13 @@ use BiliHelper\Core\Curl;
 use BiliHelper\Util\TimeLock;
 
 
-class Sleep
+class Schedule
 {
     use TimeLock;
     // TODO 黑白名单|考虑添加到每个插件内部自动添加|优化RUN逻辑代码
     private static $unlock_hour = 24;
     private static $unlock_time = 0;
-    private static $fillable = ['Login', 'Sleep', 'Daily', 'Judge', 'MasterSite', 'GiftSend', 'Task', 'Silver2Coin', 'GroupSignIn', 'AwardRecord', 'Statistics'];
+    private static $fillable = ['Login', 'Schedule', 'Daily', 'Judge', 'MasterSite', 'GiftSend', 'Task', 'Silver2Coin', 'GroupSignIn', 'AwardRecord', 'Statistics'];
     private static $guarded = ['Barrage', 'GiftHeart', 'Heart', 'Silver', 'MaterialObject', 'AloneTcpClient', 'ZoneTcpClient', 'StormRaffle', 'GuardRaffle', 'PkRaffle', 'GiftRaffle', 'AnchorRaffle'];
     private static $sleep_section = [];
 

@@ -24,7 +24,7 @@ class MasterSite
             return;
         }
         if (self::watchAid() && self::shareAid() && self::coinAdd()) {
-            self::setLock(24 * 60 * 60);
+            self::setLock(self::timing(10));
             return;
         }
         self::setLock(3600);
@@ -103,7 +103,6 @@ class MasterSite
     /**
      * @use 视频投币 TODO : 处理视频投币硬币少于需要投币数
      * @return bool
-     * @throws \Exception
      */
     protected static function coinAdd(): bool
     {
@@ -144,14 +143,13 @@ class MasterSite
     /**
      * @use 获取随机AID
      * @return string
-     * @throws \Exception
      */
     private static function getRandomAid(): string
     {
         do {
             $url = "https://api.bilibili.com/x/web-interface/newlist";
             $payload = [
-                'pn' => random_int(1, 1000),
+                'pn' => mt_rand(1, 1000),
                 'ps' => 1,
             ];
             $raw = Curl::get('other', $url, $payload);
@@ -168,7 +166,6 @@ class MasterSite
      * @use 获取日榜AID
      * @param $num
      * @return array
-     * @throws \Exception
      */
     private static function getDayRankingAids($num): array
     {
@@ -186,7 +183,7 @@ class MasterSite
         $de_raw = json_decode($raw, true);
         for ($i = 0; $i < $num; $i++) {
             while (true) {
-                $rand_num = random_int(1, 100);
+                $rand_num = mt_rand(1, 100);
                 if (in_array($rand_num, $rand_nums)) {
                     continue;
                 } else {
@@ -205,7 +202,6 @@ class MasterSite
     /**
      * @use 分享视频
      * @return bool
-     * @throws \Exception
      */
     private static function shareAid(): bool
     {
@@ -239,7 +235,6 @@ class MasterSite
     /**
      * @use 观看视频
      * @return bool
-     * @throws \Exception
      */
     private static function watchAid(): bool
     {
@@ -307,7 +302,6 @@ class MasterSite
     /**
      * @use 解析AID到CID
      * @return array
-     * @throws \Exception
      */
     private static function parseAid(): array
     {

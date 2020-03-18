@@ -24,7 +24,7 @@ class Silver2Coin
             return;
         }
         if (self::appSilver2coin() && self::pcSilver2coin()) {
-            self::setLock(24 * 60 * 60);
+            self::setLock(self::timing(10));
             return;
         }
         self::setLock(3600);

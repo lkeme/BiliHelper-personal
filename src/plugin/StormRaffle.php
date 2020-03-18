@@ -51,7 +51,7 @@ class StormRaffle extends BaseRaffle
         }
         // 过滤抽奖范围
         self::$drop_rate = getenv('STORM_DROPRATE') !== "" ? (int)getenv('STORM_DROPRATE') : 0;
-        if (random_int(1, 100) <= (int)self::$drop_rate) {
+        if (mt_rand(1, 100) <= (int)self::$drop_rate) {
             return false;
         }
         // 去重
@@ -88,7 +88,6 @@ class StormRaffle extends BaseRaffle
      * @use 创建抽奖任务
      * @param array $raffles
      * @return array
-     * @throws \Exception
      */
     protected static function createLottery(array $raffles): array
     {
@@ -96,7 +95,7 @@ class StormRaffle extends BaseRaffle
         $user_info = User::parseCookies();
         foreach ($raffles as $raffle) {
             self::$attempt = getenv('STORM_ATTEMPT') !== "" ? explode(',', getenv('STORM_ATTEMPT')) : [30, 50];
-            $num = random_int((int)self::$attempt[0], (int)self::$attempt[1]);
+            $num = mt_rand((int)self::$attempt[0], (int)self::$attempt[1]);
             $payload = [
                 'id' => $raffle['raffle_id'],
                 'roomid' => $raffle['room_id'],

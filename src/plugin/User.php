@@ -10,18 +10,14 @@
 
 namespace BiliHelper\Plugin;
 
-use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
-use BiliHelper\Util\TimeLock;
 use BiliHelper\Core\Config;
-
 
 class User
 {
     /**
      * @use 实名检测
      * @return bool
-     * @throws \Exception
      */
     public static function realNameCheck(): bool
     {
@@ -40,7 +36,6 @@ class User
     /**
      * @use 老爷检测
      * @return bool
-     * @throws \Exception
      */
     public static function isMaster(): bool
     {
@@ -57,7 +52,6 @@ class User
     /**
      * @use 写入用户名
      * @return bool
-     * @throws \Exception
      */
     public static function userInfo(): bool
     {
@@ -87,11 +81,11 @@ class User
         return json_decode($raw, true);
     }
 
+
     /**
      * @use Web User
      * @param null $room_id
      * @return mixed
-     * @throws \Exception
      */
     public static function webGetUserInfo($room_id = null)
     {

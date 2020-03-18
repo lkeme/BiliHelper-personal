@@ -31,7 +31,6 @@ class GuardRaffle extends BaseRaffle
      * @param int $room_id
      * @param array $data
      * @return bool
-     * @throws \Exception
      */
     protected static function parseLotteryInfo(int $room_id, array $data): bool
     {
@@ -73,7 +72,7 @@ class GuardRaffle extends BaseRaffle
                 'room_id' => $room_id,
                 'raffle_id' => $guard['id'],
                 'raffle_name' => $raffle_name,
-                'wait' => time() + random_int(5, 25)
+                'wait' => time() + mt_rand(5, 25)
             ];
             Statistics::addPushList(self::ACTIVE_TITLE);
             array_push(self::$wait_list, $data);
