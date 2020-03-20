@@ -61,7 +61,7 @@ class App
                     Log::error($error_msg);
                     // Notice::push('error', $error_msg);
                 }
-                yield new Delayed(1000);
+                yield call_user_func(array('BiliHelper\Plugin\\' . $taskName, 'Delayed'), []);
             }
         });
     }

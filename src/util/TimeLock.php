@@ -10,6 +10,7 @@
 
 namespace BiliHelper\Util;
 
+use Amp\Delayed;
 
 trait TimeLock
 {
@@ -31,6 +32,15 @@ trait TimeLock
     public static function getLock(): int
     {
         return static::$lock;
+    }
+
+    /**
+     * @use used in Amp loop Delayed
+     * @return delayed
+     */
+    public static function Delayed()
+    {
+        return new Delayed(1000);
     }
 
     /**
