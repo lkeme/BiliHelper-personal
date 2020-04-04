@@ -68,6 +68,12 @@ class Notice
     {
         $now_time = date('Y-m-d H:i:s');
         switch (self::$type) {
+            case 'update':
+                $info = [
+                    'title' => '程序更新通知',
+                    'content' => '[' . $now_time . ']' . ' 用户: ' . self::$uname . ' 程序更新通知' . self::$result,
+                ];
+                break;
             case 'anchor':
                 $info = [
                     'title' => '天选时刻获奖记录',

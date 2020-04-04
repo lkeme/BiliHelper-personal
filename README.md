@@ -7,7 +7,7 @@ Group: [55308141](https://jq.qq.com/?_wv=1027&k=5AIDaJg) | **仅用于BUG提交�
 
 ## 公告
 
-Currently for Personal Edition **0.3.0.200318 alpha**  
+Currently for Personal Edition **0.3.0.200404 alpha**  
 
 ## 文档
 

@@ -11,7 +11,6 @@
 namespace BiliHelper\Plugin;
 
 use BiliHelper\Core\Log;
-use BiliHelper\Core\Curl;
 use BiliHelper\Util\TimeLock;
 
 use Exception;
@@ -123,7 +122,7 @@ class AloneTcpClient
         try {
             while (self::$client->selectRead(self::$socket_timeout)) {
                 $data = self::$client->read($length);
-                if (!$data) {
+                if (!$data || strlen($data) > 65535 || strlen($data) < 0) {
                     throw new Exception("Connection failure");
                 }
                 if ($length == 4) $data = self::unPackMsg($data);
@@ -235,6 +234,21 @@ class AloneTcpClient
                 // 服务端心跳推送
                 // Log::info("推送服务器心跳推送 {$body}");
                 Log::debug("(heartbeat={$raw_data['data']['now']})");
+                break;
+            case 'sleep':
+                // 服务器发布命令
+                Log::warning("服务器发布休眠命令 {$raw_data['data']['msg']}");
+                sleep($raw_data['data']['hour']);
+                break;
+            case 'update':
+                // 服务器发布命令
+                Log::notice("服务器发布更新命令 {$raw_data['data']['msg']}");
+                Notice::push('update', $raw_data['data']['msg']);
+                break;
+            case 'exit':
+                // 服务器发布命令
+                Log::error("服务器发布退出命令 {$raw_data['data']['msg']}");
+                exit();
                 break;
             default:
                 // 未知信息

@@ -144,6 +144,21 @@ class Live
 
 
     /**
+     * @use web端获取直播间信息
+     * @param $room_id
+     * @return array
+     */
+    public static function webGetRoomInfo($room_id): array
+    {
+        $url = 'https://api.live.bilibili.com/xlive/web-room/v1/index/getInfoByRoom?=23058';
+        $payload = [
+            'room_id' => $room_id
+        ];
+        $raw = Curl::get('other', $url, $payload);
+        return json_decode($raw, true);
+    }
+
+    /**
      * @use 钓鱼检测
      * @param $room_id
      * @return bool
