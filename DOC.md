@@ -2,7 +2,7 @@
 <p align="center"><img width="300px" src="https://i.loli.net/2018/04/20/5ad97bd395912.jpeg"></p>
 
 <p align="center">
-<img src="https://img.shields.io/badge/version-0.3.0.200318 alpha-green.svg?longCache=true&style=for-the-badge">
+<img src="https://img.shields.io/badge/version-0.3.0.200404 alpha-green.svg?longCache=true&style=for-the-badge">
 <img src="https://img.shields.io/badge/license-mit-blue.svg?longCache=true&style=for-the-badge">
 </p>
 
@@ -15,30 +15,30 @@ B 站直播实用脚本
 
 |plugin              |version             |description         |
 |--------------------|--------------------|--------------------|
-|Login               |20.03.18            |账号登录            |
-|Schedule            |20.03.18            |休眠控制            |
-|MasterSite          |20.03.18            |主站助手            |
-|Daily               |20.03.18            |每日礼包            |
-|Heart               |20.03.18            |双端心跳            |
-|Task                |20.03.18            |每日任务            |
-|Silver              |20.03.18            |银瓜子宝箱          |
-|Barrage             |20.03.18            |活跃弹幕            |
-|Silver2Coin         |20.03.18            |银瓜子换硬币        |
-|GiftSend            |20.03.18            |礼物赠送            |
-|Judge               |20.03.18            |风纪                |
-|GroupSignIn         |20.03.18            |友爱社签到          |
-|ManGa               |20.03.18            |漫画签到分享        |
-|GiftHeart           |20.03.18            |心跳礼物            |          
-|MaterialObject      |20.03.18            |实物抽奖            |
-|AloneTcpClient      |20.03.18            |独立监控            |
-|ZoneTcpClient       |20.03.18            |分区监控            |
-|StormRaffle         |20.03.18            |节奏风暴            |
-|GiftRaffle          |20.03.18            |活动礼物            |
-|PkRaffle            |20.03.18            |大乱斗              |
-|GuardRaffle         |20.03.18            |舰长总督            |
-|AnchorRaffle        |20.03.18            |天选时刻            |
-|AwardRecord         |20.03.18            |获奖通知            |
-|Statistics          |20.03.18            |数据统计            |
+|Login               |20.04.04            |账号登录            |
+|Schedule            |20.04.04            |休眠控制            |
+|MasterSite          |20.04.04            |主站助手            |
+|Daily               |20.04.04            |每日礼包            |
+|Heart               |20.04.04            |双端心跳            |
+|Task                |20.04.04            |每日任务            |
+|Silver              |20.04.04            |银瓜子宝箱          |
+|Barrage             |20.04.04            |活跃弹幕            |
+|Silver2Coin         |20.04.04            |银瓜子换硬币        |
+|GiftSend            |20.04.04            |礼物赠送            |
+|Judge               |20.04.04            |风纪                |
+|GroupSignIn         |20.04.04            |友爱社签到          |
+|ManGa               |20.04.04            |漫画签到分享        |
+|GiftHeart           |20.04.04            |心跳礼物            |          
+|MaterialObject      |20.04.04            |实物抽奖            |
+|AloneTcpClient      |20.04.04            |独立监控            |
+|ZoneTcpClient       |20.04.04            |分区监控            |
+|StormRaffle         |20.04.04            |节奏风暴            |
+|GiftRaffle          |20.04.04            |活动礼物            |
+|PkRaffle            |20.04.04            |大乱斗              |
+|GuardRaffle         |20.04.04            |舰长总督            |
+|AnchorRaffle        |20.04.04            |天选时刻            |
+|AwardRecord         |20.04.04            |获奖通知            |
+|Statistics          |20.04.04            |数据统计            |
 
 ## 打赏赞助
 
