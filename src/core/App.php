@@ -23,14 +23,7 @@ class App
      */
     public function __construct()
     {
-        set_time_limit(0);
-        error_reporting(E_ALL);
-        ini_set('display_errors', 'on');
-        header("Content-Type:text/html; charset=utf-8");
-        date_default_timezone_set('Asia/Shanghai');
-        if (PHP_SAPI != 'cli') {
-            die("Please run this script from command line");
-        }
+        (new Env())->set_configure()->inspect_extension();
     }
 
     /**
