@@ -23,7 +23,7 @@ class App
      */
     public function __construct()
     {
-        (new Env())->set_configure()->inspect_extension();
+        (new Env())->inspect_configure()->inspect_extension();
     }
 
     /**

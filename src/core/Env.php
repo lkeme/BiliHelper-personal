@@ -20,15 +20,12 @@ class Env
      */
     public function __construct()
     {
-        Log::info("欢迎使用 {$this->app_name} 当前版本 {$this->app_version}");
-        Log::info("程序使用相关请移步 https://github.com/lkeme/BiliHelper-personal 文档部分查看。");
-
-        if (PHP_SAPI != 'cli') {
-            die("Please run this script from command line .");
-        }
-        if (version_compare(PHP_VERSION, '7.0.0', '<')) {
-            die("Please upgrade PHP version >= 7.0.0 .");
-        }
+        set_time_limit(0);
+        header("Content-Type:text/html; charset=utf-8");
+        // ini_set('date.timezone', 'Asia/Shanghai');
+        date_default_timezone_set('Asia/Shanghai');
+        ini_set('display_errors', 'on');
+        error_reporting(E_ALL);
     }
 
     /**
@@ -48,15 +45,19 @@ class Env
     }
 
     /**
-     * @use 环境配置
+     * @use 检查环境
      */
-    public function set_configure()
+    public function inspect_configure()
     {
-        set_time_limit(0);
-        error_reporting(E_ALL);
-        ini_set('display_errors', 'on');
-        header("Content-Type:text/html; charset=utf-8");
-        date_default_timezone_set('Asia/Shanghai');
+        Log::info("欢迎使用 {$this->app_name} 当前版本 {$this->app_version}");
+        Log::info("程序使用相关请移步 https://github.com/lkeme/BiliHelper-personal 文档部分查看。");
+
+        if (PHP_SAPI != 'cli') {
+            die("Please run this script from command line .");
+        }
+        if (version_compare(PHP_VERSION, '7.0.0', '<')) {
+            die("Please upgrade PHP version >= 7.0.0 .");
+        }
         return $this;
     }
 }
