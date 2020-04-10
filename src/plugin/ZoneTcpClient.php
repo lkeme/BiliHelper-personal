@@ -149,6 +149,9 @@ class ZoneTcpClient
      */
     private static function analyJson($data = '', $assoc = true)
     {
+        if (is_array($data)) {
+            return $data;
+        }
         $data = json_decode($data, $assoc);
         if (($data && is_object($data)) || (is_array($data) && !empty($data))) {
             return $data;
@@ -183,6 +186,24 @@ class ZoneTcpClient
         }
         $data = [];
         switch ($de_raw['cmd']) {
+            case 'TV_START':
+                // 小电视
+                break;
+            case 'RAFFLE_START':
+                // 活动礼物
+                break;
+            case 'LOTTERY_START':
+                // 抽奖
+                break;
+            case 'PK_LOTTERY_START':
+                // 乱斗
+                break;
+            case 'GUARD_LOTTERY_START':
+                // 舰长
+                break;
+            case 'ALL_MSG':
+                // 未知
+                break;
             case 'NOTICE_MSG':
                 $msg_type = $de_raw['msg_type'];
                 $msg_self = $de_raw['msg_self'];
@@ -311,8 +332,13 @@ class ZoneTcpClient
     private static function genHandshakePkg($room_id): string
     {
         return self::packMsg(json_encode([
-            'uid' => mt_rand(1000000, 2999999),
-            'roomid' => intval($room_id),
+            "uid" => 0,
+            "roomid" => intval($room_id),
+            "protover" => 2,
+            "platform" => "web",
+            "clientver" => "1.10.6",
+            "type" => 2,
+            "key" => Live::getDanMuToken($room_id)
         ]), 0x0007);
     }
 
@@ -336,8 +362,10 @@ class ZoneTcpClient
      */
     private static function unPackMsg($value)
     {
-        $res = unpack('Npacklen/nheadlen/nver/Nop/Nseq', $value);
-        return $res;
+        if (strlen($value) < 4) exit();
+        $head = unpack('Npacklen/nheadlen/nver/Nop/Nseq', $value);
+        // Log::info(json_encode($head, true));
+        return $head;
     }
 
 
@@ -448,9 +476,36 @@ class ZoneTcpClient
             if (!$len_body)
                 continue;
             $body = self::reader($len_body);
-            if ($body)
-                self::onMessage($body, $type);
+            if ($body) {
+                if ($head['ver'] == 2) {
+                    $data_list = self::v2_split($body, $len_body);
+                    foreach ($data_list as $body) {
+                        self::onMessage($body, $type);
+                    }
+                } else {
+                    self::onMessage($body, $type);
+                }
+            }
         }
+    }
+
+    private static function v2_split($bin, $total)
+    {
+        $list = [];
+        $step = 0;
+        $data = gzuncompress($bin);
+        $total = strlen($data);
+        while (true) {
+            if ($step > 65535) exit();
+            if ($step == $total) break;
+            $bin = substr($data, $step, 16);
+            $head = self::unPackMsg($bin);
+            $length = isset($head['packlen']) ? $head['packlen'] : 16;
+            $body = substr($data, $step + 16, $length - 16);
+            $step += $length;
+            array_push($list, $body);
+        }
+        return $list;
     }
 
     /*

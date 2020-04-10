@@ -62,7 +62,7 @@ class Live
         $raw = Curl::get('other', $url, $payload);
         $de_raw = json_decode($raw, true);
         // 防止异常
-        if (!isset($de_raw['data']) || $de_raw['code']) {
+        if (!isset($de_raw['data']) || $de_raw['code'] || count($de_raw['data']) == 0) {
             Log::warning("获取直播分区异常: " . $de_raw['msg']);
             $area_info = [
                 'area_id' => $area_id,
@@ -140,6 +140,35 @@ class Live
         ];
         $raw = Curl::get('other', $url, $payload);
         return json_decode($raw, true);
+    }
+
+    /**
+     * @use 获取直播间弹幕信息
+     * @param $room_id
+     * @return array
+     */
+    public static function getDanMuConf($room_id): array
+    {
+        $url = 'https://api.live.bilibili.com/room/v1/Danmu/getConf';
+        $payload = [
+            'room_id' => $room_id,
+            'platform' => 'pc',
+            'player' => 'web'
+        ];
+        $raw = Curl::get('other', $url, $payload);
+        return json_decode($raw, true);
+    }
+
+
+    /**
+     * @use 获取弹幕信息Token
+     * @param $room_id
+     * @return string
+     */
+    public static function getDanMuToken($room_id): string
+    {
+        $data = self::getDanMuConf($room_id);
+        return $data['data']['token'];
     }
 
 
