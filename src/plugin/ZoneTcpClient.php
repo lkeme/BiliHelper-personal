@@ -185,24 +185,102 @@ class ZoneTcpClient
             return false;
         }
         $data = [];
+        $update_room = false;
         switch ($de_raw['cmd']) {
             case 'TV_START':
-                // 小电视
+                // 小电视飞船(1)
+                $data = [
+                    'room_id' => self::$room_id,
+                    'raffle_id' => $de_raw['data']['id'],
+                    'raffle_title' => $de_raw['data']['title'],
+                    'raffle_type' => 'small_tv',
+                    'source' => $msg
+                ];
                 break;
-            case 'RAFFLE_START':
-                // 活动礼物
-                break;
-            case 'LOTTERY_START':
-                // 抽奖
-                break;
-            case 'PK_LOTTERY_START':
-                // 乱斗
+            case 'SPECIAL_GIFT':
+                // 节奏风暴(1)
+                if (array_key_exists('39', $de_raw['data'])) {
+                    if ($de_raw['data']['39']['action'] == 'start') {
+                        $data = [
+                            'room_id' => self::$room_id,
+                            'raffle_id' => $de_raw['data']['39']['id'],
+                            'raffle_title' => '节奏风暴(1)',
+                            'raffle_type' => 'storm',
+                            'source' => $msg
+                        ];
+                    }
+                }
                 break;
             case 'GUARD_LOTTERY_START':
-                // 舰长
+                // 舰长(1)
+                $data = [
+                    'room_id' => $de_raw['data']['roomid'],
+                    'raffle_id' => $de_raw['data']['id'],
+                    'raffle_title' => '总督舰长(1)',
+                    'raffle_type' => 'guard',
+                    'source' => $msg
+                ];
                 break;
-            case 'ALL_MSG':
-                // 未知
+            case 'GUARD_MSG':
+                // 舰长(2)
+                // {"buy_type":3,"cmd":"GUARD_MSG","msg":":?淩白夜:? 在本房间开通了舰长"}
+                $data = [
+                    'room_id' => self::$room_id,
+                    'raffle_id' => self::$raffle_id++,
+                    'raffle_title' => '总督舰长(2)',
+                    'raffle_type' => 'guard',
+                    'source' => $msg
+                ];
+                break;
+            case 'LOTTERY_START':
+                // 舰长(3)
+                $data = [
+                    'room_id' => $de_raw['data']['roomid'],
+                    'raffle_id' => $de_raw['data']['id'],
+                    'raffle_title' => '总督舰长(3)',
+                    'raffle_type' => 'guard',
+                    'source' => $msg
+                ];
+                break;
+            case 'ANCHOR_LOT_START':
+                // 天选时刻(1)
+                $data = [
+                    'room_id' => $de_raw['data']['room_id'],
+                    'raffle_id' => $de_raw['data']['id'],
+                    'raffle_title' => '天选时刻(1)',
+                    'raffle_type' => 'anchor',
+                    'source' => $msg
+                ];
+                break;
+            case 'PK_LOTTERY_START':
+                // PK大乱斗(1)
+                $data = [
+                    'room_id' => $de_raw['data']['room_id'],
+                    'raffle_id' => $de_raw['data']['id'],
+                    'raffle_title' => 'PK大乱斗(1)',
+                    'raffle_type' => 'pk',
+                    'source' => $msg
+                ];
+                break;
+            case 'PK_BATTLE_END':
+                // PK大乱斗(2)
+                $data = [
+                    'room_id' => self::$room_id,
+                    'raffle_id' => $de_raw['pk_id'],
+                    'raffle_title' => 'PK大乱斗(2)',
+                    'raffle_type' => 'pk',
+                    'source' => $msg
+                ];
+                break;
+            case 'RAFFLE_START':
+                // 高能抽奖(1)
+                $data = [
+                    'room_id' => self::$room_id,
+                    'raffle_id' => $de_raw['data']['id'],
+                    'raffle_title' => $de_raw['data']['title'], // 高能抽奖(1)
+                    'raffle_type' => 'raffle',
+                    'source' => $msg
+                ];
                 break;
             case 'NOTICE_MSG':
                 $msg_type = $de_raw['msg_type'];
@@ -227,46 +305,43 @@ class ZoneTcpClient
                         'raffle_type' => 'raffle',
                         'source' => $msg
                     ];
+
                 }
                 break;
-            case 'GUARD_MSG':
-                $data = [
-                    'room_id' => $de_raw['roomid'],
-                    'raffle_id' => self::$raffle_id++,
-                    'raffle_title' => '总督舰长',
-                    'raffle_type' => 'raffle',
-                    'source' => $msg
-                ];
+            case 'DANMU_GIFT_LOTTERY_START':
+                // 弹幕抽奖(1)
+//                $data = [
+//                    'room_id' => $de_raw['data']['room_id'],
+//                    'raffle_id' => $de_raw['data']['id'],
+//                    'raffle_title' => $de_raw['data']['title'],
+//                    'raffle_type' => 'raffle',
+//                    'source' => $msg
+//                ];
                 break;
-            case 'SPECIAL_GIFT':
-                if (array_key_exists('39', $de_raw['data'])) {
-                    if ($de_raw['data']['39']['action'] == 'start') {
-                        $data = [
-                            'room_id' => $de_raw['roomid'],
-                            'raffle_id' => self::$raffle_id++,
-                            'raffle_title' => '节奏风暴',
-                            'raffle_type' => 'raffle',
-                            'source' => $msg
-                        ];
-                    }
-                }
+            case 'PREPARING':
+                // 房间内下播消息。
+                $update_room = true;
                 break;
-            case 'SYS_GIFT':
-                /**
-                 * 系统礼物消息, 广播
-                 */
+            case 'CUT_OFF':
+                // 房间内被下播消息。
+                $update_room = true;
                 break;
-            case 'SYS_MSG':
-                /**
-                 * 系统消息, 广播
-                 */
+            case 'WARNING':
+                // 房间内管理员警告消息。
+                $update_room = true;
                 break;
-            // TODO 支持更多消息类型
             default:
                 $data = [];
                 break;
         }
-
+        // 下播处理
+        if ($update_room) {
+            self::triggerReConnect([
+                'area_id' => self::$area_id,
+                'wait_time' => time()
+            ]);
+        }
+        // 处理数据
         if (!empty($data)) {
             unset($data['source']);
             if (!isset(self::$raffle_list[$data['raffle_type']])) {
