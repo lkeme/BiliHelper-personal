@@ -7,7 +7,14 @@ Group: [55308141](https://jq.qq.com/?_wv=1027&k=5AIDaJg) | **仅用于BUG提交�
 
 ## 公告
 
-Currently for Personal Edition **0.3.0.200410 alpha**  
+> Currently for Personal Edition **0.3.0.200419 alpha**  
+
+```notice
+开源本身是个很美好的，开源、共享服务放出来给公用，很简单很美好。  
+从开放服务以来，没想到过会被滥用，免费服务不值得被尊重、被珍惜。
+---- 免费的东西总是得不到人的珍惜。
+---- 只有花大价钱去买到的东西，才会令人信任。
+```
 
 ## 文档
 

@@ -1,6 +1,19 @@
 # Release Notes
 # 本项目Log
 
+## v0.3.0.200419 alpha (2020-04-19)
+
+### Added
+-
+
+### Changed
+- 去除主监控
+-
+
+### Fixed
+- 修复风暴回显过滤
+-
+
 ## v0.3.0.200410 alpha (2020-04-10)
 
 ### Added
