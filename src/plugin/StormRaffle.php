@@ -113,21 +113,21 @@ class StormRaffle extends BaseRaffle
                     Log::notice(self::formatInfo($raffle['raffle_id'], $num, '节奏风暴未实名或异常验证码'));
                     break;
                 }
-                if (isset($de_raw['data']) && empty($de_raw['data'])) {
-                    Log::notice(self::formatInfo($raffle['raffle_id'], $num, '节奏风暴在小黑屋'));
-                    break;
-                }
                 if ($de_raw['code'] == 0) {
                     Statistics::addSuccessList(self::ACTIVE_TITLE);
                     Log::notice(self::formatInfo($raffle['raffle_id'], $num, $de_raw['data']['mobile_content']));
                     break;
                 }
-                if ($de_raw['msg'] == '节奏风暴不存在' || $de_raw['msg'] == '节奏风暴抽奖过期') {
+                if ($de_raw['msg'] == '节奏风暴不存在' || $de_raw['msg'] == '节奏风暴抽奖过期' || $de_raw['msg'] == '没抢到') {
                     Log::notice(self::formatInfo($raffle['raffle_id'], $num, '节奏风暴已经结束'));
                     break;
                 }
                 if ($de_raw['msg'] == '已经领取奖励') {
                     Log::notice(self::formatInfo($raffle['raffle_id'], $num, '节奏风暴已经领取'));
+                    break;
+                }
+                if (isset($de_raw['data']) && empty($de_raw['data'])) {
+                    Log::notice(self::formatInfo($raffle['raffle_id'], $num, '节奏风暴在小黑屋'));
                     break;
                 }
                 if ($de_raw['msg'] == '你错过了奖励，下次要更快一点哦~') {
