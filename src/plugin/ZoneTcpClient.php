@@ -410,11 +410,11 @@ class ZoneTcpClient
         return self::packMsg(json_encode([
             "uid" => 0,
             "roomid" => intval($room_id),
-            "protover" => 2,
             "platform" => "web",
             "clientver" => "1.10.6",
+            "protover" => 2,
             "type" => 2,
-            "key" => Live::getDanMuToken($room_id)
+            // "key" => Live::getDanMuToken($room_id)
         ]), 0x0007);
     }
 
@@ -476,6 +476,10 @@ class ZoneTcpClient
                 $ret = 0;
                 $socket = self::$client->getResource();
                 while ($length) {
+                    if ($length < 1 || $length > 65535) {
+                        Log::warning("Socket error: [{$ret}] [{$length}]" . PHP_EOL);
+                        throw new Exception("Connection failure");
+                    }
                     $cnt = 0;
                     $r = array($socket);
                     $w = NULL;
@@ -489,7 +493,7 @@ class ZoneTcpClient
                     }
                     $ret = socket_recv($socket, $buffer, $length, 0);
                     if ($ret < 1) {
-                        print_r("Socket error: [{$ret}] [{$length}]" . PHP_EOL);
+                        Log::warning("Socket error: [{$ret}] [{$length}]" . PHP_EOL);
                         throw new Exception("Connection failure");
                     }
                     $data .= $buffer;
