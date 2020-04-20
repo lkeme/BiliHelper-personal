@@ -108,7 +108,7 @@ class AwardRecord
             // 范围
             if ($day <= 2 && empty($raffle['update_time'])) {
                 $info = $raffle['gift_name'] . 'x' . $raffle['gift_num'];
-                Log::notice("实物奖励于" . $raffle['end_time'] . "获奖: {$info} ,请留意查看...");
+                Log::notice("实物奖励于" . $raffle['create_time'] . "获奖: {$info} ,请留意查看...");
                 Notice::push('raffle', $info);
             }
             array_push(self::$raffle_list, $raffle['id']);
