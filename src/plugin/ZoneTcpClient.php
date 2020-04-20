@@ -20,6 +20,7 @@ use Socket\Raw\Factory;
 class ZoneTcpClient
 {
     use TimeLock;
+
     private static $raffle_id = 0;
     private static $raffle_list = [];
     private static $server_addr = null;
@@ -214,7 +215,7 @@ class ZoneTcpClient
             case 'GUARD_LOTTERY_START':
                 // 舰长(1)
                 $data = [
-                    'room_id' => $de_raw['data']['roomid'],
+                    'room_id' => self::$room_id,
                     'raffle_id' => $de_raw['data']['id'],
                     'raffle_title' => '总督舰长(1)',
                     'raffle_type' => 'guard',
