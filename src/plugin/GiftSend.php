@@ -18,6 +18,7 @@ use BiliHelper\Util\TimeLock;
 class GiftSend
 {
     use TimeLock;
+
     protected static $uid = 0;
     protected static $tid = 0;
     protected static $r_uid = 0;
@@ -186,6 +187,7 @@ class GiftSend
         Log::info('勋章列表获取成功!');
         if (isset($data['data']['fansMedalList'])) {
             foreach ($data['data']['fansMedalList'] as $vo) {
+                if (isset($vo['roomid'])) continue;
                 if (in_array($vo['roomid'], self::$room_list) && ($vo['day_limit'] - $vo['today_feed'])) {
                     self::$medal_list[(string)$vo['roomid']] = ($vo['day_limit'] - $vo['today_feed']);
 //                    $data = [
