@@ -438,7 +438,6 @@ class ZoneTcpClient
      */
     private static function unPackMsg($value)
     {
-        if (strlen($value) < 4) exit();
         $head = unpack('Npacklen/nheadlen/nver/Nop/Nseq', $value);
         // Log::info(json_encode($head, true));
         return $head;
@@ -576,7 +575,6 @@ class ZoneTcpClient
         $data = gzuncompress($bin);
         $total = strlen($data);
         while (true) {
-            if ($step > 65535) exit();
             if ($step == $total) break;
             $bin = substr($data, $step, 16);
             $head = self::unPackMsg($bin);
