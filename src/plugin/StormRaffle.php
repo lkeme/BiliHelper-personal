@@ -108,6 +108,10 @@ class StormRaffle extends BaseRaffle
             ];
             for ($i = 1; $i < $num; $i++) {
                 $raw = Curl::post('app', $url, Sign::common($payload));
+                if (strpos((string)$raw, 'html') !== false) {
+                    Log::notice(self::formatInfo($raffle['raffle_id'], $num, '由于触发哔哩哔哩安全风控策略，该次访问请求被拒绝'));
+                    break;
+                }
                 $de_raw = json_decode($raw, true);
                 if ($de_raw['code'] == 429 || $de_raw['code'] == -429) {
                     Log::notice(self::formatInfo($raffle['raffle_id'], $num, '节奏风暴未实名或异常验证码'));

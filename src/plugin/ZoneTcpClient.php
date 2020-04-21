@@ -23,7 +23,7 @@ class ZoneTcpClient
 
     private static $raffle_id = 0;
     private static $raffle_list = [];
-    private static $server_addr = null;
+    private static $server = [];
     private static $server_key = null;
 
     private static $area_id;
@@ -58,9 +58,6 @@ class ZoneTcpClient
         if (empty(getenv('ZONE_SERVER_ADDR'))) {
             exit('推送服务器信息不完整, 请检查配置文件!');
         }
-        if (!self::$server_addr) {
-            self::$server_addr = getenv('ZONE_SERVER_ADDR');
-        }
         if (!self::$client) {
             self::initConnect();
         }
@@ -73,11 +70,11 @@ class ZoneTcpClient
     {
         $areas = Live::fetchLiveAreas();
         foreach ($areas as $area_id) {
-            self::$client_maps["server{$area_id}"] = ["area_id" => null, "room_id" => null, "client" => null, "heart_beat" => 0];
+            self::$client_maps["server{$area_id}"] = ["area_id" => null, "room_id" => null, "client" => null, "heart_beat" => 0, "status" => false];
             self::triggerReConnect([
                 'area_id' => $area_id,
                 'wait_time' => time()
-            ]);
+            ], 'Initialization');
         }
     }
 
@@ -85,9 +82,12 @@ class ZoneTcpClient
     /**
      * @use 触发重连
      * @param array $area_data
+     * @param string $reason
      */
-    private static function triggerReConnect(array $area_data)
+    private static function triggerReConnect(array $area_data, string $reason)
     {
+        Log::debug("Reconnect Reason: {$area_data['area_id']} -> {$reason}");
+        self::$client_maps["server" . $area_data['area_id']]['status'] = false;
         array_push(self::$trigger_restart, $area_data);
     }
 
@@ -108,9 +108,9 @@ class ZoneTcpClient
             }
             Log::notice("update_connections triggered, info: {$area_data['area_id']}");
             $area_info = Live::areaToRid($area_data['area_id']);
-//            $area_info = [
-//                'area_id' => $area_id,
-//                'room_id' => 23058
+//            $area_room_info = [
+//                'area_id' => $area_data['area_id'],
+//                'room_id' => $room_id
 //            ];
             self::update($area_info);
         }
@@ -118,27 +118,32 @@ class ZoneTcpClient
 
     /**
      * @use 更新操作
-     * @param array $area_info
+     * @param array $area
      */
-    private static function update(array $area_info)
+    private static function update(array $area)
     {
-        self::$area_id = $area_info['area_id'];
-        self::$room_id = $area_info['room_id'];
+        self::$area_id = $area['area_id'];
+        self::$room_id = $area['room_id'];
         try {
-            self::$client = (new Factory())->createClient(self::$server_addr, 40);
+            self::$server = Live::getDanMuInfo(self::$room_id);
+            self::$client = (new Factory())->createClient(self::$server['addr'], 40);
             self::$client->setBlocking(false);
             self::sendHandShake();
-            self::$client_maps["server" . self::$area_id]['client'] = self::$client;
-            self::$client_maps["server" . self::$area_id]['area_id'] = self::$area_id;
-            self::$client_maps["server" . self::$area_id]['room_id'] = self::$room_id;
-            self::$client_maps["server" . self::$area_id]['heart_beat'] = time() + 20;
-            Log::info("连接到 " . self::$client->getPeerName() . "#" . self::$area_id . " 推送服务器");
+            self::$client_maps["server" . self::$area_id] = [
+                'client' => self::$client,
+                'area_id' => self::$area_id,
+                'room_id' => self::$room_id,
+                'status' => true,
+                'heart_beat' => time() + 25,
+            ];
+            // self::$client->getPeerName()
+            Log::info("连接到 @分区 {$area['area_id']}  @房间 {$area['room_id']} @状态 √ @信息 Successful!");
         } catch (Exception $e) {
-            Log::error("连接到 #" . self::$area_id . " 推送服务器失败, {$e->getMessage()}");
+            Log::error("连接到 @分区 {$area['area_id']}  @房间 {$area['room_id']} @状态 × @信息 {$e->getMessage()}");
             self::triggerReConnect([
                 'area_id' => self::$area_id,
                 'wait_time' => time() + 60
-            ]);
+            ], self::formatErr($e));
         }
     }
 
@@ -340,7 +345,7 @@ class ZoneTcpClient
             self::triggerReConnect([
                 'area_id' => self::$area_id,
                 'wait_time' => time()
-            ]);
+            ], 'Interrupt live broadcast');
         }
         // 处理数据
         if (!empty($data)) {
@@ -414,7 +419,7 @@ class ZoneTcpClient
             "clientver" => "1.10.6",
             "protover" => 2,
             "type" => 2,
-            // "key" => Live::getDanMuToken($room_id)
+            "key" => self::$server['token'],
         ]), 0x0007);
     }
 
@@ -438,7 +443,10 @@ class ZoneTcpClient
      */
     private static function unPackMsg($value)
     {
-        if (strlen($value) < 4) exit();
+        if (strlen($value) < 4) {
+            Log::warning("unPackMsg: 包头异常 " . strlen($value));
+            return [];
+        };
         $head = unpack('Npacklen/nheadlen/nver/Nop/Nseq', $value);
         // Log::info(json_encode($head, true));
         return $head;
@@ -451,6 +459,10 @@ class ZoneTcpClient
     private static function heartBeat()
     {
         foreach (self::$client_maps as $key => $client_info) {
+            // 如果重连状态 跳过
+            if (!$client_info['status']) {
+                continue;
+            }
             if ($client_info['heart_beat'] > time()) {
                 continue;
             }
@@ -478,7 +490,7 @@ class ZoneTcpClient
                 while ($length) {
                     if ($length < 1 || $length > 65535) {
                         Log::warning("Socket error: [{$ret}] [{$length}]" . PHP_EOL);
-                        throw new Exception("Connection failure");
+                        throw new Exception("Socket error: [{$ret}] [{$length}]");
                     }
                     $cnt = 0;
                     $r = array($socket);
@@ -487,14 +499,14 @@ class ZoneTcpClient
                     while ($cnt++ < 60) {
                         $ret = socket_select($r, $w, $e, 1);
                         if ($ret === false)
-                            throw new Exception("Connection failure");
+                            throw new Exception("Socket error: ret == false");
                         if ($ret)
                             break;
                     }
                     $ret = socket_recv($socket, $buffer, $length, 0);
                     if ($ret < 1) {
                         Log::warning("Socket error: [{$ret}] [{$length}]" . PHP_EOL);
-                        throw new Exception("Connection failure");
+                        throw new Exception("Socket error: [{$ret}] [{$length}]");
                     }
                     $data .= $buffer;
                     unset($buffer);
@@ -502,11 +514,11 @@ class ZoneTcpClient
                 }
                 if ($is_header) $data = self::unPackMsg($data);
             }
-        } catch (Exception $exception) {
+        } catch (Exception $e) {
             self::triggerReConnect([
                 'area_id' => self::$area_id,
                 'wait_time' => time() + 60
-            ]);
+            ], self::formatErr($e));
             $data = false;
         }
         return $data;
@@ -525,11 +537,11 @@ class ZoneTcpClient
                 $status = self::$client->write($data);
                 break;
             }
-        } catch (Exception $exception) {
+        } catch (Exception $e) {
             self::triggerReConnect([
                 'area_id' => self::$area_id,
                 'wait_time' => time() + 60
-            ]);
+            ], self::formatErr($e));
         }
         return $status;
     }
@@ -541,6 +553,10 @@ class ZoneTcpClient
     private static function receive()
     {
         foreach (self::$client_maps as $client_info) {
+            // 如果重连状态 就跳过
+            if (!$client_info['status']) {
+                continue;
+            }
             self::$client = $client_info['client'];
             self::$area_id = $client_info['area_id'];
             self::$room_id = $client_info['room_id'];
@@ -552,7 +568,7 @@ class ZoneTcpClient
             $length = isset($head['packlen']) ? $head['packlen'] : 16;
             $type = isset($head['op']) ? $head['op'] : 0x0000;
             $len_body = $length - 16;
-            Log::debug("(len=$len_body)");
+            Log::debug("(AreaId={$client_info['area_id']} -> RoomId={$client_info['room_id']} -> Len={$len_body})");
             if (!$len_body)
                 continue;
             $body = self::reader($len_body);
@@ -576,7 +592,10 @@ class ZoneTcpClient
         $data = gzuncompress($bin);
         $total = strlen($data);
         while (true) {
-            if ($step > 65535) exit();
+            if ($step > 65535) {
+                Log::warning("v2_split: 数据step异常 {$step}");
+                break;
+            };
             if ($step == $total) break;
             $bin = substr($data, $step, 16);
             $head = self::unPackMsg($bin);
@@ -586,6 +605,17 @@ class ZoneTcpClient
             array_push($list, $body);
         }
         return $list;
+    }
+
+    private static function getClass($object): string
+    {
+        $class = \get_class($object);
+        return 'c' === $class[0] && 0 === strpos($class, "class@anonymous\0") ? get_parent_class($class) . '@anonymous' : $class;
+    }
+
+    private static function formatErr($e): string
+    {
+        return sprintf('Uncaught Exception %s: "%s" at %s line %s', self::getClass($e), $e->getMessage(), $e->getFile(), $e->getLine());
     }
 
     /*

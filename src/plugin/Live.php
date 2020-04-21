@@ -143,7 +143,7 @@ class Live
     }
 
     /**
-     * @use 获取直播间弹幕信息
+     * @use 获取弹幕配置
      * @param $room_id
      * @return array
      */
@@ -161,16 +161,24 @@ class Live
 
 
     /**
-     * @use 获取弹幕信息Token
+     * @use 获取配置信息
      * @param $room_id
-     * @return string
+     * @return array
      */
-    public static function getDanMuToken($room_id): string
+    public static function getDanMuInfo($room_id): array
     {
         $data = self::getDanMuConf($room_id);
-        return $data['data']['token'];
+        if (isset($data['data']['host_server_list'][0]['host'])) {
+            $server = $data['data']['host_server_list'][0];
+            $addr = "tcp://{$server['host']}:{$server['port']}/sub";
+        } else {
+            $addr = getenv('ZONE_SERVER_ADDR');
+        }
+        return [
+            'addr' => $addr,
+            'token' => isset($data['data']['token']) ? $data['data']['token'] : '',
+        ];
     }
-
 
     /**
      * @use web端获取直播间信息
