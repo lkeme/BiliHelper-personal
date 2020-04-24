@@ -112,8 +112,8 @@ class Notice
                 break;
             case 'banned':
                 $info = [
-                    'title' => '账号封禁',
-                    'content' => '[' . $now_time . ']' . ' 用户: ' . self::$uname . ' 账号被封禁: 程序开始睡眠，凌晨自动唤醒，距离唤醒还有' . self::$result . '小时',
+                    'title' => '任务小黑屋',
+                    'content' => '[' . $now_time . ']' . ' 用户: ' . self::$uname . ' 小黑屋: ' . self::$result,
                 ];
                 break;
             case 'error':

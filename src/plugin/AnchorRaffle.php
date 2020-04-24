@@ -145,9 +145,13 @@ class AnchorRaffle extends BaseRaffle
             $data = $result['source'];
             $content = $result['content'];
             $de_raw = json_decode($content, true);
+            // {"code":-403,"data":null,"message":"访问被拒绝","msg":"访问被拒绝"}
             if (isset($de_raw['code']) && $de_raw['code'] == 0) {
                 Statistics::addSuccessList(self::ACTIVE_TITLE);
                 Log::notice("房间 {$data['room_id']} 编号 {$data['raffle_id']} " . self::ACTIVE_TITLE . ": 参与抽奖成功~");
+            } elseif (isset($de_raw['msg']) && $de_raw['code'] == -403 && $de_raw['msg'] == '访问被拒绝') {
+                Log::debug("房间 {$data['room_id']} 编号 {$data['raffle_id']} " . self::ACTIVE_TITLE . ": {$de_raw['message']}");
+                self::pauseLock();
             } else {
                 Log::notice("房间 {$data['room_id']} 编号 {$data['raffle_id']} " . self::ACTIVE_TITLE . ": {$de_raw['message']}");
             }

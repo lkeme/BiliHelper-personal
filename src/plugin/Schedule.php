@@ -11,99 +11,141 @@
 namespace BiliHelper\Plugin;
 
 use BiliHelper\Core\Log;
-use BiliHelper\Core\Curl;
 use BiliHelper\Util\TimeLock;
 
 
 class Schedule
 {
     use TimeLock;
+
     // TODO 黑白名单|考虑添加到每个插件内部自动添加|优化RUN逻辑代码
     private static $unlock_hour = 24;
-    private static $unlock_time = 0;
-    private static $fillable = ['Login', 'Schedule', 'Daily', 'Judge', 'MasterSite', 'GiftSend', 'Task', 'Silver2Coin', 'GroupSignIn', 'AwardRecord', 'Statistics'];
-    private static $guarded = ['Barrage', 'GiftHeart', 'Heart', 'Silver', 'MaterialObject', 'AloneTcpClient', 'ZoneTcpClient', 'StormRaffle', 'GuardRaffle', 'PkRaffle', 'GiftRaffle', 'AnchorRaffle'];
+    private static $unlock_timers = [];
     private static $sleep_section = [];
-
+    // 日常类
+    private static $fillable = ['Login', 'Schedule', 'Daily', 'Judge', 'MasterSite', 'GiftSend', 'Task', 'Silver2Coin', 'GroupSignIn', 'AwardRecord', 'Statistics'];
+    // 任务类
+    private static $guarded_first = ['Barrage', 'GiftHeart', 'Heart', 'Silver', 'MaterialObject'];
+    // 监控类
+    private static $guarded_second = ['AloneTcpClient', 'ZoneTcpClient',];
+    // 抽奖类
+    private static $guarded_third = ['StormRaffle', 'GuardRaffle', 'PkRaffle', 'GiftRaffle', 'AnchorRaffle'];
 
     public static function run()
     {
         if (self::getLock() > time()) {
             return;
-        } else {
-            self::setLock(1 * 60);
         }
-        // 封禁逻辑
-        if (self::$unlock_time < time()) {
-            if (!self::isRefuse()) {
-                self::setLock(5 * 60);
-            } else {
-                self::setLock(1 * 60);
-                return;
-            }
-        }
-        // 休眠逻辑
-        if (getenv('USE_SLEEP') != 'false' && self::$unlock_time < time() && self::$unlock_hour != date('H')) {
-            if (!self::isPause()) {
-                self::setLock(5 * 60);
-            } else {
-                self::setLock(1 * 60);
-                return;
-            }
-        };
+        self::isSleep();
+        self::isSpecialPause();
+        self::setLock(1 * 60);
     }
 
     /**
      * @use 检查休眠
-     * @return bool
      */
-    private static function isPause(): bool
+    private static function isSleep()
     {
-        self::$sleep_section = empty(self::$filter_type) ? explode(',', getenv('SLEEP_SECTION')) : self::$sleep_section;
-        if (in_array(date('H'), self::$sleep_section)) {
-            $unlock_time = 60 * 60;
-            self::stopProc($unlock_time);
-            Log::warning('进入自定义休眠时间范围，暂停非必要任务，自动开启！');
-            return true;
-        }
-        return false;
+        if (getenv('USE_SLEEP') != 'false' && self::$unlock_hour != date('H')) {
+            self::$sleep_section = empty(self::$sleep_section) ? explode(',', getenv('SLEEP_SECTION')) : self::$sleep_section;
+            if (!in_array(date('H'), self::$sleep_section)) {
+                return false;
+            };
+            self::handleBan('sleep');
+        };
+        return true;
     }
 
+
     /**
-     * @use 检查封禁
-     * @return bool
+     * @use 特殊暂停
      */
-    private static function isRefuse(): bool
+    private static function isSpecialPause()
     {
-        $url = 'https://api.live.bilibili.com/mobile/freeSilverAward';
-        $payload = [];
-        $raw = Curl::get('app', $url, Sign::common($payload));
-        $de_raw = json_decode($raw, true);
-        if ($de_raw['msg'] == '访问被拒绝') {
-            $unlock_time = strtotime(date("Y-m-d", strtotime("+1 day", time()))) - time();
-            self::stopProc($unlock_time);
-            Log::warning('账号拒绝访问，暂停非必要任务，自动开启！');
-            // 推送被ban信息
-            Notice::push('banned', floor($unlock_time / 60 / 60));
-            return true;
+        foreach (self::$guarded_second as $classname) {
+            $status = call_user_func(array(__NAMESPACE__ . '\\' . $classname, 'getPauseStatus'));
+            if ($status) {
+                return true;
+            }
         }
-        return false;
+        foreach (self::$guarded_third as $classname) {
+            $status = call_user_func(array(__NAMESPACE__ . '\\' . $classname, 'getPauseStatus'));
+            if (!$status) {
+                return false;
+            }
+        }
+        self::handleBan('special');
+        return true;
     }
+
+
+    /**
+     * @use 处理禁令
+     * @param $action
+     * @param string $classname
+     */
+    private static function handleBan($action, $classname = '')
+    {
+        switch ($action) {
+            // 休眠
+            case 'sleep':
+                foreach (self::$fillable as $classname) {
+                    Log::info("插件 {$classname} 白名单，保持当前状态继续");
+                }
+                $unlock_time = 60 * 60;
+                self::$unlock_hour = date('H');
+                $classname_list = array_merge(self::$guarded_first, self::$guarded_second, self::$guarded_third);
+                self::stopProc($classname_list, $unlock_time, true);
+                Log::warning('进入自定义休眠时间范围，暂停非必要任务，自动开启！');
+                break;
+            // 暂停访问
+            case 'pause':
+                // 访问拒绝 统一时间 第二天0点
+                $unlock_time = strtotime(date("Y-m-d", strtotime("+1 day", time()))) - time();
+                self::stopProc([$classname], $unlock_time);
+                Log::warning("{$classname} 任务拒绝访问，暂停任务，自动开启！");
+                // 推送被ban信息
+                $time = floor($unlock_time / 60 / 60);
+                Notice::push('banned', "任务 {$classname} 暂停，{$time} 小时后自动恢复！");
+                break;
+            // 特殊类
+            case 'special':
+                // 访问拒绝 统一时间 第二天0点
+                $unlock_time = strtotime(date("Y-m-d", strtotime("+1 day", time()))) - time();
+                self::stopProc(self::$guarded_second, $unlock_time);
+                Log::warning("所有抽奖任务拒绝访问，暂停监控任务，自动开启！");
+                break;
+            default:
+                break;
+        }
+    }
+
 
     /**
      * @use 停止运行
+     * @param array $classname_list
      * @param int $unlock_time
+     * @param bool $force
      */
-    private static function stopProc(int $unlock_time)
+    private static function stopProc(array $classname_list, int $unlock_time, bool $force = false)
     {
-        self::$unlock_time = time() + $unlock_time;
-        self::$unlock_hour = date('H');
-        foreach (self::$fillable as $classname) {
-            Log::info("插件 {$classname} 白名单，保持当前状态继续");
-        }
-        foreach (self::$guarded as $classname) {
+        foreach ($classname_list as $classname) {
             Log::info("插件 {$classname} 黑名单，锁定状态将于" . date("Y-m-d H:i", time() + $unlock_time) . "解除");
+            // 强制 无视小黑屋设定
+            if ($force) {
+                call_user_func(array(__NAMESPACE__ . '\\' . $classname, 'setPauseStatus'), false);
+            }
             call_user_func(array(__NAMESPACE__ . '\\' . $classname, 'setLock'), $unlock_time + 3 * 60);
+            call_user_func(array(__NAMESPACE__ . '\\' . $classname, 'setPauseStatus'), true);
         }
+    }
+
+    /**
+     * @use 触发封禁
+     * @param string $classname
+     */
+    public static function triggerRefused(string $classname)
+    {
+        self::handleBan('pause', $classname);
     }
 }

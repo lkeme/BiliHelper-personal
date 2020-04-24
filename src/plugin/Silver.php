@@ -17,6 +17,7 @@ use BiliHelper\Util\TimeLock;
 class Silver
 {
     use TimeLock;
+
     protected static $task = [];
 
     public static function run()
@@ -24,6 +25,7 @@ class Silver
         if (self::getLock() > time()) {
             return;
         }
+        self::setPauseStatus();
 
         if (empty(self::$task)) {
             self::getSilverBox();
@@ -80,6 +82,12 @@ class Silver
         ];
         $data = Curl::get('app', $url, Sign::common($payload));
         $data = json_decode($data, true);
+
+        // {"code":400,"msg":"访问被拒绝","message":"访问被拒绝","data":[]}
+        if (isset($data['msg']) && $data['code'] == 400 && $data['msg'] == '访问被拒绝') {
+            self::pauseLock();
+            return;
+        }
 
         if ($data['code'] == -800) {
             self::setLock(12 * 60 * 60);

@@ -23,6 +23,7 @@ class GiftHeart
         if (self::getLock() > time()) {
             return;
         }
+        self::setPauseStatus();
         if (self::giftHeart()) {
             self::setLock(60 * 60);
             return;
@@ -43,6 +44,12 @@ class GiftHeart
         ];
         $raw = Curl::get('app', $url, Sign::common($payload));
         $de_raw = json_decode($raw, true);
+
+        // {"code":400,"msg":"访问被拒绝","message":"访问被拒绝","data":[]}
+        if (isset($de_raw['msg']) && $de_raw['code'] == 400 && $de_raw['msg'] == '访问被拒绝') {
+            self::pauseLock();
+            return false;
+        }
 
         if ($de_raw['code'] == -403) {
             Log::info($de_raw['msg']);

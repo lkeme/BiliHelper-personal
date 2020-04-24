@@ -19,6 +19,7 @@ use Socket\Raw\Factory;
 class AloneTcpClient
 {
     use TimeLock;
+
     private static $heart_lock = 0;
     private static $client = null;
     private static $server_addr = null;
@@ -33,6 +34,7 @@ class AloneTcpClient
         if (self::getLock() > time() || getenv('USE_ALONE_SERVER') == 'false') {
             return;
         }
+        self::setPauseStatus();
         self::init();
         self::heartBeat();
         self::receive();
