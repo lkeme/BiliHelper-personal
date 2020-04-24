@@ -4,7 +4,9 @@
 namespace BiliHelper\Tool;
 
 use BiliHelper\Core\Log;
-use BiliHelper\Core\Curl;class DumpMemory
+use BiliHelper\Core\Curl;
+
+class DumpMemory
 {
     public static function dd($title)
     {

@@ -152,8 +152,8 @@ class Login
             $url = 'https://passport.snm0516.aisee.tv/api/tv/login';
             $payload = [
                 'channel' => 'master',
-                'token' => '5598158bcd8511e2',
-                'guid' => 'XYEBAA3E54D502E37BD606F0589A356902FCF',
+                'token' => '5598158bcd8511e9',
+                'guid' => 'XYEBAA3E54D502E73BD606F0589A356902FCF',
                 'username' => $user,
                 'password' => base64_encode($crypt),
                 'captcha' => $captcha,
@@ -201,7 +201,7 @@ class Login
         Log::info('登录需要验证, 启动验证码登录!');
         $url = 'https://passport.snm0516.aisee.tv/api/captcha';
         $payload = [
-            'token' => '5598158bcd8511e2'
+            'token' => '5598158bcd8511e9'
         ];
         $headers = [
             'Accept' => 'application/json, text/plain, */*',

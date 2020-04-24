@@ -118,6 +118,9 @@ class PkRaffle extends BaseRaffle
             if (isset($de_raw['code']) && $de_raw['code'] == 0) {
                 Log::notice("房间 {$data['room_id']} 编号 {$data['raffle_id']} " . self::ACTIVE_TITLE . ": {$de_raw['data']['award_text']}");
                 Statistics::addSuccessList(self::ACTIVE_TITLE);
+            } elseif (isset($de_raw['msg']) && $de_raw['code'] == -403 && $de_raw['msg'] == '访问被拒绝') {
+                Log::debug("房间 {$data['room_id']} 编号 {$data['raffle_id']} " . self::ACTIVE_TITLE . ": {$de_raw['message']}");
+                self::pauseLock();
             } else {
                 Log::notice("房间 {$data['room_id']} 编号 {$data['raffle_id']} " . self::ACTIVE_TITLE . ": {$de_raw['message']}");
             }

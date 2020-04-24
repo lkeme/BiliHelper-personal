@@ -42,6 +42,7 @@ class ZoneTcpClient
         if (self::getLock() > time() || getenv('USE_ZONE_SERVER') == 'false') {
             return;
         }
+        self::setPauseStatus();
         self::init();
         self::updateConnection();
         self::heartBeat();
@@ -353,8 +354,9 @@ class ZoneTcpClient
             if (!isset(self::$raffle_list[$data['raffle_type']])) {
                 self::$raffle_list[$data['raffle_type']] = [];
             }
+            $data['area_id'] = self::$area_id;
             array_push(self::$raffle_list[$data['raffle_type']], $data);
-            // Log::info("获取到分区 #" . self::$area_id . "# {$data['source']}");
+            Log::info("监测到 @分区 {$data['area_id']} @房间 {$data['room_id']} @抽奖 {$data['raffle_title']}");
             // print_r($data);
         }
     }

@@ -12,7 +12,9 @@
 namespace BiliHelper\Plugin;
 
 use BiliHelper\Core\Log;
-use BiliHelper\Core\Curl;abstract class BaseRaffle
+use BiliHelper\Core\Curl;
+
+abstract class BaseRaffle
 {
     const ACTIVE_TITLE = '';
     const ACTIVE_SWITCH = '';
@@ -30,6 +32,7 @@ use BiliHelper\Core\Curl;abstract class BaseRaffle
         if (static::getLock() > time()) {
             return;
         }
+        static::setPauseStatus();
         static::startLottery();
     }
 
@@ -170,6 +173,10 @@ use BiliHelper\Core\Curl;abstract class BaseRaffle
     {
         // 开关
         if (getenv(static::ACTIVE_SWITCH) == 'false') {
+            return false;
+        }
+        // 黑屋
+        if (static::getPauseStatus()) {
             return false;
         }
         $current_rid = (int)$data['rid'];
