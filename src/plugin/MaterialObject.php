@@ -27,6 +27,7 @@ class MaterialObject
         if (getenv('USE_MO') == 'false') {
             return;
         }
+        self::setPauseStatus();
         if (self::getLock() > time()) {
             return;
         }

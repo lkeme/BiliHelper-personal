@@ -25,11 +25,13 @@ class Schedule
     // 日常类
     private static $fillable = ['Login', 'Schedule', 'Daily', 'Judge', 'MasterSite', 'GiftSend', 'Task', 'Silver2Coin', 'GroupSignIn', 'AwardRecord', 'Statistics'];
     // 任务类
-    private static $guarded_first = ['Barrage', 'GiftHeart', 'Heart', 'Silver', 'MaterialObject'];
+    private static $guarded_first = ['Barrage', 'GiftHeart', 'Silver', 'MaterialObject'];
     // 监控类
     private static $guarded_second = ['AloneTcpClient', 'ZoneTcpClient',];
     // 抽奖类
     private static $guarded_third = ['StormRaffle', 'GuardRaffle', 'PkRaffle', 'GiftRaffle', 'AnchorRaffle'];
+    // 特殊 老爷处理
+    private static $guarded_fourth = ['Heart'];
 
     public static function run()
     {
@@ -95,6 +97,9 @@ class Schedule
                 $unlock_time = 60 * 60;
                 self::$unlock_hour = date('H');
                 $classname_list = array_merge(self::$guarded_first, self::$guarded_second, self::$guarded_third);
+                if (!User::isMaster()) {
+                    $classname_list = array_merge($classname_list, self::$guarded_fourth);
+                }
                 self::stopProc($classname_list, $unlock_time, true);
                 Log::warning('进入自定义休眠时间范围，暂停非必要任务，自动开启！');
                 break;
