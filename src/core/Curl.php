@@ -232,7 +232,7 @@ class Curl
             'Accept-Encoding' => 'gzip',
             'Accept-Language' => 'zh-cn',
             'Connection' => 'keep-alive',
-            'Content-Type' => 'application/x-www-form-urlencoded',
+            // 'Content-Type' => 'application/x-www-form-urlencoded',
             'User-Agent' => 'Mozilla/5.0 BiliDroid/5.51.1 (bbcallen@gmail.com)',
             // 'Referer' => 'https://live.bilibili.com/',
         ];
@@ -240,7 +240,7 @@ class Curl
             'Accept' => "application/json, text/plain, */*",
             'Accept-Encoding' => 'gzip, deflate',
             'Accept-Language' => "zh-CN,zh;q=0.9",
-            'Content-Type' => 'application/x-www-form-urlencoded',
+            // 'Content-Type' => 'application/x-www-form-urlencoded',
             'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/82.0.4056.0 Safari/537.36 Edg/82.0.431.0',
             // 'Referer' => 'https://live.bilibili.com/',
         ];

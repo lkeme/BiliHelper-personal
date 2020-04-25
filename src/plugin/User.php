@@ -12,6 +12,7 @@ namespace BiliHelper\Plugin;
 
 use BiliHelper\Core\Curl;
 use BiliHelper\Core\Config;
+use http\Env\Url;
 
 class User
 {
@@ -132,4 +133,129 @@ class User
             'sid' => $sid,
         ];
     }
+
+    /**
+     * @use 获取关注列表
+     * @return array
+     */
+    public static function fetchFollowings(): array
+    {
+        $user_info = User::parseCookies();
+        $uid = $user_info['uid'];
+        $followings = [];
+        for ($i = 1; $i < 100; $i++) {
+            $url = "https://api.bilibili.com/x/relation/followings";
+            $payload = [
+                'vmid' => $uid,
+                'pn' => $i,
+                'ps' => 50,
+            ];
+            $headers = [
+                'referer' => "https://space.bilibili.com/{$uid}/fans/follow?tagid=-1",
+            ];
+            $raw = Curl::get('pc', $url, $payload, $headers);
+            $de_raw = json_decode($raw, true);
+            if ($de_raw['code'] == 0 && isset($de_raw['data']['list'])) {
+                foreach ($de_raw['data']['list'] as $user) {
+                    array_push($followings, $user['mid']);
+                }
+                if (count($followings) == $de_raw['data']['total']) {
+                    break;
+                }
+                continue;
+            }
+            break;
+        }
+        return $followings;
+    }
+
+
+    /**
+     * @use 设置用户关注
+     * @param int $follow_uid
+     * @param bool $un_follow
+     * @return bool
+     */
+    public static function setUserFollow(int $follow_uid, $un_follow = false): bool
+    {
+        $user_info = User::parseCookies();
+        $url = 'https://api.live.bilibili.com/relation/v1/Feed/SetUserFollow';
+        $payload = [
+            'uid' => $user_info['uid'],
+            'type' => $un_follow ? 0 : 1,
+            'follow' => $follow_uid,
+            're_src' => 18,
+            'csrf_token' => $user_info['token'],
+            'csrf' => $user_info['token'],
+            'visit_id' => ''
+        ];
+        $headers = [
+            'origin' => 'https://live.bilibili.com',
+            'referer' => 'https://live.bilibili.com/',
+        ];
+        $raw = Curl::post('pc', $url, $payload, $headers);
+        // {"code":0,"msg":"success","message":"success","data":[]}
+        $de_raw = json_decode($raw, true);
+        if ($de_raw['code'] == 0) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @use 创建关注分组
+     * @param string $tag_name
+     * @return bool
+     */
+    public static function createRelationTag(string $tag_name): bool
+    {
+        $user_info = User::parseCookies();
+        $url = 'https://api.bilibili.com/x/relation/tag/create?cross_domain=true';
+        $payload = [
+            'tag' => $tag_name,
+            'csrf' => $user_info['token'],
+        ];
+        $headers = [
+            'content-type' => 'application/x-www-form-urlencoded; charset=UTF-8',
+            'origin' => 'https://live.bilibili.com',
+            'referer' => 'https://link.bilibili.com/iframe/blfe-link-followIframe'
+        ];
+        $raw = Curl::post('pc', $url, $payload, $headers);
+        $de_raw = json_decode($raw, true);
+        // {"code":0,"message":"0","ttl":1,"data":{"tagid":244413}}
+        if ($de_raw['code'] == 0) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @use 添加用户到分组
+     * @param int $fid
+     * @param int $tid
+     * @return bool
+     */
+    public static function tagAddUsers(int $fid, int $tid): bool
+    {
+        $user_info = User::parseCookies();
+        $url = 'https://api.bilibili.com/x/relation/tags/addUsers?cross_domain=true';
+        $payload = [
+            'fids' => $fid,
+            'tagids' => $tid,
+            'csrf' => $user_info['token'],
+        ];
+        $headers = [
+            'content-type' => 'application/x-www-form-urlencoded; charset=UTF-8',
+            'origin' => 'https://live.bilibili.com',
+            'referer' => 'https://link.bilibili.com/iframe/blfe-link-followIframe'
+        ];
+        $raw = Curl::post('pc', $url, $payload, $headers);
+        $de_raw = json_decode($raw, true);
+        // {"code":0,"message":"0","ttl":1}
+        if ($de_raw['code'] == 0) {
+            return true;
+        }
+        return false;
+    }
+
 }
