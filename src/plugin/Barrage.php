@@ -23,6 +23,7 @@ class Barrage
         if (self::getLock() > time() || getenv('USE_DANMU') == 'false') {
             return;
         }
+        self::setPauseStatus();
         $room_id = empty(getenv('DANMU_ROOMID')) ? Live::getUserRecommend() : Live::getRealRoomID(getenv('DANMU_ROOMID'));
         $msg = empty(getenv('DANMU_CONTENT')) ? self::getMsgInfo() : getenv('DANMU_CONTENT');
 

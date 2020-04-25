@@ -1,6 +1,18 @@
 # Release Notes
 # 本项目Log
 
+## v0.3.0.200425 alpha (2020-04-25)
+
+### Added
+-
+
+### Changed
+-
+
+### Fixed
+- 修复休眠机制
+-
+
 ## v0.3.0.200424 alpha (2020-04-24)
 
 ### Added

@@ -23,6 +23,7 @@ class Heart
         if (self::getLock() > time()) {
             return;
         }
+        self::setPauseStatus();
         self::webHeart();
         self::appHeart();
         self::setLock(5 * 60);
