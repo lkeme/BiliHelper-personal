@@ -10,7 +10,6 @@
 
 namespace BiliHelper\Core;
 
-use Amp\Delayed;
 use Amp\Loop;
 use function Amp\asyncCall;
 use BiliHelper\Plugin\Notice;
