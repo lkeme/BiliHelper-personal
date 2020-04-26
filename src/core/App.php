@@ -69,6 +69,7 @@ class App
             'MasterSite',
             'Daily',
             'ManGa',
+            'Match',
             'Heart',
             'Task',
             'Silver',
