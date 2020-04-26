@@ -60,6 +60,9 @@ SLEEP_SECTION=2,3,4,5,6
 # 漫画助手
 USE_MANGA=false
 
+# 赛事助手
+USE_MATCH=false
+
 # 风纪(测试)
 USE_JUDGE=false
 

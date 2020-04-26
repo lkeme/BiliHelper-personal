@@ -236,4 +236,34 @@ class Live
         return (float)sprintf('%.0f', (floatval($t1) + floatval($t2)) * 1000);
     }
 
+
+    /**
+     * @use 发送弹幕
+     * @param int $room_id
+     * @param string $content
+     * @return array
+     */
+    public static function sendBarrage(int $room_id, string $content): array
+    {
+        $user_info = User::parseCookies();
+        $url = 'https://api.live.bilibili.com/msg/send';
+        $payload = [
+            'color' => '16777215',
+            'fontsize' => 25,
+            'mode' => 1,
+            'msg' => $content,
+            'rnd' => 0,
+            'bubble' => 0,
+            'roomid' => $room_id,
+            'csrf' => $user_info['token'],
+            'csrf_token' => $user_info['token'],
+        ];
+        $headers = [
+            'origin' => 'https://live.bilibili.com',
+            'referer' => "https://live.bilibili.com/{$room_id}"
+        ];
+        $raw = Curl::post('pc', $url, $payload, $headers);
+        return json_decode($raw, true) ?? ['code' => 404, 'msg' => '上层数据为空!'];
+    }
+
 }
