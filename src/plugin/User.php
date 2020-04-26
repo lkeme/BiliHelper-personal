@@ -12,7 +12,6 @@ namespace BiliHelper\Plugin;
 
 use BiliHelper\Core\Curl;
 use BiliHelper\Core\Config;
-use http\Env\Url;
 
 class User
 {
