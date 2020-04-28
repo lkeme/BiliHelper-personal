@@ -1,6 +1,18 @@
 # Release Notes
 # 本项目Log
 
+## v0.4.0.200428 alpha (2020-04-28)
+
+### Added
+- 
+
+### Changed
+-
+
+### Fixed
+- 修复赠送礼物逻辑
+-
+
 ## v0.4.0.200426 alpha (2020-04-26)
 
 ### Added

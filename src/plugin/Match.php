@@ -86,7 +86,6 @@ class Match
             }
             $status = self::getSignTask($room['type_id'], $room['room_id'], $room['short_room_id']);
             if ($status) {
-                echo "aaa" . PHP_EOL;
                 self::$room_infos[$title]['sign'] = true;
             } else {
                 self::$room_infos[$title]['sign'] = false;
@@ -99,7 +98,6 @@ class Match
             }
             $status = self::getShareTask($room['type_id'], $room['room_id'], $room['short_room_id']);
             if ($status) {
-                echo "aaa" . PHP_EOL;
                 self::$room_infos[$title]['share'] = true;
             } else {
                 self::$room_infos[$title]['share'] = false;
