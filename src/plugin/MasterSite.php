@@ -183,7 +183,7 @@ class MasterSite
         $de_raw = json_decode($raw, true);
         for ($i = 0; $i < $num; $i++) {
             while (true) {
-                $rand_num = mt_rand(1, 100);
+                $rand_num = mt_rand(1, 99);
                 if (in_array($rand_num, $rand_nums)) {
                     continue;
                 } else {
