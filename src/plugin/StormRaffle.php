@@ -122,6 +122,10 @@ class StormRaffle extends BaseRaffle
                     Log::notice(self::formatInfo($raffle['raffle_id'], $num, $de_raw['data']['mobile_content']));
                     break;
                 }
+                if (!isset($de_raw['msg'])) {
+                    Log::notice(self::formatInfo($raffle['raffle_id'], $num, $de_raw));
+                    break;
+                }
                 if ($de_raw['msg'] == '节奏风暴不存在' || $de_raw['msg'] == '节奏风暴抽奖过期' || $de_raw['msg'] == '没抢到') {
                     Log::notice(self::formatInfo($raffle['raffle_id'], $num, '节奏风暴已经结束'));
                     break;

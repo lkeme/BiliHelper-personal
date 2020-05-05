@@ -13,6 +13,7 @@ namespace BiliHelper\Core;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use Bramus\Monolog\Formatter\ColoredLineFormatter;
+use function GuzzleHttp\Psr7\str;
 
 class Log
 {
@@ -104,7 +105,7 @@ class Log
             $url = str_replace('{account}', self::prefix(), getenv('APP_CALLBACK'));
             $url = str_replace('{level}', $level, $url);
             $url = str_replace('{message}', urlencode($message), $url);
-            Curl::request('get', $url);
+            Curl::request('get', str_replace(' ', '%20', $url));
         }
     }
 }

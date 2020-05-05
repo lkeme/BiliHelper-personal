@@ -155,8 +155,8 @@ abstract class BaseRaffle
         if (in_array($lid, static::$all_list)) {
             return true;
         }
-        if (count(static::$all_list) > 1000) {
-            static::$all_list = [];
+        if (count(static::$all_list) > 4000) {
+            static::$all_list = array_values(array_splice(static::$all_list, 2000, 2000));
         }
         if ($filter) {
             array_push(static::$all_list, $lid);

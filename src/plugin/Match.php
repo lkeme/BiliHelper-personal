@@ -21,13 +21,13 @@ class Match
     private static $tasks = ['sign', 'share'];
     private static $check_status = false;
     private static $room_infos = [
-        'LPL' => [
-            'type_id' => 25,
-            'room_id' => 7734200,
-            'short_room_id' => 6,
-            'lottery_id' => 46,
-            'status' => true
-        ],
+//        'LPL' => [
+//            'type_id' => 25,
+//            'room_id' => 7734200,
+//            'short_room_id' => 6,
+//            'lottery_id' => 46,
+//            'status' => true
+//        ],
         'OW' => [
             'type_id' => 26,
             'room_id' => 14073662,
@@ -49,6 +49,7 @@ class Match
         if (self::getLock() > time() || getenv('USE_MATCH') == 'false') {
             return;
         }
+        // TODO 赛事访问拒绝
         self::initTask();
         self::filterTask();
         self::workTask();
