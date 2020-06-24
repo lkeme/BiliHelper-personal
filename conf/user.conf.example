@@ -78,7 +78,7 @@ USE_JUDGE=false
 #######################
 
 # 独立推送服务(主)|主备冲突
-USE_ALONE_SERVER=true
+USE_ALONE_SERVER=false
 ALONE_SERVER_ADDR=tcp://livecmt-1.mudew.com:10088
 ALONE_SERVER_KEY=
 
