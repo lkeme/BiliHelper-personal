@@ -102,7 +102,7 @@ class Statistics
      */
     private static function timeTran(int $the_time): string
     {
-        $t = time() - $the_time;//现在时间-发布时间 获取时间差
+        $t = time() - $the_time - 3;//现在时间-发布时间 获取时间差
         $f = [
             '31536000' => '年',
             '2592000' => '个月',
@@ -111,7 +111,6 @@ class Statistics
             '3600' => '小时',
             '60' => '分钟',
             '1' => '秒',
-            '0' => '秒'
         ];
         foreach ($f as $k => $v) {
             if (0 != $c = floor($t / (int)$k)) {
