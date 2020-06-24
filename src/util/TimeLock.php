@@ -56,8 +56,12 @@ trait TimeLock
      */
     public static function timing(int $hour, int $minute = 0, int $seconds = 0): int
     {
-        // now today tomorrow yesterday
-        return strtotime('tomorrow') + ($hour * 60 * 60) + ($minute * 60) + ($seconds) - time();
+        $time = strtotime('today') + ($hour * 60 * 60) + ($minute * 60) + ($seconds);
+        if ($time > time()) {
+            return strtotime('today') + ($hour * 60 * 60) + ($minute * 60) + ($seconds) - time();
+        } else {
+            return strtotime('tomorrow') + ($hour * 60 * 60) + ($minute * 60) + ($seconds) - time();
+        }
     }
 
 
