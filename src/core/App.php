@@ -70,6 +70,7 @@ class App
             'Daily',
             'ManGa',
             'Match',
+            'Competition',
             'Heart',
             'Task',
             'Silver',

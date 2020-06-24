@@ -228,8 +228,12 @@ class AloneTcpClient
                 Log::info("确认到推送服务器 {$raw_data['type']}");
                 break;
             case 'error':
-                // 致命错误
-                Log::error("推送服务器发生致命错误 {$raw_data['data']['msg']}");
+                // 产生错误
+                Log::error("推送服务器异常 {$raw_data['data']['msg']}, 程序挂起请手动关闭！");
+                // KEY到期推送提醒
+                Notice::push('key_expired', '');
+                // 程序挂起 防止systemd无限重启导致触发过多推送提醒
+                sleep(86400);
                 exit();
                 break;
             case 'heartbeat':

@@ -37,7 +37,7 @@ class Silver2Coin
      */
     protected static function appSilver2coin(): bool
     {
-        sleep(1);
+        sleep(0.5);
         $url = 'https://api.live.bilibili.com/AppExchange/silver2coin';
         $payload = [];
         $raw = Curl::get('app', $url, Sign::common($payload));
@@ -61,7 +61,7 @@ class Silver2Coin
      */
     protected static function pcSilver2coin(): bool
     {
-        sleep(1);
+        sleep(0.5);
         $payload = [];
         $url = "https://api.live.bilibili.com/exchange/silver2coin";
         $url = "https://api.live.bilibili.com/pay/v1/Exchange/silver2coin";
@@ -72,7 +72,6 @@ class Silver2Coin
             return false;
         }
         Log::info('[PC]银瓜子兑换硬币: ' . $de_raw['msg']);
-        // TODO
         return true;
     }
 }

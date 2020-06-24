@@ -65,7 +65,7 @@ class StormRaffle extends BaseRaffle
             'raffle_name' => '节奏风暴',
             'wait' => time()
         ];
-        Statistics::addPushList(self::ACTIVE_TITLE);
+        Statistics::addPushList($data['raffle_name']);
         array_push(self::$wait_list, $data);
         return true;
     }
@@ -118,8 +118,10 @@ class StormRaffle extends BaseRaffle
                     break;
                 }
                 if ($de_raw['code'] == 0) {
-                    Statistics::addSuccessList(self::ACTIVE_TITLE);
-                    Log::notice(self::formatInfo($raffle['raffle_id'], $num, $de_raw['data']['mobile_content']));
+                    $data = $de_raw['data'];
+                    Statistics::addSuccessList($raffle['raffle_name']);
+                    Log::notice(self::formatInfo($raffle['raffle_id'], $num, $data['mobile_content']));
+                    Statistics::addProfitList($data['title'] . '-' . $data['gift_name'], $data['gift_num']);
                     break;
                 }
                 if (!isset($de_raw['msg'])) {

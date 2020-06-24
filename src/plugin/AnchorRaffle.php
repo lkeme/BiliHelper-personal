@@ -24,8 +24,102 @@ class AnchorRaffle extends BaseRaffle
     protected static $wait_list = [];
     protected static $finish_list = [];
     protected static $all_list = [];
-
+    // 过滤类型
     private static $filter_type = [];
+    // 默认关注 特殊关注  等待关注
+    private static $default_follows = [];
+    private static $special_follows = [];
+    public static $wait_un_follows = [];
+    // 特殊分组  分组ID
+    private static $group_name = "玄不改非"; // 氪不改命
+    private static $group_id = null;
+
+
+    /**
+     * @use 删除分组
+     * @param int $un_follow_uid
+     * @param int $anchor_id
+     * @param bool $un_follow
+     */
+    public static function delToGroup(int $un_follow_uid, int $anchor_id, bool $un_follow = true)
+    {
+        // 取关
+        if ($un_follow) {
+            User::setUserFollow($un_follow_uid, true);
+        }
+        self::delValue($un_follow_uid, $anchor_id);
+    }
+
+    /**
+     * @use 添加分组
+     * @param int $room_id
+     * @param int $anchor_id
+     * @param int $time
+     */
+    private static function addToGroup(int $room_id, int $anchor_id, int $time)
+    {
+        // 获取分组id
+        if (is_null(self::$group_id)) {
+            $tags = User::fetchTags();
+            $tag_id = array_search(self::$group_name, $tags);
+            // 如果不存在则调用创建
+            self::$group_id = $tag_id ? $tag_id : User::createRelationTag(self::$group_name);
+        }
+        // 获取需要关注的
+        $data = Live::getRoomInfo($room_id);
+        if ($data['code'] == 0 && isset($data['data'])) {
+            $need_follow_uid = $data['data']['uid'];
+        } else {
+            return;
+        }
+        // 是否在关注里
+        $default_follows = self::getDefaultFollows();
+        if (!in_array($need_follow_uid, $default_follows)) {
+            User::setUserFollow($need_follow_uid);
+            User::tagAddUsers($need_follow_uid, self::$group_id);
+            // 添加到检测中奖
+            array_push(self::$wait_un_follows, [
+                'uid' => $need_follow_uid,
+                'anchor_id' => $anchor_id,
+                'time' => $time,
+            ]);
+        }
+    }
+
+    /**
+     * @use 删除值并重置数组
+     * @param int $uid
+     * @param int $anchor_id
+     */
+    private static function delValue(int $uid, int $anchor_id)
+    {
+        $new_list = [];
+        foreach (self::$wait_un_follows as $wait_un_follow) {
+            if ($wait_un_follow['uid'] == $uid && $wait_un_follow['uid'] == $anchor_id) {
+                continue;
+            }
+            array_push($new_list, $wait_un_follow);
+        }
+        self::$wait_un_follows = $new_list;
+    }
+
+
+    /**
+     * @use 获取默认关注
+     * @return array
+     */
+    private static function getDefaultFollows(): array
+    {
+        if (!empty(self::$default_follows)) {
+            return self::$default_follows;
+        }
+        // 如果获取默认关注错误 或者 为空则补全一个
+        self::$default_follows = User::fetchTagFollowings();
+        if (empty(self::$default_follows)) {
+            array_push(self::$default_follows, 1);
+        }
+        return self::$default_follows;
+    }
 
 
     /**
@@ -88,6 +182,10 @@ class AnchorRaffle extends BaseRaffle
         if (self::toRepeatLid($de_raw['id'])) {
             return false;
         }
+        // 分组操作
+        if (getenv('ANCHOR_UNFOLLOW') == 'true' && $de_raw['require_text'] == '关注主播') {
+            self::addToGroup($room_id, $de_raw['id'], time() + $de_raw['time'] + 5);
+        }
         // 推入列表
         $data = [
             'room_id' => $room_id,
@@ -95,7 +193,7 @@ class AnchorRaffle extends BaseRaffle
             'raffle_name' => $de_raw['award_name'],
             'wait' => time() + mt_rand(5, 25)
         ];
-        Statistics::addPushList(self::ACTIVE_TITLE);
+        Statistics::addPushList($data['raffle_name']);
         array_push(self::$wait_list, $data);
         return true;
     }
@@ -125,7 +223,8 @@ class AnchorRaffle extends BaseRaffle
                 'payload' => Sign::common($payload),
                 'source' => [
                     'room_id' => $raffle['room_id'],
-                    'raffle_id' => $raffle['raffle_id']
+                    'raffle_id' => $raffle['raffle_id'],
+                    'raffle_name' => $raffle['raffle_name']
                 ]
             ]);
         }
@@ -147,7 +246,7 @@ class AnchorRaffle extends BaseRaffle
             $de_raw = json_decode($content, true);
             // {"code":-403,"data":null,"message":"访问被拒绝","msg":"访问被拒绝"}
             if (isset($de_raw['code']) && $de_raw['code'] == 0) {
-                Statistics::addSuccessList(self::ACTIVE_TITLE);
+                Statistics::addSuccessList($data['raffle_name']);
                 Log::notice("房间 {$data['room_id']} 编号 {$data['raffle_id']} " . self::ACTIVE_TITLE . ": 参与抽奖成功~");
             } elseif (isset($de_raw['msg']) && $de_raw['code'] == -403 && $de_raw['msg'] == '访问被拒绝') {
                 Log::debug("房间 {$data['room_id']} 编号 {$data['raffle_id']} " . self::ACTIVE_TITLE . ": {$de_raw['message']}");

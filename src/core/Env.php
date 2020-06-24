@@ -13,7 +13,7 @@ namespace BiliHelper\Core;
 class Env
 {
     private $app_name = 'BiliHelper Personal';
-    private $app_version = '0.4.0.*';
+    private $app_version = '0.5.0.*';
 
     /**
      * Env constructor.
@@ -50,7 +50,7 @@ class Env
     public function inspect_configure()
     {
         Log::info("欢迎使用 {$this->app_name} 当前版本 {$this->app_version}");
-        Log::info("程序使用相关请移步 https://github.com/lkeme/BiliHelper-personal 文档部分查看。");
+        Log::info("使用说明请移步 https://github.com/lkeme/BiliHelper-personal 查看。");
 
         if (PHP_SAPI != 'cli') {
             die("Please run this script from command line .");
