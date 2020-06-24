@@ -123,7 +123,7 @@ class MasterSite
                     break;
                 }
                 // 稿件列表
-                if (gettype('RANDOM_ADD_COIN') =='random'){
+                if (gettype('ADD_COIN_MODE') =='random'){
                     // 随机热门稿件榜单
                     $aids = self::getDayRankingAids($actual_num);
                 }else{
