@@ -73,8 +73,8 @@ class GroupSignIn
         $de_raw = json_decode($raw, true);
 
         if ($de_raw['code'] != '0') {
-            Log::warning('在应援团{' . $groupInfo['group_name'] . '}中签到失败,原因待查');
-            // TODO
+            Log::warning('在应援团{' . $groupInfo['group_name'] . '}中签到失败, 原因待查');
+            // TODO 任务失败原因
             return false;
         }
         if ($de_raw['data']['status'] == '0') {

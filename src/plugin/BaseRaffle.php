@@ -63,7 +63,7 @@ abstract class BaseRaffle
             }
             array_push($room_list, $raffle['room_id']);
             array_push($raffle_list, $raffle);
-            Statistics::addJoinList(static::ACTIVE_TITLE);
+            Statistics::addJoinList($raffle['raffle_name']);
         }
         if (count($raffle_list) && count($room_list)) {
             $room_list = array_unique($room_list);
@@ -90,6 +90,7 @@ abstract class BaseRaffle
         $raw = Curl::get('app', $url, Sign::common($payload));
         $de_raw = json_decode($raw, true);
         if (!isset($de_raw['data']) || $de_raw['code']) {
+            // TODO 请求被拦截 412
             Log::error("获取抽奖数据错误，{$de_raw['message']}");
             return [];
         }

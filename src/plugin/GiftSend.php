@@ -43,7 +43,12 @@ class GiftSend
         self::$room_list = [];
         self::$medal_list = [];
         self::$tid = 0;
-        self::setLock(5 * 60);
+        // 如果在每日最后5分钟内 就50s执行一次 否则 第二天固定时间执行
+        if (self::inTime('23:55:00', '23:59:59')) {
+            self::setLock(50);
+        } else {
+            self::setLock(self::timing(23, 55));
+        }
     }
 
 
@@ -136,7 +141,9 @@ class GiftSend
         if (isset($data['data']['list'])) {
             $bag_list = $data['data']['list'];
             if (count($bag_list)) {
-                array_multisort(array_column($bag_list, "gift_id"), SORT_DESC, $bag_list);
+                // 按过期时间 升序
+                // array_multisort(array_column($bag_list, "gift_id"), SORT_DESC, $bag_list);
+                array_multisort(array_column($bag_list, "expire_at"), SORT_ASC, $bag_list);
             }
             foreach ($bag_list as $vo) {
                 // 去除永久礼物
@@ -192,14 +199,14 @@ class GiftSend
                 $fans_medals[(string)$vo['roomid']] = $vo;
             }
             // 基于配置
-            foreach (self::$room_list as $room_id ){
+            foreach (self::$room_list as $room_id) {
                 // 配置是否存在获取
-                if (!array_key_exists((string)$room_id ,$fans_medals)){
+                if (!array_key_exists((string)$room_id, $fans_medals)) {
                     continue;
                 }
                 $vo = $fans_medals[(string)$room_id];
                 // 是否还需要投喂
-                if ($vo['day_limit'] - $vo['today_feed']){
+                if ($vo['day_limit'] - $vo['today_feed']) {
                     self::$medal_list[(string)$vo['roomid']] = ($vo['day_limit'] - $vo['today_feed']);
                 }
             }

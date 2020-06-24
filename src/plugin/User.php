@@ -94,7 +94,7 @@ class User
             'room_id' => $room_id ?? getenv('ROOM_ID')
         ];
         $raw = Curl::get('pc', $url, $payload);
-        return json_decode($raw, true);;
+        return json_decode($raw, true);
     }
 
 
@@ -134,10 +134,10 @@ class User
     }
 
     /**
-     * @use 获取关注列表
+     * @use 获取全部关注列表
      * @return array
      */
-    public static function fetchFollowings(): array
+    public static function fetchAllFollowings(): array
     {
         $user_info = User::parseCookies();
         $uid = $user_info['uid'];
@@ -159,6 +159,46 @@ class User
                     array_push($followings, $user['mid']);
                 }
                 if (count($followings) == $de_raw['data']['total']) {
+                    break;
+                }
+                continue;
+            }
+            break;
+        }
+        return $followings;
+    }
+
+
+    /**
+     * @use 获取分组关注列表
+     * @param int $tag_id
+     * @param int $page_num
+     * @param int $page_size
+     * @return array
+     */
+    public static function fetchTagFollowings(int $tag_id = 0, int $page_num = 100, int $page_size = 50): array
+    {
+        $user_info = User::parseCookies();
+        $uid = $user_info['uid'];
+        $followings = [];
+        for ($i = 1; $i < $page_num; $i++) {
+            $url = "https://api.bilibili.com/x/relation/tag";
+            $payload = [
+                'mid' => $uid,
+                'tagid' => $tag_id,
+                'pn' => $i,
+                'ps' => $page_size,
+            ];
+            $headers = [
+                'referer' => "https://space.bilibili.com/{$uid}/fans/follow?tagid={$tag_id}",
+            ];
+            $raw = Curl::get('pc', $url, $payload, $headers);
+            $de_raw = json_decode($raw, true);
+            if ($de_raw['code'] == 0 && isset($de_raw['data'])) {
+                foreach ($de_raw['data'] as $user) {
+                    array_push($followings, $user['mid']);
+                }
+                if (count($de_raw['data']) != $page_size || empty($de_raw['data'])) {
                     break;
                 }
                 continue;
@@ -204,9 +244,9 @@ class User
     /**
      * @use 创建关注分组
      * @param string $tag_name
-     * @return bool
+     * @return int
      */
-    public static function createRelationTag(string $tag_name): bool
+    public static function createRelationTag(string $tag_name): int
     {
         $user_info = User::parseCookies();
         $url = 'https://api.bilibili.com/x/relation/tag/create?cross_domain=true';
@@ -222,10 +262,10 @@ class User
         $raw = Curl::post('pc', $url, $payload, $headers);
         $de_raw = json_decode($raw, true);
         // {"code":0,"message":"0","ttl":1,"data":{"tagid":244413}}
-        if ($de_raw['code'] == 0) {
-            return true;
+        if ($de_raw['code'] == 0 && isset($de_raw['data']['tagid'])) {
+            return $de_raw['data']['tagid'];
         }
-        return false;
+        return 0;
     }
 
     /**
@@ -255,6 +295,29 @@ class User
             return true;
         }
         return false;
+    }
+
+    /**
+     * @use 获取分组列表
+     * @return array
+     */
+    public static function fetchTags(): array
+    {
+        $user_info = User::parseCookies();
+        $tags = [];
+        $url = 'https://api.bilibili.com/x/relation/tags';
+        $payload = [];
+        $headers = [
+            'referer' => "https://space.bilibili.com/{$user_info['uid']}/fans/follow",
+        ];
+        $raw = Curl::get('pc', $url, $payload, $headers);
+        $de_raw = json_decode($raw, true);
+        if ($de_raw['code'] == 0 && isset($de_raw['data'])) {
+            foreach ($de_raw['data'] as $tag) {
+                $tags[$tag['tagid']] = $tag['name'];
+            }
+        }
+        return $tags;
     }
 
 }

@@ -50,12 +50,34 @@ trait TimeLock
     /**
      * @use 定时
      * @param int $hour
+     * @param int $minute
+     * @param int $seconds
      * @return int
      */
-    public static function timing(int $hour): int
+    public static function timing(int $hour, int $minute = 0, int $seconds = 0): int
     {
         // now today tomorrow yesterday
-        return strtotime('tomorrow') + ($hour * 60 * 60) - time();
+        return strtotime('tomorrow') + ($hour * 60 * 60) + ($minute * 60) + ($seconds) - time();
+    }
+
+
+    /**
+     * @use 判断是否在时间内
+     * @param string $first_time
+     * @param string $second_time
+     * @return bool
+     */
+    public static function inTime(string $first_time, string $second_time): bool
+    {
+        #判断当前时间是否在时间段内，如果是，则执行
+        $Day = date('Y-m-d ', time());
+        $timeBegin = strtotime($Day . $first_time);
+        $timeEnd = strtotime($Day . $second_time);
+        $curr_time = time();
+        if ($curr_time >= $timeBegin && $curr_time <= $timeEnd) {
+            return true;
+        }
+        return false;
     }
 
     /**

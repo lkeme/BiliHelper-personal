@@ -28,20 +28,20 @@ class Match
 //            'lottery_id' => 46,
 //            'status' => true
 //        ],
-        'OW' => [
-            'type_id' => 26,
-            'room_id' => 14073662,
-            'short_room_id' => 76,
-            'lottery_id' => 52,
-            'status' => true
-        ],
-        'KPL' => [
-            'type_id' => 27,
-            'room_id' => 21144080,
-            'short_room_id' => 55,
-            'lottery_id' => 55,
-            'status' => true
-        ],
+//        'OW' => [
+//            'type_id' => 26,
+//            'room_id' => 14073662,
+//            'short_room_id' => 76,
+//            'lottery_id' => 52,
+//            'status' => true
+//        ],
+//        'KPL' => [
+//            'type_id' => 27,
+//            'room_id' => 21144080,
+//            'short_room_id' => 55,
+//            'lottery_id' => 55,
+//            'status' => true
+//        ],
     ];
 
     public static function run()

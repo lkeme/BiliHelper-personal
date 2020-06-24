@@ -53,11 +53,11 @@ class GiftRaffle extends BaseRaffle
             $data = [
                 'room_id' => $room_id,
                 'raffle_id' => $gift['raffleId'],
-                'title' => $gift['title'],
+                'raffle_name' => $gift['title'],
                 'type' => $gift['type'],
                 'wait' => $gift['time_wait'] + time(),
             ];
-            Statistics::addPushList(self::ACTIVE_TITLE);
+            Statistics::addPushList($data['raffle_name']);
             array_push(self::$wait_list, $data);
         }
         return true;
@@ -91,7 +91,8 @@ class GiftRaffle extends BaseRaffle
                 'payload' => Sign::common($payload),
                 'source' => [
                     'room_id' => $raffle['room_id'],
-                    'raffle_id' => $raffle['raffle_id']
+                    'raffle_id' => $raffle['raffle_id'],
+                    'raffle_name' => $raffle['raffle_name']
                 ]
             ]);
         }
@@ -118,13 +119,14 @@ class GiftRaffle extends BaseRaffle
                     $info = $de_raw['data']['award_name'] . 'x' . $de_raw['data']['award_num'];
                     Notice::push('gift', $info);
                 }
-                Log::notice("房间 {$data['room_id']} 编号 {$data['raffle_id']} " . self::ACTIVE_TITLE . ": {$de_raw['data']['award_name']}x{$de_raw['data']['award_num']}");
-                Statistics::addSuccessList(self::ACTIVE_TITLE);
+                Statistics::addSuccessList($data['raffle_name']);
+                Log::notice("房间 {$data['room_id']} 编号 {$data['raffle_id']} {$data['raffle_name']}: {$de_raw['data']['award_name']}x{$de_raw['data']['award_num']}");
+                Statistics::addProfitList($data['raffle_name'] . '-' . $de_raw['data']['award_name'], $de_raw['data']['award_num']);
             } elseif (isset($de_raw['msg']) && $de_raw['code'] == -403 && $de_raw['msg'] == '访问被拒绝') {
-                Log::debug("房间 {$data['room_id']} 编号 {$data['raffle_id']} " . self::ACTIVE_TITLE . ": {$de_raw['msg']}");
+                Log::debug("房间 {$data['room_id']} 编号 {$data['raffle_id']} {$data['raffle_name']}: {$de_raw['msg']}");
                 self::pauseLock();
             } else {
-                Log::notice("房间 {$data['room_id']} 编号 {$data['raffle_id']} " . self::ACTIVE_TITLE . ": {$de_raw['msg']}");
+                Log::notice("房间 {$data['room_id']} 编号 {$data['raffle_id']} {$data['raffle_name']}: " . isset($de_raw['msg']) ? $de_raw['msg'] : $de_raw);
             }
         }
     }

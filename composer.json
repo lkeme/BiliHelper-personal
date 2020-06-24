@@ -15,7 +15,8 @@
     "clue/socket-raw": "^1.4.1",
     "vlucas/phpdotenv": "^4.1",
     "amphp/amp": "^2.4",
-    "guzzlehttp/guzzle": "^6.5"
+    "guzzlehttp/guzzle": "^6.5",
+    "mathieuviossat/arraytotexttable": "^1.0"
   },
   "license": "MIT",
   "authors": [

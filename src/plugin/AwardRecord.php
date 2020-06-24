@@ -17,6 +17,7 @@ use BiliHelper\Util\TimeLock;
 class AwardRecord
 {
     use TimeLock;
+
     private static $raffle_lock = 0;
     private static $raffle_list = [];
     private static $anchor_lock = 0;
@@ -75,6 +76,18 @@ class AwardRecord
             }
             array_push(self::$anchor_list, $anchor['id']);
         }
+        // 处理取关操作
+        foreach (AnchorRaffle::$wait_un_follows as $wait_un_follow) {
+            if ($wait_un_follow['time'] > time()) {
+                continue;
+            }
+            if (in_array($wait_un_follow['anchor_id'], self::$anchor_list)) {
+                AnchorRaffle::delToGroup($wait_un_follow['uid'], $wait_un_follow['anchor_id'], false);
+            }else{
+                AnchorRaffle::delToGroup($wait_un_follow['uid'], $wait_un_follow['anchor_id'], true);
+            }
+        }
+
         self::$anchor_lock = time() + 6 * 60 * 60;
     }
 

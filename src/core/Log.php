@@ -29,7 +29,7 @@ class Log
 
     protected static function configureInstance()
     {
-        $logger = new Logger('Bilibili');
+        $logger = new Logger('BH');
         $handler = new StreamHandler('php://stdout', getenv('APP_DEBUG') == 'true' ? Logger::DEBUG : Logger::INFO);
         $handler->setFormatter(new ColoredLineFormatter());
         $logger->pushHandler($handler);

@@ -1,5 +1,13 @@
 <?php
 
+/**
+ *  Website: https://mudew.com/
+ *  Author: Lkeme
+ *  License: The MIT License
+ *  Email: Useri@live.cn
+ *  Updated: 2020 ~ 2021
+ *  Source: https://github.com/anhao/bv2av/
+ */
 
 namespace BiliHelper\Tool;
 

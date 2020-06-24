@@ -225,6 +225,7 @@ class Login
      */
     private static function ocrCaptcha($captcha_img)
     {
+        // $url = 'http://captcha-v1.mudew.com:19951/';
         $url = 'http://47.102.120.84:19951/';
         $payload = [
             'image' => (string)$captcha_img

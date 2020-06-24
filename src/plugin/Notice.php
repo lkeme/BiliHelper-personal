@@ -122,6 +122,12 @@ class Notice
                     'content' => '[' . $now_time . ']' . ' 用户: ' . self::$uname . ' 程序运行错误: ' . self::$result,
                 ];
                 break;
+            case 'key_expired':
+                $info = [
+                    'title' => '监控KEY异常',
+                    'content' => '[' . $now_time . ']' . ' 用户: ' . self::$uname . ' 监控KEY到期或者错误，请及时查错或续期后重试哦~',
+                ];
+                break;
             default:
                 $info = [
                     'title' => '推送消息异常记录',
