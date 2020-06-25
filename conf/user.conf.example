@@ -6,6 +6,9 @@
 APP_USER=
 APP_PASS=
 
+# 登录模式|[1.账密模式 2.短信验证码模式 3.行为验证码模式(暂未开放)]
+LOGIN_MODE=1
+
 # 令牌(自动生成)
 ACCESS_TOKEN=
 REFRESH_TOKEN=

@@ -2,7 +2,7 @@
 <p align="center"><img width="300px" src="https://i.loli.net/2018/04/20/5ad97bd395912.jpeg"></p>
 
 <p align="center">
-<img src="https://img.shields.io/badge/version-0.5.0.200624 alpha-green.svg?longCache=true&style=for-the-badge">
+<img src="https://img.shields.io/badge/version-0.5.0.200625 alpha-green.svg?longCache=true&style=for-the-badge">
 <img src="https://img.shields.io/badge/license-mit-blue.svg?longCache=true&style=for-the-badge">
 </p>
 
@@ -127,7 +127,7 @@ $ php index.php
 - 通过环境变量进行传入
 
 ```shell script
-  docker run -itd --rm -e USER_NAME=你的B站登陆账号 -e USER_PASSWORD=你的B站密码 zsnmwy/bilihelper-personal
+  docker run -itd --rm -e USER_NAME=你的B站登录账号 -e USER_PASSWORD=你的B站密码 zsnmwy/bilihelper-personal
 ```
 
 - 通过配置文件进行传入
