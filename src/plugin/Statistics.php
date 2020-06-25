@@ -102,7 +102,8 @@ class Statistics
      */
     private static function timeTran(int $the_time): string
     {
-        $t = time() - $the_time - 3;//现在时间-发布时间 获取时间差
+        $the_time = $the_time < 1577808000 ? time() : $the_time;
+        $t = time() - $the_time + 3;//现在时间-发布时间 获取时间差
         $f = [
             '31536000' => '年',
             '2592000' => '个月',

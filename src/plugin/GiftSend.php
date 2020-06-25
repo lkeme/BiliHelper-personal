@@ -30,7 +30,7 @@ class GiftSend
 
     public static function run()
     {
-        if (self::getLock() > time()) {
+        if (self::getLock() > time() || !self::inTime('23:50:00', '23:59:50')) {
             return;
         }
         if (!self::$uid) {
@@ -44,8 +44,8 @@ class GiftSend
         self::$medal_list = [];
         self::$tid = 0;
         // 如果在每日最后5分钟内 就50s执行一次 否则 第二天固定时间执行
-        if (self::inTime('23:55:00', '23:59:59')) {
-            self::setLock(50);
+        if (self::inTime('23:52:00', '23:59:59')) {
+            self::setLock(60);
         } else {
             self::setLock(self::timing(23, 55));
         }
