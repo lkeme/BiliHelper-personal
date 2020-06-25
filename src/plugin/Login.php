@@ -456,7 +456,7 @@ class Login
     private static function saveConfig(string $key, string $value, $hide = true)
     {
         Config::put($key, $value);
-        Log::info(" > {$key}: " . ($hide ? substr_replace($value, '********', mb_strlen($value / 2), 8) : $value));
+        Log::info(" > {$key}: " . ($hide ? substr_replace($value, '********', mb_strlen($value) / 2, 8) : $value));
     }
 
     /**
