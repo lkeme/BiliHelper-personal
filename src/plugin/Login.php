@@ -147,8 +147,9 @@ class Login
         ];
         $raw = Curl::post('app', $url, Sign::common($payload));
         $de_raw = json_decode($raw, true);
-        if (isset($data['code']) && $data['code']) {
-            Log::error('重新生成令牌失败', ['msg' => $data['message']]);
+        // {"message":"user not login","ts":1593111694,"code":-101}
+        if (isset($de_raw['code']) && $de_raw['code']) {
+            Log::error('重新生成令牌失败', ['msg' => $de_raw['message']]);
             return false;
         }
         Log::info('重新令牌生成完毕');
