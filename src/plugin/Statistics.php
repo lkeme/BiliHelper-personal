@@ -169,7 +169,10 @@ class Statistics
         $results = 0;
         is_null($second_key) ? self::initKeyValue($target, $key) : self::initKeyValue($target, $key, 0, $second_key);
         foreach ($target as $item) {
-            is_null($second_key) ? $results += intval($item[$key]) : $results += intval($item[$key][$second_key]);
+            $skip = is_null($second_key) ? isset($item[$key]) : $item[$key][$second_key];
+            if ($skip) {
+                is_null($second_key) ? $results += intval($item[$key]) : $results += intval($item[$key][$second_key]);
+            }
         }
         return $results;
     }
@@ -236,7 +239,18 @@ class Statistics
                 array_push($tr_list_profit, $td);
             }
         }
-        return [$tr_list_count, $tr_list_profit];
+        return [self::unique_arr($tr_list_count), self::unique_arr($tr_list_profit)];
+    }
+
+
+    /**
+     * @use 二维数组去重
+     * @param $result
+     * @return array
+     */
+    private static function unique_arr(array $result): array
+    {
+        return array_unique($result, SORT_REGULAR);
     }
 
     /**
