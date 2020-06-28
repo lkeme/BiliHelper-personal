@@ -18,6 +18,9 @@ class Competition
 {
     use TimeLock;
 
+    /**
+     * @use 赛事入口 https://www.bilibili.com/v/game/match/competition
+     */
     public static function run()
     {
         if (getenv('USE_COMPETITION') == 'false' || self::getLock() > time()) {
@@ -37,10 +40,9 @@ class Competition
         $questions = self::fetchQuestions();
         $max_guess = intval(getenv('COMPET_MAX_NUM'));
         foreach ($questions as $index => $question) {
-            if (($index + 1) >= $max_guess) {
+            if ($index >= $max_guess) {
                 break;
             }
-            // int $, int $main_id, int $detail_id, int $coin_num
             $guess = self::parseQuestion($question);
             self::addGuess($guess);
         }
