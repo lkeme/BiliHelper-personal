@@ -169,7 +169,7 @@ class Statistics
         $results = 0;
         is_null($second_key) ? self::initKeyValue($target, $key) : self::initKeyValue($target, $key, 0, $second_key);
         foreach ($target as $item) {
-            $skip = is_null($second_key) ? isset($item[$key]) : $item[$key][$second_key];
+            $skip = is_null($second_key) ? isset($item[$key]) : isset($item[$key][$second_key]);
             if ($skip) {
                 is_null($second_key) ? $results += intval($item[$key]) : $results += intval($item[$key][$second_key]);
             }
