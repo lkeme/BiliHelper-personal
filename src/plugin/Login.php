@@ -296,11 +296,11 @@ class Login
             'seccode' => $validate ? "{$validate}|jordan" : '',
             'validate' => $validate,
             'challenge' => $challenge,
-            'subid' => 1,
             'permission' => 'ALL',
             'username' => self::$username,
             'password' => self::$password,
             'captcha' => '',
+            'subid' => 1,
             'cookies' => ''
         ];
         $raw = Curl::post('app', $url, Sign::login($payload));

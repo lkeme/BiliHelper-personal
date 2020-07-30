@@ -94,6 +94,10 @@ USE_SC=false
 SC_KEY=
 SC_FILTER_WORDS=
 
+# 小心心|加密服务器(开源)|
+USE_HEARTBEAT=true
+ENC_SERVER=http://116.85.43.27:3000/enc
+
 #######################
 #       房间设置       #
 #######################

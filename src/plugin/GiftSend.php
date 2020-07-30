@@ -180,35 +180,22 @@ class GiftSend
     protected static function getMedalList()
     {
         self::$medal_list = [];
-        $url = 'https://api.live.bilibili.com/i/api/medal';
-        $payload = [
-            'page' => 1,
-            'pageSize' => 25
-        ];
-        $data = Curl::get('app', $url, Sign::common($payload));
-        $data = json_decode($data, true);
-        if (isset($data['code']) && $data['code']) {
-            Log::warning('获取勋章列表失败!', ['msg' => $data['message']]);
-            return;
+        $data = Live::fetchMedalList();
+        $fans_medals = [];
+        foreach ($data as $vo) {
+            if (!isset($vo['roomid'])) continue;
+            $fans_medals[(string)$vo['roomid']] = $vo;
         }
-        Log::info('勋章列表获取成功!');
-        if (isset($data['data']['fansMedalList'])) {
-            $fans_medals = [];
-            foreach ($data['data']['fansMedalList'] as $vo) {
-                if (!isset($vo['roomid'])) continue;
-                $fans_medals[(string)$vo['roomid']] = $vo;
+        // 基于配置
+        foreach (self::$room_list as $room_id) {
+            // 配置是否存在获取
+            if (!array_key_exists((string)$room_id, $fans_medals)) {
+                continue;
             }
-            // 基于配置
-            foreach (self::$room_list as $room_id) {
-                // 配置是否存在获取
-                if (!array_key_exists((string)$room_id, $fans_medals)) {
-                    continue;
-                }
-                $vo = $fans_medals[(string)$room_id];
-                // 是否还需要投喂
-                if ($vo['day_limit'] - $vo['today_feed']) {
-                    self::$medal_list[(string)$vo['roomid']] = ($vo['day_limit'] - $vo['today_feed']);
-                }
+            $vo = $fans_medals[(string)$room_id];
+            // 是否还需要投喂
+            if ($vo['day_limit'] - $vo['today_feed']) {
+                self::$medal_list[(string)$vo['roomid']] = ($vo['day_limit'] - $vo['today_feed']);
             }
         }
     }
