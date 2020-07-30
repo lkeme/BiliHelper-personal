@@ -7,7 +7,7 @@ Group: [55308141](https://jq.qq.com/?_wv=1027&k=5AIDaJg) | **仅用于BUG提交�
 
 ## 公告
 
-> Currently for Personal Edition **0.5.0.200625 alpha**  
+> Currently for Personal Edition **0.6.0.200730 alpha**  
 
 ```notice
 ---- 免费的东西总是得不到人的珍惜。
@@ -28,4 +28,3 @@ Group: [55308141](https://jq.qq.com/?_wv=1027&k=5AIDaJg) | **仅用于BUG提交�
 ## 效果
 
 ![](https://i.loli.net/2019/07/13/5d296961a4bae41364.png)
-

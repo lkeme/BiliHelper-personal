@@ -116,6 +116,7 @@ class StormRaffle extends BaseRaffle
                 // {"code":-412,"message":"请求被拦截","ttl":1,"data":null}
                 if ($de_raw['code'] == -412) {
                     Log::notice(self::formatInfo($raffle['raffle_id'], $num, '触发哔哩哔哩安全风控策略(-412)'));
+                    break;
                 }
                 if ($de_raw['code'] == 429 || $de_raw['code'] == -429) {
                     Log::notice(self::formatInfo($raffle['raffle_id'], $num, '节奏风暴未实名或异常验证码'));

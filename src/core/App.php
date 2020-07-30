@@ -80,6 +80,7 @@ class App
             'GiftSend',
             'GroupSignIn',
             'GiftHeart',
+            'SmallHeart',
             'MaterialObject',
             'AloneTcpClient',
             'ZoneTcpClient',
