@@ -25,9 +25,9 @@ class Task
         }
 
         $data = self::check();
-        if (isset($data['data']['double_watch_info'])) {
-            self::double_watch_info($data['data']['double_watch_info']);
-        }
+        // if (isset($data['data']['double_watch_info'])) {
+        //     self::double_watch_info($data['data']['double_watch_info']);
+        // }
         if (isset($data['data']['sign_info'])) {
             self::sign_info($data['data']['sign_info']);
         }

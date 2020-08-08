@@ -22,5 +22,6 @@ Traits/
 README1.md
 conf/user.conf
 /conf/user.conf
+/conf/test.conf
 /log/
 /src/backup/
