@@ -34,7 +34,7 @@ class ActivityLottery
             return;
         }
         self::workTask();
-        self::setLock(self::timing(5));
+        self::setLock(self::timing(5) + mt_rand(1, 180));
     }
 
 
