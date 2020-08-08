@@ -138,6 +138,7 @@ class SmallHeart
         $x_data = self::xHeartBeat(self::$hb_count);
         if (!$x_data['status']) {
             // 错误级别
+            self::resetVar();
             return;
         }
         self::$hb_count += 1;

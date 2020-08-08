@@ -25,6 +25,7 @@ class AloneTcpClient
     private static $server_addr = null;
     private static $server_key = null;
     private static $socket_timeout = 0;
+    private static $max_errors_num = 0; // 最大连续错误5次
 
     /**
      * @use 入口
@@ -226,15 +227,19 @@ class AloneTcpClient
             case 'entered':
                 // 握手确认
                 Log::info("确认到推送服务器 {$raw_data['type']}");
+                self::$max_errors_num = 0;
                 break;
             case 'error':
                 // 产生错误
-                Log::error("推送服务器异常 {$raw_data['data']['msg']}, 程序挂起请手动关闭！");
-                // KEY到期推送提醒
-                Notice::push('key_expired', '');
-                // 程序挂起 防止systemd无限重启导致触发过多推送提醒
-                sleep(86400);
-                exit();
+                Log::error("推送服务器异常 {$raw_data['data']['msg']}, 程序错误5次后将挂起, 请手动关闭!");
+                if (self::$max_errors_num == 5) {
+                    // KEY到期推送提醒
+                    Notice::push('key_expired', '');
+                    // 程序挂起 防止systemd无限重启导致触发过多推送提醒
+                    sleep(86400);
+                    exit();
+                }
+                self::$max_errors_num += 1;
                 break;
             case 'heartbeat':
                 // 服务端心跳推送
