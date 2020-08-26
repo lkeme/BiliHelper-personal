@@ -74,7 +74,7 @@ class App
             'Competition',
             'Heart',
             'Task',
-            'Silver',
+//            'Silver',
             'Barrage',
             'Silver2Coin',
             'Judge',
