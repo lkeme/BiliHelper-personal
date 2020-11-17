@@ -595,7 +595,7 @@ class ZoneTcpClient
         $data = gzuncompress($bin);
         $total = strlen($data);
         while (true) {
-            if ($step > 65535) {
+            if ($step > 165535) {
                 Log::warning("v2_split: 数据step异常 {$step}");
                 break;
             };

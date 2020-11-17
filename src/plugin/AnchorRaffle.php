@@ -200,7 +200,8 @@ class AnchorRaffle extends BaseRaffle
             'raffle_name' => $de_raw['award_name'],
             'wait' => time() + mt_rand(5, 25)
         ];
-        Statistics::addPushList($data['raffle_name']);
+//        Statistics::addPushList($data['raffle_name']);
+        Statistics::addPushList("天选之子");
         array_push(self::$wait_list, $data);
         return true;
     }

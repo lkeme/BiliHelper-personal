@@ -33,6 +33,8 @@ class SmallHeart
 
     private static $metal_lock = 0; // 勋章时间锁
 
+    private static $heartbeat_interval = 60; // 每次跳动时间
+
     public static function run()
     {
         if (!self::init()) {
@@ -45,11 +47,11 @@ class SmallHeart
         }
         if (self::getLock() < time()) {
             self::heartBeat();
-            if (self::$hb_count >= 30) {
+            if (self::$hb_count >= 200) {
                 self::resetVar();
                 self::setLock(self::timing(2));
             } else {
-                self::setLock(5 * 60);
+                self::setLock(self::$heartbeat_interval);
             }
         }
     }
@@ -64,6 +66,8 @@ class SmallHeart
 
         self::$hb_count = 0; // 心跳次数 max 24
         self::$hb_room_info = []; // 心跳带勋章房间信息
+
+        self::$heartbeat_interval = 60; // 跳变时间
     }
 
     /**
@@ -185,6 +189,8 @@ class SmallHeart
         $payload['secret_key'] = $de_raw['data']['secret_key'];
         $payload['heartbeat_interval'] = $de_raw['data']['heartbeat_interval'];
         $payload['secret_rule'] = $de_raw['data']['secret_rule'];
+        // 自动跳变时间
+        self::$heartbeat_interval = $de_raw['data']['heartbeat_interval'];
         return [
             'status' => true,
             'payload' => $payload,
@@ -229,6 +235,8 @@ class SmallHeart
         self::$hb_payload['ets'] = $de_raw['data']['timestamp'];
         self::$hb_payload['secret_key'] = $de_raw['data']['secret_key'];
         self::$hb_payload['heartbeat_interval'] = $de_raw['data']['heartbeat_interval'];
+        // 自动跳变时间
+        self::$heartbeat_interval = $de_raw['data']['heartbeat_interval'];
         Log::info("小心心礼物X-{$index}心跳成功");
         return ['status' => true];
     }

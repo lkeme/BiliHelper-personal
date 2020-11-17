@@ -13,7 +13,7 @@ namespace BiliHelper\Core;
 class Env
 {
     private $app_name = 'BiliHelper Personal';
-    private $app_version = '0.6.5.*';
+    private $app_version = '0.6.7.*';
 
     /**
      * Env constructor.
