@@ -21,6 +21,7 @@ config
 Traits/
 README1.md
 conf/user.conf
+conf/user1.conf
 /conf/user.conf
 /conf/test.conf
 /log/

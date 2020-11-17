@@ -33,7 +33,7 @@ class Barrage
         ];
 
         if (self::privateSendMsg($info)) {
-            self::setLock(mt_rand(20, 40) * 60);
+            self::setLock(mt_rand(40, 60) * 60);
             return;
         }
 
