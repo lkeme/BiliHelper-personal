@@ -79,6 +79,13 @@ COMPET_STAKE=1
 # 风纪委员
 USE_JUDGE=false
 
+# 自动转发抽奖动态
+AUTO_DYNAMIC = false
+# 自动取关未中奖动态
+CLEAR_DYNAMIC = false
+# 强制清除抽奖组关注
+CLEAR_GROUP_FOLLOW = false
+
 #######################
 #       基础设置       #
 #######################
