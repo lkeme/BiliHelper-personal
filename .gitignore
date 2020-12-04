@@ -17,6 +17,7 @@ gen
 /configs/
 /tests/
 config
+/conf/user*.conf
 *.log
 Traits/
 README1.md
