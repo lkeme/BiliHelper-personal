@@ -24,5 +24,6 @@ conf/user.conf
 conf/user1.conf
 /conf/user.conf
 /conf/test.conf
+/conf/test1.conf
 /log/
 /src/backup/
