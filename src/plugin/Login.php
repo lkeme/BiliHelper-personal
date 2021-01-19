@@ -4,7 +4,7 @@
  *  Website: https://mudew.com/
  *  Author: Lkeme
  *  License: The MIT License
- *  Updated: 2020 ~ 2021
+ *  Updated: 2021 ~ 2022
  */
 
 namespace BiliHelper\Plugin;
@@ -291,7 +291,8 @@ class Login
     private static function accountLogin(string $validate = '', string $challenge = '', string $mode = '账密模式')
     {
         Log::info("尝试{$mode}登录");
-        $url = 'https://passport.bilibili.com/api/v3/oauth2/login';
+//        $url = 'https://passport.bilibili.com/api/v3/oauth2/login';
+        $url = 'https://passport.bilibili.com/x/passport-login/oauth2/login';
         $payload = [
             'seccode' => $validate ? "{$validate}|jordan" : '',
             'validate' => $validate,

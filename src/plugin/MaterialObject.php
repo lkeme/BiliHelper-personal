@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2020 ~ 2021
+ *  Updated: 2021 ~ 2022
  */
 
 namespace BiliHelper\Plugin;
@@ -32,7 +32,7 @@ class MaterialObject
             return;
         }
         // TODO 优化计算AID算法
-        self::calcAid(470, 770);
+        self::calcAid(650, 850);
         $lottery_list = self::fetchLottery();
         self::drawLottery($lottery_list);
         self::setLock(mt_rand(6, 10) * 60);

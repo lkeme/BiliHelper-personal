@@ -2,7 +2,7 @@
 <p align="center"><img width="300px" src="https://i.loli.net/2018/04/20/5ad97bd395912.jpeg"></p>
 
 <p align="center">
-<img src="https://img.shields.io/badge/version-0.6.7.201117 alpha-green.svg?longCache=true&style=for-the-badge">
+<img src="https://img.shields.io/badge/version-0.7.0.210119 alpha-green.svg?longCache=true&style=for-the-badge">
 <img src="https://img.shields.io/badge/license-mit-blue.svg?longCache=true&style=for-the-badge">
 </p>
 
@@ -15,34 +15,34 @@ B 站直播实用脚本
 
 |plugin              |version             |description         |
 |--------------------|--------------------|--------------------|
-|Login               |20.08.08            |账号登录            |
-|Schedule            |20.08.08            |休眠控制            |
-|MasterSite          |20.08.08            |主站助手            |
-|Daily               |20.08.08            |每日礼包            |
-|Heart               |20.08.08            |双端心跳            |
-|Task                |20.08.08            |每日任务            |
-|Silver              |20.08.08            |银瓜子宝箱          |
-|Barrage             |20.08.08            |活跃弹幕            |
-|Silver2Coin         |20.08.08            |银瓜子换硬币        |
-|GiftSend            |20.08.08            |礼物赠送            |
-|Judge               |20.08.08            |风纪                |
-|GroupSignIn         |20.08.08            |友爱社签到          |
-|ManGa               |20.08.08            |漫画签到分享        |
-|Match               |20.08.08            |赛事签到分享        |
-|GiftHeart           |20.08.08            |心跳礼物            |          
-|MaterialObject      |20.08.08            |实物抽奖            |
-|AloneTcpClient      |20.08.08            |独立监控            |
-|ZoneTcpClient       |20.08.08            |分区监控            |
-|StormRaffle         |20.08.08            |节奏风暴            |
-|GiftRaffle          |20.08.08            |活动礼物            |
-|PkRaffle            |20.08.08            |大乱斗              |
-|GuardRaffle         |20.08.08            |舰长总督            |
-|AnchorRaffle        |20.08.08            |天选时刻            |
-|AwardRecord         |20.08.08            |获奖通知            |
-|Statistics          |20.08.08            |数据统计            |
-|Competition         |20.08.08            |赛事竞猜            |
-|SmallHeart          |20.08.08            |小心心              |
-|ActivityLottery     |20.08.08            |主站活动            |
+|Login               |21.01.19            |账号登录            |
+|Schedule            |21.01.19            |休眠控制            |
+|MasterSite          |21.01.19            |主站助手            |
+|Daily               |21.01.19            |每日礼包            |
+|Heart               |21.01.19            |双端心跳            |
+|Task                |21.01.19            |每日任务            |
+|Silver              |21.01.19            |银瓜子宝箱          |
+|Barrage             |21.01.19            |活跃弹幕            |
+|Silver2Coin         |21.01.19            |银瓜子换硬币        |
+|GiftSend            |21.01.19            |礼物赠送            |
+|Judge               |21.01.19            |风纪                |
+|GroupSignIn         |21.01.19            |友爱社签到          |
+|ManGa               |21.01.19            |漫画签到分享        |
+|Match               |21.01.19            |赛事签到分享        |
+|GiftHeart           |21.01.19            |心跳礼物            |          
+|MaterialObject      |21.01.19            |实物抽奖            |
+|AloneTcpClient      |21.01.19            |独立监控            |
+|ZoneTcpClient       |21.01.19            |分区监控            |
+|StormRaffle         |21.01.19            |节奏风暴            |
+|GiftRaffle          |21.01.19            |活动礼物            |
+|PkRaffle            |21.01.19            |大乱斗              |
+|GuardRaffle         |21.01.19            |舰长总督            |
+|AnchorRaffle        |21.01.19            |天选时刻            |
+|AwardRecord         |21.01.19            |获奖通知            |
+|Statistics          |21.01.19            |数据统计            |
+|Competition         |21.01.19            |赛事竞猜            |
+|SmallHeart          |21.01.19            |小心心              |
+|ActivityLottery     |21.01.19            |主站活动            |
      
 ## 打赏赞助
 

@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2020 ~ 2021
+ *  Updated: 2021 ~ 2022
  */
 
 namespace BiliHelper\Plugin;
@@ -13,6 +13,7 @@ namespace BiliHelper\Plugin;
 
 use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
+use BiliHelper\Tool\Faker;
 use BiliHelper\Util\TimeLock;
 use BiliHelper\Tool\Generator;
 
@@ -48,7 +49,7 @@ class SmallHeart
         if (self::getLock() < time()) {
             self::heartBeat();
             if (self::$hb_count >= 200) {
-                self::resetVar();
+                self::resetVar(true);
                 self::setLock(self::timing(2));
             } else {
                 self::setLock(self::$heartbeat_interval);
@@ -56,15 +57,19 @@ class SmallHeart
         }
     }
 
+
     /**
      * @use 重置变量
+     * @param false $reset_num
      */
-    private static function resetVar()
+    private static function resetVar($reset_num = false)
     {
         self::$hb_payload = []; // 心跳请求数据
         self::$hb_headers = []; // 心跳请求头
 
-        self::$hb_count = 0; // 心跳次数 max 24
+        if ($reset_num) {
+            self::$hb_count = 0; // 心跳次数 max 24
+        }
         self::$hb_room_info = []; // 心跳带勋章房间信息
 
         self::$heartbeat_interval = 60; // 跳变时间
