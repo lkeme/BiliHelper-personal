@@ -26,6 +26,7 @@ class SmallHeart
     private static $hb_payload = []; // 心跳请求数据
     private static $hb_headers = []; // 心跳请求头
 
+    private static $hb_count_total = 0;
     private static $hb_count = 0; // 心跳次数 max 24
     private static $hb_room_info = []; // 心跳带勋章房间信息
 
@@ -48,7 +49,7 @@ class SmallHeart
         }
         if (self::getLock() < time()) {
             self::heartBeat();
-            if (self::$hb_count >= 200) {
+            if (self::$hb_count_total >= 200) {
                 self::resetVar(true);
                 self::setLock(self::timing(2));
             } else {
@@ -66,12 +67,11 @@ class SmallHeart
     {
         self::$hb_payload = []; // 心跳请求数据
         self::$hb_headers = []; // 心跳请求头
-
         if ($reset_num) {
-            self::$hb_count = 0; // 心跳次数 max 24
+            self::$hb_count_total = 0;
         }
         self::$hb_room_info = []; // 心跳带勋章房间信息
-
+        self::$hb_count = 0; // 心跳次数 max 24
         self::$heartbeat_interval = 60; // 跳变时间
     }
 
@@ -140,6 +140,7 @@ class SmallHeart
                 return;
             }
             self::$hb_count += 1;
+            self::$hb_count_total +=1;
             self::$hb_payload = $e_data['payload'];
             self::$hb_headers = $e_data['headers'];
             return;
@@ -150,6 +151,7 @@ class SmallHeart
             self::resetVar();
             return;
         }
+        self::$hb_count_total +=1;
         self::$hb_count += 1;
     }
 
