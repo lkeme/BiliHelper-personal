@@ -92,6 +92,7 @@ class App
             'AnchorRaffle',
             'AwardRecord',
             'Statistics',
+            'Forward'
         ];
         foreach ($plugins as $plugin) {
             $this->newTask($plugin);
