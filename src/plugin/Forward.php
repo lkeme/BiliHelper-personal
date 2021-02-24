@@ -28,6 +28,8 @@ class Forward
 
     private static $msg = '从未中奖，从未放弃[doge]';
 
+    private static $draw_follow = [];
+
 
     public static function run()
     {
@@ -162,8 +164,11 @@ class Forward
         }
         // 取关
         foreach (self::$un_follows as $uid) {
-            Log::info("[动态抽奖]-未中奖-取关 {$uid}");
-            User::setUserFollow($uid, true);
+            // 非转发抽奖动态关注的up 不取关
+            if (isset(self::$draw_follow[$uid])) {
+                Log::info("[动态抽奖]-未中奖-取关 {$uid}");
+                User::setUserFollow($uid, true);
+            }
         }
     }
 
@@ -217,6 +222,7 @@ class Forward
         if (!in_array($need_follow_uid, $default_follows)) {
             User::setUserFollow($need_follow_uid); // 关注
             User::tagAddUsers($need_follow_uid, self::$group_id); // 转到分组中
+            self::$draw_follow[$need_follow_uid] = 1; // 记录转发抽奖关注的up
         }
     }
 
