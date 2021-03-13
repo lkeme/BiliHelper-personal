@@ -76,7 +76,7 @@ class Forward
     */
     public static function changeReply(){
         self::$msg=getenv('AUTO_REPLY_TEXT');
-        Log::info("已将自动回复改为\"{self::$msg}\"");
+        Log::info("已将自动回复改为\"{$msg}\"");
     }
 
     /**
