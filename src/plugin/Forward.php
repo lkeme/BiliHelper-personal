@@ -67,10 +67,18 @@ class Forward
             self::clearFollowGroup();
         }
         //更改自动回复
-        $msg=getenv('AUTO_REPLY_TEXT');
+        if (getenv('AUTO_REPLY_TEXT') != $msg) {
+            self::changeReply();
+        }
         return true;
     }
-
+    /**
+     *更改自动回复
+    */
+    public static function changeReply(){
+        $msg=getenv('AUTO_REPLY_TEXT');
+        Log::info("已将自动回复改为{$msg}");
+    }
 
     /**
      * 自动转发抽奖
