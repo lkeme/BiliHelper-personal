@@ -52,7 +52,10 @@ class Forward
 
     public static function start()
     {
-
+        //更改自动回复
+        if (getenv('AUTO_REPLY_TEXT') != $msg) {
+            self::changeReply();
+        }
         // 取关未中奖
         if (getenv('CLEAR_DYNAMIC') == 'true') {
             self::clearDynamic();
@@ -65,10 +68,6 @@ class Forward
         if (getenv('CLEAR_GROUP_FOLLOW') == 'true') {
             self::clearAllDynamic();
             self::clearFollowGroup();
-        }
-        //更改自动回复
-        if (getenv('AUTO_REPLY_TEXT') != $msg) {
-            self::changeReply();
         }
         return true;
     }
