@@ -62,6 +62,8 @@ class Forward
             self::clearAllDynamic();
             self::clearFollowGroup();
         }
+        //更改自动回复
+        $msg=getenv('AUTO_REPLY_TEXT');
         return true;
     }
 
