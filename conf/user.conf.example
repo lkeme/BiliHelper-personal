@@ -85,6 +85,8 @@ AUTO_DYNAMIC = false
 CLEAR_DYNAMIC = false
 # 强制清除抽奖组关注
 CLEAR_GROUP_FOLLOW = false
+# 更改自动回复语言
+AUTO_REPLY_TEXT = 从未中奖，从未放弃[doge]
 
 #######################
 #       基础设置       #
