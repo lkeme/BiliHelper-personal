@@ -495,15 +495,17 @@ class ZoneTcpClient
                         throw new Exception("Socket error: [{$ret}] [{$length}]");
                     }
                     $cnt = 0;
-                    $r = array($socket);
                     $w = NULL;
                     $e = NULL;
                     while ($cnt++ < 60) {
+                        // reset read fdset when timeout
+                        $r = array($socket);
                         $ret = socket_select($r, $w, $e, 1);
                         if ($ret === false)
                             throw new Exception("Socket error: ret == false");
                         if ($ret)
                             break;
+                        Log::debug("Socket debug: select timeout" . PHP_EOL);
                     }
                     // TODO unable to read from socket[104]: Connection reset by peer
                     $ret = socket_recv($socket, $buffer, $length, 0);
