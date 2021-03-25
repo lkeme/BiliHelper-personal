@@ -53,7 +53,7 @@ class Forward
     public static function start()
     {
         //更改自动回复
-        if (getenv('AUTO_REPLY_TEXT') != $msg) {
+        if (getenv('AUTO_REPLY_TEXT') != self::$msg) {
             self::changeReply();
         }
         // 取关未中奖
@@ -76,6 +76,7 @@ class Forward
     */
     public static function changeReply(){
         self::$msg=getenv('AUTO_REPLY_TEXT');
+        $msg = self::$msg;
         Log::info("已将自动回复改为\"{$msg}\"");
     }
 
