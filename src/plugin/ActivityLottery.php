@@ -204,7 +204,7 @@ class ActivityLottery
         // {"code":0,"message":"0","ttl":1,"data":[{"id":0,"mid":4133274,"num":1,"gift_id":1152,"gift_name":"硬币x6","gift_type":0,"img_url":"https://i0.hdslb.com/bfs/activity-plat/static/b6e956937ee4aefd1e19c01283145fc0/JQ9Y9-KCm_w96_h102.png","type":5,"ctime":1596255796,"cid":0}]}
         // {"code":0,"message":"0","ttl":1,"data":[{"id":0,"mid":4133274,"ip":0,"num":1,"gift_id":0,"gift_name":"未中奖0","gift_type":0,"img_url":"","type":1,"ctime":1616825625,"cid":0,"extra":{}}]}
         if ($de_raw['code'] == 0) {
-            $result = "活动->{$referer} 获得->{$de_raw[0]['gift_name']}";
+            $result = "活动->{$referer} 获得->{$de_raw['data'][0]['gift_name']}";
             Notice::push('activity_lottery', $result);
             return true;
         }
