@@ -14,9 +14,12 @@ namespace BiliHelper\Util;
 use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
 use BiliHelper\Plugin\Live;
+use BiliHelper\Plugin\Sign;
+use BiliHelper\Plugin\Statistics;
 
 abstract class BaseRaffle
 {
+    use TimeLock;
     use FilterWords;
     const ACTIVE_TITLE = '';
     const ACTIVE_SWITCH = '';
