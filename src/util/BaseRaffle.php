@@ -13,6 +13,7 @@ namespace BiliHelper\Util;
 
 use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
+use BiliHelper\Plugin\Live;
 
 abstract class BaseRaffle
 {
