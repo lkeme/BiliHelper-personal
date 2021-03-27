@@ -13,7 +13,6 @@ namespace BiliHelper\Core;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use Bramus\Monolog\Formatter\ColoredLineFormatter;
-use function GuzzleHttp\Psr7\str;
 
 class Log
 {
@@ -27,7 +26,7 @@ class Log
         return self::$instance;
     }
 
-    protected static function configureInstance()
+    private static function configureInstance()
     {
         $logger = new Logger('BH');
         $handler = new StreamHandler('php://stdout', getenv('APP_DEBUG') == 'true' ? Logger::DEBUG : Logger::INFO);
@@ -46,8 +45,8 @@ class Log
 
     private static function writeLog($type, $message)
     {
-        if (getenv('APP_WRITELOG') == 'true') {
-            $path = './' . getenv("APP_WRITELOGPATH") . '/';
+        if (getenv('APP_WRITE_LOG') == 'true') {
+            $path = './' . getenv("APP_LOG_PATH") . '/';
             if (!file_exists($path)) {
                 mkdir($path);
                 chmod($path, 0777);
@@ -57,7 +56,12 @@ class Log
             $data = $date . ' Log.' . $type . ' ' . $message . PHP_EOL;
             file_put_contents($filename, $data, FILE_APPEND);
         }
-        return;
+    }
+
+    private static function backtrace(): string
+    {
+        $backtraces = debug_backtrace();
+        return "(". pathinfo(basename($backtraces[1]['file']))['filename'] . ") => ";
     }
 
     public static function debug($message, array $context = [])
@@ -68,7 +72,7 @@ class Log
 
     public static function info($message, array $context = [])
     {
-        $message = self::prefix() . $message;
+        $message =  self::prefix() .self::backtrace() . $message;
         self::writeLog('INFO', $message);
         self::getLogger()->addInfo($message, $context);
         self::callback(Logger::INFO, 'INFO', $message);
@@ -76,7 +80,7 @@ class Log
 
     public static function notice($message, array $context = [])
     {
-        $message = self::prefix() . $message;
+        $message =  self::prefix() .self::backtrace() . $message;
         self::writeLog('NOTICE', $message);
         self::getLogger()->addNotice($message, $context);
         self::callback(Logger::NOTICE, 'NOTICE', $message);
@@ -84,7 +88,7 @@ class Log
 
     public static function warning($message, array $context = [])
     {
-        $message = self::prefix() . $message;
+        $message =  self::prefix() .self::backtrace() . $message;
         self::writeLog('WARNING', $message);
         self::getLogger()->addWarning($message, $context);
         self::callback(Logger::WARNING, 'WARNING', $message);
@@ -92,7 +96,7 @@ class Log
 
     public static function error($message, array $context = [])
     {
-        $message = self::prefix() . $message;
+        $message =  self::prefix() .self::backtrace() . $message;
         self::writeLog('ERROR', $message);
         self::getLogger()->addError($message, $context);
         self::callback(Logger::ERROR, 'ERROR', $message);

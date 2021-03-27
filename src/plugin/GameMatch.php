@@ -14,7 +14,7 @@ use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
 use BiliHelper\Util\TimeLock;
 
-class Match
+class GameMatch
 {
     use TimeLock;
 

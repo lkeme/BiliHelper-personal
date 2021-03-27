@@ -1,0 +1,81 @@
+{
+  "remarks": "有需要可以自己添加，或者提pr",
+  "data": [
+    {
+      "_url": "注释: 活动地址",
+      "url": "https://www.bilibili.com/blackboard/activity-S9PC.html",
+      "_title": "注释: 活动标题",
+      "title": "vivo S9系列照亮我的美",
+      "_description": "注释: 活动描述",
+      "description": "vivo S9系列照亮我的美",
+      "_sid": "注释: 活动SID",
+      "sid": "f3ae9322-817d-11eb-8597-246e966235d8",
+      "_login": "注释: 登录+1次机会",
+      "login": "true",
+      "_follow": "注释: 关注+1次机会",
+      "follow": "false",
+      "_share": "注释: 分享+1次机会",
+      "share": "true",
+      "_draw_times": "抽奖次数",
+      "draw_times": 2,
+      "_expire_at": "注释: 到期时间",
+      "expire_at": "2021-03-30 23:59:59"
+    },
+    {
+      "url": "https://www.bilibili.com/blackboard/BDF2021.html",
+      "title": "哔哩哔哩舞蹈嘉年华2021",
+      "description": "BDF2021等你来玩！活动期间每天分享页面，新增一次机会。",
+      "sid": "12a6d7e9-7813-11eb-8597-246e966235d8",
+      "login": "true",
+      "follow": "false",
+      "share": "true",
+      "draw_times": 1,
+      "expire_at": "2021-07-15 11:59:59"
+    },
+    {
+      "url": "https://www.bilibili.com/blackboard/activity-nA2uYrmpfA.html",
+      "title": "哥斯拉金刚你站谁",
+      "description": "活动期间每天分享页面，新增一次机会。",
+      "sid": "f851e27a-858e-11eb-8597-246e966235d8",
+      "login": "true",
+      "follow": "false",
+      "share": "true",
+      "draw_times": 2,
+      "expire_at": "2021-04-15 11:59:59"
+    },
+    {
+      "url": "https://www.bilibili.com/blackboard/activity-QEya2bouhQ.html",
+      "title": "春日嗑糖大作战",
+      "description": "活动期间每天分享页面，新增一次机会。",
+      "sid": "20b0dfaf-8bcd-11eb-8597-246e966235d8",
+      "login": "true",
+      "follow": "false",
+      "share": "true",
+      "draw_times": 2,
+      "expire_at": "2021-05-05 23:59:59"
+    },
+    {
+      "url": "https://www.bilibili.com/blackboard/activity-YxhUEb7UwQ.html",
+      "title": "种草大作战特别篇",
+      "description": "活动期间每天分享页面，新增一次机会。",
+      "sid": "0cc8ffd7-8d56-11eb-8597-246e966235d8",
+      "login": "true",
+      "follow": "false",
+      "share": "true",
+      "draw_times": 2,
+      "expire_at": "2021-01-01 11:11:11",
+      "remarks": "2021年4月02日开始，先指定为过期。"
+    },
+    {
+      "url": "https://www.bilibili.com/blackboard/activity-M22oqFLY1w.html",
+      "title": "最强搞事王",
+      "description": "活动期间每天分享页面，新增一次机会。",
+      "sid": "e168f825-8be6-11eb-8597-246e966235d8",
+      "login": "true",
+      "follow": "false",
+      "share": "true",
+      "draw_times": 1,
+      "expire_at": "2021-04-23 23:59:59"
+    }
+  ]
+}

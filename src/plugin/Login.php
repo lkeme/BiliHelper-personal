@@ -13,6 +13,7 @@ use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
 use BiliHelper\Core\Config;
 use BiliHelper\Util\TimeLock;
+use BiliHelper\Tool\Common;
 
 
 class Login
@@ -199,9 +200,10 @@ class Login
     private static function publicKeyEnc($plaintext): string
     {
         Log::info('正在载入公钥');
-        $url = 'https://passport.bilibili.com/api/oauth2/getKey';
+        // $url = 'https://passport.bilibili.com/api/oauth2/getKey';
+        $url = 'https://passport.bilibili.com/x/passport-login/web/key';
         $payload = [];
-        $data = Curl::post('app', $url, Sign::login($payload));
+        $data = Curl::get('app', $url, Sign::login($payload));
         $data = json_decode($data, true);
         if (isset($data['code']) && $data['code']) {
             Log::error('公钥载入失败', ['msg' => $data['message']]);
@@ -209,6 +211,7 @@ class Login
         } else {
             Log::info('公钥载入完毕');
         }
+        print_r($data);
         $public_key = $data['data']['key'];
         $hash = $data['data']['hash'];
         openssl_public_encrypt($hash . $plaintext, $crypt, $public_key);
@@ -314,7 +317,7 @@ class Login
         switch ($de_raw['code']) {
             case 0:
                 // 二次判断
-                switch ($de_raw['data']['status']){
+                switch ($de_raw['data']['status']) {
                     case 0:
                         // 正常登录
                         Log::info("{$mode}登录成功");
@@ -472,7 +475,7 @@ class Login
     private static function saveConfig(string $key, string $value, $hide = true)
     {
         Config::put($key, $value);
-        Log::info(" > {$key}: " . ($hide ? substr_replace($value, '********', mb_strlen($value) / 2, 8) : $value));
+        Log::info(" > {$key}: " . ($hide ? Common::replaceStar($value,4,4) : $value));
     }
 
     /**
