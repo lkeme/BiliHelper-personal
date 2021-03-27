@@ -13,7 +13,7 @@ namespace BiliHelper\Core;
 class Env
 {
     private $app_name = 'BiliHelper Personal';
-    private $app_version = '0.7.0.*';
+    private $app_version = '0.8.0.*';
 
     /**
      * Env constructor.
@@ -58,9 +58,9 @@ class Env
         if (version_compare(PHP_VERSION, '7.0.0', '<')) {
             die("Please upgrade PHP version > 7.0.0 .");
         }
-        if (version_compare(PHP_VERSION, '8.0.0', '>')) {
-            die("Please upgrade PHP version < 8.0.0 .");
-        }
+//        if (version_compare(PHP_VERSION, '8.0.0', '>')) {
+//            die("Please upgrade PHP version < 8.0.0 .");
+//        }
         return $this;
     }
 }

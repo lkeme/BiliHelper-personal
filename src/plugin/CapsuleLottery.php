@@ -13,48 +13,129 @@ namespace BiliHelper\Plugin;
 
 use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
+use BiliHelper\Util\AllotTasks;
 use BiliHelper\Util\TimeLock;
 use BiliHelper\Tool\Generator;
 
-class SmallHeart
+class CapsuleLottery
 {
     use TimeLock;
+    use AllotTasks;
 
+    private static $repository = APP_DATA_PATH . 'capsule_infos.json';
+
+    private static $work_room_id = null;
     private static $enc_server = null; // 加密服务器 配置文件
-
     private static $hb_payload = []; // 心跳请求数据
     private static $hb_headers = []; // 心跳请求头
-
     private static $hb_count_total = 0;
     private static $hb_count = 0; // 心跳次数 max 24
     private static $hb_room_info = []; // 心跳带勋章房间信息
-
-    private static $fans_medals = []; // 全部勋章
-    private static $grey_fans_medals = []; // 灰色勋章
-
-    private static $metal_lock = 0; // 勋章时间锁
-
     private static $heartbeat_interval = 60; // 每次跳动时间
+
 
     public static function run()
     {
-        if (!self::init()) {
+        if (self::getLock() > time() || !self::init()) {
             return;
         }
-
-        if (self::$metal_lock < time()) {
-            self::polishMetal();
-            self::$metal_lock = time() + 8 * 60 * 60;
+        self::allotTasks();
+        if (self::workTask()) {
+            self::setLock(self::$heartbeat_interval);
+        } else {
+            self::setLock(self::timing(5) + mt_rand(1, 180));
         }
-        if (self::getLock() < time()) {
-            self::heartBeat();
-            if (self::$hb_count_total >= 200) {
-                self::resetVar(true);
-                self::setLock(self::timing(2));
-            } else {
-                self::setLock(self::$heartbeat_interval);
+    }
+
+    /**
+     * @use init
+     * @return bool
+     */
+    private static function init(): bool
+    {
+        if (getenv('USE_CAPSULE') == 'false' || getenv('ENC_SERVER') == '') {
+            return false;
+        }
+        if (is_null(self::$enc_server)) {
+            self::$enc_server = getenv('ENC_SERVER');
+        }
+        return true;
+    }
+
+
+    /**
+     * @use 分配任务
+     * @return bool
+     * @throws \JsonDecodeStream\Exception\CollectorException
+     * @throws \JsonDecodeStream\Exception\ParserException
+     * @throws \JsonDecodeStream\Exception\SelectorException
+     * @throws \JsonDecodeStream\Exception\TokenizerException
+     */
+    private static function allotTasks(): bool
+    {
+        if (self::$work_status['work_updated'] == date("Y/m/d")) {
+            return false;
+        }
+        $parser = self::loadJsonData();
+        foreach ($parser->items('data[]') as $act) {
+            // 活动无效
+            if (is_null($act->coin_id)) {
+                continue;
+            }
+            // 活动实效过期
+            if (strtotime($act->expire_at) < time()) {
+                continue;
+            }
+            if ($act->room_id == 0) {
+                $room_ids = Live::getAreaRoomList($act->parent_area_id, $act->area_id);
+                $act->room_id = array_shift($room_ids);
+            }
+            // 观看时间
+            self::pushTask('watch', $act, true);
+            // 抽奖次数
+            $arr = range(1, $act->draw_times);
+            foreach ($arr as $_) {
+                self::pushTask('draw', $act);
             }
         }
+        self::$work_status['work_updated'] = date("Y/m/d");
+        Log::info('扭蛋抽奖任务分配完成 ' . count(self::$tasks) . ' 个任务待执行');
+        return true;
+    }
+
+
+    /**
+     * @use 执行任务
+     * @return bool
+     */
+    private static function workTask()
+    {
+        if (self::$work_status['work_completed'] == date("Y/m/d")) {
+            return false;
+        }
+        $task = self::pullTask();
+        // 所有任务完成 标记
+        if (!$task) {
+            self::$work_status['work_completed'] = date("Y/m/d");
+            return false;
+        }
+        if ($task['time'] && is_null(self::$work_status['estimated_time'])) {
+            self::$work_status['estimated_time'] = time() + $task['act']->watch_time;
+        }
+        Log::info("执行 {$task['act']->title} #{$task['operation']} 任务");
+        // 执行任务
+        switch ($task['operation']) {
+            case 'watch':
+                self::heartBeat($task['act']->room_id);
+                break;
+            case 'draw':
+                self::doLottery($task['act']->coin_id, $task['act']->url, 0);
+                break;
+            default:
+                Log::info("当前 {$task['act']->title} #{$task['operation']} 任务不存在哦");
+                break;
+        }
+        return true;
     }
 
 
@@ -74,72 +155,28 @@ class SmallHeart
         self::$heartbeat_interval = 60; // 跳变时间
     }
 
-    /**
-     * @use init
-     * @return bool
-     */
-    private static function init(): bool
-    {
-        if (getenv('USE_HEARTBEAT') == 'false' || getenv('ENC_SERVER') == '') {
-            return false;
-        }
-        if (is_null(self::$enc_server)) {
-            self::$enc_server = getenv('ENC_SERVER');
-        }
-        return true;
-    }
-
-
-    /**
-     * @use 勋章处理
-     */
-    private static function polishMetal()
-    {
-        // 灰色勋章
-        self::fetchGreyMedalList();
-        if (empty(self::$grey_fans_medals)) {
-            return;
-        }
-        // 小心心
-        $bag_list = Live::fetchBagListByGift('小心心', 30607);
-        if (empty($bag_list)) {
-            return;
-        }
-        // 擦亮勋章
-        foreach ($bag_list as $gift) {
-            for ($num = 1; $num <= $gift['gift_num']; $num++) {
-                $grey_fans_medal = array_shift(self::$grey_fans_medals);
-                // 为空
-                if (is_null($grey_fans_medal)) break;
-                // 擦亮
-                Live::sendGift($grey_fans_medal, $gift, 1);
-            }
-        }
-
-
-    }
-
 
     /**
      * @use 心跳处理
+     * @param int $room_id
      */
-    private static function heartBeat()
+    private static function heartBeat(int $room_id)
     {
-        if (empty(self::$fans_medals)) {
-            return;
+        if (self::$work_room_id != $room_id) {
+            self::resetVar();
+            self::$work_room_id = $room_id;
         }
         if (empty(self::$hb_room_info)) {
-            $metal = self::$fans_medals[array_rand(self::$fans_medals)];
-            self::$hb_room_info = Live::webGetRoomInfo($metal['roomid']);
+            self::$hb_room_info = Live::webGetRoomInfo($room_id);
         }
-        if (self::$hb_count == 0) {
+        if (!self::$hb_count) {
             $e_data = self::eHeartBeat(self::$hb_room_info['data']['room_info']);
             if (!$e_data['status']) {
                 // 错误级别
                 return;
             }
             self::$hb_count += 1;
-            self::$hb_count_total +=1;
+            self::$hb_count_total += 1;
             self::$hb_payload = $e_data['payload'];
             self::$hb_headers = $e_data['headers'];
             return;
@@ -150,7 +187,7 @@ class SmallHeart
             self::resetVar();
             return;
         }
-        self::$hb_count_total +=1;
+        self::$hb_count_total += 1;
         self::$hb_count += 1;
     }
 
@@ -285,32 +322,42 @@ class SmallHeart
         ];
     }
 
-
     /**
-     * @use 获取灰色勋章列表(过滤无勋章或已满)
+     * @use 开始抽奖
+     * @param int $coin_id
+     * @param string $referer
+     * @param int $num
+     * @return bool
      */
-    private static function fetchGreyMedalList()
+    private static function doLottery(int $coin_id, string $referer, int $num)
     {
-        $data = Live::fetchMedalList();
+        $url = 'https://api.live.bilibili.com/xlive/web-ucenter/v1/capsule/open_capsule_by_id';
+        $headers = [
+            'origin' => 'https://live.bilibili.com',
+            'referer' => $referer
+        ];
         $user_info = User::parseCookies();
-        foreach ($data as $vo) {
-            // 过滤主站勋章
-            if (!isset($vo['roomid'])) continue;
-            // 过滤自己勋章
-            if ($vo['target_id'] == $user_info['uid']) continue;
-            // 所有
-            self::$fans_medals[] = [
-                'uid' => $vo['target_id'],
-                'roomid' => $vo['roomid'],
-            ];
-            //  灰色
-            if ($vo['medal_color_start'] == 12632256 && $vo['medal_color_end'] == 12632256 && $vo['medal_color_border'] == 12632256) {
-                self::$grey_fans_medals[] = [
-                    'uid' => $vo['target_id'],
-                    'roomid' => $vo['roomid'],
-                ];
-            }
+        $payload = [
+            'id' => $coin_id,
+            'count' => 1,
+            'type' => 1,
+            'platform' => 'web',
+            '_' => time() * 1000,
+            'csrf' => $user_info['token'],
+            'csrf_token' => $user_info['token'],
+            'visit_id' => ''
+        ];
+        $raw = Curl::post('pc', $url, $payload, $headers);
+        $de_raw = json_decode($raw, true);
+        Log::notice("开始抽奖#{$num} {$raw}");
+        // {"code":0,"message":"0","ttl":1,"data":{"status":false,"isEntity":false,"info":{"coin":1},"awards":[{"name":"谢谢参与","num":1,"text":"谢谢参与 X 1","web_url":"https://i0.hdslb.com/bfs/live/b0fccfb3bac2daae35d7e514a8f6d31530b9add2.png","mobile_url":"https://i0.hdslb.com/bfs/live/b0fccfb3bac2daae35d7e514a8f6d31530b9add2.png","usage":{"text":"很遗憾您未能中奖","url":""},"type":32,"expire":"当天","gift_type":"7290bc172e5ab9e151eb141749adb9dd","gift_value":""}],"text":["谢谢参与 X 1"],"isExCode":false}}
+        if ($de_raw['code'] == 0) {
+            $result = "活动->{$referer} 获得->{$de_raw['text'][0]}";
+            Notice::push('capsule_lottery', $result);
+            return true;
         }
+        return false;
+
     }
 
 }

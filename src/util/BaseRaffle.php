@@ -9,13 +9,14 @@
  *  Updated: 2021 ~ 2022
  */
 
-namespace BiliHelper\Plugin;
+namespace BiliHelper\Util;
 
 use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
 
 abstract class BaseRaffle
 {
+    use FilterWords;
     const ACTIVE_TITLE = '';
     const ACTIVE_SWITCH = '';
 
@@ -33,6 +34,7 @@ abstract class BaseRaffle
             return;
         }
         static::setPauseStatus();
+        static::loadJsonData();
         static::startLottery();
     }
 

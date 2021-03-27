@@ -14,7 +14,7 @@ use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
 use BiliHelper\Util\TimeLock;
 
-class Task
+class DailyTask
 {
     use TimeLock;
 
@@ -71,9 +71,9 @@ class Task
         $data = json_decode($data, true);
 
         if (isset($data['code']) && $data['code']) {
-            Log::warning('签到失败', ['msg' => $data['message']]);
+            Log::warning("签到失败: {$data['message']}");
         } else {
-            Log::info('签到成功');
+            Log::info("签到成功: {$data['text']}");
             // 推送签到信息
             Notice::push('todaySign', $data['message']);
         }

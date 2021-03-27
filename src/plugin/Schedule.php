@@ -23,7 +23,7 @@ class Schedule
     private static $unlock_timers = [];
     private static $sleep_section = [];
     // 日常类
-    private static $fillable = ['Login', 'Schedule', 'Daily', 'Judge', 'MasterSite', 'GiftSend', 'Task', 'Silver2Coin', 'ManGa', 'Match', 'GroupSignIn', 'AwardRecord', 'Statistics'];
+    private static $fillable = ['Login', 'Schedule', 'Daily', 'Judge', 'MasterSite', 'GiftSend', 'DailyTask', 'Silver2Coin', 'ManGa', 'GameMatch', 'GroupSignIn', 'AwardRecord', 'Statistics'];
     // 任务类
     private static $guarded_first = ['Barrage', 'GiftHeart', 'Silver', 'MaterialObject'];
     // 监控类
@@ -32,6 +32,8 @@ class Schedule
     private static $guarded_third = ['StormRaffle', 'GuardRaffle', 'PkRaffle', 'GiftRaffle', 'AnchorRaffle'];
     // 特殊 老爷处理
     private static $guarded_fourth = ['Heart'];
+    // 暂定不做处理，后期看情况再定
+    private static $release = ['ActivityLottery', 'SmallHeart', 'Competition', 'SmallHeart', 'Forward', 'CapsuleLottery'];
 
     public static function run()
     {

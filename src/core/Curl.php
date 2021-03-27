@@ -153,7 +153,7 @@ class Curl
                 'timeout' => $timeout,
             ),
         );
-        $result = @file_get_contents($url, false, stream_context_create($options));
+        $result = $url ? @file_get_contents($url, false, stream_context_create($options)) : null;
         Log::debug($result);
         return $result ? $result : null;
     }
@@ -243,7 +243,7 @@ class Curl
             'Connection' => 'keep-alive',
             // 'Content-Type' => 'application/x-www-form-urlencoded',
             // 'User-Agent' => 'Mozilla/5.0 BiliDroid/5.51.1 (bbcallen@gmail.com)',
-            'User-Agent' => 'Mozilla/5.0 BiliDroid/6.17.1 (bbcallen@gmail.com) os/android model/MuMu mobi_app/android build/6171000 channel/bili innerVer/6171000 osVer/6.0.1 network/2',
+            'User-Agent' => 'Mozilla/5.0 BiliDroid/6.20.5 (bbcallen@gmail.com) os/android model/MuMu mobi_app/android build/6205500 channel/bili innerVer/6205500 osVer/6.0.1 network/2',
             // 'Referer' => 'https://live.bilibili.com/',
         ];
         $pc_headers = [
@@ -251,11 +251,11 @@ class Curl
             'Accept-Encoding' => 'gzip, deflate',
             'Accept-Language' => "zh-CN,zh;q=0.9",
             // 'Content-Type' => 'application/x-www-form-urlencoded',
-            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/82.0.4056.0 Safari/537.36 Edg/82.0.431.0',
+            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.30 Safari/537.36 Edg/90.0.818.8',
             // 'Referer' => 'https://live.bilibili.com/',
         ];
         $other_headers = [
-            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36',
+            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4450.0 Safari/537.36',
         ];
         $default_headers = isset(${$os . "_headers"}) ? ${$os . "_headers"} : $other_headers;
         if (in_array($os, ['app', 'pc']) && getenv('COOKIE') != "") {
