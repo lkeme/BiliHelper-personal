@@ -74,7 +74,6 @@ class DailyTask
         if (isset($data['code']) && $data['code']) {
             Log::warning("签到失败: {$data['message']}");
         } else {
-
             Log::info("签到成功: {$data['data']['text']}");
             // 推送签到信息
             Notice::push('todaySign', $data['data']['text']);
