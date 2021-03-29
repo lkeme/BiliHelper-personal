@@ -23,7 +23,7 @@ class Schedule
     private static $unlock_timers = [];
     private static $sleep_section = [];
     // 日常类
-    private static $fillable = ['Login', 'Schedule', 'Daily', 'Judge', 'MasterSite', 'GiftSend', 'DailyTask', 'Silver2Coin', 'ManGa', 'GameMatch', 'GroupSignIn', 'AwardRecord', 'Statistics'];
+    private static $fillable = ['Login', 'Schedule', 'Daily', 'Judge', 'MainSite', 'GiftSend', 'DailyTask', 'Silver2Coin', 'ManGa', 'GameMatch', 'GroupSignIn', 'AwardRecord', 'Statistics'];
     // 任务类
     private static $guarded_first = ['Barrage', 'GiftHeart', 'Silver', 'MaterialObject'];
     // 监控类
