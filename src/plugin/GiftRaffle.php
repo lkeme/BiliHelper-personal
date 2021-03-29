@@ -98,7 +98,7 @@ class GiftRaffle extends BaseRaffle
             ]);
         }
         $results = Curl::async('app', $url, $tasks);
-        # print_r($results);
+        // print_r($results);
         return $results;
     }
 

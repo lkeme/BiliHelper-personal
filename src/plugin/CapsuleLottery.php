@@ -352,7 +352,7 @@ class CapsuleLottery
         Log::notice("开始抽奖#{$num} {$raw}");
         // {"code":0,"message":"0","ttl":1,"data":{"status":false,"isEntity":false,"info":{"coin":1},"awards":[{"name":"谢谢参与","num":1,"text":"谢谢参与 X 1","web_url":"https://i0.hdslb.com/bfs/live/b0fccfb3bac2daae35d7e514a8f6d31530b9add2.png","mobile_url":"https://i0.hdslb.com/bfs/live/b0fccfb3bac2daae35d7e514a8f6d31530b9add2.png","usage":{"text":"很遗憾您未能中奖","url":""},"type":32,"expire":"当天","gift_type":"7290bc172e5ab9e151eb141749adb9dd","gift_value":""}],"text":["谢谢参与 X 1"],"isExCode":false}}
         if ($de_raw['code'] == 0) {
-            $result = "活动->{$referer} 获得->{$de_raw['text'][0]}";
+            $result = "活动->{$referer} 获得->{$de_raw['data']['text'][0]}";
             Notice::push('capsule_lottery', $result);
             return true;
         }

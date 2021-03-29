@@ -68,7 +68,7 @@ class App
         $plugins = [
             'Login',
             'Schedule',
-            'MasterSite',
+            'MainSite',
             'Daily',
             'ManGa',
             'GameMatch',

@@ -211,7 +211,7 @@ class Login
         } else {
             Log::info('公钥载入完毕');
         }
-        print_r($data);
+        // print_r($data);
         $public_key = $data['data']['key'];
         $hash = $data['data']['hash'];
         openssl_public_encrypt($hash . $plaintext, $crypt, $public_key);
