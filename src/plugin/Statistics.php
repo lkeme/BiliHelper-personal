@@ -32,7 +32,7 @@ class Statistics
         }
         self::outputResult();
 
-        self::setLock(5 * 60);
+        self::setLock(20 * 60);
     }
 
 
