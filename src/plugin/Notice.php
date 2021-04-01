@@ -171,11 +171,14 @@ class Notice
         if (getenv('NOTIFY_PUSHPLUS_TOKEN')) {
             self::pushPlusSend($info);
         }
+        if (getenv('NOTIFY_CQ_URL') && getenv('NOTIFY_CQ_TOKEN') && getenv('NOTIFY_CQ_QQ')) {
+            self::goCqhttp($info);
+        }
     }
 
 
     /**
-     * @use 钉钉bot推送
+     * @use DingTalkbot推送
      * @doc https://developers.dingtalk.com/document/app/document-upgrade-notice#/serverapi2/qf2nxq
      * @param array $info
      */
@@ -277,13 +280,13 @@ class Notice
 
     /**
      * @use PushPlus酱推送
-     * @doc http://pushplus.hxtrip.com/doc/
+     * @doc http://www.pushplus.plus/doc/
      * @param array $info
      */
     private static function pushPlusSend(array $info)
     {
         Log::info('使用PushPlus酱推送消息');
-        $url = 'http://pushplus.hxtrip.com/send';
+        $url = 'http://www.pushplus.plus/send';
         $payload = [
             'token' => getenv('NOTIFY_PUSHPLUS_TOKEN'),
             'title' => $info['title'],
@@ -293,6 +296,7 @@ class Notice
             'Content-Type' => 'application/json'
         ];
         $raw = Curl::put('other', $url, $payload, $headers);
+        // {"code":200,"msg":"请求成功","data":"发送消息成功"}
         $de_raw = json_decode($raw, true);
         if ($de_raw['code'] == 200) {
             Log::info("推送消息成功: {$de_raw['data']}");
@@ -301,5 +305,29 @@ class Notice
         }
     }
 
+
+    /**
+     * @use GO-CQHTTP推送
+     * @doc https://docs.go-cqhttp.org/api/
+     * @param array $info
+     */
+    private static function goCqhttp(array $info)
+    {
+        Log::info('使用GoCqhttp推送消息');
+        $url = getenv('NOTIFY_CQ_URL');
+        $payload = [
+            'access_token' => getenv('NOTIFY_CQ_TOKEN'),
+            'user_id' => getenv('NOTIFY_CQ_QQ'),
+            'message' => $info['content']
+        ];
+        $raw = Curl::post('other', $url, $payload);
+        // {"data":{"message_id":123456},"retcode":0,"status":"ok"}
+        $de_raw = json_decode($raw, true);
+        if ($de_raw['retcode'] == 0) {
+            Log::info("推送消息成功: {$de_raw['status']}");
+        } else {
+            Log::warning("推送消息失败: {$raw}");
+        }
+    }
 
 }
