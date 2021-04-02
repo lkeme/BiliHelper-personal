@@ -212,6 +212,9 @@ class SmallHeart
     private static function xHeartBeat(int $index = 1): array
     {
         $s_data = self::encParamS($index);
+        if (!$s_data) {
+            return ['status' => false];
+        }
         $s = $s_data['s'];
         $t = $s_data['payload'];
 
@@ -251,9 +254,9 @@ class SmallHeart
     /**
      * @use 加密参数S
      * @param int $index
-     * @return array
+     * @return array|false
      */
-    private static function encParamS(int $index): array
+    private static function encParamS(int $index)
     {
         // 转换index
         $temp = json_decode(self::$hb_payload['id'], true);
@@ -277,12 +280,16 @@ class SmallHeart
         ];
         $data = Curl::put('other', self::$enc_server, $payload, $headers);
         $de_raw = json_decode($data, true);
-        Log::info("S参数加密 {$de_raw['s']}");
-
-        return [
-            's' => $de_raw['s'],
-            'payload' => $payload['t']
-        ];
+        if ($de_raw['code'] == 0) {
+            Log::info("S加密成功 {$de_raw['s']}");
+            return [
+                's' => $de_raw['s'],
+                'payload' => $payload['t']
+            ];
+        } else {
+            Log::warning("S加密成功 {$de_raw['message']}");
+            return false;
+        }
     }
 
 

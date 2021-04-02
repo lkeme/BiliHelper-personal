@@ -21,8 +21,6 @@ class PkRaffle extends BaseRaffle
     const ACTIVE_TITLE = '大乱斗';
     const ACTIVE_SWITCH = 'USE_PK';
 
-    use TimeLock;
-
     protected static $wait_list = [];
     protected static $finish_list = [];
     protected static $all_list = [];
