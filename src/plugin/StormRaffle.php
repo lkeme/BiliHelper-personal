@@ -20,8 +20,6 @@ class StormRaffle extends BaseRaffle
     const ACTIVE_TITLE = '节奏风暴';
     const ACTIVE_SWITCH = 'USE_STORM';
 
-    use TimeLock;
-
     protected static $wait_list = [];
     protected static $finish_list = [];
     protected static $all_list = [];

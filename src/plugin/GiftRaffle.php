@@ -20,8 +20,6 @@ class GiftRaffle extends BaseRaffle
     const ACTIVE_TITLE = '活动礼物';
     const ACTIVE_SWITCH = 'USE_ACTIVE';
 
-    use TimeLock;
-
     protected static $wait_list = [];
     protected static $finish_list = [];
     protected static $all_list = [];

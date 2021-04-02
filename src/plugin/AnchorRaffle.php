@@ -20,8 +20,6 @@ class AnchorRaffle extends BaseRaffle
     const ACTIVE_TITLE = '天选时刻';
     const ACTIVE_SWITCH = 'USE_ANCHOR';
 
-    use TimeLock;
-
     protected static $wait_list = [];
     protected static $finish_list = [];
     protected static $all_list = [];

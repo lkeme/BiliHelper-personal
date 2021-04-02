@@ -20,8 +20,6 @@ class GuardRaffle extends BaseRaffle
     const ACTIVE_TITLE = '总督舰长';
     const ACTIVE_SWITCH = 'USE_GUARD';
 
-    use TimeLock;
-
     protected static $wait_list = [];
     protected static $finish_list = [];
     protected static $all_list = [];
