@@ -192,8 +192,10 @@ class Curl
                 // var_dump($e->getRequest());
                 if ($e->hasResponse()) var_dump($e->getResponse());
             } catch (\Exception $e) {
+                // $e->getHandlerContext()
                 // var_dump($e);
             }
+            Log::warning("Target -> URL: {$url} METHOD: {$method}");
             Log::warning("CURl -> RETRY: {$retry} ERROR: {$e->getMessage()} ERRNO: {$e->getCode()} STATUS:  Waiting for recovery!");
             sleep(15);
         }
