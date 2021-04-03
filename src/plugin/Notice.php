@@ -320,7 +320,7 @@ class Notice
             'user_id' => getenv('NOTIFY_CQ_QQ'),
             'message' => $info['content']
         ];
-        $raw = Curl::post('other', $url, $payload);
+        $raw = Curl::get('other', $url, $payload);
         // {"data":{"message_id":123456},"retcode":0,"status":"ok"}
         $de_raw = json_decode($raw, true);
         if ($de_raw['retcode'] == 0) {
