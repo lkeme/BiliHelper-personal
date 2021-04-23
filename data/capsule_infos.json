@@ -34,23 +34,23 @@
       "parent_area_id": 6,
       "coin_id": 121,
       "watch_time": 3720,
-      "draw_times": 9,
+      "draw_times": 2,
       "expire_at": "2021-04-26 23:59:59"
     },
     {
       "url": "https://live.bilibili.com/11218604",
-      "title": "PGI全球邀请赛",
-      "description": "每日在PGI直播间观看，10分钟1张",
+      "title": "2021PCL春季赛观赛任务",
+      "description": "每日在PGI直播间观看，10、15、30",
       "room_id": 11218604,
       "area_id": 0,
       "parent_area_id": 2,
-      "coin_id": 91,
+      "coin_id": 129,
       "watch_time": 3720,
-      "draw_times": 6,
-      "expire_at": "2021-03-28 23:59:59"
+      "draw_times": 3,
+      "expire_at": "2021-05-31 23:59:59"
     },
     {
-      "url": "https://live.bilibili.com/blackboard/2021-lpl-main.html",
+      "url": "https://live.bilibili.com/6",
       "title": "2021LPL春季赛",
       "description": "每日在LOL直播间观看，5分钟1张，15分钟1张",
       "room_id": 7734200,
@@ -59,19 +59,19 @@
       "coin_id": 76,
       "watch_time": 3720,
       "draw_times": 3,
-      "expire_at": "2021-03-28 23:59:59"
+      "expire_at": "2021-05-31 23:59:59"
     },
     {
       "url": "https://live.bilibili.com/23",
-      "title": "PEL和平精英职业联赛",
+      "title": "PEI亚洲邀请赛",
       "description": "每日在PEL直播间观看，5分钟1张",
       "room_id": 13242892,
       "area_id": 0,
       "parent_area_id": 2,
       "coin_id": 109,
       "watch_time": 3720,
-      "draw_times": 6,
-      "expire_at": "2021-04-11 23:59:59"
+      "draw_times": 2,
+      "expire_at": "2021-05-31 23:59:59"
     }
   ]
 }

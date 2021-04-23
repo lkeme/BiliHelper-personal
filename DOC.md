@@ -2,7 +2,7 @@
 <p align="center"><img width="300px" src="https://i.loli.net/2018/04/20/5ad97bd395912.jpeg"></p>
 
 <p align="center">
-<img src="https://img.shields.io/badge/version-0.8.0.210327 alpha-green.svg?longCache=true&style=for-the-badge">
+<img src="https://img.shields.io/badge/version-0.8.1.210423 alpha-green.svg?longCache=true&style=for-the-badge">
 <img src="https://img.shields.io/badge/license-mit-blue.svg?longCache=true&style=for-the-badge">
 </p>
 
@@ -17,7 +17,7 @@ B 站直播实用脚本
 |--------------------|--------------------|--------------------|
 |Login               |21.03.27           |账号登录            |
 |Schedule            |21.03.27           |休眠控制            |
-|MainSite          |21.03.27           |主站助手            |
+|MainSite            |21.03.27           |主站助手            |
 |Daily               |21.03.27           |每日礼包            |
 |Heart               |21.03.27           |双端心跳            |
 |DailyTask           |21.03.27           |每日任务            |
