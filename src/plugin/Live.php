@@ -390,7 +390,7 @@ class Live
             'platform' => 'web',
             'parent_area_id' => $parent_area_id,
             'area_id' => $area_id,
-            'sort_type' => 'sort_type_282',
+            'sort_type' => 'online',
             'page' => $page
         ];
         $raw = Curl::get('other', $url, $payload);
