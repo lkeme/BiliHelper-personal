@@ -1,6 +1,23 @@
 # Release Notes
 # 本项目Log
 
+## v0.8.1.210423 alpha (2021-04-23)
+
+### Added
+-
+
+### Changed
+- 更新天选敏感词
+- 更新活动列表
+- 优化直播间心跳
+-
+
+### Fixed
+-
+
+### Remarks
+-
+
 ## v0.8.0.210327 alpha (2021-03-27)
 
 ### Added
