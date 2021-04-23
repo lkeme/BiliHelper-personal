@@ -7,7 +7,7 @@ Group: [55308141](https://jq.qq.com/?_wv=1027&k=5AIDaJg) | **仅用于BUG提交�
 
 ## 公告
 
-> Personal Edition **0.8.0.210327 alpha**  
+> Personal Edition **0.8.1.210423 alpha**  
 
 ```notice
 ---- 免费的东西总是得不到人的珍惜。
