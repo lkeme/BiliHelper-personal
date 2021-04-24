@@ -39,7 +39,7 @@ trait XliveHeartBeat
      */
     protected static function resetVar($force = false)
     {
-        if ($force){
+        if ($force) {
             static::$_room_info = [];
             static::$_current_room_id = 0;
 
@@ -55,6 +55,13 @@ trait XliveHeartBeat
     }
 
 
+    /**
+     * @use 任务接口
+     * @param int $room_id
+     * @param int $max_time
+     * @param int $max_num
+     * @return int|mixed
+     */
     protected static function xliveHeartBeatTask(int $room_id, int $max_time, int $max_num)
     {
         // 加载依赖
@@ -73,6 +80,7 @@ trait XliveHeartBeat
                 Log::warning('直播间信息获取失败');
                 return static::$_default;
             }
+            static::$_room_info = $r_data;
             $rdata = $r_data['data'];
             $parent_area_id = $rdata['room_info']['parent_area_id'];
             $area_id = $rdata['room_info']['area_id'];
@@ -85,7 +93,7 @@ trait XliveHeartBeat
         $index = static::$_data['id'][2];
         if ($r_data['code'] != 0) {
             if (static::$_retry) {
-                Log::warning("心跳失败-{$index} {$r_data['message']}");
+                Log::warning("心跳失败-$index {$r_data['message']}");
                 static::resetVar();
                 static::$_retry -= 1;
                 return static::$_default;
@@ -103,7 +111,7 @@ trait XliveHeartBeat
             //成功在id为{room_id}的直播间发送第{ii}次心跳
         }
         $minute = round(static::$_count_time / 60);
-        Log::info("已在直播间 {$room_id} 连续观看了 {$minute} 分钟");
+        Log::info("已在直播间 $room_id 连续观看了 $minute 分钟");
         return $r_data['heartbeat_interval'];
 
     }
@@ -125,6 +133,10 @@ trait XliveHeartBeat
     }
 
 
+    /**
+     * @use 心跳迭代
+     * @return array
+     */
     protected static function heartBeatIterator(): array
     {
         $rdata = [];
@@ -145,6 +157,7 @@ trait XliveHeartBeat
             static::$_secret_rule = $rdata['secret_rule'];
             static::$_data['id'][2] += 1;
         }
+        Log::debug(json_encode(static::$_data['id'], true));
         return [
             'code' => $r_data['code'],
             'message' => $r_data['message'],
@@ -178,6 +191,8 @@ trait XliveHeartBeat
             'csrf' => $user_info['token'],
             'visit_id' => ''
         ];
+        //        print_r($payload);
+        Log::debug(json_encode($payload, true));
         $raw = Curl::post('pc', $url, $payload, $headers);
         // {'code':0,'message':'0','ttl':1,'data':{'timestamp':1595342828,'heartbeat_interval':300,'secret_key':'seacasdgyijfhofiuxoannn','secret_rule':[2,5,1,4],'patch_status':2}}
 
@@ -196,6 +211,11 @@ trait XliveHeartBeat
     {
         $url = 'https://live-trace.bilibili.com/xlive/data-interface/v1/x25Kn/X';
         $user_info = User::parseCookies();
+        $headers = [
+            'Content-Type' => 'application/x-www-form-urlencoded',
+            'Origin' => 'https://live.bilibili.com',
+            'Referer' => 'https://live.bilibili.com/' . $id[3],
+        ];
         $payload = [
             's' => static::$_data['s'],
             'id' => json_encode([$id[0], $id[1], $id[2], $id[3]], true),
@@ -209,8 +229,9 @@ trait XliveHeartBeat
             'csrf' => $user_info['token'],
             'visit_id' => ''
         ];
-        // print_r($payload);
-        $raw = Curl::post('pc', $url, $payload, static::$hb_headers);
+//        print_r($payload);
+        Log::debug(json_encode($payload, true));
+        $raw = Curl::post('pc', $url, $payload, $headers);
         # {'code':0,'message':'0','ttl':1,'data':{'heartbeat_interval':300,'timestamp':1595346846,'secret_rule':[2,5,1,4],'secret_key':'seacasdgyijfhofiuxoannn'}}
         return json_decode($raw, true);
     }
