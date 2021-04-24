@@ -1,0 +1,92 @@
+{
+  "remarks": "有需要可以自己添加，或者提pr",
+  "data": [
+    {
+      "_url": "注释: 活动地址",
+      "url": "https://www.bilibili.com/blackboard/activity-S9PC.html",
+      "_title": "注释: 活动标题",
+      "title": "vivo S9系列照亮我的美",
+      "_description": "注释: 活动描述",
+      "description": "vivo S9系列照亮我的美",
+      "_sid": "注释: 活动SID",
+      "sid": "f3ae9322-817d-11eb-8597-246e966235d8",
+      "_login": "注释: 登录+1次机会",
+      "login": "true",
+      "_follow": "注释: 关注+1次机会",
+      "follow": "false",
+      "_share": "注释: 分享+1次机会",
+      "share": "true",
+      "_draw_times": "抽奖次数",
+      "draw_times": 2,
+      "_expire_at": "注释: 到期时间",
+      "expire_at": "2021-03-30 23:59:59"
+    },
+    {
+      "url": "https://www.bilibili.com/blackboard/BDF2021.html",
+      "title": "哔哩哔哩舞蹈嘉年华2021",
+      "description": "BDF2021等你来玩！活动期间每天分享页面，新增一次机会。",
+      "sid": "12a6d7e9-7813-11eb-8597-246e966235d8",
+      "login": "true",
+      "follow": "false",
+      "share": "true",
+      "draw_times": 1,
+      "expire_at": "2021-07-15 11:59:59"
+    },
+    {
+      "url": "https://www.bilibili.com/blackboard/activity-nA2uYrmpfA.html",
+      "title": "哥斯拉金刚你站谁",
+      "description": "活动期间每天分享页面，新增一次机会。",
+      "sid": "f851e27a-858e-11eb-8597-246e966235d8",
+      "login": "true",
+      "follow": "false",
+      "share": "true",
+      "draw_times": 2,
+      "expire_at": "2021-05-23 11:59:59"
+    },
+    {
+      "url": "https://www.bilibili.com/blackboard/activity-QEya2bouhQ.html",
+      "title": "春日嗑糖大作战",
+      "description": "活动期间每天分享页面，新增一次机会。",
+      "sid": "20b0dfaf-8bcd-11eb-8597-246e966235d8",
+      "login": "true",
+      "follow": "false",
+      "share": "true",
+      "draw_times": 2,
+      "expire_at": "2021-05-05 23:59:59"
+    },
+    {
+      "url": "https://www.bilibili.com/blackboard/gaming_on_bilibili.html",
+      "title": "上B站看电竞",
+      "description": "活动期间每天分享页面，新增一次机会。",
+      "sid": "0b87bd83-8565-11eb-8597-246e966235d8",
+      "login": "true",
+      "follow": "false",
+      "share": "true",
+      "draw_times": 1,
+      "expire_at": "2021-05-30 23:59:59",
+      "remarks": "时间不名，暂定一个月。"
+    },
+    {
+      "url": "https://www.bilibili.com/blackboard/activity-aT7zphkwF1.html",
+      "title": "初夏逛吃大会",
+      "description": "活动期间每天分享页面，新增一次机会。",
+      "sid": "01aff78a-9e1a-11eb-8597-246e966235d8",
+      "login": "true",
+      "follow": "false",
+      "share": "true",
+      "draw_times": 1,
+      "expire_at": "2021-06-10 23:59:59"
+    },
+    {
+      "url": "https://www.bilibili.com/blackboard/activity-oGiWFe0YTz.html",
+      "title": "京东超市超有young",
+      "description": "活动期间每天分享页面，新增一次机会。",
+      "sid": "4eb728e2-a0d7-11eb-8597-246e966235d8",
+      "login": "true",
+      "follow": "false",
+      "share": "true",
+      "draw_times": 1,
+      "expire_at": "2021-04-25 23:59:59"
+    }
+  ]
+}

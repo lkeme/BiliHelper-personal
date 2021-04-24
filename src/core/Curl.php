@@ -5,10 +5,12 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2020 ~ 2021
+ *  Updated: 2021 ~ 2022
  */
 
 namespace BiliHelper\Core;
+
+use BiliHelper\Tool\Generator;
 
 class Curl
 {
@@ -16,6 +18,7 @@ class Curl
     private static $async_opt;
     private static $results = [];
     private static $result = [];
+    private static $buvid = '';
 
     /**
      * @use POST请求
@@ -150,7 +153,7 @@ class Curl
                 'timeout' => $timeout,
             ),
         );
-        $result = @file_get_contents($url, false, stream_context_create($options));
+        $result = $url ? @file_get_contents($url, false, stream_context_create($options)) : null;
         Log::debug($result);
         return $result ? $result : null;
     }
@@ -189,8 +192,10 @@ class Curl
                 // var_dump($e->getRequest());
                 if ($e->hasResponse()) var_dump($e->getResponse());
             } catch (\Exception $e) {
+                // $e->getHandlerContext()
                 // var_dump($e);
             }
+            Log::warning("Target -> URL: {$url} METHOD: {$method}");
             Log::warning("CURl -> RETRY: {$retry} ERROR: {$e->getMessage()} ERRNO: {$e->getCode()} STATUS:  Waiting for recovery!");
             sleep(15);
         }
@@ -227,14 +232,20 @@ class Curl
      */
     private static function getHeaders(string $os = 'app', array $headers = []): array
     {
+        if (!self::$buvid) {
+            self::$buvid = Generator::buvid();
+        }
         $app_headers = [
+            'env' => 'prod',
+            'APP-KEY' => 'android',
+            'Buvid' => self::$buvid,
             'Accept' => '*/*',
             'Accept-Encoding' => 'gzip',
             'Accept-Language' => 'zh-cn',
             'Connection' => 'keep-alive',
             // 'Content-Type' => 'application/x-www-form-urlencoded',
             // 'User-Agent' => 'Mozilla/5.0 BiliDroid/5.51.1 (bbcallen@gmail.com)',
-            'User-Agent' => 'Mozilla/5.0 BiliDroid/6.3.0 (bbcallen@gmail.com) os/android model/MuMu mobi_app/android build/6030600 channel/bili innerVer/6030600 osVer/6.0.1 network/2',
+            'User-Agent' => 'Mozilla/5.0 BiliDroid/6.20.5 (bbcallen@gmail.com) os/android model/MuMu mobi_app/android build/6205500 channel/bili innerVer/6205500 osVer/6.0.1 network/2',
             // 'Referer' => 'https://live.bilibili.com/',
         ];
         $pc_headers = [
@@ -242,11 +253,11 @@ class Curl
             'Accept-Encoding' => 'gzip, deflate',
             'Accept-Language' => "zh-CN,zh;q=0.9",
             // 'Content-Type' => 'application/x-www-form-urlencoded',
-            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/82.0.4056.0 Safari/537.36 Edg/82.0.431.0',
+            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.30 Safari/537.36 Edg/90.0.818.8',
             // 'Referer' => 'https://live.bilibili.com/',
         ];
         $other_headers = [
-            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36',
+            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4450.0 Safari/537.36',
         ];
         $default_headers = isset(${$os . "_headers"}) ? ${$os . "_headers"} : $other_headers;
         if (in_array($os, ['app', 'pc']) && getenv('COOKIE') != "") {

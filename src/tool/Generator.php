@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2020 ~ 2021
+ *  Updated: 2021 ~ 2022
  *  Source: https://github.com/anhao/bv2av/
  */
 
@@ -48,5 +48,17 @@ class Generator
         return md5($content); // sha1
     }
 
+
+    /**
+     * @use 生成BUVID
+     * @return string
+     */
+    public static function buvid():string{
+        // XYD5B85DA7212341F51C612344A6B8C6C21234
+        $mac = Faker::macAddress();
+        $md5 = md5($mac);
+        $md5_arr = str_split($md5);
+        return strtoupper("XY{$md5_arr[2]}{$md5_arr[12]}{$md5_arr[22]}{$md5}");
+    }
 
 }

@@ -2,7 +2,7 @@
 <p align="center"><img width="300px" src="https://i.loli.net/2018/04/20/5ad97bd395912.jpeg"></p>
 
 <p align="center">
-<img src="https://img.shields.io/badge/version-0.6.7.201117 alpha-green.svg?longCache=true&style=for-the-badge">
+<img src="https://img.shields.io/badge/version-0.8.1.210423 alpha-green.svg?longCache=true&style=for-the-badge">
 <img src="https://img.shields.io/badge/license-mit-blue.svg?longCache=true&style=for-the-badge">
 </p>
 
@@ -15,34 +15,36 @@ B 站直播实用脚本
 
 |plugin              |version             |description         |
 |--------------------|--------------------|--------------------|
-|Login               |20.08.08            |账号登录            |
-|Schedule            |20.08.08            |休眠控制            |
-|MasterSite          |20.08.08            |主站助手            |
-|Daily               |20.08.08            |每日礼包            |
-|Heart               |20.08.08            |双端心跳            |
-|Task                |20.08.08            |每日任务            |
-|Silver              |20.08.08            |银瓜子宝箱          |
-|Barrage             |20.08.08            |活跃弹幕            |
-|Silver2Coin         |20.08.08            |银瓜子换硬币        |
-|GiftSend            |20.08.08            |礼物赠送            |
-|Judge               |20.08.08            |风纪                |
-|GroupSignIn         |20.08.08            |友爱社签到          |
-|ManGa               |20.08.08            |漫画签到分享        |
-|Match               |20.08.08            |赛事签到分享        |
-|GiftHeart           |20.08.08            |心跳礼物            |          
-|MaterialObject      |20.08.08            |实物抽奖            |
-|AloneTcpClient      |20.08.08            |独立监控            |
-|ZoneTcpClient       |20.08.08            |分区监控            |
-|StormRaffle         |20.08.08            |节奏风暴            |
-|GiftRaffle          |20.08.08            |活动礼物            |
-|PkRaffle            |20.08.08            |大乱斗              |
-|GuardRaffle         |20.08.08            |舰长总督            |
-|AnchorRaffle        |20.08.08            |天选时刻            |
-|AwardRecord         |20.08.08            |获奖通知            |
-|Statistics          |20.08.08            |数据统计            |
-|Competition         |20.08.08            |赛事竞猜            |
-|SmallHeart          |20.08.08            |小心心              |
-|ActivityLottery     |20.08.08            |主站活动            |
+|Login               |21.03.27           |账号登录            |
+|Schedule            |21.03.27           |休眠控制            |
+|MainSite            |21.03.27           |主站助手            |
+|Daily               |21.03.27           |每日礼包            |
+|Heart               |21.03.27           |双端心跳            |
+|DailyTask           |21.03.27           |每日任务            |
+|Silver              |21.03.27           |银瓜子宝箱          |
+|Barrage             |21.03.27           |活跃弹幕            |
+|Silver2Coin         |21.03.27           |银瓜子换硬币        |
+|GiftSend            |21.03.27           |礼物赠送            |
+|Judge               |21.03.27           |风纪                |
+|GroupSignIn         |21.03.27           |友爱社签到          |
+|ManGa               |21.03.27           |漫画签到分享        |
+|GameMatch           |21.03.27           |赛事签到分享        |
+|GiftHeart           |21.03.27           |心跳礼物            |          
+|MaterialObject      |21.03.27           |实物抽奖            |
+|AloneTcpClient      |21.03.27           |独立监控            |
+|ZoneTcpClient       |21.03.27           |分区监控            |
+|StormRaffle         |21.03.27           |节奏风暴            |
+|GiftRaffle          |21.03.27           |活动礼物            |
+|PkRaffle            |21.03.27           |大乱斗              |
+|GuardRaffle         |21.03.27           |舰长总督            |
+|AnchorRaffle        |21.03.27           |天选时刻            |
+|AwardRecord         |21.03.27           |获奖通知            |
+|Statistics          |21.03.27           |数据统计            |
+|Competition         |21.03.27           |赛事竞猜            |
+|SmallHeart          |21.03.27           |小心心              |
+|ActivityLottery     |21.03.27           |主站活动            |
+|CapsuleLottery      |21.03.27           |直播扭蛋活动         |
+|Forward             |21.03.27           |动态抽奖转发         |
      
 ## 打赏赞助
 

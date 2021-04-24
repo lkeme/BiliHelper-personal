@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2020 ~ 2021
+ *  Updated: 2021 ~ 2022
  */
 
 namespace BiliHelper\Plugin;
@@ -55,8 +55,8 @@ class Sign
             'access_key' => getenv('ACCESS_TOKEN'),
             'actionKey' => 'appkey',
             'appkey' => $appkey,
-            'build' => 6030600,
-            'channel'=>'bili',
+            'build' => 6205500,
+            'channel' => 'bili',
             'device' => 'phone',
             'mobi_app' => 'android',
             'platform' => 'android',
@@ -84,7 +84,7 @@ class Sign
             'access_key' => getenv('ACCESS_TOKEN'),
             'actionKey' => 'appkey',
             'appkey' => $appkey,
-            'build' => 5511400,
+            'build' => 6205500,
             'device' => 'android',
             'mobi_app' => 'android',
             'platform' => 'android',

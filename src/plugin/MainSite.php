@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2020 ~ 2021
+ *  Updated: 2021 ~ 2022
  */
 
 namespace BiliHelper\Plugin;
@@ -14,13 +14,13 @@ use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
 use BiliHelper\Util\TimeLock;
 
-class MasterSite
+class MainSite
 {
     use TimeLock;
 
     public static function run()
     {
-        if (self::getLock() > time() || getenv('USE_MASTER_SITE') == 'false') {
+        if (self::getLock() > time() || getenv('USE_MAIN_SITE') == 'false') {
             return;
         }
         if (self::watchAid() && self::shareAid() && self::coinAdd()) {

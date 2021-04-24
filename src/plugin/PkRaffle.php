@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2020 ~ 2021
+ *  Updated: 2021 ~ 2022
  */
 
 namespace BiliHelper\Plugin;
@@ -13,14 +13,13 @@ namespace BiliHelper\Plugin;
 use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
 use BiliHelper\Util\TimeLock;
+use BiliHelper\Util\BaseRaffle;
 
 
 class PkRaffle extends BaseRaffle
 {
     const ACTIVE_TITLE = '大乱斗';
     const ACTIVE_SWITCH = 'USE_PK';
-
-    use TimeLock;
 
     protected static $wait_list = [];
     protected static $finish_list = [];
@@ -95,7 +94,7 @@ class PkRaffle extends BaseRaffle
             ]);
         }
         $results = Curl::async('app', $url, $tasks);
-        # print_r($results);
+        // print_r($results);
         return $results;
     }
 

@@ -18,34 +18,58 @@ COOKIE=
 #       功能设置       #
 #######################
 
-# 主站助手
-USE_MASTER_SITE=true
+# 主站每日任务(每日登录、观看、投币、分享)
+USE_MAIN_SITE=true
 
-# 统一活动
-USE_ACTIVE=true
-
-# 舰长总督
-USE_GUARD=true
-
-# 大乱斗
+# 直播大乱斗
 USE_PK=true
+
+# 直播箱子实物抽奖
+USE_LIVE_BOX=true
+
+# 每日24个小心心|依赖加密心跳服务器
+USE_HEARTBEAT=true
+
+# 直播扭蛋活动抽奖|依赖加密心跳服务器
+USE_CAPSULE=true
+
+# 主站九宫格抽奖活动助手
+USE_ACTIVITY=true
+
+# 银瓜子兑换硬币
+USE_SILVER2COIN=true
+
+# 风纪委员
+USE_JUDGE=false
+
+# 直播统一活动
+USE_ACTIVE=false
+
+# 直播舰长总督
+USE_GUARD=false
+
+# 漫画助手
+USE_MANGA=false
+
+# 赛事助手
+USE_MATCH=false
+
+# 节奏风暴|丢弃率(0-100)|尝试数(范围值)
+USE_STORM=false
+STORM_DROPRATE=0
+STORM_ATTEMPT=10,20
+
+# 破产机|每日竞猜次数|每次竞猜硬币(1-10)|下注(1.压大,2.压小,3.随机)
+USE_COMPETITION=false
+COMPET_MAX_NUM=20
+COMPET_MAX_COIN=10
+COMPET_STAKE=1
 
 # 天选时刻|抽取类型(0: 无限制; 1: 关注主播; 2: 粉丝勋章; 3大航海； 4用户等级；5主站等级)|自动取关(测试功能)|过滤关键词|逗号分隔
 USE_ANCHOR=false
 ANCHOR_UNFOLLOW=false
 ANCHOR_TYPE=0,1
 ANCHOR_FILTER_WORDS=
-
-# 实物抽奖
-USE_MO=true
-
-# 银瓜子兑换硬币
-USE_SILVER2COIN=true
-
-# 节奏风暴|丢弃率(0-100)|尝试数(范围值)
-USE_STORM=true
-STORM_DROPRATE=0
-STORM_ATTEMPT=30,50
 
 # 活跃弹幕|弹幕房间(为空则随机)|弹幕内容(为空则随机)
 USE_DANMU=true
@@ -57,34 +81,41 @@ USE_ADD_COIN=false
 ADD_COIN_MODE=random
 ADD_COIN_NUM=5
 
-# 休眠时间|时间区间(0-23)|逗号分隔
-USE_SLEEP=true
-SLEEP_SECTION=2,3,4,5,6
-
-# 漫画助手
-USE_MANGA=false
-
-# 赛事助手
-USE_MATCH=false
-
-# 活动助手
-USE_ACTIVITY=false
-
-# 破产机|每日竞猜次数|每次竞猜硬币(1-10)|下注(1.压大,2.压小,3.随机)
-USE_COMPETITION=false
-COMPET_MAX_NUM=20
-COMPET_MAX_COIN=10
-COMPET_STAKE=1
-
-# 风纪委员
-USE_JUDGE=false
-
 # 自动转发抽奖动态
 AUTO_DYNAMIC = false
 # 自动取关未中奖动态
 CLEAR_DYNAMIC = false
 # 强制清除抽奖组关注
 CLEAR_GROUP_FOLLOW = false
+# 更改自动回复语言
+AUTO_REPLY_TEXT = 从未中奖，从未放弃[doge]
+
+# 休眠时间|时间区间(0-23)|逗号分隔
+USE_SLEEP=true
+SLEEP_SECTION=2,3,4,5,6
+
+#######################
+#       通知设置       #
+#######################
+
+# 消息推送|消息推送过滤词|逗号分割|优先级从上到下
+USE_NOTIFY=false
+NOTIFY_FILTER_WORDS=
+## Dingtalk机器人|token|依赖USE_NOTIFY
+NOTIFY_DINGTALK_TOKEN=
+## Tele机器人|token|chatid|依赖USE_NOTIFY
+NOTIFY_TELE_BOTTOKEN=
+NOTIFY_TELE_CHATID=
+## Pushplus酱|token|依赖USE_NOTIFY
+NOTIFY_PUSHPLUS_TOKEN=
+## Sever酱(原版)|令牌Key|依赖USE_NOTIFY
+NOTIFY_SCKEY=
+## Server酱(Turbo版)|令牌Key|依赖USE_NOTIFY
+NOTIFY_SCTKEY=
+## GoCqhttp|url|token|qq|依赖USE_NOTIFY
+NOTIFY_CQ_URL=
+NOTIFY_CQ_TOKEN=
+NOTIFY_CQ_QQ=
 
 #######################
 #       基础设置       #
@@ -99,14 +130,8 @@ ALONE_SERVER_KEY=
 USE_ZONE_SERVER=true
 ZONE_SERVER_ADDR=tcp://broadcastlv.chat.bilibili.com:2243/sub
 
-# SERVER酱|令牌KEY|过滤关键词|逗号分隔
-USE_SC=false
-SC_KEY=
-SC_FILTER_WORDS=
-
-# 小心心|加密服务器(开源)|
-USE_HEARTBEAT=true
-ENC_SERVER=http://116.85.43.27:3000/enc
+# 加密心跳服务器(开源)|如失效自行搭建
+ENC_SERVER=http://heartbeat-1.mudew.com:3000/enc
 
 #######################
 #       房间设置       #
@@ -140,10 +165,10 @@ NETWORK_PROXY=http://127.0.0.1:8888
 #######################
 
 # 写入日志
-APP_WRITELOG=false
+APP_WRITE_LOG=false
 
 # 日志路径
-APP_WRITELOGPATH=log
+APP_LOG_PATH=log
 
 # 调试模式
 APP_DEBUG=false

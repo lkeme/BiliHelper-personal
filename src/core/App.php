@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2020 ~ 2021
+ *  Updated: 2021 ~ 2022
  */
 
 namespace BiliHelper\Core;
@@ -19,21 +19,23 @@ class App
 {
     /**
      * App constructor.
+     * @param string $app_path
      */
-    public function __construct()
+    public function __construct(string $app_path)
     {
+        define('APP_CONF_PATH', $app_path . "/conf/");
+        define('APP_DATA_PATH', $app_path . "/data/");
+        define('APP_LOG_PATH', $app_path . "/log/");
         (new Env())->inspect_configure()->inspect_extension();
     }
 
     /**
      * @use 加载配置
-     * @param $app_path
      * @param string $load_file
      * @return $this
      */
-    public function load($app_path, $load_file = 'user.conf')
+    public function load($load_file = 'user.conf')
     {
-        define('APP_PATH', $app_path);
         Config::load($load_file);
         return $this;
     }
@@ -66,15 +68,14 @@ class App
         $plugins = [
             'Login',
             'Schedule',
-            'MasterSite',
+            'MainSite',
             'Daily',
             'ManGa',
-            'Match',
+            'GameMatch',
             'ActivityLottery',
             'Competition',
             'Heart',
-            'Task',
-//            'Silver',
+            'DailyTask',
             'Barrage',
             'Silver2Coin',
             'Judge',
@@ -92,7 +93,10 @@ class App
             'AnchorRaffle',
             'AwardRecord',
             'Statistics',
-            'Forward'
+            'Forward',
+            'CapsuleLottery',
+            // 'Silver',
+
         ];
         foreach ($plugins as $plugin) {
             $this->newTask($plugin);

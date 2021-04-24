@@ -10,13 +10,15 @@
     "ext-json": "*",
     "ext-zlib": "*",
     "ext-mbstring": "*",
-    "monolog/monolog": "^1.23",
-    "bramus/monolog-colored-line-formatter": "^2.0",
-    "clue/socket-raw": "^1.4.1",
-    "vlucas/phpdotenv": "^4.1",
-    "amphp/amp": "^2.4",
-    "guzzlehttp/guzzle": "^6.5",
-    "mathieuviossat/arraytotexttable": "^1.0"
+    "monolog/monolog": "^1.26.0",
+    "bramus/monolog-colored-line-formatter": "^2.0.3",
+    "clue/socket-raw": "^1.5.0",
+    "vlucas/phpdotenv": "^4.2.0",
+    "amphp/amp": "^2.5.2",
+    "guzzlehttp/guzzle": "^6.5.5",
+    "mathieuviossat/arraytotexttable": "^1.0.8",
+    "klkvsk/json-decode-stream": "^1.0",
+    "sven/file-config": "^3.1"
   },
   "license": "MIT",
   "authors": [

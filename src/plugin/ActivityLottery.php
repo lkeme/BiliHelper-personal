@@ -5,61 +5,118 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2020 ~ 2021
+ *  Updated: 2021 ~ 2022
  */
 
 namespace BiliHelper\Plugin;
 
 use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
+use BiliHelper\Util\AllotTasks;
 use BiliHelper\Util\TimeLock;
 
 class ActivityLottery
 {
     use TimeLock;
+    use AllotTasks;
 
-    private static $activity_infos = [
-        '2020SummerMusic' => [
-            'sid' => 'dd83a687-c800-11ea-8597-246e966235d8',
-            'action_types' => [3, 4], // 4 关注  3 分享
-            'referer' => 'https://www.bilibili.com/blackboard/2020SummerMusic.html',
-            'expired_time' => 1599318000, // 2020-09-05 23:00:00
-            'draw_times' => 3,
-        ],
-    ];
+    private static $repository = APP_DATA_PATH . 'activity_infos.json';
 
     public static function run()
     {
         if (self::getLock() > time() || getenv('USE_ACTIVITY') == 'false') {
             return;
         }
-        self::workTask();
-        self::setLock(self::timing(5) + mt_rand(1, 180));
+        self::allotTasks();
+        if (self::workTask()) {
+            self::setLock(5 * 60);
+        } else {
+            self::setLock(self::timing(5) + mt_rand(1, 180));
+        }
     }
 
 
     /**
-     * @use 运行任务
+     * @use 分配任务
+     * @return bool
+     * @throws \JsonDecodeStream\Exception\CollectorException
+     * @throws \JsonDecodeStream\Exception\ParserException
+     * @throws \JsonDecodeStream\Exception\SelectorException
+     * @throws \JsonDecodeStream\Exception\TokenizerException
+     */
+    private static function allotTasks(): bool
+    {
+        if (self::$work_status['work_updated'] == date("Y/m/d")) {
+            return false;
+        }
+        $parser = self::loadJsonData();
+        foreach ($parser->items('data[]') as $act) {
+            // 活动无效
+            if (is_null($act->sid)) {
+                continue;
+            }
+            // 活动实效过期
+            if (strtotime($act->expire_at) < time()) {
+                continue;
+            }
+            // init
+            if ($act->login == 'true') {
+                self::pushTask('login', $act);
+            }
+            // follow
+            if ($act->follow == 'true') {
+                self::pushTask('follow', $act);
+            }
+            // share
+            if ($act->share == 'true') {
+                self::pushTask('share', $act);
+            }
+            // draw_times
+            $arr = range(1, $act->draw_times);
+            foreach ($arr as $_) {
+                self::pushTask('draw', $act);
+            }
+        }
+        self::$work_status['work_updated'] = date("Y/m/d");
+        Log::info('活动抽奖任务分配完成 ' . count(self::$tasks) . ' 个任务待执行');
+        return true;
+    }
+
+    /**
+     * @use 执行任务
+     * @return bool
      */
     private static function workTask()
     {
-        foreach (self::$activity_infos as $title => $activity) {
-            // 过期
-            if ($activity['expired_time'] < time()) {
-                Log::info('跳过');
-                continue;
-            }
-            Log::info("启动 {$title} 抽奖任务");
-            self::initTimes($activity['sid'], $activity['referer']);
-            foreach ($activity['action_types'] as $action_type) {
-                sleep(1);
-                self::addTimes($activity['sid'], $activity['referer'], $action_type);
-            }
-            foreach (range(1, $activity['draw_times']) as $num) {
-                sleep(5);
-                self::doLottery($activity['sid'], $activity['referer'], $num);
-            }
+        if (self::$work_status['work_completed'] == date("Y/m/d")) {
+            return false;
         }
+        $task = self::pullTask();
+        // 所有任务完成 标记
+        if (!$task) {
+            self::$work_status['work_completed'] = date("Y/m/d");
+            return false;
+        }
+        Log::info("执行 {$task['act']->title} #{$task['operation']} 任务");
+        // 执行任务
+        switch ($task['operation']) {
+            case 'login':
+                self::initTimes($task['act']->sid, $task['act']->url);
+                break;
+            case 'follow':
+                self::addTimes($task['act']->sid, $task['act']->url, 4);
+                break;
+            case 'share':
+                self::addTimes($task['act']->sid, $task['act']->url, 3);
+                break;
+            case 'draw':
+                self::doLottery($task['act']->sid, $task['act']->url, 0);
+                break;
+            default:
+                Log::info("当前 {$task['act']->title} #{$task['operation']} 任务不存在哦");
+                break;
+        }
+        return true;
     }
 
 
@@ -81,11 +138,12 @@ class ActivityLottery
         ];
         $raw = Curl::get('pc', $url, $payload, $headers);
         $de_raw = json_decode($raw, true);
-        Log::info("获取抽奖机会 {$raw}");
         // {"code":0,"message":"0","ttl":1,"data":{"times":2}}
         if ($de_raw['code'] == 0) {
+            Log::info("获取抽奖机会成功 {$raw}");
             return true;
         }
+        Log::warning("获取抽奖机会失败 {$raw}");
         return false;
     }
 
@@ -104,6 +162,7 @@ class ActivityLottery
             'referer' => $referer
         ];
         $user_info = User::parseCookies();
+        // $action_type  4 关注  3 分享
         $payload = [
             'sid' => $sid,
             'action_type' => $action_type,
@@ -143,7 +202,10 @@ class ActivityLottery
         $de_raw = json_decode($raw, true);
         Log::notice("开始抽奖#{$num} {$raw}");
         // {"code":0,"message":"0","ttl":1,"data":[{"id":0,"mid":4133274,"num":1,"gift_id":1152,"gift_name":"硬币x6","gift_type":0,"img_url":"https://i0.hdslb.com/bfs/activity-plat/static/b6e956937ee4aefd1e19c01283145fc0/JQ9Y9-KCm_w96_h102.png","type":5,"ctime":1596255796,"cid":0}]}
+        // {"code":0,"message":"0","ttl":1,"data":[{"id":0,"mid":4133274,"ip":0,"num":1,"gift_id":0,"gift_name":"未中奖0","gift_type":0,"img_url":"","type":1,"ctime":1616825625,"cid":0,"extra":{}}]}
         if ($de_raw['code'] == 0) {
+            $result = "活动->{$referer} 获得->{$de_raw['data'][0]['gift_name']}";
+            Notice::push('activity_lottery', $result);
             return true;
         }
         return false;

@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2020 ~ 2021
+ *  Updated: 2021 ~ 2022
  */
 
 namespace BiliHelper\Plugin;
@@ -40,12 +40,31 @@ class Barrage
         self::setLock(30);
     }
 
+    /**
+     * @use 获取颜文字信息
+     * @return string
+     */
+    private static function getEmojiMsg(): string
+    {
+        $emoji_list = [
+            "(⌒▽⌒)", "（￣▽￣）", "(=・ω・=)", "(｀・ω・´)", "(〜￣△￣)〜", "(･∀･)",
+            "(°∀°)ﾉ", "(￣3￣)", "╮(￣▽￣)╭", "_(:3」∠)_", "( ´_ゝ｀)", "←_←", "→_→",
+            "(<_<)", "(>_>)", "(;¬_¬)", '("▔□▔)/', "(ﾟДﾟ≡ﾟдﾟ)!?", "Σ(ﾟдﾟ;)", "Σ( ￣□￣||)",
+            "(´；ω；`)", "（/TДT)/", "(^・ω・^ )", "(｡･ω･｡)", "(●￣(ｴ)￣●)", "ε=ε=(ノ≧∇≦)ノ",
+            "(´･_･`)", "(-_-#)", "（￣へ￣）", "(￣ε(#￣) Σ", "ヽ(`Д´)ﾉ", "（#-_-)┯━┯",
+            "(╯°口°)╯(┴—┴", "←◡←", "( ♥д♥)", "Σ>―(〃°ω°〃)♡→", "⁄(⁄ ⁄•⁄ω⁄•⁄ ⁄)⁄",
+            "(╬ﾟдﾟ)▄︻┻┳═一", "･*･:≡(　ε:)", "(打卡)", "(签到)"
+        ];
+        shuffle($emoji_list);
+        return $emoji_list[array_rand($emoji_list)];
+    }
+
 
     /**
-     * @use 获取随机弹幕
-     * @return \Exception|false|mixed|string|null
+     * @use 获取一言api消息
+     * @return string
      */
-    private static function getMsgInfo()
+    private static function getMsgInfo():string
     {
         /**
          *  整理一部分API，收集于网络，侵权麻烦联系我删除.
@@ -57,15 +76,13 @@ class Barrage
             'https://api.ly522.com/yan.php?format=text',
             'https://v1.hitokoto.cn/?encode=text',
             'https://api.jysafe.cn/yy/',
-            'https://api.ooopn.com/yan/api.php?type=text',
             'https://api.imjad.cn/hitokoto/',
             'https://www.ly522.com/hitokoto/',
             'https://api.guoch.xyz/',
-            'http://www.ooomg.cn/dutang/',
             'https://api.gushi.ci/rensheng.txt',
             'https://api.itswincer.com/hitokoto/v2/',
-            'http://api.dsecret.com/yiyan/',
-            'https://api.xygeng.cn/dailywd/api/api.php',
+//            'http://www.ooomg.cn/dutang/',
+//            'http://api.dsecret.com/yiyan/',
         ];
         shuffle($apis);
         try {
@@ -81,7 +98,7 @@ class Barrage
                 return $data;
             }
         } catch (\Exception $e) {
-            return $e;
+            return $e->getMessage();
         }
     }
 
@@ -120,10 +137,10 @@ class Barrage
         //TODO 短期功能 有需求就修改
         $response = self::sendMsg($info);
         if (isset($response['code']) && $response['code'] == 0) {
-            Log::info('活跃弹幕发送成功!');
+            Log::info('弹幕发送成功');
             return true;
         } else {
-            Log::warning("活跃代码发送失败, CODE -> {$response['code']} MSG -> {$response['msg']} ");
+            Log::warning("弹幕发送失败, CODE -> {$response['code']} MSG -> {$response['msg']} ");
             return false;
         }
     }

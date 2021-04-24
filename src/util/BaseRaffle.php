@@ -6,16 +6,21 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2020 ~ 2021
+ *  Updated: 2021 ~ 2022
  */
 
-namespace BiliHelper\Plugin;
+namespace BiliHelper\Util;
 
 use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
+use BiliHelper\Plugin\Live;
+use BiliHelper\Plugin\Sign;
+use BiliHelper\Plugin\Statistics;
 
 abstract class BaseRaffle
 {
+    use TimeLock;
+    use FilterWords;
     const ACTIVE_TITLE = '';
     const ACTIVE_SWITCH = '';
 
@@ -33,6 +38,7 @@ abstract class BaseRaffle
             return;
         }
         static::setPauseStatus();
+        static::loadJsonData();
         static::startLottery();
     }
 
