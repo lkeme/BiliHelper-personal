@@ -1,0 +1,77 @@
+{
+  "pool": "https://api.live.bilibili.com/xlive/web-ucenter/v1/capsule/get_pool_detail?pool_id=131&_=1616829671726",
+  "v3": "https://api.live.bilibili.com/xlive/web-ucenter/v1/capsule/get_capsule_info_v3?id=79&from=web&_=1608110093802",
+  "remarks": "有需要可以自己添加，或者提pr",
+  "data": [
+    {
+      "_url": "注释: 活动地址",
+      "url": "https://www.bilibili.com/blackboard/activity-c_fu2inm-.html",
+      "_title": "注释: 活动标题",
+      "title": "原神1.4版本「风花的邀约」激励计划",
+      "_description": "注释: 活动描述",
+      "description": "每日在原神分区任意直播间观看，20分钟1张、1小时2张、2小时3张，每日最高6张。",
+      "_room_id": "注释: 活动直播间，如果为0，则取分区随机一个",
+      "room_id": 0,
+      "_area_id": "注释: 子分区id",
+      "area_id": 321,
+      "_parent_area_id": "注释: 主分区id",
+      "parent_area_id": 3,
+      "_coin_id": "注释: 抽奖id",
+      "coin_id": 112,
+      "_watch_time": "注释: 观看时长 单位秒",
+      "watch_time": 7320,
+      "_draw_times": "注释: 抽奖次数",
+      "draw_times": 1,
+      "_expire_at": "注释: 活动有效时间",
+      "expire_at": "2021-04-27 23:59:59"
+    },
+    {
+      "url": "https://www.bilibili.com/blackboard/activity-MHRISE.html",
+      "title": "《怪物猎人：崛起》直播挑战",
+      "description": "每日在怪物猎人分区任意直播间观看，10分钟1张、30分钟3张、60分钟5张",
+      "room_id": 0,
+      "area_id": 412,
+      "parent_area_id": 6,
+      "coin_id": 121,
+      "watch_time": 3720,
+      "draw_times": 2,
+      "expire_at": "2021-04-26 23:59:59"
+    },
+    {
+      "url": "https://live.bilibili.com/11218604",
+      "title": "2021PCL春季赛观赛任务",
+      "description": "每日在PGI直播间观看，10、15、30",
+      "room_id": 11218604,
+      "area_id": 0,
+      "parent_area_id": 2,
+      "coin_id": 129,
+      "watch_time": 3720,
+      "draw_times": 3,
+      "expire_at": "2021-05-31 23:59:59"
+    },
+    {
+      "url": "https://live.bilibili.com/6",
+      "title": "2021LPL春季赛",
+      "description": "每日在LOL直播间观看，5分钟1张，15分钟1张",
+      "room_id": 7734200,
+      "area_id": 86,
+      "parent_area_id": 2,
+      "coin_id": 76,
+      "watch_time": 3720,
+      "draw_times": 3,
+      "expire_at": "2021-05-31 23:59:59"
+    },
+    {
+      "url": "https://live.bilibili.com/23",
+      "title": "PEI亚洲邀请赛",
+      "description": "每日在PEL直播间观看，5分钟1张",
+      "room_id": 13242892,
+      "area_id": 0,
+      "parent_area_id": 2,
+      "coin_id": 109,
+      "watch_time": 3720,
+      "draw_times": 2,
+      "expire_at": "2021-05-31 23:59:59"
+    }
+  ]
+}

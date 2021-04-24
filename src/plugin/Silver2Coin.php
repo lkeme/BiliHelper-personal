@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2020 ~ 2021
+ *  Updated: 2021 ~ 2022
  */
 
 namespace BiliHelper\Plugin;
@@ -46,7 +46,7 @@ class Silver2Coin
         if (!$de_raw['code'] && $de_raw['msg'] == '兑换成功') {
             Log::info('[APP]银瓜子兑换硬币: ' . $de_raw['msg']);
         } elseif ($de_raw['code'] == 403) {
-            Log::info('[APP]银瓜子兑换硬币: ' . $de_raw['msg']);
+            Log::warning('[APP]银瓜子兑换硬币: ' . $de_raw['msg']);
         } else {
             Log::warning('[APP]银瓜子兑换硬币: ' . $de_raw['msg']);
             return false;

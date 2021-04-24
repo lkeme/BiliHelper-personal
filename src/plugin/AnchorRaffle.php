@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2020 ~ 2021
+ *  Updated: 2021 ~ 2022
  */
 
 namespace BiliHelper\Plugin;
@@ -13,13 +13,12 @@ namespace BiliHelper\Plugin;
 use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
 use BiliHelper\Util\TimeLock;
+use BiliHelper\Util\BaseRaffle;
 
 class AnchorRaffle extends BaseRaffle
 {
     const ACTIVE_TITLE = '天选时刻';
     const ACTIVE_SWITCH = 'USE_ANCHOR';
-
-    use TimeLock;
 
     protected static $wait_list = [];
     protected static $finish_list = [];
@@ -129,23 +128,7 @@ class AnchorRaffle extends BaseRaffle
      */
     protected static function filterPrizeWords(string $prize_name): bool
     {
-        $default_words = [
-            '拉黑', '黑名单', '脸皮厚', '没有奖品', '无奖', '脸皮厚', 'ceshi', '测试', '测试', '测试', '脚本',
-            '抽奖号', '星段位', '星段位', '圣晶石', '圣晶石', '水晶', '水晶', '万兴神剪手', '万兴神剪手',
-            '自付邮费', '自付邮费', 'test', 'Test', 'TEST', '加密', 'QQ', '测试', '測試', 'VX', 'vx',
-            'ce', 'shi', '这是一个', 'lalall', '第一波', '第二波', '第三波', '测试用', '抽奖标题', '策是',
-            '房间抽奖', 'CESHI', 'ceshi', '奖品A', '奖品B', '奖品C', '硬币', '无奖品', '白名单', '我是抽奖',
-            '0.1', '五毛二', '一分', '一毛', '0.52', '0.66', '0.01', '0.77', '0.16', '照片', '穷', '0.5',
-            '0.88', '双排', '1毛', '1分', '1角', 'P口罩', '素颜', '写真', '图包', '五毛', '一角', '冥币',
-            '自拍', '日历', '0.22', '加速器', '越南盾','毛','分','限','0.','角','〇点','①元',
-            '一起玩','不包邮','邮费','续期卡','儿时','闪宠','大师球','一元','两元','两块','赛车',
-            '代币','一块','一局','好友位','通话','首胜','代金券','辣条','补贴','抵用券','主播素颜照',
-            '武器箱棺材板','游戏道具','优惠券','日元','发音课','壹元','零点','舰长五折券','上车',
-            '没有钱','女装','肥宅快乐水','哥斯拉','公主连结','pokemmo','宝可>梦','明日方舟','雪碧','公主连接',
-            '专属头衔','FF14','韩元','空洞骑士','老婆饼','稀世时装','洛克衣服','帮过图','证件照','自抽号',
-            '晶耀之星','伊洛纳','〇.','②元','③元','0·','繁华美化','喵喵喵','闪伊布','①圆','o点','金达摩','嗷呜',
-            '游戏位','S-追光者','OWL','勾玉','跟yo宝游戏','三元','怡宝','蛋闪迷>你冰','哥伦比亚比索','油条'
-        ];
+        $default_words = self::$store->get("Anchor.default");
         $custom_words = empty(getenv('ANCHOR_FILTER_WORDS')) ? [] : explode(',', getenv('ANCHOR_FILTER_WORDS'));
         $total_words = array_merge($default_words, $custom_words);
         foreach ($total_words as $word) {
@@ -237,7 +220,7 @@ class AnchorRaffle extends BaseRaffle
             ]);
         }
         $results = Curl::async('app', $url, $tasks);
-        # print_r($results);
+        // print_r($results);
         return $results;
     }
 

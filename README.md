@@ -7,7 +7,7 @@ Group: [55308141](https://jq.qq.com/?_wv=1027&k=5AIDaJg) | **仅用于BUG提交�
 
 ## 公告
 
-> Currently for Personal Edition **0.6.7.201117 alpha**  
+> Personal Edition **0.8.1.210423 alpha**  
 
 ```notice
 ---- 免费的东西总是得不到人的珍惜。
@@ -15,6 +15,7 @@ Group: [55308141](https://jq.qq.com/?_wv=1027&k=5AIDaJg) | **仅用于BUG提交�
 ```
 
 ## 文档
+> 有疑问一定要先看看文档或Issue里是否存在相同的问题，再考虑其他渠道咨询。  
 
 * [使用文档 / DOC.md](./DOC.md)
 * [更新日志 / CHANGELOG.md](./CHANGELOG.md)

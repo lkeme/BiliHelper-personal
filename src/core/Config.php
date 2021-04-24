@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2020 ~ 2021
+ *  Updated: 2021 ~ 2022
  */
 
 namespace BiliHelper\Core;
@@ -49,7 +49,7 @@ class Config
      */
     private static function _load($load_file)
     {
-        $config_path = str_replace("\\", "/", APP_PATH . "/conf/{$load_file}");
+        $config_path = str_replace("\\", "/", APP_CONF_PATH . $load_file);
         if (!is_file($config_path)) {
             die("配置文件 {$load_file} 加载错误，请参照文档添加配置文件！");
         }

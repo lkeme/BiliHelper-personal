@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2020 ~ 2021
+ *  Updated: 2021 ~ 2022
  */
 
 namespace BiliHelper\Plugin;
@@ -13,13 +13,12 @@ namespace BiliHelper\Plugin;
 use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
 use BiliHelper\Util\TimeLock;
+use BiliHelper\Util\BaseRaffle;
 
 class StormRaffle extends BaseRaffle
 {
     const ACTIVE_TITLE = '节奏风暴';
     const ACTIVE_SWITCH = 'USE_STORM';
-
-    use TimeLock;
 
     protected static $wait_list = [];
     protected static $finish_list = [];

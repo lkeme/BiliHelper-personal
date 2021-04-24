@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2020 ~ 2021
+ *  Updated: 2021 ~ 2022
  */
 
 namespace BiliHelper\Core;
@@ -13,7 +13,7 @@ namespace BiliHelper\Core;
 class Env
 {
     private $app_name = 'BiliHelper Personal';
-    private $app_version = '0.6.7.*';
+    private $app_version = '0.8.1.*';
 
     /**
      * Env constructor.
@@ -56,8 +56,11 @@ class Env
             die("Please run this script from command line .");
         }
         if (version_compare(PHP_VERSION, '7.0.0', '<')) {
-            die("Please upgrade PHP version >= 7.0.0 .");
+            die("Please upgrade PHP version > 7.0.0 .");
         }
+//        if (version_compare(PHP_VERSION, '8.0.0', '>')) {
+//            die("Please upgrade PHP version < 8.0.0 .");
+//        }
         return $this;
     }
 }

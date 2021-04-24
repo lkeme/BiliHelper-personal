@@ -4,7 +4,7 @@
  *  Website: https://mudew.com/
  *  Author: Lkeme
  *  License: The MIT License
- *  Updated: 2020 ~ 2021
+ *  Updated: 2021 ~ 2022
  */
 
 namespace BiliHelper\Plugin;
@@ -13,6 +13,7 @@ use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
 use BiliHelper\Core\Config;
 use BiliHelper\Util\TimeLock;
+use BiliHelper\Tool\Common;
 
 
 class Login
@@ -199,9 +200,10 @@ class Login
     private static function publicKeyEnc($plaintext): string
     {
         Log::info('正在载入公钥');
-        $url = 'https://passport.bilibili.com/api/oauth2/getKey';
+        // $url = 'https://passport.bilibili.com/api/oauth2/getKey';
+        $url = 'https://passport.bilibili.com/x/passport-login/web/key';
         $payload = [];
-        $data = Curl::post('app', $url, Sign::login($payload));
+        $data = Curl::get('app', $url, Sign::login($payload));
         $data = json_decode($data, true);
         if (isset($data['code']) && $data['code']) {
             Log::error('公钥载入失败', ['msg' => $data['message']]);
@@ -209,6 +211,7 @@ class Login
         } else {
             Log::info('公钥载入完毕');
         }
+        // print_r($data);
         $public_key = $data['data']['key'];
         $hash = $data['data']['hash'];
         openssl_public_encrypt($hash . $plaintext, $crypt, $public_key);
@@ -291,7 +294,8 @@ class Login
     private static function accountLogin(string $validate = '', string $challenge = '', string $mode = '账密模式')
     {
         Log::info("尝试{$mode}登录");
-        $url = 'https://passport.bilibili.com/api/v3/oauth2/login';
+//        $url = 'https://passport.bilibili.com/api/v3/oauth2/login';
+        $url = 'https://passport.bilibili.com/x/passport-login/oauth2/login';
         $payload = [
             'seccode' => $validate ? "{$validate}|jordan" : '',
             'validate' => $validate,
@@ -308,17 +312,31 @@ class Login
         // {"ts":1593079322,"code":-629,"message":"账号或者密码错误"}
         // {"ts":1593082268,"code":-105,"data":{"url":"https://passport.bilibili.com/register/verification.html?success=1&gt=b6e5b7fad7ecd37f465838689732e788&challenge=7efb4020b22c0a9ac124aea624e11ad7&ct=1&hash=7fa8282ad93047a4d6fe6111c93b308a"},"message":"验证码错误"}
         // {"ts":1593082432,"code":0,"data":{"status":0,"token_info":{"mid":123456,"access_token":"123123","refresh_token":"123123","expires_in":2592000},"cookie_info":{"cookies":[{"name":"bili_jct","value":"123123","http_only":0,"expires":1595674432},{"name":"DedeUserID","value":"123456","http_only":0,"expires":1595674432},{"name":"DedeUserID__ckMd5","value":"123123","http_only":0,"expires":1595674432},{"name":"sid","value":"bd6aagp7","http_only":0,"expires":1595674432},{"name":"SESSDATA","value":"6d74d850%123%2Cf0e36b61","http_only":1,"expires":1595674432}],"domains":[".bilibili.com",".biligame.com",".bigfunapp.cn"]},"sso":["https://passport.bilibili.com/api/v2/sso","https://passport.biligame.com/api/v2/sso","https://passport.bigfunapp.cn/api/v2/sso"]}}
+        // {"ts":1610254019,"code":0,"data":{"status":2,"url":"https://passport.bilibili.com/account/mobile/security/managephone/phone/verify?tmp_token=2bc5dd260df7158xx860565fxx0d5311&requestId=dffcfxx052fe11xxa9c8e2667739c15c&source=risk","message":"您的账号存在高危异常行为，为了您的账号安全，请验证手机号后登录帐号"}}
         // https://passport.bilibili.com/mobile/verifytel_h5.html
         switch ($de_raw['code']) {
             case 0:
-                // 正常登录
-                Log::info("{$mode}登录成功");
-                $access_token = $de_raw['data']['token_info']['access_token'];
-                $refresh_token = $de_raw['data']['token_info']['refresh_token'];
-                self::saveConfig('ACCESS_TOKEN', $access_token);
-                self::saveConfig('REFRESH_TOKEN', $refresh_token);
-                self::saveCookie($de_raw);
-                Log::info('信息配置完毕');
+                // 二次判断
+                switch ($de_raw['data']['status']) {
+                    case 0:
+                        // 正常登录
+                        Log::info("{$mode}登录成功");
+                        $access_token = $de_raw['data']['token_info']['access_token'];
+                        $refresh_token = $de_raw['data']['token_info']['refresh_token'];
+                        self::saveConfig('ACCESS_TOKEN', $access_token);
+                        self::saveConfig('REFRESH_TOKEN', $refresh_token);
+                        self::saveCookie($de_raw);
+                        Log::info('信息配置完毕');
+                        break;
+                    case 2:
+                        // 异常高危
+                        Log::error('登录失败', ['msg' => $de_raw['data']['message']]);
+                        die();
+                    default:
+                        Log::error('登录失败', ['msg' => '未知错误: ' . $de_raw['data']['message']]);
+                        die();
+                        break;
+                }
                 break;
             case -105:
                 // 需要验证码
@@ -457,7 +475,7 @@ class Login
     private static function saveConfig(string $key, string $value, $hide = true)
     {
         Config::put($key, $value);
-        Log::info(" > {$key}: " . ($hide ? substr_replace($value, '********', mb_strlen($value) / 2, 8) : $value));
+        Log::info(" > {$key}: " . ($hide ? Common::replaceStar($value,4,4) : $value));
     }
 
     /**

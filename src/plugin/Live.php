@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2020 ~ 2021
+ *  Updated: 2021 ~ 2022
  */
 
 namespace BiliHelper\Plugin;
@@ -330,7 +330,7 @@ class Live
             foreach ($bag_list as $vo) {
                 // 去除永久礼物
                 if ($vo['corner_mark'] == '永久') continue;
-                if ($vo['gift_id'] == $gift_id && $vo['gift_name'] == $gift_name){
+                if ($vo['gift_id'] == $gift_id && $vo['gift_name'] == $gift_name) {
                     array_push($new_bag_list, $vo);
                 }
             }
@@ -373,5 +373,35 @@ class Live
         } else {
             Log::notice("成功向 {$payload['biz_id']} 投喂了 {$num} 个{$gift['gift_name']}");
         }
+    }
+
+
+    /**
+     * @use 获取分区直播间
+     * @param int $parent_area_id
+     * @param int $area_id
+     * @param int $page
+     * @return array
+     */
+    public static function getAreaRoomList(int $parent_area_id, int $area_id, int $page=1): array
+    {
+        $url = 'https://api.live.bilibili.com/xlive/web-interface/v1/second/getList';
+        $payload = [
+            'platform' => 'web',
+            'parent_area_id' => $parent_area_id,
+            'area_id' => $area_id,
+            'sort_type' => 'online',
+            'page' => $page
+        ];
+        $raw = Curl::get('other', $url, $payload);
+        $de_raw = json_decode($raw, true);
+        $room_ids = [];
+
+        if ($de_raw['code'] == 0) {
+            foreach ($de_raw['data']['list'] as $room) {
+                array_push($room_ids, $room['roomid']);
+            }
+        }
+        return $room_ids;
     }
 }

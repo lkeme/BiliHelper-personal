@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2020 ~ 2021
+ *  Updated: 2021 ~ 2022
  */
 
 namespace BiliHelper\Plugin;
@@ -13,10 +13,13 @@ namespace BiliHelper\Plugin;
 use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
 use BiliHelper\Util\TimeLock;
+use BiliHelper\Util\FilterWords;
+
 
 class MaterialObject
 {
     use TimeLock;
+    use FilterWords;
 
     private static $invalid_aids = [];
     private static $start_aid = 0;
@@ -24,20 +27,18 @@ class MaterialObject
 
     public static function run()
     {
-        if (getenv('USE_MO') == 'false') {
+        if (getenv('USE_LIVE_BOX') == 'false') {
             return;
         }
         self::setPauseStatus();
         if (self::getLock() > time()) {
             return;
         }
-        // TODO 优化计算AID算法
-        self::calcAid(470, 770);
+        self::calcAid(700, 900);
         $lottery_list = self::fetchLottery();
         self::drawLottery($lottery_list);
         self::setLock(mt_rand(6, 10) * 60);
     }
-
 
     /**
      * @use 过滤抽奖Title
@@ -46,10 +47,8 @@ class MaterialObject
      */
     private static function filterTitleWords(string $title): bool
     {
-        $sensitive_words = [
-            '测试', '加密', 'test', 'TEST', '钓鱼', '炸鱼', '调试', "123", "1111", "测试", "測試", "Test",
-            "测一测", "ce-shi", "test", "T-E-S-T", "lala", "我是抽奖标题", "压测", "測一測", "t-e-s-t"
-        ];
+        self::loadJsonData();
+        $sensitive_words = self::$store->get("MaterialObject.sensitive");
         foreach ($sensitive_words as $word) {
             if (strpos($title, $word) !== false) {
                 return true;
@@ -204,6 +203,7 @@ class MaterialObject
      */
     private static function calcAid($min, $max): bool
     {
+        // TODO 优化计算AID算法
         if (self::$end_aid != 0 && self::$start_aid != 0) {
             return false;
         }
