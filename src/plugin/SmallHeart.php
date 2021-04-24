@@ -41,6 +41,7 @@ class SmallHeart
             self::heartBeat();
             if (self::$total_time >= 12000) {
                 self::$total_time = 0;
+                self::$metal = null;
                 self::setLock(self::timing(2));
             } else {
                 self::setLock(self::$interval);
