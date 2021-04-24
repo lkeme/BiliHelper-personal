@@ -246,7 +246,8 @@ class Judge
         ];
         $raw = Curl::get('pc', $url, $payload, $headers);
         $de_raw = json_decode($raw, true);
-        print_r($de_raw);
+//        print_r($de_raw);
+        Log::debug($raw);
         $data = $de_raw['data'];
         if (!$data) {
             Log::info('该用户非风纪委成员');

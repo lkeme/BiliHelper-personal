@@ -92,7 +92,7 @@ class CapsuleLottery
      * @use 执行任务
      * @return bool
      */
-    private static function workTask()
+    private static function workTask(): bool
     {
         if (self::$work_status['work_completed'] == date("Y/m/d")) {
             return false;
