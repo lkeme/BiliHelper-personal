@@ -12,6 +12,18 @@ namespace BiliHelper\Tool;
 
 class Common
 {
+
+    /**
+     * @use 获取十三位时间戳
+     * @return int
+     */
+    public static function getMillisecond(): int
+    {
+        list($t1, $t2) = explode(' ', microtime());
+        // return (float)sprintf('%.0f', (floatval($t1) + floatval($t2)) * 1000);
+        return intval(sprintf('%u', (floatval($t1) + floatval($t2)) * 1000));
+    }
+
     /**
      * @use 替换字符串
      * @param $str
@@ -21,7 +33,7 @@ class Common
      * @param string $charset
      * @return string
      */
-    public static function replaceStar($str, $start, $end = 0, $dot = "*", $charset = "UTF-8")
+    public static function replaceStar($str, $start, $end = 0, $dot = "*", $charset = "UTF-8"): string
     {
         $len = mb_strlen($str, $charset);
         if ($start == 0 || $start > $len) {
