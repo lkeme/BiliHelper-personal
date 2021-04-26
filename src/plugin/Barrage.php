@@ -134,13 +134,13 @@ class Barrage
      */
     private static function privateSendMsg($info): bool
     {
-        //TODO 短期功能 有需求就修改
+        //TODO 短期功能 有需求就修改 // todo 加入直播间
         $response = self::sendMsg($info);
         if (isset($response['code']) && $response['code'] == 0) {
             Log::info('弹幕发送成功');
             return true;
         } else {
-            Log::warning("弹幕发送失败, CODE -> {$response['code']} MSG -> {$response['msg']} ");
+            Log::warning("弹幕发送失败, CODE -> {$response['code']} MSG -> {$response} ");
             return false;
         }
     }
