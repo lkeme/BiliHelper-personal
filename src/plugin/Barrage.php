@@ -33,11 +33,11 @@ class Barrage
         ];
 
         if (self::privateSendMsg($info)) {
-            self::setLock(mt_rand(40, 60) * 60);
+            self::setLock(mt_rand(40, 80) * 60);
             return;
         }
 
-        self::setLock(30);
+        self::setLock(10 * 60);
     }
 
     /**
@@ -64,7 +64,7 @@ class Barrage
      * @use 获取一言api消息
      * @return string
      */
-    private static function getMsgInfo():string
+    private static function getMsgInfo(): string
     {
         /**
          *  整理一部分API，收集于网络，侵权麻烦联系我删除.
@@ -112,7 +112,7 @@ class Barrage
     {
         $user_info = User::parseCookies();
         $url = 'https://api.live.bilibili.com/msg/send';
-        $data = Live::getRoomInfo($info['roomid']);
+        $data = Live::getRoomInfoV1($info['roomid']);
         $payload = [
             'color' => '16777215',
             'fontsize' => 25,
@@ -140,7 +140,7 @@ class Barrage
             Log::info('弹幕发送成功');
             return true;
         } else {
-            Log::warning("弹幕发送失败, CODE -> {$response['code']} MSG -> {$response} ");
+            Log::warning("弹幕发送失败, CODE -> {$response['code']} MSG -> {$response['message']} ");
             return false;
         }
     }

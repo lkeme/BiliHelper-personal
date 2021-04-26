@@ -226,7 +226,7 @@ class GiftSend
     {
         Log::info('正在生成直播间信息...');
         $room_id = empty(self::$tid) ? getenv('ROOM_ID') : self::$tid;
-        $data = Live::getRoomInfo($room_id);
+        $data = Live::getRoomInfoV1($room_id);
         if (isset($data['code']) && $data['code']) {
             Log::warning('获取主播房间号失败!', ['msg' => $data['message']]);
             Log::warning('清空礼物功能禁用!');
