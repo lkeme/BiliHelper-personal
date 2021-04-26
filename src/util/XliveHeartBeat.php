@@ -60,7 +60,7 @@ trait XliveHeartBeat
             static::resetVar(true);
             static::$_current_room_id = $room_id;
         }
-        // 加载房间信息
+        // 获取房间信息
         if (empty(static::$_room_info)) {
             $r_data = Live::webGetRoomInfo($room_id);
             if ($r_data['code'] != 0) {
@@ -68,7 +68,10 @@ trait XliveHeartBeat
                 return static::$_default;
             }
             static::$_room_info = $r_data;
-            $rdata = $r_data['data'];
+        }
+        // 加载房间信息
+        if (static::$_room_info && static::$_data["id"][2] == 0){
+            $rdata = static::$_room_info['data'];
             $parent_area_id = $rdata['room_info']['parent_area_id'];
             $area_id = $rdata['room_info']['area_id'];
             # 短位转长位
@@ -83,7 +86,7 @@ trait XliveHeartBeat
             // 失败心跳
             if (static::$_retry) {
                 // 重试次数 > 1 , 不全部清除
-                static::resetVar();
+                static::resetVar(true);
                 static::$_retry -= 1;
             } else {
                 // 重试次数 < 1 , 全部清除
@@ -103,7 +106,7 @@ trait XliveHeartBeat
             if ($max_time <= static::$_count_time) {
                 //成功在id为{room_id}的直播间发送第{ii}次心跳
             }
-            $minute = round(static::$_count_time / 60);
+            $minute = round(static::$_count_time / 60) - 1;
             Log::info("已在直播间 $room_id 连续观看了 $minute 分钟");
             return $r_data['heartbeat_interval'];
         }
@@ -125,7 +128,11 @@ trait XliveHeartBeat
             static::$_data['ts'] = time() * 1000;
             static::$_data['s'] = static::encParamS(static::$_data, static::$_secret_rule);
             if (!static::$_data['s']) {
-                return [404, '心跳加密错误', '心跳加密错误'];
+                return [
+                    'code' => 404,
+                    'message' => '心跳加密错误',
+                    'heartbeat_interval' => static::$_default
+                ];
             }
             $r_data = static::xHeartBeat(static::$_data['id']);
         }
@@ -229,9 +236,9 @@ trait XliveHeartBeat
                 // Log::info("S加密成功 {$de_raw['s']}");
                 return $de_raw['s'];
             }
-            Log::warning("S加密失败 加密服务器暂时错误，请检查更换");
+            Log::warning("参数S加密失败: 加密服务器暂时错误，请检查更换");
         } else {
-            Log::warning("S加密失败 {$de_raw['message']}");
+            Log::warning("参数S加密失败: {$de_raw['message']}");
         }
         return false;
     }
