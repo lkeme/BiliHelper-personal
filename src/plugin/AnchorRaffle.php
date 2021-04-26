@@ -65,7 +65,7 @@ class AnchorRaffle extends BaseRaffle
             self::$group_id = $tag_id ? $tag_id : User::createRelationTag(self::$group_name);
         }
         // 获取需要关注的
-        $data = Live::getRoomInfo($room_id);
+        $data = Live::getRoomInfoV1($room_id);
         if ($data['code'] == 0 && isset($data['data'])) {
             $need_follow_uid = $data['data']['uid'];
         } else {

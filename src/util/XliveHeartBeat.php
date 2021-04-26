@@ -68,10 +68,7 @@ trait XliveHeartBeat
                 return static::$_default;
             }
             static::$_room_info = $r_data;
-        }
-        // 加载房间信息
-        if (static::$_room_info && static::$_data["id"][2] == 0){
-            $rdata = static::$_room_info['data'];
+            $rdata = $r_data['data'];
             $parent_area_id = $rdata['room_info']['parent_area_id'];
             $area_id = $rdata['room_info']['area_id'];
             # 短位转长位

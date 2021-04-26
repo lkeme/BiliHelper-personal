@@ -82,7 +82,7 @@ class Live
      * @use 获取随机直播房间号
      * @return int
      */
-    public static function getUserRecommend()
+    public static function getUserRecommend(): int
     {
         $url = 'https://api.live.bilibili.com/room/v1/Area/getListByAreaID';
         $payload = [
@@ -105,9 +105,9 @@ class Live
      * @param $room_id
      * @return bool
      */
-    public static function getRealRoomID($room_id)
+    public static function getRealRoomID($room_id): bool
     {
-        $data = self::getRoomInfo($room_id);
+        $data = self::getRoomInfoV1($room_id);
         if (!isset($data['code']) || !isset($data['data'])) {
             return false;
         }
@@ -132,11 +132,26 @@ class Live
      * @param $room_id
      * @return array
      */
-    public static function getRoomInfo($room_id): array
+    public static function getRoomInfoV1($room_id): array
     {
         $url = 'https://api.live.bilibili.com/room/v1/Room/room_init';
         $payload = [
             'id' => $room_id
+        ];
+        $raw = Curl::get('other', $url, $payload);
+        return json_decode($raw, true);
+    }
+
+    /**
+     * @use 获取直播间信息
+     * @param $room_id
+     * @return array
+     */
+    public static function getRoomInfoV2($room_id): array
+    {
+        $url = ' https://api.live.bilibili.com/room/v1/Room/get_info_by_id';
+        $payload = [
+            'ids[]' => $room_id
         ];
         $raw = Curl::get('other', $url, $payload);
         return json_decode($raw, true);
@@ -230,7 +245,7 @@ class Live
      * @use 获取毫秒
      * @return float
      */
-    public static function getMillisecond()
+    public static function getMillisecond(): float
     {
         list($t1, $t2) = explode(' ', microtime());
         return (float)sprintf('%.0f', (floatval($t1) + floatval($t2)) * 1000);
@@ -383,7 +398,7 @@ class Live
      * @param int $page
      * @return array
      */
-    public static function getAreaRoomList(int $parent_area_id, int $area_id, int $page=1): array
+    public static function getAreaRoomList(int $parent_area_id, int $area_id, int $page = 1): array
     {
         $url = 'https://api.live.bilibili.com/xlive/web-interface/v1/second/getList';
         $payload = [
