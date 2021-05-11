@@ -48,7 +48,6 @@ class Login
         self::setLock(3600);
     }
 
-
     /**
      * @use 登录控制中心
      */
@@ -92,12 +91,11 @@ class Login
         self::$password = self::publicKeyEnc($pass);
     }
 
-
     /**
      * @use 保持认证
      * @return bool
      */
-    private static function keepAuth()
+    private static function keepAuth(): bool
     {
         if (self::getLock() > time()) {
             return true;
@@ -119,7 +117,7 @@ class Login
      * @use 获取令牌信息
      * @return bool
      */
-    private static function checkToken()
+    private static function checkToken(): bool
     {
         $url = 'https://passport.bilibili.com/api/v2/oauth2/info';
         $payload = [
@@ -135,11 +133,10 @@ class Login
         return $data['data']['expires_in'] > 14400;
     }
 
-
     /**
      * @use 刷新Token
      */
-    private static function refreshToken()
+    private static function refreshToken(): bool
     {
         $url = 'https://passport.bilibili.com/api/v2/oauth2/refresh_token';
         $payload = [
@@ -162,35 +159,6 @@ class Login
         Log::info('重置信息配置完毕');
         return true;
     }
-
-    /**
-     * @use 检查Cookie
-     */
-    private static function checkCookie()
-    {
-
-    }
-
-
-    /**
-     * @use 刷新Cookie
-     */
-    private static function refreshCookie()
-    {
-        $url = 'https://passport.bilibili.com/api/login/sso';
-        $payload = [
-            'gourl' => 'https%3A%2F%2Faccount.bilibili.com%2Faccount%2Fhome'
-        ];
-        $response = Curl::headers('app', $url, Sign::common($payload));
-        $headers = $response['Set-Cookie'];
-        $cookies = [];
-        foreach ($headers as $header) {
-            preg_match_all('/^(.*);/iU', $header, $cookie);
-            array_push($cookies, $cookie[0][0]);
-        }
-        return implode("", array_reverse($cookies));
-    }
-
 
     /**
      * @use 公钥加密
@@ -217,7 +185,6 @@ class Login
         openssl_public_encrypt($hash . $plaintext, $crypt, $public_key);
         return base64_encode($crypt);
     }
-
 
     /**
      * @use 获取验证码
@@ -273,7 +240,6 @@ class Login
         ];
     }
 
-
     /**
      * @use 验证码登录
      * @param string $mode
@@ -293,8 +259,8 @@ class Login
      */
     private static function accountLogin(string $validate = '', string $challenge = '', string $mode = '账密模式')
     {
-        Log::info("尝试{$mode}登录");
-//        $url = 'https://passport.bilibili.com/api/v3/oauth2/login';
+        Log::info("尝试 {$mode} 登录");
+        // $url = 'https://passport.bilibili.com/api/v3/oauth2/login';
         $url = 'https://passport.bilibili.com/x/passport-login/oauth2/login';
         $payload = [
             'seccode' => $validate ? "{$validate}|jordan" : '',
@@ -314,50 +280,7 @@ class Login
         // {"ts":1593082432,"code":0,"data":{"status":0,"token_info":{"mid":123456,"access_token":"123123","refresh_token":"123123","expires_in":2592000},"cookie_info":{"cookies":[{"name":"bili_jct","value":"123123","http_only":0,"expires":1595674432},{"name":"DedeUserID","value":"123456","http_only":0,"expires":1595674432},{"name":"DedeUserID__ckMd5","value":"123123","http_only":0,"expires":1595674432},{"name":"sid","value":"bd6aagp7","http_only":0,"expires":1595674432},{"name":"SESSDATA","value":"6d74d850%123%2Cf0e36b61","http_only":1,"expires":1595674432}],"domains":[".bilibili.com",".biligame.com",".bigfunapp.cn"]},"sso":["https://passport.bilibili.com/api/v2/sso","https://passport.biligame.com/api/v2/sso","https://passport.bigfunapp.cn/api/v2/sso"]}}
         // {"ts":1610254019,"code":0,"data":{"status":2,"url":"https://passport.bilibili.com/account/mobile/security/managephone/phone/verify?tmp_token=2bc5dd260df7158xx860565fxx0d5311&requestId=dffcfxx052fe11xxa9c8e2667739c15c&source=risk","message":"您的账号存在高危异常行为，为了您的账号安全，请验证手机号后登录帐号"}}
         // https://passport.bilibili.com/mobile/verifytel_h5.html
-        switch ($de_raw['code']) {
-            case 0:
-                // 二次判断
-                switch ($de_raw['data']['status']) {
-                    case 0:
-                        // 正常登录
-                        Log::info("{$mode}登录成功");
-                        $access_token = $de_raw['data']['token_info']['access_token'];
-                        $refresh_token = $de_raw['data']['token_info']['refresh_token'];
-                        self::saveConfig('ACCESS_TOKEN', $access_token);
-                        self::saveConfig('REFRESH_TOKEN', $refresh_token);
-                        self::saveCookie($de_raw);
-                        Log::info('信息配置完毕');
-                        break;
-                    case 2:
-                        // 异常高危
-                        Log::error('登录失败', ['msg' => $de_raw['data']['message']]);
-                        die();
-                    default:
-                        Log::error('登录失败', ['msg' => '未知错误: ' . $de_raw['data']['message']]);
-                        die();
-                        break;
-                }
-                break;
-            case -105:
-                // 需要验证码
-                Log::error('登录失败', ['msg' => '此次登录需要验证码或' . $de_raw['message']]);
-                die();
-                break;
-            case -629:
-                // 密码错误
-                Log::error('登录失败', ['msg' => $de_raw['message']]);
-                die();
-                break;
-            case  -2100:
-                // 验证手机号
-                Log::error('登录失败', ['msg' => '账号启用了设备锁或异地登录需验证手机号']);
-                die();
-                break;
-            default:
-                Log::error('登录失败', ['msg' => '未知错误: ' . $de_raw['message']]);
-                die();
-                break;
-        }
+        self::loginAfter($mode, $de_raw['code'], $de_raw);
     }
 
     /**
@@ -366,7 +289,7 @@ class Login
      */
     private static function smsLogin(string $mode = '短信模式')
     {
-        Log::info("尝试{$mode}登录");
+        Log::info("尝试 {$mode} 登录");
         self::checkPhone(self::$username);
         $captcha = self::sendSms(self::$username);
         $url = 'https://passport.bilibili.com/x/passport-login/login/sms';
@@ -379,38 +302,7 @@ class Login
         ];
         $raw = Curl::post('app', $url, Sign::login($payload));
         $de_raw = json_decode($raw, true);
-        switch ($de_raw['code']) {
-            case 0:
-                // 正常登录
-                Log::info("{$mode}登录成功");
-                $access_token = $de_raw['data']['token_info']['access_token'];
-                $refresh_token = $de_raw['data']['token_info']['refresh_token'];
-                self::saveConfig('ACCESS_TOKEN', $access_token);
-                self::saveConfig('REFRESH_TOKEN', $refresh_token);
-                self::saveCookie($de_raw);
-                Log::info('信息配置完毕');
-                break;
-            case -105:
-                // 需要验证码
-                Log::error('登录失败', ['msg' => '此次登录需要验证码或' . $de_raw['message']]);
-                die();
-                break;
-            case -629:
-                // 密码错误
-                Log::error('登录失败', ['msg' => $de_raw['message']]);
-                die();
-                break;
-            case  -2100:
-                // 验证手机号
-                Log::error('登录失败', ['msg' => '账号启用了设备锁或异地登录需验证手机号']);
-                die();
-                break;
-            default:
-                Log::error('登录失败', ['msg' => '未知错误: ' . $de_raw['message']]);
-                die();
-                break;
-        }
-
+        self::loginAfter($mode, $de_raw['code'], $de_raw);
     }
 
     /**
@@ -455,6 +347,85 @@ class Login
     }
 
     /**
+     * @use 登录之后
+     * @param $mode
+     * @param $code
+     * @param $data
+     */
+    private static function loginAfter($mode, $code, $data)
+    {
+        switch ($code) {
+            case 0:
+                // data->data->status number
+                if (array_key_exists('status', $data['data'])) {
+                    // 二次判断
+                    switch ($data['data']['status']) {
+                        case 0:
+                            // 正常登录
+                            self::loginSuccess($mode, $data);
+                            break;
+                        case 2:
+                            // 异常高危
+                            self::loginFail($mode, $data['data']['message']);
+                            break;
+                        default:
+                            // 未知错误
+                            self::loginFail($mode, '未知错误: ' . $data['data']['message']);
+                            break;
+                    }
+                }
+                // 正常登录
+                self::loginSuccess($mode, $data);
+                break;
+            case -105:
+                // 需要验证码
+                self::loginFail($mode, '此次登录需要验证码或' . $data['message']);
+                break;
+            case -629:
+                // 密码错误
+                self::loginFail($mode, $data['message']);
+                break;
+            case  -2100:
+                // 验证手机号
+                self::loginFail($mode, '账号启用了设备锁或异地登录需验证手机号');
+                break;
+            default:
+                // 未知错误
+                self::loginFail($mode, '未知错误: ' . $data['message']);
+                break;
+        }
+
+    }
+
+    /**
+     * @use 登陆成功
+     * @param $mode
+     * @param $data
+     */
+    private static function loginSuccess($mode, $data)
+    {
+        Log::info("{$mode} 登录成功");
+        $access_token = $data['data']['token_info']['access_token'];
+        $refresh_token = $data['data']['token_info']['refresh_token'];
+        self::saveConfig('ACCESS_TOKEN', $access_token);
+        self::saveConfig('REFRESH_TOKEN', $refresh_token);
+        self::saveCookie($data);
+        Log::info('信息配置完毕');
+    }
+
+    /**
+     * @use 登陆失败
+     * @param $mode
+     * @param $data
+     */
+    private static function loginFail($mode, $data)
+    {
+        Log::error("{$mode} 登录失败");
+        Log::error('登录失败', ['msg' => $data]);
+        die();
+    }
+
+    /**
      * @use 检查手机号格式
      * @param string $phone
      */
@@ -475,7 +446,7 @@ class Login
     private static function saveConfig(string $key, string $value, $hide = true)
     {
         Config::put($key, $value);
-        Log::info(" > {$key}: " . ($hide ? Common::replaceStar($value,4,4) : $value));
+        Log::info(" > {$key}: " . ($hide ? Common::replaceStar($value, 4, 4) : $value));
     }
 
     /**
@@ -503,5 +474,23 @@ class Login
         }
     }
 
+    /**
+     * @use 刷新Cookie
+     */
+    private static function refreshCookie(): string
+    {
+        $url = 'https://passport.bilibili.com/api/login/sso';
+        $payload = [
+            'gourl' => 'https%3A%2F%2Faccount.bilibili.com%2Faccount%2Fhome'
+        ];
+        $response = Curl::headers('app', $url, Sign::common($payload));
+        $headers = $response['Set-Cookie'];
+        $cookies = [];
+        foreach ($headers as $header) {
+            preg_match_all('/^(.*);/iU', $header, $cookie);
+            array_push($cookies, $cookie[0][0]);
+        }
+        return implode("", array_reverse($cookies));
+    }
 
 }
