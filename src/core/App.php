@@ -66,6 +66,7 @@ class App
     public function start()
     {
         $plugins = [
+            'CheckUpdate',
             'Login',
             'Schedule',
             'MainSite',

@@ -87,6 +87,39 @@
       "share": "true",
       "draw_times": 1,
       "expire_at": "2021-04-25 23:59:59"
+    },
+    {
+      "url": "https://www.bilibili.com/blackboard/activity-Tpo81ydpiW.html",
+      "title": "和平精英周年庆嘉年华1次",
+      "description": "活动期间每天分享页面，新增一次机会。",
+      "sid": "e2d93baa-96b9-11eb-8597-246e966235d8",
+      "login": "true",
+      "follow": "false",
+      "share": "true",
+      "draw_times": 1,
+      "expire_at": "2021-06-15 23:59:59"
+    },
+    {
+      "url": "https://www.bilibili.com/blackboard/activity-Tpo81ydpiW.html",
+      "title": "和平精英周年庆嘉年华2次",
+      "description": "活动期间每天分享页面，新增一次机会。",
+      "sid": "e2d93baa-96b9-11eb-8597-246e966235d8",
+      "login": "true",
+      "follow": "false",
+      "share": "true",
+      "draw_times": 1,
+      "expire_at": "2021-06-15 23:59:59"
+    },
+    {
+      "url": "https://www.bilibili.com/blackboard/activity-Tpo81ydpiW.html",
+      "title": "和平精英周年庆嘉年华3次",
+      "description": "活动期间每天分享页面，新增一次机会。",
+      "sid": "e2d93baa-96b9-11eb-8597-246e966235d8",
+      "login": "true",
+      "follow": "false",
+      "share": "true",
+      "draw_times": 1,
+      "expire_at": "2021-06-15 23:59:59"
     }
   ]
 }

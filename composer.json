@@ -18,7 +18,8 @@
     "guzzlehttp/guzzle": "^6.5.5",
     "mathieuviossat/arraytotexttable": "^1.0.8",
     "klkvsk/json-decode-stream": "^1.0",
-    "sven/file-config": "^3.1"
+    "sven/file-config": "^3.1",
+    "hassankhan/config": "^2.2"
   },
   "license": "MIT",
   "authors": [
