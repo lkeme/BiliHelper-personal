@@ -20,7 +20,7 @@ class MainSite
 
     public static function run()
     {
-        if (self::getLock() > time() || getenv('USE_MAIN_SITE') == 'false') {
+        if (self::getLock() > time() || !getEnable('main_site')) {
             return;
         }
         if (self::watchAid() && self::shareAid() && self::coinAdd()) {
@@ -30,7 +30,6 @@ class MainSite
         self::setLock(3600);
     }
 
-
     /**
      * @use 投币
      * @param $aid
@@ -38,13 +37,12 @@ class MainSite
      */
     private static function reward($aid): bool
     {
-        $user_info = User::parseCookies();
         $url = "https://api.bilibili.com/x/web-interface/coin/add";
         $payload = [
             "aid" => $aid,
             "multiply" => "1",
             "cross_domain" => "true",
-            "csrf" => $user_info['token']
+            "csrf" => getCsrf()
         ];
         $headers = [
             'Host' => "api.bilibili.com",
@@ -55,14 +53,13 @@ class MainSite
         $raw = Curl::post('app', $url, Sign::common($payload), $headers);
         $de_raw = json_decode($raw, true);
         if ($de_raw['code'] == 0) {
-            Log::notice("主站任务: av{$aid}投币成功!");
+            Log::notice("主站任务: av{$aid} 投币成功");
             return true;
         } else {
-            Log::warning("主站任务: av{$aid}投币失败!");
+            Log::warning("主站任务: av{$aid} 投币失败");
             return false;
         }
     }
-
 
     /**
      * @use 投币日志
@@ -75,7 +72,7 @@ class MainSite
         $raw = Curl::get('pc', $url, $payload);
         $de_raw = json_decode($raw, true);
 
-        $logs = isset($de_raw['data']['list']) ? $de_raw['data']['list'] : [];
+        $logs = $de_raw['data']['list'] ?? [];
         $coins = 0;
         foreach ($logs as $log) {
             $log_ux = strtotime($log['time']);
@@ -106,44 +103,35 @@ class MainSite
      */
     protected static function coinAdd(): bool
     {
-        switch (getenv('USE_ADD_COIN')) {
-            case 'false':
-                break;
-            case 'true':
-                // 预计数量 失败默认0  避免损失
-                $estimate_num = intval(getenv('ADD_COIN_NUM') ?? 0);
-                // 库存数量
-                $stock_num = self::getCoin();
-                // 实际数量 处理硬币库存少于预计数量
-                $actual_num = intval($estimate_num > $stock_num ? $stock_num : $estimate_num) - self::coinLog();
-                Log::info("当前硬币库存 {$stock_num} 预计投币 {$estimate_num} 实际投币 {$actual_num}");
-                // 上限
-                if ($actual_num <= 0) {
-                    Log::info('今日投币上限已满!');
-                    break;
-                }
-                // 稿件列表
-                if (gettype('ADD_COIN_MODE') =='random'){
-                    // 随机热门稿件榜单
-                    $aids = self::getDayRankingAids($actual_num);
-                }else{
-                    // 固定获取关注UP稿件榜单, 不足会随机补全
-                    $aids = self::getFollowUpAids($actual_num);
-                }
-                Log::info("获取稿件列表: ". implode(" ",$aids));
-                // 投币
-                foreach ($aids as $aid) {
-                    self::reward($aid);
-                }
-                break;
-            default:
-                Log::warning('当前视频投币设置不正确, 请检查配置文件!');
-                die();
-                break;
+        if (!getConf('add_coin', 'main_site')) return true;
+
+        // 预计数量 失败默认0  避免损失
+        $estimate_num = getConf('add_coin_num', 'main_site') ?? 0;
+        // 库存数量
+        $stock_num = self::getCoin();
+        // 实际数量 处理硬币库存少于预计数量
+        $actual_num = intval($estimate_num > $stock_num ? $stock_num : $estimate_num) - self::coinLog();
+        Log::info("当前硬币库存 {$stock_num} 预计投币 {$estimate_num} 实际投币 {$actual_num}");
+        // 上限
+        if ($actual_num <= 0) {
+            Log::notice('今日投币上限已满');
+            return true;
+        }
+        // 稿件列表
+        if (getConf('add_coin_mode', 'main_site') == 'random') {
+            // 随机热门稿件榜单
+            $aids = self::getDayRankingAids($actual_num);
+        } else {
+            // 固定获取关注UP稿件榜单, 不足会随机补全
+            $aids = self::getFollowUpAids($actual_num);
+        }
+        Log::info("获取稿件列表: " . implode(" ", $aids));
+        // 投币
+        foreach ($aids as $aid) {
+            self::reward($aid);
         }
         return true;
     }
-
 
     /**
      * @use 获取随机AID
@@ -166,7 +154,6 @@ class MainSite
         return (string)$aid;
     }
 
-
     /**
      * @use 获取关注UP稿件列表
      * @param int $num
@@ -175,11 +162,9 @@ class MainSite
     private static function getFollowUpAids(int $num): array
     {
         $aids = [];
-        $rand_nums = [];
         $url = 'https://api.vc.bilibili.com/dynamic_svr/v1/dynamic_svr/dynamic_new';
-        $user_info = User::parseCookies();
         $payload = [
-            'uid' => $user_info['uid'],
+            'uid' => getUid(),
             'type_list' => '8,512,4097,4098,4099,4100,4101'
         ];
         $headers = [
@@ -200,7 +185,6 @@ class MainSite
         }
         return $aids;
     }
-
 
     /**
      * @use 获取榜单稿件列表
@@ -238,21 +222,21 @@ class MainSite
         return $aids;
     }
 
-
     /**
      * @use 分享视频
      * @return bool
      */
     private static function shareAid(): bool
     {
+        if (!getConf('share', 'main_site')) return true;
+
         # aid = 稿件av号
         $url = "https://api.bilibili.com/x/web-interface/share/add";
         $av_info = self::parseAid();
-        $user_info = User::parseCookies();
         $payload = [
             'aid' => $av_info['aid'],
             'jsonp' => "jsonp",
-            'csrf' => $user_info['token'],
+            'csrf' => getCsrf(),
         ];
         $headers = [
             'Host' => "api.bilibili.com",
@@ -263,14 +247,13 @@ class MainSite
         $raw = Curl::post('pc', $url, $payload, $headers);
         $de_raw = json_decode($raw, true);
         if ($de_raw['code'] == 0) {
-            Log::notice("主站任务: av{$av_info['aid']}分享成功!");
+            Log::notice("主站任务: av{$av_info['aid']} 分享成功");
             return true;
         } else {
-            Log::warning("主站任务: av{$av_info['aid']}分享失败!");
+            Log::warning("主站任务: av{$av_info['aid']} 分享失败");
             return false;
         }
     }
-
 
     /**
      * @use 观看视频
@@ -278,6 +261,8 @@ class MainSite
      */
     private static function watchAid(): bool
     {
+        if (!getConf('watch', 'main_site')) return true;
+
         $url = "https://api.bilibili.com/x/report/click/h5";
         $av_info = self::parseAid();
         $user_info = User::parseCookies();
@@ -289,8 +274,8 @@ class MainSite
             'ftime' => time(),
             'jsonp' => "jsonp",
             'lv' => "",
-            'mid' => $user_info['uid'],
-            'csrf' => $user_info['token'],
+            'mid' => getUid(),
+            'csrf' => getCsrf(),
             'stime' => time()
         ];
 
@@ -309,7 +294,7 @@ class MainSite
                 "aid" => $av_info['aid'],
                 "cid" => $av_info['cid'],
                 "mid" => $user_info['uid'],
-                "csrf" => $user_info['token'],
+                "csrf" => getCsrf(),
                 "jsonp" => "jsonp",
                 "played_time" => "0",
                 "realtime" => $av_info['duration'],
@@ -329,15 +314,14 @@ class MainSite
                 $raw = Curl::post('pc', $url, $payload, $headers);
                 $de_raw = json_decode($raw, true);
                 if ($de_raw['code'] == 0) {
-                    Log::notice("主站任务: av{$av_info['aid']}观看成功!");
+                    Log::notice("主站任务: av{$av_info['aid']} 观看成功");
                     return true;
                 }
             }
         }
-        Log::warning("主站任务: av{$av_info['aid']}观看失败!");
+        Log::warning("主站任务: av{$av_info['aid']} 观看失败");
         return false;
     }
-
 
     /**
      * @use 解析AID到CID

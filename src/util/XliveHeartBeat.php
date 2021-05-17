@@ -104,7 +104,7 @@ trait XliveHeartBeat
                 //成功在id为{room_id}的直播间发送第{ii}次心跳
             }
             $minute = round(static::$_count_time / 60) - 1;
-            Log::info("已在直播间 $room_id 连续观看了 $minute 分钟");
+            Log::notice("已在直播间 $room_id 连续观看了 $minute 分钟");
             return $r_data['heartbeat_interval'];
         }
     }
@@ -157,7 +157,6 @@ trait XliveHeartBeat
     protected static function eHeartBeat(array $id): array
     {
         $url = 'https://live-trace.bilibili.com/xlive/data-interface/v1/x25Kn/E';
-        $user_info = User::parseCookies();
         $payload = [
             'id' => json_encode([$id[0], $id[1], $id[2], $id[3]], true),
             'device' => json_encode([Generator::hash(), Generator::uuid4()], true),
@@ -165,8 +164,8 @@ trait XliveHeartBeat
             'is_patch' => 0,
             'heart_beat' => [],
             'ua' => static::$_user_agent,
-            'csrf_token' => $user_info['token'],
-            'csrf' => $user_info['token'],
+            'csrf_token' => getCsrf(),
+            'csrf' => getCsrf(),
             'visit_id' => ''
         ];
         // print_r($payload);
@@ -299,12 +298,12 @@ trait XliveHeartBeat
      */
     protected static function depend(): bool
     {
-        if (getenv('ENC_SERVER') == '') {
+        if (getConf('server', 'heartbeat_enc') == '') {
             return false;
         }
         // 加载加密服务器
         if (is_null(static::$_enc_server)) {
-            static::$_enc_server = getenv('ENC_SERVER');
+            static::$_enc_server = getConf('server', 'heartbeat_enc');
         }
         return true;
     }

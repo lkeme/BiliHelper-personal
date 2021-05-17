@@ -1,68 +1,8 @@
-
-<p align="center"><img width="300px" src="https://i.loli.net/2018/04/20/5ad97bd395912.jpeg"></p>
-
-<p align="center">
-<img src="https://img.shields.io/badge/version-0.8.1.210423 alpha-green.svg?longCache=true&style=for-the-badge">
-<img src="https://img.shields.io/badge/license-mit-blue.svg?longCache=true&style=for-the-badge">
-</p>
-
-
-# BiliHelper
-
-B 站直播实用脚本
-
-## 功能组件
-
-|plugin              |version             |description         |
-|--------------------|--------------------|--------------------|
-|Login               |21.03.27           |账号登录            |
-|Schedule            |21.03.27           |休眠控制            |
-|MainSite            |21.03.27           |主站助手            |
-|Daily               |21.03.27           |每日礼包            |
-|Heart               |21.03.27           |双端心跳            |
-|DailyTask           |21.03.27           |每日任务            |
-|Silver              |21.03.27           |银瓜子宝箱          |
-|Barrage             |21.03.27           |活跃弹幕            |
-|Silver2Coin         |21.03.27           |银瓜子换硬币        |
-|GiftSend            |21.03.27           |礼物赠送            |
-|Judge               |21.03.27           |风纪                |
-|GroupSignIn         |21.03.27           |友爱社签到          |
-|ManGa               |21.03.27           |漫画签到分享        |
-|GameMatch           |21.03.27           |赛事签到分享        |
-|GiftHeart           |21.03.27           |心跳礼物            |          
-|MaterialObject      |21.03.27           |实物抽奖            |
-|AloneTcpClient      |21.03.27           |独立监控            |
-|ZoneTcpClient       |21.03.27           |分区监控            |
-|StormRaffle         |21.03.27           |节奏风暴            |
-|GiftRaffle          |21.03.27           |活动礼物            |
-|PkRaffle            |21.03.27           |大乱斗              |
-|GuardRaffle         |21.03.27           |舰长总督            |
-|AnchorRaffle        |21.03.27           |天选时刻            |
-|AwardRecord         |21.03.27           |获奖通知            |
-|Statistics          |21.03.27           |数据统计            |
-|Competition         |21.03.27           |赛事竞猜            |
-|SmallHeart          |21.03.27           |小心心              |
-|ActivityLottery     |21.03.27           |主站活动            |
-|CapsuleLottery      |21.03.27           |直播扭蛋活动         |
-|Forward             |21.03.27           |动态抽奖转发         |
-     
-## 打赏赞助
-
-![](https://i.loli.net/2019/07/13/5d2963e5cc1eb22973.png)
-
-> 待添加
-
-## 未完成功能
-
-|待续       |
-|-----------|
-|多用户     |
-
 ## 环境依赖
 
 |Requirement         |
 |--------------------|
-|PHP >=7.0           |
+|PHP >=7.3           |
 |php_curl            |
 |php_sockets         |
 |php_openssl         |
@@ -70,61 +10,129 @@ B 站直播实用脚本
 |php_zlib            |
 |php_mbstring        |
 
-通常使用 `composer` 工具会自动检测上述依赖问题。  
+> 通常使用 `composer` 工具会自动检测上述依赖问题。
 
 ## Composer
-* 项目 `composer.lock` 基于阿里云Composer镜像生成
-+ 阿里云(推荐)
-```
+
++ [Composer 安装与使用](https://www.runoob.com/w3cnote/composer-install-and-usage.html)
+
++ [Composer 下载](https://getcomposer.org/download/)
+
++ 当前项目 `composer.lock` 基于阿里云 Composer镜像生成
+
++ 阿里云(全量镜像)
+
+```bash
 # 使用帮助
-https://developer.aliyun.com/composer
+> https://developer.aliyun.com/composer
 # 使用命令
 > composer config -g repo.packagist composer https://mirrors.aliyun.com/composer/
 ```
-* 腾讯云(备用)
+
++ 恢复默认镜像|Composer.phar加速下载
+
+```bash
+> composer config -g --unset repos.packagist
+
+> https://mirrors.cloud.tencent.com/composer/composer.phar
+> https://mirrors.aliyun.com/composer/composer.phar
 ```
+
+<details>
+<summary>其余镜像 展开查看</summary>
+<pre><code>
++ cnpkg(全量镜像)
+```bash
 # 使用帮助
-https://mirrors.cloud.tencent.com/composer/
+> https://php.cnpkg.org/
 # 使用命令
-composer config -g repos.packagist composer https://mirrors.cloud.tencent.com/composer/
+> composer config -g repos.packagist composer https://php.cnpkg.org
 ```
 
++ 腾讯云(全量镜像)
 
+```bash
+# 使用帮助
+> https://mirrors.cloud.tencent.com/help/composer.html
+# 使用命令
+> composer config -g repos.packagist composer https://mirrors.cloud.tencent.com/composer/
+```
+
++ phpcomposer(全量镜像)
+
+```bash
+# 使用帮助
+> https://pkg.phpcomposer.com/
+# 使用命令
+> composer config -g repo.packagist composer https://packagist.phpcomposer.com
+```
+
++ 华为云(全量镜像)
+
+```bash
+# 使用帮助
+> https://mirrors.huaweicloud.com/repository/php/
+# 使用命令
+> composer config -g repos.packagist composer https://mirrors.huaweicloud.com/repository/php/
+```
+
++ 交通大学(非全量镜像)
+
+```bash
+# 使用帮助
+> https://packagist.mirrors.sjtug.sjtu.edu.cn/
+# 使用命令
+> composer config -g repos.packagist composer https://packagist.mirrors.sjtug.sjtu.edu.cn
+```
+
+</code></pre>
+</details>
 
 ## 使用指南
 
- 1. 下载（克隆）项目代码，初始化项目
+1. 下载（克隆）项目代码，初始化项目
+
 ```
 $ git clone https://github.com/lkeme/BiliHelper-personal.git
 $ cd BiliHelper-personal/conf
-$ cp user.conf.example user.conf
+$ cp user.ini.example user.ini
 ```
- 2. 使用 [composer](https://getcomposer.org/download/) 工具进行安装
+
+2. 使用 [composer](https://getcomposer.org/download/) 工具进行安装
+
 ```
 $ composer install
+$ composer dump-autoload 
 ```
- 3. 按照说明修改配置文件 `user.conf`
+
+3. 按照说明修改配置文件 `user.ini`
+
  ```
  # 默认只需填写帐号密码，按需求开启其他功能即可
  ```
- 4. 运行测试
+
+4. 运行测试
+
 ```
 $ php index.php
 ```
+
 > 以下是`多账户多开方案`，单个账户可以无视
- 5. 复制一份example配置文件，修改账号密码即可
+
+5. 复制一份example配置文件，修改账号密码即可
+
  ```
- $ php index.php example.conf
+ $ php index.php example.ini
  ```
- 6. 请保证配置文件存在，否则默认加载`user.conf`配置文件
+
+6. 请保证配置文件存在，否则默认加载`user.ini`配置文件
 
 <p align="center"><img width="680px" src="https://i.loli.net/2018/04/21/5adb497dc3ece.png"></p>
 
 ## Docker使用指南
 
-  1. 安装好[Docker](https://yeasy.gitbooks.io/docker_practice/content/install/)
-  2. 直接命令行拉取镜像后运行
-
+1. 安装好[Docker](https://yeasy.gitbooks.io/docker_practice/content/install/)
+2. 直接命令行拉取镜像后运行
 
 ### 传入的参数方式有两种(二选一，如果同时传入则优先选择配置文件)
 
@@ -136,12 +144,12 @@ $ php index.php
 
 - 通过配置文件进行传入
 
-1. 下载[配置文件](https://raw.githubusercontent.com/lkeme/BiliHelper-personal/master/conf/user.conf.example)
+1. 下载[配置文件](https://raw.githubusercontent.com/lkeme/BiliHelper-personal/master/conf/user.ini.example)
 2. 修改
 3. 通过下面的命令进行挂载并运行
 
 ```shell script
-docker run -itd --rm -v /path/to/your/confFileName.conf:/app/conf/user.conf zsnmwy/bilihelper-personal
+docker run -itd --rm -v /path/to/your/confFileName.ini:/app/conf/user.ini zsnmwy/bilihelper-personal
 ```
 
 ```
@@ -155,20 +163,29 @@ docker run -itd --rm -v /path/to/your/confFileName.conf:/app/conf/user.conf zsnm
 - 注意: Docker镜像已经包含了所有所需的运行环境，无需在本地环境弄composer。每次启动容器时，都会与项目进行同步以确保版本最新。
 
 ## 升级指南
+
 > 注意新版本的配置文件是否变动，则需要重新覆盖配置文件，并重新填写设置
- 1. 进入项目目录
+
+1. 进入项目目录
+
 ```
 $ cd BiliHelper-personal
 ```
- 2. 拉取最新代码
+
+2. 拉取最新代码
+
 ```
 $ git pull  
 ```
- 3. 更新依赖库
+
+3. 更新依赖库
+
 ```
 $ composer install
 ```
- 4. 如果使用 systemd 等，需要重启服务
+
+4. 如果使用 systemd 等，需要重启服务
+
 ```
 $ systemctl restart bilibili
 ```
@@ -178,10 +195,11 @@ $ systemctl restart bilibili
 如果你将 BiliHelper-personal 部署到线上服务器时，则需要配置一个进程监控器来监测 `php index.php` 命令，在它意外退出时自动重启。
 
 通常可以使用以下的方式
- - systemd (推荐)
- - Supervisor
- - screen (自用)
- - nohup
+
+- systemd (推荐)
+- Supervisor
+- screen (自用)
+- nohup
 
 ## systemd 脚本
 
@@ -189,7 +207,7 @@ $ systemctl restart bilibili
 # /usr/lib/systemd/system/bilibili.service
 
 [Unit]
-Description=Bili Helper Manager
+Description=BiliHelper Manager
 Documentation=https://github.com/lkeme/BiliHelper-personal
 After=network.target
 
@@ -223,6 +241,7 @@ stdout_logfile=/tmp/bilibili.log
 |TelegramBot|https://core.telegram.org/bots/api|
 
 示范如下
+
 ```
 # Server酱
 # 自行替换 <SCKEY>
@@ -235,10 +254,9 @@ APP_CALLBACK="https://api.telegram.org/bot<TOKEN>/sendMessage?chat_id=<CHAR_ID>&
 
 `{message}` 部分会自动替换成错误信息，接口采用 get 方式发送
 
-
 ## 直播间 ID 问题
 
-文件 `user.conf` 里
+文件 `user.ini` 里
 
 `ROOM_ID` 配置，填写此项可以清空临过期礼物给指定直播间。
 
@@ -249,11 +267,13 @@ APP_CALLBACK="https://api.telegram.org/bot<TOKEN>/sendMessage?chat_id=<CHAR_ID>&
 `SOCKET_ROOM_ID` 配置，监控使用，暂时没用到。
 
 通常可以在直播间页面的 url 获取到它
+
 ```
 http://live.bilibili.com/9522051
 ```
 
 长位直播间ID获取
+
 ```
 https://api.live.bilibili.com/room/v1/Room/room_init?id=3
 ```
@@ -261,24 +281,3 @@ https://api.live.bilibili.com/room/v1/Room/room_init?id=3
 所有直播间号码小于 1000 的直播间为短号，部分4位直播间也为短号，
 
 该脚本在每次启动会自动修正部分功能，特殊标注的请留意。
-
-## 相关
-
- >  [BilibiliHelper](https://github.com/metowolf/BilibiliHelper) 
- 
- > [BiliHelper](https://github.com/lkeme/BiliHelper)
- 
- >  [Github](https://github.com/)
-
-
-## License 许可证
-
-BiliHelper is under the MIT license.
-
-本项目基于 MIT 协议发布，并增加了 SATA 协议。
-
-当你使用了使用 SATA 的开源软件或文档的时候，在遵守基础许可证的前提下，你必须马不停蹄地给你所使用的开源项目 “点赞” ，比如在 GitHub 上 star，然后你必须感谢这个帮助了你的开源项目的作者，作者信息可以在许可证头部的版权声明部分找到。
-
-本项目的所有代码文件、配置项，除另有说明外，均基于上述介绍的协议发布，具体请看分支下的 LICENSE。
-
-此处的文字仅用于说明，条款以 LICENSE 文件中的内容为准。

@@ -32,7 +32,7 @@ class AloneTcpClient
      */
     public static function run()
     {
-        if (self::getLock() > time() || getenv('USE_ALONE_SERVER') == 'false') {
+        if (self::getLock() > time() || !getEnable('alone_monitor')) {
             return;
         }
         self::setPauseStatus();
@@ -41,24 +41,22 @@ class AloneTcpClient
         self::receive();
     }
 
-
     /**
      * @use 初始化
      */
     private static function init()
     {
-        if (empty(getenv('ALONE_SERVER_ADDR')) || empty(getenv('ALONE_SERVER_KEY'))) {
+        if (empty(getConf('server_addr', 'alone_monitor')) || empty(getConf('server_key', 'alone_monitor'))) {
             exit('推送服务器信息不完整, 请检查配置文件!');
         }
         if (!self::$server_addr || !self::$server_key) {
-            self::$server_addr = getenv('ALONE_SERVER_ADDR');
-            self::$server_key = getenv('ALONE_SERVER_KEY');
+            self::$server_addr = getConf('server_addr', 'alone_monitor');
+            self::$server_key = getConf('server_key', 'alone_monitor');
         }
         if (!self::$client) {
             self::openConnect();
         }
     }
-
 
     /**
      * @use 数据封装
@@ -66,11 +64,10 @@ class AloneTcpClient
      * @param $fmt
      * @return string
      */
-    private static function packMsg($value, $fmt = "N")
+    private static function packMsg($value, $fmt = "N"): string
     {
         $head = pack($fmt, strlen($value));
-        $data = $head . $value;
-        return $data;
+        return $head . $value;
     }
 
     /**
@@ -117,7 +114,7 @@ class AloneTcpClient
     /**
      * @use 读数据
      * @param $length
-     * @return array|bool|false
+     * @return array|bool
      */
     private static function reader($length)
     {
@@ -142,7 +139,7 @@ class AloneTcpClient
      * @param $data
      * @return bool
      */
-    private static function writer($data)
+    private static function writer($data): bool
     {
         $status = false;
         try {
@@ -156,7 +153,6 @@ class AloneTcpClient
         }
         return $status;
     }
-
 
     /**
      * @use 打开连接
@@ -201,7 +197,6 @@ class AloneTcpClient
         }
         self::$client = null;
     }
-
 
     /**
      * @use 读取数据
@@ -260,7 +255,6 @@ class AloneTcpClient
                 // 服务器发布命令
                 Log::error("服务器发布退出命令 {$raw_data['data']['msg']}");
                 exit();
-                break;
             default:
                 // 未知信息
                 var_dump($raw_data);
@@ -268,7 +262,6 @@ class AloneTcpClient
                 break;
         }
     }
-
 
     /**
      * @use 写入log
@@ -281,7 +274,7 @@ class AloneTcpClient
             mkdir($path);
             chmod($path, 0777);
         }
-        $filename = $path . getenv('APP_USER') . ".log";
+        $filename = $path . getConf('username', 'login.account') . ".log";
         $date = date('[Y-m-d H:i:s] ');
         $data = "[{$date}]{$message}" . PHP_EOL;
         file_put_contents($filename, $data, FILE_APPEND);

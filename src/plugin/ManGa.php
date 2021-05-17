@@ -20,7 +20,7 @@ class ManGa
 
     public static function run()
     {
-        if (self::getLock() > time() || getenv('USE_MANGA') == 'false') {
+        if (self::getLock() > time() || !getEnable('manga')) {
             return;
         }
         if (self::sign() && self::share()) {
@@ -31,12 +31,16 @@ class ManGa
     }
 
 
+    /**
+     * @use 漫画签到
+     * @return bool
+     */
     private static function sign(): bool
     {
         sleep(1);
         $url = 'https://manga.bilibili.com/twirp/activity.v1.Activity/ClockIn';
         $payload = [
-            'access_key' => getenv('ACCESS_TOKEN'),
+            'access_key' => getConf('access_token', 'login.auth'),
             'ts' => time()
         ];
         $raw = Curl::post('app', $url, Sign::common($payload));
@@ -44,14 +48,18 @@ class ManGa
         # {"code":0,"msg":"","data":{}}
         # {"code":"invalid_argument","msg":"clockin clockin is duplicate","meta":{"argument":"clockin"}}
         if (!$de_raw['code']) {
-            Log::notice('漫画签到: 成功~');
+            Log::notice('漫画签到: 成功');
         } else {
-            Log::warning('漫画签到: 失败或者重复操作~');
+            Log::warning('漫画签到: 失败或者重复操作');
         }
         return true;
     }
 
 
+    /**
+     * @use 漫画分享
+     * @return bool
+     */
     private static function share(): bool
     {
         sleep(1);
@@ -62,9 +70,9 @@ class ManGa
         # {"code":0,"msg":"","data":{"point":5}}
         # {"code":1,"msg":"","data":{"point":0}}
         if (!$de_raw['code']) {
-            Log::notice('漫画分享: 成功~');
+            Log::notice('漫画分享: 成功');
         } else {
-            Log::warning('漫画分享: 失败或者重复操作~');
+            Log::warning('漫画分享: 失败或者重复操作');
         }
         return true;
     }

@@ -27,7 +27,7 @@ class Sign
 //        $appsecret = '59b43e04ad6965f34319062b478f83dd';
 //
 //        $default = [
-//            'access_key' => getenv('ACCESS_TOKEN'),
+//            'access_key' => getConf('access_token', 'login.auth')
 //            'actionKey' => 'appkey',
 //            'appkey' => $appkey,
 //            'build' => 101800,
@@ -45,17 +45,17 @@ class Sign
      * @param $payload
      * @return array
      */
-    public static function login($payload)
+    public static function login($payload): array
     {
         # Android 新
         $appkey = 'bca7e84c2d947ac6';
         $appsecret = '60698ba2f68e01ce44738920a0ffe768';
 
         $default = [
-            'access_key' => getenv('ACCESS_TOKEN'),
+            'access_key' => getConf('access_token', 'login.auth'),
             'actionKey' => 'appkey',
             'appkey' => $appkey,
-            'build' => 6205500,
+            'build' => 6240300,
             'channel' => 'bili',
             'device' => 'phone',
             'mobi_app' => 'android',
@@ -71,7 +71,7 @@ class Sign
      * @param $payload
      * @return array
      */
-    public static function common($payload)
+    public static function common($payload): array
     {
         # iOS 6680
 //        $appkey = '27eb53fc9058f8c3';
@@ -81,11 +81,11 @@ class Sign
         $appsecret = '560c52ccd288fed045859ed18bffd973';
 
         $default = [
-            'access_key' => getenv('ACCESS_TOKEN'),
+            'access_key' => getConf('access_token', 'login.auth'),
             'actionKey' => 'appkey',
             'appkey' => $appkey,
-            'build' => 6205500,
-            'device' => 'android',
+            'build' => 6240300,
+            'device' => 'phone',
             'mobi_app' => 'android',
             'platform' => 'android',
             'ts' => time(),

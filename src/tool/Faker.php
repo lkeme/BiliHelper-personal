@@ -22,7 +22,7 @@ class Faker
      * @example 79907610
      *
      */
-    public static function numberBetween($int1 = 0, $int2 = 2147483647)
+    public static function numberBetween($int1 = 0, $int2 = 2147483647): int
     {
         $min = $int1 < $int2 ? $int1 : $int2;
         $max = $int1 < $int2 ? $int2 : $int1;
@@ -36,7 +36,7 @@ class Faker
      * @param int $except
      * @return int
      */
-    public static function randomDigitNot($except)
+    public static function randomDigitNot($except): int
     {
         $result = self::numberBetween(0, 8);
         if ($result >= $except) {
@@ -53,7 +53,7 @@ class Faker
      * @param string $string String that needs to bet parsed
      * @return string
      */
-    public static function asciify($string = '****')
+    public static function asciify($string = '****'): string
     {
         return preg_replace_callback('/\*/u', 'static::randomAscii', $string);
     }
@@ -62,7 +62,7 @@ class Faker
     /**
      * @example 'fY4èHdZv68'
      */
-    public function password($minLength = 6, $maxLength = 20)
+    public function password($minLength = 6, $maxLength = 20): string
     {
         $pattern = str_repeat('*', $this->numberBetween($minLength, $maxLength));
 
@@ -81,7 +81,7 @@ class Faker
     /**
      * @example '35cd:186d:3e23:2986:ef9f:5b41:42a4:e6f1'
      */
-    public function ipv6()
+    public function ipv6(): string
     {
         $res = array();
         for ($i = 0; $i < 8; $i++) {
@@ -108,7 +108,7 @@ class Faker
     /**
      * @example '32:F1:39:2F:D6:18'
      */
-    public static function macAddress()
+    public static function macAddress(): string
     {
         for ($i = 0; $i < 6; $i++) {
             $mac[] = sprintf('%02X', static::numberBetween(0, 0xff));
@@ -118,6 +118,11 @@ class Faker
         return $mac;
     }
 
+    /**
+     * @use 转Ascii
+     * @param $string
+     * @return array|string|string[]
+     */
     protected static function toAscii($string)
     {
         static $arrayFrom, $arrayTo;

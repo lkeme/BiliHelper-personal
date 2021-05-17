@@ -8,7 +8,6 @@
 
 namespace BiliHelper\Plugin;
 
-
 use BiliHelper\Core\Curl;
 
 class Dynamic
@@ -26,7 +25,7 @@ class Dynamic
     /**
      * 获取抽奖话题下的帖子
      */
-    public static function getAwardTopic()
+    public static function getAwardTopic(): array
     {
 
         foreach (self::$topic_list as $t_id => $t_name) {
@@ -53,7 +52,6 @@ class Dynamic
         return self::$article_list;
     }
 
-
     /**
      * 动态转发
      * @param $rid
@@ -64,12 +62,11 @@ class Dynamic
      * @param string $extension
      * @return bool
      */
-    public static function dynamicRepost($rid, $content = "", $type = 1, $repost_code = 3000, $from = "create.comment", $extension = '{"emoji_type":1}')
+    public static function dynamicRepost($rid, $content = "", $type = 1, $repost_code = 3000, $from = "create.comment", $extension = '{"emoji_type":1}'): bool
     {
-        $user_info = User::parseCookies();
         $url = "https://api.vc.bilibili.com/dynamic_repost/v1/dynamic_repost/reply";
         $payload = [
-            "uid" => $user_info['uid'],
+            "uid" => getUid(),
             "rid" => $rid,
             "type" => $type,
             "content" => $content,
@@ -85,7 +82,6 @@ class Dynamic
         return false;
     }
 
-
     /**
      * 发表评论
      * @param int $rid
@@ -94,16 +90,15 @@ class Dynamic
      * @param int $plat
      * @return bool
      */
-    public static function dynamicReplyAdd($rid, $message = "", $type = 11, $plat = 1)
+    public static function dynamicReplyAdd(int $rid, $message = "", $type = 11, $plat = 1): bool
     {
-        $user_info = User::parseCookies();
         $url = "https://api.bilibili.com/x/v2/reply/add";
         $payload = [
             "oid" => $rid,
             "plat" => $plat,
             "type" => $type,
             "message" => $message,
-            "csrf" => $user_info['token'],
+            "csrf" => getCsrf(),
         ];
         $raw = Curl::post('app', $url, $payload);
         $de_raw = json_decode($raw, true);
@@ -112,20 +107,18 @@ class Dynamic
         }
         return false;
     }
-
 
     /**
      * 删除指定动态
      * @param $did
      * @return bool
      */
-    public static function removeDynamic($did)
+    public static function removeDynamic($did): bool
     {
-        $user_info = User::parseCookies();
         $url = 'https://api.vc.bilibili.com/dynamic_svr/v1/dynamic_svr/rm_dynamic';
         $payload = [
             "dynamic_id" => $did,
-            "csrf_token" => $user_info['token'],
+            "csrf_token" => getCsrf(),
         ];
         $raw = Curl::post('app', $url, $payload);
         $de_raw = json_decode($raw, true);
@@ -135,16 +128,14 @@ class Dynamic
         return false;
     }
 
-
     /**
      * 获取个人发布的动态
      * @param int $uid
-     * @return mixed
+     * @return array
      */
-    public static function getMyDynamic($uid = 0)
+    public static function getMyDynamic($uid = 0): array
     {
-        $user_info = User::parseCookies();
-        $uid = $uid == 0 ? $user_info['uid'] : $uid;
+        $uid = $uid == 0 ? getUid() : $uid;
         $url = "https://api.vc.bilibili.com/dynamic_svr/v1/dynamic_svr/space_history";
         $offset = '';
         $has_more = true;
@@ -185,7 +176,6 @@ class Dynamic
 
     }
 
-
     /**
      * 获取抽奖动态信息
      * @param $did
@@ -209,8 +199,7 @@ class Dynamic
      */
     public static function getDynamicTab($uid = 0, $type_list = 268435455)
     {
-        $user_info = User::parseCookies();
-        $uid = $uid == 0 ? $user_info['uid'] : $uid;
+        $uid = $uid == 0 ? getUid() : $uid;
         $url = "https://api.vc.bilibili.com/dynamic_svr/v1/dynamic_svr/dynamic_new";
         $offset = '';
         $has_more = true;

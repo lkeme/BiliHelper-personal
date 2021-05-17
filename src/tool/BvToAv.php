@@ -20,11 +20,11 @@ class BvToAv
     protected $add = 8728348608;
     protected $s = [11, 10, 3, 8, 4, 6];
 
+
     /**
-     * BV 转 AV
-     *
+     * @use BV 转 AV
      * @param $bv
-     * @return int
+     * @return int|string
      */
     public function dec($bv)
     {
@@ -36,14 +36,13 @@ class BvToAv
         return ($r - $this->add) ^ $this->xor;
     }
 
+
     /**
-     *
-     * AV 转 BV
-     *
+     * @use AV 转 BV
      * @param $av
      * @return string
      */
-    public function enc($av)
+    public function enc($av): string
     {
         $tr = str_split($this->tr);
         $bv = 'BV1  4 1 7  ';

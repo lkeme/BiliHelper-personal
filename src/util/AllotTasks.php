@@ -29,7 +29,7 @@ trait AllotTasks
      * @use 加载json数据
      * @return Parser
      */
-    protected static function loadJsonData()
+    protected static function loadJsonData(): Parser
     {
         return Parser::fromFile(static::$repository);
     }

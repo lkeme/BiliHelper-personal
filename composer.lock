@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7b0e5cfde9ebb70a16c941f59fd2a71d",
+    "content-hash": "e70802004e3c9d66674b79cba60e91ad",
     "packages": [
         {
             "name": "amphp/amp",
@@ -959,6 +959,70 @@
             "time": "2021-02-25T21:54:58+00:00"
         },
         {
+            "name": "lkeme/inifile",
+            "version": "v3.4.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/lkeme/inifile.git",
+                "reference": "bebdcced93b92ad929f6b05cb7cc305d72169a37"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/lkeme/inifile/zipball/bebdcced93b92ad929f6b05cb7cc305d72169a37",
+                "reference": "bebdcced93b92ad929f6b05cb7cc305d72169a37",
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
+            },
+            "require": {
+                "php": ">=7.0.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "4.8.*"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Jelix\\IniFile\\": "lib/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "LGPL-2.1"
+            ],
+            "authors": [
+                {
+                    "name": "Laurent Jouanneau",
+                    "email": "laurent@jelix.org"
+                },
+                {
+                    "name": "Loic Mathaud"
+                },
+                {
+                    "name": "Riccardo Mazzei",
+                    "email": "riccardo.mazzei@gmail.com"
+                },
+                {
+                    "name": "Lkeme",
+                    "email": "Useri@live.cn"
+                }
+            ],
+            "description": "classes to read and modify ini files by preserving comments and empty lines",
+            "homepage": "https://github.com/lkeme/inifile",
+            "keywords": [
+                "files",
+                "ini"
+            ],
+            "support": {
+                "source": "https://github.com/lkeme/inifile/tree/v3.4.0"
+            },
+            "time": "2021-05-13T10:44:17+00:00"
+        },
+        {
             "name": "mathieuviossat/arraytotexttable",
             "version": "v1.0.8",
             "source": {
@@ -1904,7 +1968,7 @@
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
-        "php": ">=7.0.0",
+        "php": ">=7.3.0",
         "ext-curl": "*",
         "ext-openssl": "*",
         "ext-sockets": "*",

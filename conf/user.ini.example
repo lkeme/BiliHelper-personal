@@ -1,0 +1,279 @@
+#######################
+#       账户设置       #
+#######################
+
+[login.account]
+; 帐号|密码
+username = ""
+password = ""
+
+; 登录模式|[1.账密模式 2.短信验证码模式 3.行为验证码模式(暂未开放)]
+[login.mode]
+mode = 1
+
+; UID|CSRF|令牌|(当前区域自动生成)
+[login.auth]
+uid =
+csrf =
+cookie =
+access_token =
+refresh_token =
+
+#######################
+#       功能设置       #
+#######################
+
+; 主站每日任务(每日登录、观看、投币、分享)
+[main_site]
+enable = true
+; 每日观看
+watch = true
+; 每日分享
+share = true
+; 每日视频投币|random(随机热门)/fixed(关注列表)|投币稿件数(每日任务最大5)
+add_coin = true
+add_coin_mode = random
+add_coin_num = 5
+
+; 日常/周常礼物
+[daily_bag]
+enable = true
+
+; 双端心跳
+[double_heart]
+enable = true
+
+; 友爱社签到
+[love_club]
+enable = true
+
+; 领取心跳礼物
+[gift_heart]
+enable = true
+
+; 直播每日任务|每日签到|每日登录
+[daily_task]
+enable = true
+
+; 直播箱子实物抽奖
+[live_box]
+enable = true
+
+; 每日24个小心心|依赖加密心跳服务器
+[small_heart]
+enable = true
+
+; 直播扭蛋活动抽奖|依赖加密心跳服务器
+[live_capsule]
+enable = true
+
+; 点亮灰色勋章
+[polish_the_medal]
+enable = true
+
+; 主站九宫格抽奖活动助手
+[main_activity]
+enable = true
+
+; 银瓜子兑换硬币
+[silver2coin]
+enable = true
+
+; 直播大乱斗
+[live_pk]
+enable = false
+
+; 直播舰长总督
+[live_guard]
+enable = false
+
+; 直播其他礼物
+[live_gift]
+enable = false
+
+; 直播节奏风暴|丢弃率(0-100)|尝试次数(范围值)
+[live_storm]
+enable = false
+drop_rate = 0
+attempt = "10,20"
+
+; 直播天选时刻|抽取类型(0: 无限制; 1: 关注主播; 2: 粉丝勋章; 3大航海； 4用户等级；5主站等级)|自动取关(测试功能)|过滤关键词|逗号分隔
+[live_anchor]
+enable = false
+limit_type = "0,1"
+auto_unfollow = true
+filter_words =
+
+; 获取最新的中奖纪录
+[award_record]
+enable = true
+
+; 活跃弹幕|弹幕房间(为空则随机)|弹幕内容(为空则随机)
+[barrage]
+enable = true
+room_id = 9522051
+content =
+
+; 漫画助手
+[manga]
+enable = false
+
+; 风纪委员投票|需要实名认证
+[judgement]
+enable = false
+
+; 大会员权益|年度大会员专享
+[vip_privilege]
+enable = false
+
+; B币券消费|年度大会员专享|每月默认充值数量5B币|消费方式优先级从上到下
+[bp_consumption]
+enable = false
+# 消费B币充电|充电的目标UID|可充值自己的UID
+bp2charge = false
+bp2charge_uid = 6580464
+# 消费B币充值金瓜子|5000金瓜子
+bp2gold = false
+
+; 自动转发抽奖动态|自动取关未中奖动态|强制清除抽奖组关注|更改自动回复语言
+[dynamic]
+enable = false
+clear_dynamic = false
+clear_group_follow = false
+auto_reply_text = "从未中奖，从未放弃[doge]"
+
+; 游戏赛事竞猜预测|破产机|每日竞猜次数|每次竞猜硬币(1-10)|下注(1.压大,2.压小,3.随机)
+[match_forecast]
+enable = false
+max_num = 20
+max_coin = 10
+bet = 1
+
+; 休眠时间|时间区间(0-23)|逗号分隔
+[sleep]
+enable = true
+section = "2,3,4,5,6"
+
+#######################
+#       通知设置       #
+#######################
+
+; 消息推送|消息推送过滤词|逗号分割|优先级从上到下
+[notify]
+enable = false
+filter_words =
+
+; Dingtalk机器人|token|依赖USE_NOTIFY
+[notify.dingtalk]
+token =
+
+; Tele机器人|token|chatid|依赖USE_NOTIFY
+[notify.telegram]
+bottoken =
+chatid =
+
+; Pushplus酱|token|依赖USE_NOTIFY
+[notify.pushplus]
+token =
+
+; Sever酱(原版)|令牌Key|依赖USE_NOTIFY
+[notify.sc]
+sckey =
+
+; Server酱(Turbo版)|令牌Key|依赖USE_NOTIFY
+[notify.sct]
+sctkey =
+
+; GoCqhttp|url|token|目标qq|依赖USE_NOTIFY
+[notify.gocqhttp]
+url = ""
+token =
+target_qq =
+
+; Debug|个人调试推送|url|token|
+[notify.debug]
+url = ""
+token =
+
+#######################
+#       基础设置       #
+#######################
+
+; 独立推送服务(主)|主备冲突
+[alone_monitor]
+enable = false
+server_addr = "tcp://livecmt-1.mudew.com:10088"
+server_key = ""
+
+; 分区推送服务(备)|主备冲突
+[zone_monitor]
+enable = true
+server_addr = "tcp://broadcastlv.chat.bilibili.com:2243/sub"
+
+; 加密心跳服务器(开源)|如失效自行搭建
+[heartbeat_enc]
+server = "http://heartbeat-1.mudew.com:3000/enc"
+
+#######################
+#       房间设置       #
+#######################
+
+; 直播间ID，全局房间，用于礼物赠送、心跳等等.
+[global_room]
+room_id = 9522051
+
+; 弹幕监控房间(为空则随机)
+[socket]
+room_id = 9522051
+
+; 勋章亲密度，测试功能，有短位使用短位反之长位，左侧优先，仅支持辣条和亿元
+; 当列表中所有ID都已达到每日上限，剩余礼物赠送ROOM_ID指定的直播间
+; 是否填满(按时间投喂正常礼物，否则过期礼物)|直播间ID列表|逗号分隔|
+[intimacy]
+feed_fill = false
+room_list = 9522051
+
+#######################
+#       网络设置       #
+#######################
+
+; 验证SSL证书|请求时验证SSL证书行为
+[network.ssl]
+verify_ssl = true
+
+; 是否使用代理|(http\https)
+[network.proxy]
+enable = false
+proxy = "http://127.0.0.1:8888"
+
+#######################
+#       程序设置       #
+#######################
+
+; 调试模式|采集完整日志
+[debug]
+enable = false
+
+; 记录日志|日志路径|日志回调地址
+[log]
+enable = false
+path = log
+callback = "http://www.example.com/api.send?text={account}[{level}]: {message}"
+# 错误回调级别
+#
+#   DEBUG   100
+#   INFO    200
+#   NOTICE  250
+#   WARNING 300
+#   ERROR   400
+#
+callback_level = 400
+
+; app设置
+[print]
+; 用户名，可自定义
+uname =
+; 账号别名，如果为空则默认使用登录账号作为标示
+user_identity =
+; 多账号区别输出
+multiple = false

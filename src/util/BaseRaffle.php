@@ -21,6 +21,7 @@ abstract class BaseRaffle
 {
     use TimeLock;
     use FilterWords;
+
     const ACTIVE_TITLE = '';
     const ACTIVE_SWITCH = '';
 
@@ -31,7 +32,7 @@ abstract class BaseRaffle
 
     public static function run()
     {
-        if (getenv(static::ACTIVE_SWITCH) == 'false') {
+        if (!getEnable(static::ACTIVE_SWITCH)) {
             return;
         }
         if (static::getLock() > time()) {
@@ -103,7 +104,6 @@ abstract class BaseRaffle
         return $de_raw;
     }
 
-
     /**
      * @use 解析抽奖信息
      * @param int $room_id
@@ -112,14 +112,12 @@ abstract class BaseRaffle
      */
     abstract protected static function parseLotteryInfo(int $room_id, array $data): bool;
 
-
     /**
      * @use 创建抽奖
      * @param array $raffles
      * @return array
      */
     abstract protected static function createLottery(array $raffles): array;
-
 
     /**
      * @use 解析抽奖返回
@@ -135,7 +133,7 @@ abstract class BaseRaffle
      * @param string $type
      * @return array
      */
-    protected static function arrKeySort($arr, $key, $type = 'asc')
+    protected static function arrKeySort($arr, $key, $type = 'asc'): array
     {
         switch ($type) {
             case 'desc':
@@ -148,7 +146,6 @@ abstract class BaseRaffle
                 return $arr;
         }
     }
-
 
     /**
      * @use 去重检测
@@ -179,7 +176,7 @@ abstract class BaseRaffle
     public static function pushToQueue(array $data): bool
     {
         // 开关
-        if (getenv(static::ACTIVE_SWITCH) == 'false') {
+        if (!getEnable(static::ACTIVE_SWITCH)) {
             return false;
         }
         // 黑屋

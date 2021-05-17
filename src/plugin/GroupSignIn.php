@@ -20,7 +20,7 @@ class GroupSignIn
 
     public static function run()
     {
-        if (self::getLock() > time()) {
+        if (self::getLock() > time() || !getEnable('love_club')) {
             return;
         }
 
@@ -34,9 +34,8 @@ class GroupSignIn
             self::signInGroup($group);
         }
 
-        self::setLock(8 * 60 * 60);
+        self::setLock(mt_rand(8, 12) * 60 * 60);
     }
-
 
     /**
      * @use 获取友爱社列表
@@ -50,12 +49,11 @@ class GroupSignIn
         $de_raw = json_decode($raw, true);
 
         if (empty($de_raw['data']['list'])) {
-            Log::notice('你没有需要签到的应援团!');
+            Log::warning('你没有需要签到的应援团!');
             return [];
         }
         return $de_raw['data']['list'];
     }
-
 
     /**
      * @use 签到
@@ -73,14 +71,15 @@ class GroupSignIn
         $de_raw = json_decode($raw, true);
 
         if ($de_raw['code'] != '0') {
-            Log::warning('在应援团{' . $groupInfo['group_name'] . '}中签到失败, 原因待查');
             // TODO 任务失败原因
+            print_r($de_raw);
+            Log::warning('在应援团{' . $groupInfo['group_name'] . '}中签到失败, 原因待查');
             return false;
         }
         if ($de_raw['data']['status'] == '0') {
-            Log::info('在应援团{' . $groupInfo['group_name'] . '}中签到成功,增加{' . $de_raw['data']['add_num'] . '点}亲密度');
+            Log::notice('在应援团{' . $groupInfo['group_name'] . '}中签到成功,增加{' . $de_raw['data']['add_num'] . '点}亲密度');
         } else {
-            Log::notice('在应援团{' . $groupInfo['group_name'] . '}中不要重复签到');
+            Log::warning('在应援团{' . $groupInfo['group_name'] . '}中不要重复签到');
         }
 
         return true;

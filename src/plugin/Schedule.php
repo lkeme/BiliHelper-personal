@@ -13,7 +13,6 @@ namespace BiliHelper\Plugin;
 use BiliHelper\Core\Log;
 use BiliHelper\Util\TimeLock;
 
-
 class Schedule
 {
     use TimeLock;
@@ -23,7 +22,7 @@ class Schedule
     private static $unlock_timers = [];
     private static $sleep_section = [];
     // 日常类
-    private static $fillable = ['Login', 'Schedule', 'Daily', 'Judge', 'MainSite', 'GiftSend', 'DailyTask', 'Silver2Coin', 'ManGa', 'GameMatch', 'GroupSignIn', 'AwardRecord', 'Statistics'];
+    private static $fillable = ['Login', 'Schedule', 'DailyBag', 'Judge', 'MainSite', 'GiftSend', 'DailyTask', 'Silver2Coin', 'ManGa', 'GroupSignIn', 'AwardRecord', 'Statistics'];
     // 任务类
     private static $guarded_first = ['Barrage', 'GiftHeart', 'Silver', 'MaterialObject'];
     // 监控类
@@ -31,9 +30,12 @@ class Schedule
     // 抽奖类
     private static $guarded_third = ['StormRaffle', 'GuardRaffle', 'PkRaffle', 'GiftRaffle', 'AnchorRaffle'];
     // 特殊 老爷处理
-    private static $guarded_fourth = ['Heart'];
+    private static $guarded_fourth = ['DoubleHeart'];
     // 暂定不做处理，后期看情况再定
-    private static $release = ['ActivityLottery', 'SmallHeart', 'Competition', 'SmallHeart', 'Forward', 'CapsuleLottery'];
+    private static $release = ['ActivityLottery', 'SmallHeart', 'Competition', 'SmallHeart', 'Forward', 'CapsuleLottery', 'PolishTheMedal'];
+    // 暂定不做处理 大会员类
+    private static $guarded_fifth = ['VipPrivilege', 'BpConsumption'];
+
 
     public static function run()
     {
@@ -48,10 +50,10 @@ class Schedule
     /**
      * @use 检查休眠
      */
-    private static function isSleep()
+    private static function isSleep(): bool
     {
-        if (getenv('USE_SLEEP') != 'false' && self::$unlock_hour != date('H')) {
-            self::$sleep_section = empty(self::$sleep_section) ? explode(',', getenv('SLEEP_SECTION')) : self::$sleep_section;
+        if (getEnable('sleep') && self::$unlock_hour != date('H')) {
+            self::$sleep_section = empty(self::$sleep_section) ? explode(',', getConf('section', 'sleep')) : self::$sleep_section;
             if (!in_array(date('H'), self::$sleep_section)) {
                 return false;
             };
@@ -64,7 +66,7 @@ class Schedule
     /**
      * @use 特殊暂停
      */
-    private static function isSpecialPause()
+    private static function isSpecialPause(): bool
     {
         foreach (self::$guarded_second as $classname) {
             $status = call_user_func(array(__NAMESPACE__ . '\\' . $classname, 'getPauseStatus'));

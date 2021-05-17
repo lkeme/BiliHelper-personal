@@ -14,7 +14,7 @@ class ConfigGenerator
     public $filename;
     public $template;
     private $options = ['APP_USER', 'APP_PASS'];
-    private $default_filename = 'user.conf.example';
+    private $default_filename = 'user.ini.example';
 
     /**
      * ConfigGenerator constructor.
@@ -64,8 +64,8 @@ class ConfigGenerator
             $value = $this->cliInput("请输入{$option}: ");
             $this->template = $this->envReplace($option, $value, $this->template);
         }
-        file_put_contents(__DIR__ . "\\$this->filename.conf", $this->template);
-        echo "生成配置文件 $this->filename.conf 成功~";
+        file_put_contents(__DIR__ . "\\$this->filename.ini", $this->template);
+        echo "生成配置文件 $this->filename.ini 成功~";
     }
 
 }

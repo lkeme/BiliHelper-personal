@@ -25,10 +25,9 @@ class AwardRecord
     private static $gift_lock = 0;
     private static $gift_list = [];
 
-
     public static function run()
     {
-        if (self::getLock() > time()) {
+        if (self::getLock() > time() || !getEnable('award_record')) {
             return;
         }
         if (self::$anchor_lock < time()) {
@@ -42,7 +41,6 @@ class AwardRecord
         // }
         self::setLock(5 * 60);
     }
-
 
     /**
      * @use 获取天选时刻中奖纪录
@@ -83,14 +81,13 @@ class AwardRecord
             }
             if (in_array($wait_un_follow['anchor_id'], self::$anchor_list)) {
                 AnchorRaffle::delToGroup($wait_un_follow['uid'], $wait_un_follow['anchor_id'], false);
-            }else{
+            } else {
                 AnchorRaffle::delToGroup($wait_un_follow['uid'], $wait_un_follow['anchor_id'], true);
             }
         }
 
         self::$anchor_lock = time() + 6 * 60 * 60;
     }
-
 
     /**
      * @use 获取实物抽奖中奖纪录
@@ -128,7 +125,6 @@ class AwardRecord
         }
         self::$raffle_lock = time() + 6 * 60 * 60;
     }
-
 
     /**
      * @use 获取活动礼物中奖纪录

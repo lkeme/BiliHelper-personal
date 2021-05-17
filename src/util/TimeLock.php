@@ -42,7 +42,7 @@ trait TimeLock
      * @use used in Amp loop Delayed
      * @return delayed
      */
-    public static function Delayed()
+    public static function Delayed(): Delayed
     {
         return new Delayed(1000);
     }
@@ -109,7 +109,7 @@ trait TimeLock
      * @use 暂停状态
      * @return bool
      */
-    public static function getPauseStatus()
+    public static function getPauseStatus(): bool
     {
         return static::$pause_status;
     }
