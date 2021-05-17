@@ -25,6 +25,21 @@ class Common
     }
 
     /**
+     * @use 获取当月第一天及最后一天
+     * $day[0] 第一天
+     * $day[1] 最后一天
+     * @return array
+     */
+    public static function getTheMonth(): array
+    {
+        $today = date("Y-m-d");
+        $first_day = date('Y-m-01', strtotime($today));
+        $last_day = date('Y-m-d', strtotime("$first_day +1 month -1 day"));
+        return array($first_day, $last_day);
+    }
+
+
+    /**
      * @use 替换字符串
      * @param $str
      * @param $start
@@ -51,9 +66,7 @@ class Common
         $len = $len - mb_strlen($top, $charset);
         $len = $len - mb_strlen($bottom, $charset);
         $newStr = $top;
-        for ($i = 0; $i < $len; $i++) {
-            $newStr .= $dot;
-        }
+        $newStr .= str_repeat($dot, $len);
         $newStr .= $bottom;
         return $newStr;
     }

@@ -11,7 +11,6 @@
 
 namespace BiliHelper\Tool;
 
-
 class Generator
 {
     /**
@@ -53,12 +52,32 @@ class Generator
      * @use 生成BUVID
      * @return string
      */
-    public static function buvid():string{
+    public static function buvid(): string
+    {
         // XYD5B85DA7212341F51C612344A6B8C6C21234
         $mac = Faker::macAddress();
         $md5 = md5($mac);
         $md5_arr = str_split($md5);
         return strtoupper("XY{$md5_arr[2]}{$md5_arr[12]}{$md5_arr[22]}{$md5}");
+    }
+
+    /**
+     * @use 获取颜文字信息
+     * @return string
+     */
+    public static function emoji(): string
+    {
+        $emoji_list = [
+            "(⌒▽⌒)", "（￣▽￣）", "(=・ω・=)", "(｀・ω・´)", "(〜￣△￣)〜", "(･∀･)",
+            "(°∀°)ﾉ", "(￣3￣)", "╮(￣▽￣)╭", "_(:3」∠)_", "( ´_ゝ｀)", "←_←", "→_→",
+            "(<_<)", "(>_>)", "(;¬_¬)", '("▔□▔)/', "(ﾟДﾟ≡ﾟдﾟ)!?", "Σ(ﾟдﾟ;)", "Σ( ￣□￣||)",
+            "(´；ω；`)", "（/TДT)/", "(^・ω・^ )", "(｡･ω･｡)", "(●￣(ｴ)￣●)", "ε=ε=(ノ≧∇≦)ノ",
+            "(´･_･`)", "(-_-#)", "（￣へ￣）", "(￣ε(#￣) Σ", "ヽ(`Д´)ﾉ", "（#-_-)┯━┯",
+            "(╯°口°)╯(┴—┴", "←◡←", "( ♥д♥)", "Σ>―(〃°ω°〃)♡→", "⁄(⁄ ⁄•⁄ω⁄•⁄ ⁄)⁄",
+            "(╬ﾟдﾟ)▄︻┻┳═一", "･*･:≡(　ε:)", "(打卡)", "(签到)"
+        ];
+        shuffle($emoji_list);
+        return $emoji_list[array_rand($emoji_list)];
     }
 
 }

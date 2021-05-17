@@ -12,13 +12,12 @@ namespace BiliHelper\Plugin;
 
 use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
-use BiliHelper\Util\TimeLock;
 use BiliHelper\Util\BaseRaffle;
 
 class GiftRaffle extends BaseRaffle
 {
     const ACTIVE_TITLE = '活动礼物';
-    const ACTIVE_SWITCH = 'USE_ACTIVE';
+    const ACTIVE_SWITCH = 'live_gift';
 
     protected static $wait_list = [];
     protected static $finish_list = [];
@@ -62,7 +61,6 @@ class GiftRaffle extends BaseRaffle
         return true;
     }
 
-
     /**
      * @use 创建抽奖任务
      * @param array $raffles
@@ -75,15 +73,13 @@ class GiftRaffle extends BaseRaffle
         // $url = 'https://api.live.bilibili.com/gift/v4/smalltv/getAward';
         $url = 'https://api.live.bilibili.com/xlive/lottery-interface/v5/smalltv/join';
         $tasks = [];
-        $results = [];
-        $user_info = User::parseCookies();
         foreach ($raffles as $raffle) {
             $payload = [
                 'id' => $raffle['raffle_id'],
                 'roomid' => $raffle['room_id'],
                 'type' => $raffle['type'],
-                'csrf_token' => $user_info['token'],
-                'csrf' => $user_info['token'],
+                'csrf_token' => getCsrf(),
+                'csrf' => getCsrf(),
                 'visit_id' => ''
             ];
             array_push($tasks, [
@@ -95,15 +91,14 @@ class GiftRaffle extends BaseRaffle
                 ]
             ]);
         }
-        $results = Curl::async('app', $url, $tasks);
         // print_r($results);
-        return $results;
+        return Curl::async('app', $url, $tasks);
     }
 
     /**
      * @use 解析抽奖信息
      * @param array $results
-     * @return mixed|void
+     * @return void
      */
     protected static function parseLottery(array $results)
     {

@@ -12,15 +12,12 @@
  * @Blog   http://blog.jianxiaodai.com
  * @author  菜如狗怎么了
  * @date 2020-12
- */
-
-/**
+ *
  * 2021-3-14 FEAT:增加自动回复语言更改
  * @author:zymooll
  */
 
 namespace BiliHelper\Plugin;
-
 
 use BiliHelper\Core\Log;
 use BiliHelper\Util\TimeLock;
@@ -60,22 +57,22 @@ class Forward
     }
 
 
-    public static function start()
+    public static function start(): bool
     {
         //更改自动回复
-        if (getenv('AUTO_REPLY_TEXT') != self::$msg) {
+        if (getConf('auto_reply_text', 'dynamic') != self::$msg) {
             self::changeReply();
         }
         // 取关未中奖
-        if (getenv('CLEAR_DYNAMIC') == 'true') {
+        if (getConf('clear_group_follow', 'dynamic')) {
             self::clearDynamic();
         }
         // 自动转发关注评论
-        if (getenv('AUTO_DYNAMIC') == 'true') {
+        if (getConf('enable', 'dynamic')) {
             self::autoRepost();
         }
         // 强制清除抽奖关注组
-        if (getenv('CLEAR_GROUP_FOLLOW') == 'true') {
+        if (getConf('clear_group_follow', 'dynamic')) {
             self::clearAllDynamic();
             self::clearFollowGroup();
         }
@@ -87,7 +84,7 @@ class Forward
      */
     public static function changeReply()
     {
-        self::$msg = getenv('AUTO_REPLY_TEXT');
+        self::$msg = getConf('auto_reply_text', 'dynamic');
         $msg = self::$msg;
         Log::info("已将自动回复改为\"{$msg}\"");
     }
@@ -120,7 +117,6 @@ class Forward
             sleep(1);
         }
     }
-
 
     /**
      * 清理无效的动态
@@ -198,6 +194,9 @@ class Forward
         }
     }
 
+    /**
+     * @use 取关
+     */
     private static function clearFollowGroup()
     {
         $tags = User::fetchTags();
@@ -214,6 +213,9 @@ class Forward
 
     }
 
+    /**
+     * @use 清理动态
+     */
     private static function clearAllDynamic()
     {
         $dynamicList = Dynamic::getMyDynamic();
@@ -226,7 +228,6 @@ class Forward
             }
         }
     }
-
 
     /**
      * @use 添加分组
@@ -256,7 +257,7 @@ class Forward
      * @use 获取默认关注
      * @return array
      */
-    private static function getDefaultFollows()
+    private static function getDefaultFollows(): array
     {
         if (!empty(self::$default_follows)) {
             return self::$default_follows;

@@ -39,7 +39,7 @@ class ZoneTcpClient
      */
     public static function run()
     {
-        if (self::getLock() > time() || getenv('USE_ZONE_SERVER') == 'false') {
+        if (self::getLock() > time() || !getEnable('zone_monitor')) {
             return;
         }
         self::setPauseStatus();
@@ -50,13 +50,12 @@ class ZoneTcpClient
         self::pushHandle();
     }
 
-
     /**
      * @use 初始化
      */
     private static function init()
     {
-        if (empty(getenv('ZONE_SERVER_ADDR'))) {
+        if (empty(getConf('server_addr', 'zone_monitor'))) {
             exit('推送服务器信息不完整, 请检查配置文件!');
         }
         if (!self::$client) {
@@ -78,7 +77,6 @@ class ZoneTcpClient
             ], 'Initialization');
         }
     }
-
 
     /**
      * @use 触发重连
@@ -166,14 +164,13 @@ class ZoneTcpClient
         return false;
     }
 
-
     /**
      * @use 响应数据
      * @param $msg
      * @param $type
      * @return bool
      */
-    private static function onMessage($msg, $type)
+    private static function onMessage($msg, $type): bool
     {
         // 心跳后回复人气
         if ($type == 3) {
@@ -359,8 +356,8 @@ class ZoneTcpClient
             Log::info("监测到 @分区 {$data['area_id']} @房间 {$data['room_id']} @抽奖 {$data['raffle_title']}");
             // print_r($data);
         }
+        return true;
     }
-
 
     /**
      * @推送到上游处理
@@ -387,12 +384,11 @@ class ZoneTcpClient
     {
     }
 
-
     /**
      * @use 发送握手包
      * @return bool
      */
-    private static function sendHandShake()
+    private static function sendHandShake(): bool
     {
         return self::writer(self::genHandshakePkg(self::$room_id));
     }
@@ -405,7 +401,6 @@ class ZoneTcpClient
     {
         return self::packMsg('', 0x0002);
     }
-
 
     /**
      * @use 握手包
@@ -431,17 +426,16 @@ class ZoneTcpClient
      * @param $option
      * @return string
      */
-    private static function packMsg($value, $option)
+    private static function packMsg($value, $option): string
     {
         $head = pack('NnnNN', 0x10 + strlen($value), 0x10, 0x01, $option, 0x0001);
         return $head . $value;
     }
 
-
     /**
      * @use 解包数据
      * @param $value
-     * @return int|mixed
+     * @return array|false
      */
     private static function unPackMsg($value)
     {
@@ -449,11 +443,9 @@ class ZoneTcpClient
             Log::warning("unPackMsg: 包头异常 " . strlen($value));
             return [];
         };
-        $head = unpack('Npacklen/nheadlen/nver/Nop/Nseq', $value);
         // Log::info(json_encode($head, true));
-        return $head;
+        return unpack('Npacklen/nheadlen/nver/Nop/Nseq', $value);
     }
-
 
     /**
      * @use 心跳
@@ -534,7 +526,7 @@ class ZoneTcpClient
      * @param $data
      * @return bool
      */
-    private static function writer($data)
+    private static function writer($data): bool
     {
         $status = false;
         try {
@@ -550,7 +542,6 @@ class ZoneTcpClient
         }
         return $status;
     }
-
 
     /**
      * @use 读取数据
@@ -570,8 +561,8 @@ class ZoneTcpClient
                 // 长度为0 ，空信息
                 continue;
             }
-            $length = isset($head['packlen']) ? $head['packlen'] : 16;
-            $type = isset($head['op']) ? $head['op'] : 0x0000;
+            $length = $head['packlen'] ?? 16;
+            $type = $head['op'] ?? 0x0000;
             $len_body = $length - 16;
             Log::debug("(AreaId={$client_info['area_id']} -> RoomId={$client_info['room_id']} -> Len={$len_body})");
             if (!$len_body)
@@ -590,7 +581,13 @@ class ZoneTcpClient
         }
     }
 
-    private static function v2_split($bin, $total)
+    /**
+     * @use V2切割
+     * @param $bin
+     * @param $total
+     * @return array
+     */
+    private static function v2_split($bin, $total): array
     {
         $list = [];
         $step = 0;
@@ -604,7 +601,7 @@ class ZoneTcpClient
             if ($step == $total) break;
             $bin = substr($data, $step, 16);
             $head = self::unPackMsg($bin);
-            $length = isset($head['packlen']) ? $head['packlen'] : 16;
+            $length = $head['packlen'] ?? 16;
             $body = substr($data, $step + 16, $length - 16);
             $step += $length;
             array_push($list, $body);
@@ -612,12 +609,20 @@ class ZoneTcpClient
         return $list;
     }
 
+    /**
+     * @param $object
+     * @return string
+     */
     private static function getClass($object): string
     {
         $class = \get_class($object);
         return 'c' === $class[0] && 0 === strpos($class, "class@anonymous\0") ? get_parent_class($class) . '@anonymous' : $class;
     }
 
+    /**
+     * @param $e
+     * @return string
+     */
     private static function formatErr($e): string
     {
         return sprintf('Uncaught Exception %s: "%s" at %s line %s', self::getClass($e), $e->getMessage(), $e->getFile(), $e->getLine());
@@ -626,7 +631,7 @@ class ZoneTcpClient
     /*
      * @use replace delay by select
      */
-    public static function Delayed()
+    public static function Delayed(): Delayed
     {
         $r = [];
         $w = NULL;

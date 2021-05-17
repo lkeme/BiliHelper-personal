@@ -11,10 +11,8 @@ namespace BiliHelper\Plugin;
 
 use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
-use BiliHelper\Core\Config;
 use BiliHelper\Util\TimeLock;
 use BiliHelper\Tool\Common;
-
 
 class Login
 {
@@ -31,14 +29,13 @@ class Login
             return;
         }
         Log::info('启动登录程序');
-        if (getenv('ACCESS_TOKEN') == "") {
+        if (getConf('access_token', 'login.auth') == '') {
             Log::info('准备载入登录令牌');
             self::login();
         }
-
         Log::info('检查登录令牌有效性');
         if (!self::checkToken()) {
-            Log::warning('登录令牌即将过期');
+            Log::warning('登录令牌失效或即将过期');
             Log::info('申请更换登录令牌中');
             if (!self::refreshToken()) {
                 Log::warning('无效的登录令牌，尝试重新申请');
@@ -54,7 +51,7 @@ class Login
     private static function login()
     {
         self::checkLogin();
-        switch (intval(getenv('LOGIN_MODE'))) {
+        switch (getConf('mode', 'login.mode')) {
             case 1:
                 // 账密模式
                 self::accountLogin();
@@ -68,7 +65,6 @@ class Login
                 // self::captchaLogin();
                 Log::error('此登录模式暂未开放');
                 die();
-                break;
             default:
                 Log::error('登录模式配置错误');
                 die();
@@ -80,15 +76,15 @@ class Login
      */
     private static function checkLogin()
     {
-        $user = getenv('APP_USER');
-        $pass = getenv('APP_PASS');
-        if (empty($user) || empty($pass)) {
+        $username = getConf('username', 'login.account');
+        $password = getConf('password', 'login.account');
+        if (empty($username) || empty($password)) {
             Log::error('空白的帐号和口令');
             die();
         }
         self::clearAccount();
-        self::$username = $user;
-        self::$password = self::publicKeyEnc($pass);
+        self::$username = $username;
+        self::$password = self::publicKeyEnc($password);
     }
 
     /**
@@ -121,15 +117,16 @@ class Login
     {
         $url = 'https://passport.bilibili.com/api/v2/oauth2/info';
         $payload = [
-            'access_token' => getenv('ACCESS_TOKEN'),
+            'access_token' => getConf('access_token', 'login.auth'),
         ];
         $data = Curl::get('app', $url, Sign::common($payload));
+        // {"ts":1234,"code":0,"data":{"mid":1234,"access_token":"1234","expires_in":7759292}}
         $data = json_decode($data, true);
         if (isset($data['code']) && $data['code']) {
             Log::error('检查令牌失败', ['msg' => $data['message']]);
             return false;
         }
-        Log::info('令牌有效期: ' . date('Y-m-d H:i:s', $data['ts'] + $data['data']['expires_in']));
+        Log::notice('令牌有效期: ' . date('Y-m-d H:i:s', $data['ts'] + $data['data']['expires_in']));
         return $data['data']['expires_in'] > 14400;
     }
 
@@ -140,8 +137,8 @@ class Login
     {
         $url = 'https://passport.bilibili.com/api/v2/oauth2/refresh_token';
         $payload = [
-            'access_token' => getenv('ACCESS_TOKEN'),
-            'refresh_token' => getenv('REFRESH_TOKEN'),
+            'access_token' => getConf('access_token', 'login.auth'),
+            'refresh_token' => getConf('refresh_token', 'login.auth'),
         ];
         $raw = Curl::post('app', $url, Sign::common($payload));
         $de_raw = json_decode($raw, true);
@@ -150,13 +147,7 @@ class Login
             Log::error('重新生成令牌失败', ['msg' => $de_raw['message']]);
             return false;
         }
-        Log::info('重新令牌生成完毕');
-        $access_token = $de_raw['data']['token_info']['access_token'];
-        $refresh_token = $de_raw['data']['token_info']['refresh_token'];
-        self::saveConfig('ACCESS_TOKEN', $access_token);
-        self::saveConfig('REFRESH_TOKEN', $refresh_token);
-        self::saveCookie($de_raw);
-        Log::info('重置信息配置完毕');
+        self::refreshSuccess($de_raw);
         return true;
     }
 
@@ -221,7 +212,7 @@ class Login
      */
     private static function ocrCaptcha(array $captcha): array
     {
-        $url = 'http://captcha-v1.mudew.com:19951/';
+        $url = 'https://captcha-v1.mudew.com:19951/';
         $payload = [
             'type' => 'gt3',
             'gt' => $captcha['gt'],
@@ -238,17 +229,6 @@ class Login
             'validate' => $de_raw['data']['validate'],
             'challenge' => $de_raw['data']['challenge']
         ];
-    }
-
-    /**
-     * @use 验证码登录
-     * @param string $mode
-     */
-    private static function captchaLogin(string $mode = '验证码模式')
-    {
-        $captcha_ori = self::getCaptcha();
-        $captcha = self::ocrCaptcha($captcha_ori);
-        self::accountLogin($captcha['validate'], $captcha['challenge'], $mode);
     }
 
     /**
@@ -373,9 +353,10 @@ class Login
                             self::loginFail($mode, '未知错误: ' . $data['data']['message']);
                             break;
                     }
+                } else {
+                    // 正常登录
+                    self::loginSuccess($mode, $data);
                 }
-                // 正常登录
-                self::loginSuccess($mode, $data);
                 break;
             case -105:
                 // 需要验证码
@@ -398,30 +379,52 @@ class Login
     }
 
     /**
-     * @use 登陆成功
+     * @use 登录成功
      * @param $mode
      * @param $data
      */
     private static function loginSuccess($mode, $data)
     {
         Log::info("{$mode} 登录成功");
-        $access_token = $data['data']['token_info']['access_token'];
-        $refresh_token = $data['data']['token_info']['refresh_token'];
-        self::saveConfig('ACCESS_TOKEN', $access_token);
-        self::saveConfig('REFRESH_TOKEN', $refresh_token);
-        self::saveCookie($data);
-        Log::info('信息配置完毕');
+        self::successHandle($data);
+        Log::info('生成信息配置完毕');
     }
 
     /**
-     * @use 登陆失败
+     * @use 刷新成功
+     * @param $data
+     */
+    private static function refreshSuccess($data)
+    {
+        Log::info('重新令牌生成完毕');
+        self::successHandle($data);
+        Log::info('重置信息配置完毕');
+    }
+
+    /**
+     * @use 成功处理
+     * @param $data
+     */
+    private static function successHandle($data)
+    {
+        $access_token = $data['data']['token_info']['access_token'];
+        $refresh_token = $data['data']['token_info']['refresh_token'];
+        self::saveConfig('access_token', $access_token, 'login.auth');
+        self::saveConfig('refresh_token', $refresh_token, 'login.auth');
+        self::saveConfig('cookie', self::formatCookie($data), 'login.auth');
+        $user = User::parseCookies();
+        self::saveConfig('uid', $user['uid'], 'login.auth', false);
+        self::saveConfig('csrf', $user['csrf'], 'login.auth', false);
+    }
+
+    /**
+     * @use 登录失败
      * @param $mode
      * @param $data
      */
     private static function loginFail($mode, $data)
     {
-        Log::error("{$mode} 登录失败");
-        Log::error('登录失败', ['msg' => $data]);
+        Log::error("{$mode} 登录失败", ['msg' => $data]);
         die();
     }
 
@@ -441,26 +444,31 @@ class Login
      * @use 保存配置
      * @param string $key
      * @param string $value
+     * @param string $section
+     * @param bool $print
      * @param bool $hide
      */
-    private static function saveConfig(string $key, string $value, $hide = true)
+    private static function saveConfig(string $key, string $value, string $section, $print = true, $hide = true)
     {
-        Config::put($key, $value);
-        Log::info(" > {$key}: " . ($hide ? Common::replaceStar($value, 4, 4) : $value));
+        setConf($key, $value, $section);
+        if ($print) {
+            Log::info(" > {$key}: " . ($hide ? Common::replaceStar($value, 6, 6) : $value));
+        }
     }
 
     /**
-     * @use 保存配置
+     * @use @use 格式化COOKIE
      * @param array $data
+     * @return string
      */
-    private static function saveCookie(array $data)
+    private static function formatCookie(array $data): string
     {
         $c = '';
         $cookies = $data['data']['cookie_info']['cookies'];
         foreach ($cookies as $cookie) {
             $c .= $cookie['name'] . '=' . $cookie['value'] . ';';
         }
-        self::saveConfig('COOKIE', $c);
+        return $c;
     }
 
     /**
@@ -468,14 +476,15 @@ class Login
      */
     private static function clearAccount()
     {
-        $variables = ['ACCESS_TOKEN', 'REFRESH_TOKEN', 'COOKIE'];
+        $variables = ['cookie', 'access_token', 'refresh_token'];
         foreach ($variables as $variable) {
-            Config::put($variable, '');
+            setConf($variable, '', 'login.auth');
         }
     }
 
     /**
-     * @use 刷新Cookie
+     * @use 刷新COOKIE
+     * @return string
      */
     private static function refreshCookie(): string
     {
@@ -492,5 +501,17 @@ class Login
         }
         return implode("", array_reverse($cookies));
     }
+
+    /**
+     * @use 验证码登录
+     * @param string $mode
+     */
+    private static function captchaLogin(string $mode = '验证码模式')
+    {
+        $captcha_ori = self::getCaptcha();
+        $captcha = self::ocrCaptcha($captcha_ori);
+        self::accountLogin($captcha['validate'], $captcha['challenge'], $mode);
+    }
+
 
 }

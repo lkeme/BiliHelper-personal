@@ -12,13 +12,12 @@ namespace BiliHelper\Plugin;
 
 use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
-use BiliHelper\Util\TimeLock;
 use BiliHelper\Util\BaseRaffle;
 
 class AnchorRaffle extends BaseRaffle
 {
     const ACTIVE_TITLE = '天选时刻';
-    const ACTIVE_SWITCH = 'USE_ANCHOR';
+    const ACTIVE_SWITCH = 'live_anchor';
 
     protected static $wait_list = [];
     protected static $finish_list = [];
@@ -62,7 +61,7 @@ class AnchorRaffle extends BaseRaffle
             $tags = User::fetchTags();
             $tag_id = array_search(self::$group_name, $tags);
             // 如果不存在则调用创建
-            self::$group_id = $tag_id ? $tag_id : User::createRelationTag(self::$group_name);
+            self::$group_id = $tag_id ?: User::createRelationTag(self::$group_name);
         }
         // 获取需要关注的
         $data = Live::getRoomInfoV1($room_id);
@@ -102,7 +101,6 @@ class AnchorRaffle extends BaseRaffle
         self::$wait_un_follows = $new_list;
     }
 
-
     /**
      * @use 获取默认关注
      * @return array
@@ -120,7 +118,6 @@ class AnchorRaffle extends BaseRaffle
         return self::$default_follows;
     }
 
-
     /**
      * @use 过滤奖品
      * @param string $prize_name
@@ -129,7 +126,7 @@ class AnchorRaffle extends BaseRaffle
     protected static function filterPrizeWords(string $prize_name): bool
     {
         $default_words = self::$store->get("Anchor.default");
-        $custom_words = empty(getenv('ANCHOR_FILTER_WORDS')) ? [] : explode(',', getenv('ANCHOR_FILTER_WORDS'));
+        $custom_words = empty($words = getConf('filter_words', 'live_anchor')) ? [] : explode(',', $words);
         $total_words = array_merge($default_words, $custom_words);
         foreach ($total_words as $word) {
             if (strpos($prize_name, $word) !== false) {
@@ -160,7 +157,7 @@ class AnchorRaffle extends BaseRaffle
             return false;
         }
         // 过滤抽奖范围
-        self::$filter_type = empty(self::$filter_type) ? explode(',', getenv('ANCHOR_TYPE')) : self::$filter_type;
+        self::$filter_type = empty(self::$filter_type) ? explode(',', getConf('limit_type', 'live_anchor')) : self::$filter_type;
         if (!in_array((string)$de_raw['require_type'], self::$filter_type)) {
             return false;
         }
@@ -173,7 +170,7 @@ class AnchorRaffle extends BaseRaffle
             return false;
         }
         // 分组操作
-        if (getenv('ANCHOR_UNFOLLOW') == 'true' && $de_raw['require_text'] == '关注主播') {
+        if (getConf('auto_unfollow', 'live_anchor') && $de_raw['require_text'] == '关注主播') {
             self::addToGroup($room_id, $de_raw['id'], time() + $de_raw['time'] + 5);
         }
         // 推入列表
@@ -189,7 +186,6 @@ class AnchorRaffle extends BaseRaffle
         return true;
     }
 
-
     /**
      * @use 创建抽奖任务
      * @param array $raffles
@@ -199,15 +195,13 @@ class AnchorRaffle extends BaseRaffle
     {
         $url = 'https://api.live.bilibili.com/xlive/lottery-interface/v1/Anchor/Join';
         $tasks = [];
-        $results = [];
-        $user_info = User::parseCookies();
         foreach ($raffles as $raffle) {
             $payload = [
                 'id' => $raffle['raffle_id'],
                 'roomid' => $raffle['room_id'],
                 'platform' => 'pc',
-                'csrf_token' => $user_info['token'],
-                'csrf' => $user_info['token'],
+                'csrf_token' => getCsrf(),
+                'csrf' => getCsrf(),
                 'visit_id' => ''
             ];
             array_push($tasks, [
@@ -219,15 +213,14 @@ class AnchorRaffle extends BaseRaffle
                 ]
             ]);
         }
-        $results = Curl::async('app', $url, $tasks);
         // print_r($results);
-        return $results;
+        return Curl::async('app', $url, $tasks);
     }
 
     /**
      * @use 解析抽奖信息
      * @param array $results
-     * @return mixed|void
+     * @return void
      */
     protected static function parseLottery(array $results)
     {

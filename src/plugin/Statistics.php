@@ -14,7 +14,6 @@ use BiliHelper\Core\Log;
 use BiliHelper\Util\TimeLock;
 use MathieuViossat\Util\ArrayToTextTable;
 
-
 class Statistics
 {
     use TimeLock;
@@ -31,10 +30,8 @@ class Statistics
             return;
         }
         self::outputResult();
-
         self::setLock(20 * 60);
     }
-
 
     /**
      * @use 添加推送
@@ -49,7 +46,6 @@ class Statistics
         return true;
     }
 
-
     /**
      * @use 添加参与
      * @param string $key
@@ -63,7 +59,6 @@ class Statistics
         return true;
     }
 
-
     /**
      * @use 添加成功
      * @param string $key
@@ -76,7 +71,6 @@ class Statistics
         self::valIncrease(self::$success_list, $key);
         return true;
     }
-
 
     /**
      * @use 添加收益
@@ -93,7 +87,6 @@ class Statistics
         self::valReplace(self::$profit_list, $title, time(), 'updated_time');
         return true;
     }
-
 
     /**
      * @use 转换时间
@@ -142,7 +135,6 @@ class Statistics
         return true;
     }
 
-
     /**
      * @use 获取结果
      * @param array $target
@@ -156,7 +148,6 @@ class Statistics
         return is_null($second_key) ? $target[self::getTodayKey()][$key] : $target[self::getTodayKey()][$key][$second_key];
     }
 
-
     /**
      * @use 获取所有结果
      * @param array $target
@@ -164,7 +155,7 @@ class Statistics
      * @param string $second_key
      * @return int
      */
-    private static function getResults(array &$target, string $key, $second_key = null)
+    private static function getResults(array &$target, string $key, $second_key = null): int
     {
         $results = 0;
         is_null($second_key) ? self::initKeyValue($target, $key) : self::initKeyValue($target, $key, 0, $second_key);
@@ -177,7 +168,6 @@ class Statistics
         return $results;
     }
 
-
     /**
      * @use 变量增加
      * @param array $target
@@ -186,12 +176,11 @@ class Statistics
      * @param null $second_key
      * @return bool
      */
-    private static function valIncrease(array &$target, string $key, $num = 1, $second_key = null)
+    private static function valIncrease(array &$target, string $key, $num = 1, $second_key = null): bool
     {
         is_null($second_key) ? $target[self::getTodayKey()][$key] += $num : $target[self::getTodayKey()][$key][$second_key] += $num;
         return true;
     }
-
 
     /**
      * @use 变量替换
@@ -201,7 +190,7 @@ class Statistics
      * @param string $second_key
      * @return bool
      */
-    private static function valReplace(array &$target, string $key, $data = null, $second_key = '')
+    private static function valReplace(array &$target, string $key, $data = null, $second_key = ''): bool
     {
         is_null($second_key) ? $target[self::getTodayKey()][$key] = $data : $target[self::getTodayKey()][$key][$second_key] = $data;
         return true;
@@ -242,10 +231,9 @@ class Statistics
         return [self::unique_arr($tr_list_count), self::unique_arr($tr_list_profit)];
     }
 
-
     /**
      * @use 二维数组去重
-     * @param $result
+     * @param array $result
      * @return array
      */
     private static function unique_arr(array $result): array

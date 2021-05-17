@@ -20,7 +20,7 @@ class DailyTask
 
     public static function run()
     {
-        if (self::getLock() > time()) {
+        if (self::getLock() > time() || !getEnable('daily_task')) {
             return;
         }
 
@@ -31,8 +31,7 @@ class DailyTask
         if (isset($data['data']['sign_info'])) {
             self::sign_info($data['data']['sign_info']);
         }
-
-        self::setLock(8 * 60 * 60);
+        self::setLock(mt_rand(8, 12) * 60 * 60);
     }
 
     /**
@@ -43,13 +42,12 @@ class DailyTask
     {
         $url = 'https://api.live.bilibili.com/i/api/taskInfo';
         $payload = [];
-        $data = Curl::get('app',$url, Sign::common($payload));
+        $data = Curl::get('app', $url, Sign::common($payload));
         $data = json_decode($data, true);
         Log::info('正在检查每日任务...');
         if (isset($data['code']) && $data['code']) {
             Log::warning('每日任务检查失败!', ['msg' => $data['message']]);
         }
-
         return $data;
     }
 
@@ -65,16 +63,22 @@ class DailyTask
             Log::notice('该任务已完成');
             return;
         }
+        $url = 'https://api.live.bilibili.com/xlive/web-ucenter/v1/sign/DoSign';
+        $headers = [
+            'origin' => 'https://link.bilibili.com',
+            'referer' => 'https://link.bilibili.com/p/center/index'
+        ];
         $url = 'https://api.live.bilibili.com/sign/doSign';
         $payload = [];
-        $data = Curl::get('app',$url, Sign::common($payload));
+        $data = Curl::get('app', $url, Sign::common($payload));
         $data = json_decode($data, true);
         // {"code":1011040,"message":"今日已签到过,无法重复签到","ttl":1,"data":null}
+        // {"code":0,"message":"0","ttl":1,"data":{"text":"3000点用户经验,2根辣条","specialText":"再签到3天可以获得666银瓜子","allDays":31,"hadSignDays":2,"isBonusDay":0}}
         // {"code":0,"message":"0","ttl":1,"data":{"text":"3000点用户经验,2根辣条,50根辣条","specialText":"","allDays":31,"hadSignDays":20,"isBonusDay":1}}
         if (isset($data['code']) && $data['code']) {
             Log::warning("签到失败: {$data['message']}");
         } else {
-            Log::info("签到成功: {$data['data']['text']}");
+            Log::notice("签到成功: {$data['data']['text']}");
             // 推送签到信息
             Notice::push('todaySign', $data['data']['text']);
         }
@@ -100,7 +104,7 @@ class DailyTask
         $payload = [
             'task_id' => 'double_watch_task',
         ];
-        $data = Curl::post('app',$url, Sign::common($payload));
+        $data = Curl::post('app', $url, Sign::common($payload));
         $data = json_decode($data, true);
 
         if (isset($data['code']) && $data['code']) {

@@ -41,7 +41,6 @@ class Live
         return $areas;
     }
 
-
     /**
      * @use AREA_ID转ROOM_ID
      * @param $area_id
@@ -77,7 +76,6 @@ class Live
         return $area_info;
     }
 
-
     /**
      * @use 获取随机直播房间号
      * @return int
@@ -93,19 +91,19 @@ class Live
         ];
         $raw = Curl::get('other', $url, $payload);
         $de_raw = json_decode($raw, true);
+        print_r($de_raw);
         if ($de_raw['code'] != '0') {
             return 23058;
         }
         return $de_raw['data'][mt_rand(1, 29)]['roomid'];
     }
 
-
     /**
      * @use 获取直播房间号
      * @param $room_id
-     * @return bool
+     * @return false|mixed
      */
-    public static function getRealRoomID($room_id): bool
+    public static function getRealRoomID($room_id)
     {
         $data = self::getRoomInfoV1($room_id);
         if (!isset($data['code']) || !isset($data['data'])) {
@@ -174,7 +172,6 @@ class Live
         return json_decode($raw, true);
     }
 
-
     /**
      * @use 获取配置信息
      * @param $room_id
@@ -187,11 +184,11 @@ class Live
             $server = $data['data']['host_server_list'][0];
             $addr = "tcp://{$server['host']}:{$server['port']}/sub";
         } else {
-            $addr = getenv('ZONE_SERVER_ADDR');
+            $addr = getConf('server_addr', 'zone_monitor');
         }
         return [
             'addr' => $addr,
-            'token' => isset($data['data']['token']) ? $data['data']['token'] : '',
+            'token' => $data['data']['token'] ?? '',
         ];
     }
 
@@ -223,7 +220,6 @@ class Live
         return true;
     }
 
-
     /**
      * @use 访问直播间
      * @param $room_id
@@ -240,27 +236,18 @@ class Live
         return true;
     }
 
-
     /**
-     * @use 获取毫秒
-     * @return float
-     */
-    public static function getMillisecond(): float
-    {
-        list($t1, $t2) = explode(' ', microtime());
-        return (float)sprintf('%.0f', (floatval($t1) + floatval($t2)) * 1000);
-    }
-
-
-    /**
-     * @use 发送弹幕
+     * @use 发送弹幕pc
      * @param int $room_id
      * @param string $content
      * @return array
      */
-    public static function sendBarrage(int $room_id, string $content): array
+    public static function sendBarragePC(int $room_id, string $content): array
     {
-        $user_info = User::parseCookies();
+        $room_id = self::getRealRoomID($room_id);
+        if (!$room_id) {
+            return ['code' => 404, 'msg' => '直播间数据异常'];
+        }
         $url = 'https://api.live.bilibili.com/msg/send';
         $payload = [
             'color' => '16777215',
@@ -270,17 +257,44 @@ class Live
             'rnd' => 0,
             'bubble' => 0,
             'roomid' => $room_id,
-            'csrf' => $user_info['token'],
-            'csrf_token' => $user_info['token'],
+            'csrf' => getCsrf(),
+            'csrf_token' => getCsrf(),
         ];
         $headers = [
             'origin' => 'https://live.bilibili.com',
             'referer' => "https://live.bilibili.com/{$room_id}"
         ];
         $raw = Curl::post('pc', $url, $payload, $headers);
+        // {"code":0,"data":[],"message":"","msg":""}
         return json_decode($raw, true) ?? ['code' => 404, 'msg' => '上层数据为空!'];
     }
 
+    /**
+     * @use 发送弹幕app
+     * @param int $room_id
+     * @param string $content
+     * @return array
+     */
+    public static function sendBarrageAPP(int $room_id, string $content): array
+    {
+        $room_id = self::getRealRoomID($room_id);
+        if (!$room_id) {
+            return ['code' => 404, 'msg' => '直播间数据异常'];
+        }
+        $url = 'https://api.live.bilibili.com/msg/send';
+        $payload = [
+            'color' => '16777215',
+            'fontsize' => 25,
+            'mode' => 1,
+            'msg' => $content,
+            'rnd' => 0,
+            'roomid' => $room_id,
+            'csrf' => getCsrf(),
+            'csrf_token' => getCsrf(),
+        ];
+        $raw = Curl::post('app', $url, Sign::common($payload));
+        return json_decode($raw, true) ?? ['code' => 404, 'msg' => '上层数据为空!'];
+    }
 
     /**
      * @use 获取勋章列表
@@ -291,6 +305,7 @@ class Live
     {
         $metal_list = [];
         for ($i = 1; $i <= 10; $i++) {
+            // $url = 'https://api.live.bilibili.com/fans_medal/v5/live_fans_medal/iApiMedal';
             $url = 'https://api.live.bilibili.com/i/api/medal';
             $payload = [
                 'page' => $i,
@@ -362,9 +377,8 @@ class Live
     public static function sendGift(array $guest, array $gift, int $num)
     {
         $url = 'https://api.live.bilibili.com/gift/v2/live/bag_send';
-        $user_info = User::parseCookies();
         $payload = [
-            'uid' => $user_info['uid'], // 自己的UID
+            'uid' => getUid(), // 自己的UID
             'gift_id' => $gift['gift_id'],
             'ruid' => $guest['uid'], // UP的UID
             'send_ruid' => 0,
@@ -377,8 +391,8 @@ class Live
             'storm_beat_id' => 0,
             'metadata' => '',
             'price' => 0,
-            'csrf' => $user_info['token'],
-            'csrf_token' => $user_info['token']
+            'csrf' => getCsrf(),
+            'csrf_token' => getCsrf()
         ];
         // {"code":0,"msg":"success","message":"success","data":{"tid":"1595419985112400002","uid":4133274,"uname":"沙奈之朵","face":"https://i2.hdslb.com/bfs/face/eb101ef90ebc4e9bf79f65312a22ebac84946700.jpg","guard_level":0,"ruid":893213,"rcost":30834251,"gift_id":30607,"gift_type":5,"gift_name":"小心心","gift_num":1,"gift_action":"投喂","gift_price":5000,"coin_type":"silver","total_coin":5000,"pay_coin":5000,"metadata":"","fulltext":"","rnd":"1595419967","tag_image":"","effect_block":1,"extra":{"wallet":null,"gift_bag":{"bag_id":210196588,"gift_num":20},"top_list":[],"follow":null,"medal":null,"title":null,"pk":{"pk_gift_tips":"","crit_prob":0},"fulltext":"","event":{"event_score":0,"event_redbag_num":0},"capsule":null},"blow_switch":0,"send_tips":"赠送成功","gift_effect":{"super":0,"combo_timeout":0,"super_gift_num":0,"super_batch_gift_num":0,"batch_combo_id":"","broadcast_msg_list":[],"small_tv_list":[],"beat_storm":null,"smallTVCountFlag":true},"send_master":null,"crit_prob":0,"combo_stay_time":3,"combo_total_coin":0,"demarcation":2,"magnification":1,"combo_resources_id":1,"is_special_batch":0,"send_gift_countdown":6}}
         $data = Curl::post('app', $url, Sign::common($payload));
@@ -389,7 +403,6 @@ class Live
             Log::notice("成功向 {$payload['biz_id']} 投喂了 {$num} 个{$gift['gift_name']}");
         }
     }
-
 
     /**
      * @use 获取分区直播间

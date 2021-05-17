@@ -26,11 +26,11 @@ class Judge
 
     public static function run()
     {
-        if (self::getLock() > time() || self::$retry_time > time() || getenv('USE_JUDGE') == 'false') {
+        // https://www.bilibili.com/judgement/index
+        if (self::getLock() > time() || self::$retry_time > time() || !getEnable('judgement')) {
             return;
         }
-        # https://www.bilibili.com/judgement/index
-        $case_id = self::$wait_case_id ? self::$wait_case_id : self::caseObtain();
+        $case_id = self::$wait_case_id ?: self::caseObtain();
         if (!self::judgeCase($case_id)) {
             self::setLock(1 * 60 + 5);
             return;
@@ -44,7 +44,7 @@ class Judge
      * @param $case_id
      * @return bool
      */
-    private static function judgeCase($case_id)
+    private static function judgeCase($case_id): bool
     {
         if (is_null($case_id) || $case_id == 0) {
             return true;
@@ -95,7 +95,7 @@ class Judge
      * @param $pct
      * @return int|null
      */
-    private static function judgeAdvice($num_judged, $pct)
+    private static function judgeAdvice($num_judged, $pct): ?int
     {
         if ($num_judged >= 300) {
             # 认为这里可能出现了较多分歧，抬一手
@@ -137,8 +137,7 @@ class Judge
      */
     private static function juryVote($case_id, $decision)
     {
-        $user_info = User::parseCookies();
-        $url = 'http://api.bilibili.com/x/credit/jury/vote';
+        $url = 'https://api.bilibili.com/x/credit/jury/vote';
         $payload = [
             "jsonp" => "jsonp",
             "cid" => $case_id,
@@ -147,7 +146,7 @@ class Judge
             "likes" => "",
             "hates" => "",
             "attr" => "1",
-            "csrf" => $user_info['token'],
+            "csrf" => getCsrf(),
         ];
         $raw = Curl::post('pc', $url, $payload);
         $de_raw = json_decode($raw, true);
@@ -158,18 +157,16 @@ class Judge
         }
     }
 
-
     /**
      * @use 案件获取
-     * @return |null
+     * @return mixed|null
      */
     private static function caseObtain()
     {
-        $user_info = User::parseCookies();
-        $url = 'http://api.bilibili.com/x/credit/jury/caseObtain';
+        $url = 'https://api.bilibili.com/x/credit/jury/caseObtain';
         $payload = [
             "jsonp" => "jsonp",
-            "csrf" => $user_info['token']
+            "csrf" => getCsrf()
         ];
         $raw = Curl::post('pc', $url, $payload);
         $de_raw = json_decode($raw, true);
@@ -196,7 +193,7 @@ class Judge
      * @param $case_id
      * @return array
      */
-    private static function judgementVote($case_id)
+    private static function judgementVote($case_id): array
     {
         $url = 'https://api.bilibili.com/x/credit/jury/juryCase';
         $headers = [
@@ -227,6 +224,31 @@ class Judge
         ];
     }
 
+    /**
+     * @use 随机整数
+     * @param int $max
+     * @return string
+     */
+    private static function randInt(int $max = 17): string
+    {
+        $temp = [];
+        foreach (range(1, $max) as $_) {
+            array_push($temp, mt_rand(0, 9));
+        }
+        return implode("", $temp);
+    }
+
+    /**
+     * @use 初始化参数
+     */
+    private static function initParams()
+    {
+        self::$retry_time = 0;
+        self::$wait_case_id = 0;
+        self::$wait_time = 0;
+        self::$min_ok_pct = 1;
+        self::$max_ok_pct = 0;
+    }
 
     /**
      * @use 获取案例数据|风纪检测
@@ -272,32 +294,5 @@ class Judge
         }
         Log::info("今日投票{$sum_cases}（{$valid_cases}票有效（非弃权），{$judging_cases}票还在进行中）");
         return true;
-    }
-
-
-    /**
-     * @use 随机整数
-     * @param int $max
-     * @return string
-     */
-    private static function randInt(int $max = 17): string
-    {
-        $temp = [];
-        foreach (range(1, $max) as $index) {
-            array_push($temp, mt_rand(0, 9));
-        }
-        return implode("", $temp);
-    }
-
-    /**
-     * @use 初始化参数
-     */
-    private static function initParams()
-    {
-        self::$retry_time = 0;
-        self::$wait_case_id = 0;
-        self::$wait_time = 0;
-        self::$min_ok_pct = 1;
-        self::$max_ok_pct = 0;
     }
 }

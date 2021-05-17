@@ -25,13 +25,13 @@ class Notice
      */
     public static function push(string $type, string $result = '')
     {
-        if (getenv('USE_NOTIFY') == 'false') {
+        if (!getEnable('notify')) {
             return;
         }
         if (self::filterResultWords($result)) {
             return;
         }
-        $uname = User::userInfo() ? getenv('APP_UNAME') : getenv('APP_USER');
+        $uname = getConf('uname', 'print') ?? getConf('username', 'login.account');
         self::sendInfoHandle($type, $uname, $result);
     }
 
@@ -44,7 +44,7 @@ class Notice
     {
         self::loadJsonData();
         $default_words = self::$store->get("Notice.default");;
-        $custom_words = empty(getenv('NOTIFY_FILTER_WORDS')) ? [] : explode(',', getenv('NOTIFY_FILTER_WORDS'));
+        $custom_words = explode(',', getConf('filter_words', 'notify'));
         $total_words = array_merge($default_words, $custom_words);
         foreach ($total_words as $word) {
             if (strpos($result, $word) !== false) {
@@ -53,7 +53,6 @@ class Notice
         }
         return false;
     }
-
 
     /**
      * @use 处理信息
@@ -156,26 +155,28 @@ class Notice
      */
     private static function sendLog(array $info)
     {
-        if (getenv('NOTIFY_SCTKEY')) {
+        if (getConf('sctkey', 'notify.sct')) {
             self::sctSend($info);
         }
-        if (getenv('NOTIFY_SCKEY')) {
+        if (getConf('sckey', 'notify.sc')) {
             self::scSend($info);
         }
-        if (getenv('NOTIFY_TELE_BOTTOKEN') && getenv('NOTIFY_TELE_CHATID')) {
+        if (getConf('bottoken', 'notify.telegram') && getConf('chatid', 'notify.telegram')) {
             self::teleSend($info);
         }
-        if (getenv('NOTIFY_DINGTALK_TOKEN')) {
+        if (getConf('token', 'notify.dingtalk')) {
             self::dingTalkSend($info);
         }
-        if (getenv('NOTIFY_PUSHPLUS_TOKEN')) {
+        if (getConf('token', 'notify.pushplus')) {
             self::pushPlusSend($info);
         }
-        if (getenv('NOTIFY_CQ_URL') && getenv('NOTIFY_CQ_TOKEN') && getenv('NOTIFY_CQ_QQ')) {
+        if (getConf('target_qq', 'notify.gocqhttp') && getConf('token', 'notify.gocqhttp') && getConf('url', 'notify.gocqhttp')) {
             self::goCqhttp($info);
         }
+        if (getConf('token', 'notify.debug') && getConf('url', 'notify.debug')) {
+            self::debug($info);
+        }
     }
-
 
     /**
      * @use DingTalkbot推送
@@ -185,7 +186,7 @@ class Notice
     private static function dingTalkSend(array $info)
     {
         Log::info('使用DingTalk机器人推送消息');
-        $url = 'https://oapi.dingtalk.com/robot/send?access_token=' . getenv('NOTIFY_DINGTALK_TOKEN');
+        $url = 'https://oapi.dingtalk.com/robot/send?access_token=' . getConf('token', 'notify.dingtalk');
         $payload = [
             'msgtype' => 'markdown',
             'markdown' => [
@@ -205,7 +206,6 @@ class Notice
         }
     }
 
-
     /**
      * @use TeleBot推送
      * @doc https://core.telegram.org/bots/api#sendmessage
@@ -214,10 +214,10 @@ class Notice
     private static function teleSend(array $info)
     {
         Log::info('使用Tele机器人推送消息');
-        $url = 'https://api.telegram.org/bot' . getenv('NOTIFY_TELE_BOTTOKEN');
+        $url = 'https://api.telegram.org/bot' . getConf('bottoken', 'notify.telegram');
         $payload = [
             'method' => 'sendMessage',
-            'chat_id' => getenv('NOTIFY_TELE_CHATID'),
+            'chat_id' => getConf('chatid', 'notify.telegram'),
             'text' => $info['content']
         ];
         $raw = Curl::post('other', $url, $payload);
@@ -229,7 +229,6 @@ class Notice
         }
     }
 
-
     /**
      * @use ServerChan推送
      * @use https://sc.ftqq.com/
@@ -238,7 +237,7 @@ class Notice
     private static function scSend(array $info)
     {
         Log::info('使用ServerChan推送消息');
-        $url = 'https://sc.ftqq.com/' . getenv('NOTIFY_SCKEY') . '.send';
+        $url = 'https://sc.ftqq.com/' . getConf('sckey', 'notify.sc') . '.send';
         $payload = [
             'text' => $info['title'],
             'desp' => $info['content'],
@@ -253,7 +252,6 @@ class Notice
         }
     }
 
-
     /**
      * @use ServerChan(Turbo)推送
      * @doc https://sct.ftqq.com/
@@ -262,7 +260,7 @@ class Notice
     private static function sctSend(array $info)
     {
         Log::info('使用ServerChan(Turbo)推送消息');
-        $url = 'https://sctapi.ftqq.com/' . getenv('NOTIFY_SCTKEY') . '.send';
+        $url = 'https://sctapi.ftqq.com/' . getConf('sctkey', 'notify.sct') . '.send';
         $payload = [
             'text' => $info['title'],
             'desp' => $info['content'],
@@ -288,7 +286,7 @@ class Notice
         Log::info('使用PushPlus酱推送消息');
         $url = 'http://www.pushplus.plus/send';
         $payload = [
-            'token' => getenv('NOTIFY_PUSHPLUS_TOKEN'),
+            'token' => getConf('token', 'notify.pushplus'),
             'title' => $info['title'],
             'content' => $info['content']
         ];
@@ -305,7 +303,6 @@ class Notice
         }
     }
 
-
     /**
      * @use GO-CQHTTP推送
      * @doc https://docs.go-cqhttp.org/api/
@@ -314,10 +311,10 @@ class Notice
     private static function goCqhttp(array $info)
     {
         Log::info('使用GoCqhttp推送消息');
-        $url = getenv('NOTIFY_CQ_URL');
+        $url = getConf('url', 'notify.gocqhttp');
         $payload = [
-            'access_token' => getenv('NOTIFY_CQ_TOKEN'),
-            'user_id' => getenv('NOTIFY_CQ_QQ'),
+            'access_token' => getConf('token', 'notify.gocqhttp'),
+            'user_id' => getConf('target_qq', 'notify.gocqhttp'),
             'message' => $info['content']
         ];
         $raw = Curl::get('other', $url, $payload);
@@ -328,6 +325,32 @@ class Notice
         } else {
             Log::warning("推送消息失败: {$raw}");
         }
+    }
+
+    /**
+     * @use 个人调试使用
+     * @doc
+     * @param array $info
+     */
+    private static function debug(array $info)
+    {
+        Log::info('使用Debug推送消息');
+        $url = getConf('url', 'notify.debug');
+        $payload = [
+            'receiver' => getConf('token', 'notify.debug'),
+            'title' => $info['title'],
+            'body' => $info['content'],
+            'url' => '',
+        ];
+        $raw = Curl::post('other', $url, $payload);
+        $de_raw = json_decode($raw, true);
+        // {"success": true, "msg": null, "data": {"errcode": 0, "errmsg": "ok", "msgid": 1231, "token": "456"}}
+        if ($de_raw['success'] == true) {
+            Log::info("推送消息成功: {$de_raw['data']['msgid']}");
+        } else {
+            Log::warning("推送消息失败: {$raw}");
+        }
+
     }
 
 }

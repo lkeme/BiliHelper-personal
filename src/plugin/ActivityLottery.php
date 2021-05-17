@@ -22,9 +22,15 @@ class ActivityLottery
 
     private static $repository = APP_DATA_PATH . 'activity_infos.json';
 
+    /**
+     * @throws \JsonDecodeStream\Exception\TokenizerException
+     * @throws \JsonDecodeStream\Exception\SelectorException
+     * @throws \JsonDecodeStream\Exception\CollectorException
+     * @throws \JsonDecodeStream\Exception\ParserException
+     */
     public static function run()
     {
-        if (self::getLock() > time() || getenv('USE_ACTIVITY') == 'false') {
+        if (self::getLock() > time() || !getEnable('main_activity')) {
             return;
         }
         self::allotTasks();
@@ -34,7 +40,6 @@ class ActivityLottery
             self::setLock(self::timing(5) + mt_rand(1, 180));
         }
     }
-
 
     /**
      * @use 分配任务
@@ -86,7 +91,7 @@ class ActivityLottery
      * @use 执行任务
      * @return bool
      */
-    private static function workTask()
+    private static function workTask(): bool
     {
         if (self::$work_status['work_completed'] == date("Y/m/d")) {
             return false;
@@ -119,7 +124,6 @@ class ActivityLottery
         return true;
     }
 
-
     /**
      * @use 获取抽奖机会
      * @param string $sid
@@ -140,7 +144,7 @@ class ActivityLottery
         $de_raw = json_decode($raw, true);
         // {"code":0,"message":"0","ttl":1,"data":{"times":2}}
         if ($de_raw['code'] == 0) {
-            Log::info("获取抽奖机会成功 {$raw}");
+            Log::notice("获取抽奖机会成功 {$raw}");
             return true;
         }
         Log::warning("获取抽奖机会失败 {$raw}");
@@ -161,16 +165,15 @@ class ActivityLottery
             'origin' => 'https://www.bilibili.com',
             'referer' => $referer
         ];
-        $user_info = User::parseCookies();
         // $action_type  4 关注  3 分享
         $payload = [
             'sid' => $sid,
             'action_type' => $action_type,
-            'csrf' => $user_info['token']
+            'csrf' => getCsrf()
         ];
         $raw = Curl::post('pc', $url, $payload, $headers);
         $de_raw = json_decode($raw, true);
-        Log::info("增加抽奖机会#{$action_type} {$raw}");
+        Log::notice("增加抽奖机会#{$action_type} {$raw}");
         // {"code":0,"message":"0","ttl":1}
         if ($de_raw['code'] == 0) {
             return true;
@@ -192,11 +195,10 @@ class ActivityLottery
             'origin' => 'https://www.bilibili.com',
             'referer' => $referer
         ];
-        $user_info = User::parseCookies();
         $payload = [
             'sid' => $sid,
             'type' => 1,
-            'csrf' => $user_info['token']
+            'csrf' => getCsrf()
         ];
         $raw = Curl::post('pc', $url, $payload, $headers);
         $de_raw = json_decode($raw, true);

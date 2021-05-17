@@ -11,7 +11,8 @@
 namespace BiliHelper\Plugin;
 
 use BiliHelper\Core\Curl;
-use BiliHelper\Core\Config;
+use BiliHelper\Core\Log;
+use BiliHelper\Tool\Common;
 
 class User
 {
@@ -32,7 +33,6 @@ class User
         return true;
     }
 
-
     /**
      * @use 老爷检测
      * @return bool
@@ -48,25 +48,6 @@ class User
         return false;
     }
 
-
-    /**
-     * @use 写入用户名
-     * @return bool
-     */
-    public static function userInfo(): bool
-    {
-        $data = self::getUserInfo();
-        if (getenv('APP_UNAME') != "") {
-            return true;
-        }
-        if ($data['msg'] == 'ok') {
-            Config::put('APP_UNAME', $data['data']['uname']);
-            return true;
-        }
-        return false;
-    }
-
-
     /**
      * @use UserInfo
      * @return array
@@ -75,7 +56,7 @@ class User
     {
         $url = 'https://api.live.bilibili.com/User/getUserInfo';
         $payload = [
-            'ts' => Live::getMillisecond(),
+            'ts' => Common::getMillisecond(),
         ];
         $raw = Curl::get('app', $url, Sign::common($payload));
         return json_decode($raw, true);
@@ -91,7 +72,7 @@ class User
     {
         $url = 'https://api.live.bilibili.com/xlive/web-room/v1/index/getInfoByUser';
         $payload = [
-            'room_id' => $room_id ?? getenv('ROOM_ID')
+            'room_id' => $room_id ?? getConf('room_id', 'global_room')
         ];
         $raw = Curl::get('pc', $url, $payload);
         return json_decode($raw, true);
@@ -107,10 +88,10 @@ class User
     {
         $url = 'https://api.live.bilibili.com/xlive/app-room/v1/index/getInfoByUser';
         $payload = [
-            'room_id' => $room_id ?? getenv('ROOM_ID')
+            'room_id' => $room_id ?? getConf('room_id', 'global_room')
         ];
         $raw = Curl::get('app', $url, Sign::common($payload));
-        return json_decode($raw, true);;
+        return json_decode($raw, true);
     }
 
     /**
@@ -119,17 +100,14 @@ class User
      */
     public static function parseCookies(): array
     {
-        $cookies = getenv('COOKIE');
+        $cookies = getCookie();
         preg_match('/bili_jct=(.{32})/', $cookies, $token);
-        $token = isset($token[1]) ? $token[1] : '';
         preg_match('/DedeUserID=(\d+)/', $cookies, $uid);
-        $uid = isset($uid[1]) ? $uid[1] : '';
         preg_match('/DedeUserID__ckMd5=(.{16})/', $cookies, $sid);
-        $sid = isset($sid[1]) ? $sid[1] : '';
         return [
-            'token' => $token,
-            'uid' => $uid,
-            'sid' => $sid,
+            'csrf' => $token[1] ?? '',
+            'uid' => $uid[1] ?? '',
+            'sid' => $sid[1] ?? '',
         ];
     }
 
@@ -139,8 +117,7 @@ class User
      */
     public static function fetchAllFollowings(): array
     {
-        $user_info = User::parseCookies();
-        $uid = $user_info['uid'];
+        $uid = getUid();
         $followings = [];
         for ($i = 1; $i < 100; $i++) {
             $url = "https://api.bilibili.com/x/relation/followings";
@@ -168,7 +145,6 @@ class User
         return $followings;
     }
 
-
     /**
      * @use 获取分组关注列表
      * @param int $tag_id
@@ -178,8 +154,7 @@ class User
      */
     public static function fetchTagFollowings(int $tag_id = 0, int $page_num = 100, int $page_size = 50): array
     {
-        $user_info = User::parseCookies();
-        $uid = $user_info['uid'];
+        $uid = getUid();
         $followings = [];
         for ($i = 1; $i < $page_num; $i++) {
             $url = "https://api.bilibili.com/x/relation/tag";
@@ -208,7 +183,6 @@ class User
         return $followings;
     }
 
-
     /**
      * @use 设置用户关注
      * @param int $follow_uid
@@ -217,15 +191,14 @@ class User
      */
     public static function setUserFollow(int $follow_uid, $un_follow = false): bool
     {
-        $user_info = User::parseCookies();
         $url = 'https://api.live.bilibili.com/relation/v1/Feed/SetUserFollow';
         $payload = [
-            'uid' => $user_info['uid'],
+            'uid' => getUid(),
             'type' => $un_follow ? 0 : 1,
             'follow' => $follow_uid,
             're_src' => 18,
-            'csrf_token' => $user_info['token'],
-            'csrf' => $user_info['token'],
+            'csrf_token' => getCsrf(),
+            'csrf' => getCsrf(),
             'visit_id' => ''
         ];
         $headers = [
@@ -248,11 +221,10 @@ class User
      */
     public static function createRelationTag(string $tag_name): int
     {
-        $user_info = User::parseCookies();
         $url = 'https://api.bilibili.com/x/relation/tag/create?cross_domain=true';
         $payload = [
             'tag' => $tag_name,
-            'csrf' => $user_info['token'],
+            'csrf' => getCsrf(),
         ];
         $headers = [
             'content-type' => 'application/x-www-form-urlencoded; charset=UTF-8',
@@ -276,12 +248,11 @@ class User
      */
     public static function tagAddUsers(int $fid, int $tid): bool
     {
-        $user_info = User::parseCookies();
         $url = 'https://api.bilibili.com/x/relation/tags/addUsers?cross_domain=true';
         $payload = [
             'fids' => $fid,
             'tagids' => $tid,
-            'csrf' => $user_info['token'],
+            'csrf' => getCsrf(),
         ];
         $headers = [
             'content-type' => 'application/x-www-form-urlencoded; charset=UTF-8',
@@ -303,12 +274,11 @@ class User
      */
     public static function fetchTags(): array
     {
-        $user_info = User::parseCookies();
         $tags = [];
         $url = 'https://api.bilibili.com/x/relation/tags';
         $payload = [];
         $headers = [
-            'referer' => "https://space.bilibili.com/{$user_info['uid']}/fans/follow",
+            'referer' => 'https://space.bilibili.com/' . getUid() . '/fans/follow',
         ];
         $raw = Curl::get('pc', $url, $payload, $headers);
         $de_raw = json_decode($raw, true);
@@ -318,6 +288,33 @@ class User
             }
         }
         return $tags;
+    }
+
+    /**
+     * @use 是否为有效年度大会员
+     * @return bool
+     */
+    public static function isYearVip(): bool
+    {
+        $url = 'https://api.bilibili.com/x/vip/web/user/info';
+        $headers = [
+            'origin' => 'https://account.bilibili.com',
+            'referer' => 'https://account.bilibili.com/account/home'
+        ];
+        $payload = [];
+        $raw = Curl::get('pc', $url, $payload, $headers);
+        // {"code":0,"message":"0","ttl":1,"data":{"mid":1234,"vip_type":2,"vip_status":1,"vip_due_date":1667750400000,"vip_pay_type":0,"theme_type":0,"label":{"text":"年度大会员","label_theme":"annual_vip","text_color":"#FFFFFF","bg_style":1,"bg_color":"#FB7299","border_color":""},"avatar_subscript":1,"avatar_subscript_url":"http://i0.hdslb.com/bfs/vip/icon_Certification_big_member_22_3x.png","nickname_color":"#FB7299","is_new_user":false}}
+        $de_raw = json_decode($raw, true);
+        if ($de_raw['code'] == 0) {
+            if ($de_raw['data']['vip_type'] == 2 && $de_raw['data']['vip_due_date'] > Common::getMillisecond()) {
+                Log::debug("获取会员成功 有效年度大会员");
+                return true;
+            }
+            Log::debug("获取会员成功 不是年度大会员或已过期");
+        } else {
+            Log::debug("获取会员信息失败 {$raw}");
+        }
+        return false;
     }
 
 }

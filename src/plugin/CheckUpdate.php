@@ -16,14 +16,13 @@ use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
 use BiliHelper\Util\TimeLock;
 
-
 class CheckUpdate
 {
     use TimeLock;
 
-    private static $conf;
+    private static $current_conf;
     private static $latest_conf;
-    private static $repository = APP_DATA_PATH . 'latest.json';
+    private static $repository = APP_DATA_PATH . 'latest_version.json';
 
 
     public static function run()
@@ -62,10 +61,10 @@ class CheckUpdate
      */
     private static function fetchLatest()
     {
-        $url = self::$conf->get('raw_url');
+        $url = self::$current_conf->get('raw_url');
         $payload = [];
         $raw = Curl::get('other', $url, $payload);
-        self::$latest_conf = new Config($raw, new Json, true);
+        self::$latest_conf = Config::load($raw, new Json, true);
     }
 
     /**
@@ -73,7 +72,7 @@ class CheckUpdate
      */
     private static function loadJsonData()
     {
-        self::$conf = new Config(self::$repository);
+        self::$current_conf = Config::load(self::$repository);
     }
 
     /**
@@ -82,7 +81,7 @@ class CheckUpdate
      */
     private static function compareVersion(): bool
     {
-        $current_version = self::$conf->get('version');
+        $current_version = self::$current_conf->get('version');
         $latest_version = self::$latest_conf->get('version');
         // true 有更新  false 无更新
         return !($current_version == $latest_version);

@@ -4,7 +4,7 @@ MAINTAINER zsnmwy <szlszl35622@gmail.com>
 
 ENV USER_NAME='' \
     USER_PASSWORD='' \
-    CONIFG_PATH='/app/conf/user.conf' \
+    CONIFG_PATH='/app/conf/user.ini' \
     Green="\\033[32m" \
     Red="\\033[31m" \
     GreenBG="\\033[42;37m" \
@@ -35,4 +35,4 @@ ENTRYPOINT echo -e "\n ======== \n ${Info} ${GreenBG} 正使用 git pull 同步�
     echo -e "\n ======== \n ${Info} ${GreenBG} 安装/更新 项目运行依赖 ${Font} \n ======== \n" && \
     php composer.phar install && \
     echo -e "\n \n \n \n" && \
-    if [[ -f ${CONIFG_PATH} ]]; then echo -e "\n ======== \n ${GreenBG} 正在使用外部配置文件 ${Font} \n ======== \n" && php index.php ; else echo -e "${OK} ${GreenBG} 正在使用传入的环境变量进行用户配置。\n 如果需要配置更多选择项，请通过挂载配置文件来传入。具体参考项目中的README。\n https://github.com/lkeme/BiliHelper-personal.git ${Font} \n ======== \n " && cp /app/conf/user.conf.example /app/conf/user.conf && sed -i ''"$(cat /app/conf/user.conf -n | grep "APP_USER=" | awk '{print $1}')"'c '"$(echo "APP_USER=${USER_NAME}")"'' ${CONIFG_PATH} && sed -i ''"$(cat /app/conf/user.conf -n | grep "APP_PASS=" | awk '{print $1}')"'c '"$(echo "APP_PASS=${USER_PASSWORD}")"'' ${CONIFG_PATH} && php index.php; fi
+    if [[ -f ${CONIFG_PATH} ]]; then echo -e "\n ======== \n ${GreenBG} 正在使用外部配置文件 ${Font} \n ======== \n" && php index.php ; else echo -e "${OK} ${GreenBG} 正在使用传入的环境变量进行用户配置。\n 如果需要配置更多选择项，请通过挂载配置文件来传入。具体参考项目中的README。\n https://github.com/lkeme/BiliHelper-personal.git ${Font} \n ======== \n " && cp /app/conf/user.ini.example /app/conf/user.ini && sed -i ''"$(cat /app/conf/user.ini -n | grep "APP_USER=" | awk '{print $1}')"'c '"$(echo "APP_USER=${USER_NAME}")"'' ${CONIFG_PATH} && sed -i ''"$(cat /app/conf/user.ini -n | grep "APP_PASS=" | awk '{print $1}')"'c '"$(echo "APP_PASS=${USER_PASSWORD}")"'' ${CONIFG_PATH} && php index.php; fi

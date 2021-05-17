@@ -12,8 +12,6 @@ namespace BiliHelper\Core;
 
 use Amp\Loop;
 use function Amp\asyncCall;
-use BiliHelper\Plugin\Notice;
-
 
 class App
 {
@@ -26,7 +24,16 @@ class App
         define('APP_CONF_PATH', $app_path . "/conf/");
         define('APP_DATA_PATH', $app_path . "/data/");
         define('APP_LOG_PATH', $app_path . "/log/");
+    }
+
+    /**
+     * @use 检查环境
+     * @return $this
+     */
+    public function inspect(): App
+    {
         (new Env())->inspect_configure()->inspect_extension();
+        return $this;
     }
 
     /**
@@ -34,7 +41,7 @@ class App
      * @param string $load_file
      * @return $this
      */
-    public function load($load_file = 'user.conf')
+    public function load($load_file = 'user.ini'): App
     {
         Config::load($load_file);
         return $this;
@@ -70,12 +77,11 @@ class App
             'Login',
             'Schedule',
             'MainSite',
-            'Daily',
+            'DailyBag',
             'ManGa',
-            'GameMatch',
             'ActivityLottery',
             'Competition',
-            'Heart',
+            'DoubleHeart',
             'DailyTask',
             'Barrage',
             'Silver2Coin',
@@ -93,10 +99,13 @@ class App
             'GuardRaffle',
             'AnchorRaffle',
             'AwardRecord',
-            'Statistics',
             'Forward',
             'CapsuleLottery',
-            // 'Silver',
+            'PolishTheMedal',
+            'VipPrivilege',
+            'BpConsumption',
+            // 'Silver', // Abandoned
+            'Statistics',
 
         ];
         foreach ($plugins as $plugin) {
