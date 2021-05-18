@@ -47,6 +47,7 @@ class Notice
         $custom_words = explode(',', getConf('filter_words', 'notify'));
         $total_words = array_merge($default_words, $custom_words);
         foreach ($total_words as $word) {
+            if (empty($word)) continue;
             if (strpos($result, $word) !== false) {
                 return true;
             }
