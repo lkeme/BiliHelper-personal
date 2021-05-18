@@ -317,4 +317,24 @@ class User
         return false;
     }
 
+    /**
+     * @use 我的钱包
+     */
+    public static function myWallet()
+    {
+        $url = 'https://api.live.bilibili.com/pay/v2/Pay/myWallet';
+        $headers = [
+            'origin' => 'https://link.bilibili.com',
+            'referer' => 'https://link.bilibili.com/p/center/index'
+        ];
+        $payload = [
+            'need_bp' => 1,
+            'need_metal' => 1,
+            'platform' => 'pc',
+        ];
+        $raw = Curl::get('pc', $url, $payload, $headers);
+        // {"code":0,"msg":"succ","message":"succ","data":{"gold":5074,"silver":37434,"bp":"0","metal":1904}}
+        $de_raw = json_decode($raw, true);
+    }
+
 }

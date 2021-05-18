@@ -36,7 +36,10 @@ class Judge
             return;
         }
         //  self::judgementIndex();
-        self::setLock(mt_rand(15, 30) * 60);
+        // 如果没有设置时间 就设置个默认时间
+        if (self::getLock() < time()) {
+            self::setLock(mt_rand(15, 30) * 60);
+        }
     }
 
     /**
@@ -149,6 +152,7 @@ class Judge
             "csrf" => getCsrf(),
         ];
         $raw = Curl::post('pc', $url, $payload);
+        // {"code":25012,"message":"请勿重复投票","ttl":1}
         $de_raw = json_decode($raw, true);
         if (isset($de_raw['code']) && $de_raw['code']) {
             Log::warning("案件 {$case_id} 投票失败 {$raw}");
@@ -173,14 +177,23 @@ class Judge
         // {"code":25008,"message":"真给力 , 移交众裁的举报案件已经被处理完了","ttl":1}
         // {"code":25014,"message":"25014","ttl":1}
         // {"code":25005,"message":"请成为风纪委员后再试","ttl":1}
-        if (isset($de_raw['code']) && $de_raw['code'] == 25005) {
-            Log::warning($de_raw['message']);
-            self::setLock(self::timing(10));
-            return null;
-        }
         if (isset($de_raw['code']) && $de_raw['code']) {
-            Log::info("没有获取到案件~ {$raw}");
-            return null;
+            switch ($de_raw['code']) {
+                case 25005:
+                    Log::warning($de_raw['message']);
+                    self::setLock(self::timing(10));
+                    return null;
+                case 25008:
+                    Log::info("暂时没有新的案件需要审理~ {$raw}");
+                    return null;
+                case 25014:
+                    Log::info("今日案件已审满，感谢您对社区的贡献！明天再来看看吧~");
+                    self::setLock(self::timing(7, 0, 0, true));
+                    return null;
+                default:
+                    Log::info("获取案件失败~ {$raw}");
+                    return null;
+            }
         } else {
             $case_id = $de_raw['data']['id'];
             Log::info("获取到案件 {$case_id} ~");

@@ -108,12 +108,16 @@ class CapsuleLottery
         Log::info("执行 {$task['act']->title} #{$task['operation']} 任务");
         // 执行任务
         switch ($task['operation']) {
+            // TODO 观看 分享 签到任务
             case 'watch':
                 $interval = self::xliveHeartBeatTask($task['act']->room_id, 999, 999);
                 self::$interval = $interval == 0 ? 60 : $interval;
                 break;
             case 'draw':
-                self::doLottery($task['act']->coin_id, $task['act']->url, 0);
+                // 抽奖次数 > 0 开始抽奖
+                if (self::getLuckyNum($task['act']->coin_id, $task['act']->url)) {
+                    self::doLottery($task['act']->coin_id, $task['act']->url, 0);
+                }
                 break;
             default:
                 Log::info("当前 {$task['act']->title} #{$task['operation']} 任务不存在哦");
@@ -208,8 +212,9 @@ class CapsuleLottery
      * @use 获取扭蛋信息
      * @param int $coin_id
      * @param string $referer
+     * @return array
      */
-    private static function getCapsuleInfo(int $coin_id, string $referer)
+    private static function getCapsuleInfo(int $coin_id, string $referer): array
     {
         $url = 'https://api.live.bilibili.com/xlive/web-ucenter/v1/capsule/get_capsule_info_v3';
         $headers = [
@@ -224,8 +229,26 @@ class CapsuleLottery
         $raw = Curl::get('pc', $url, $payload, $headers);
         // data -> status 0||2
         // {"code":0,"message":"0","ttl":1,"data":{"coin":9,"rule":"2020年英雄联盟职业联赛春季赛抽奖奖池","gift_list":[{"name":"辣条","num":1,"web_url":"https://i0.hdslb.com/bfs/live/48605b0fe9eca5aba87f93da0fa0aa361c419835.png","mobile_url":"https://i0.hdslb.com/bfs/live/8e7a4dc8de374faee22fca7f9a3f801a1712a36b.png","usage":{"text":"辣条是一种直播虚拟礼物，可以在直播间送给自己喜爱的主播哦~","url":""},"type":1,"expire":"3天","gift_type":"325a347f91903c0353385e343dd358f0"},{"name":"3天头衔续期卡","num":1,"web_url":"https://i0.hdslb.com/bfs/live/48aecec2d7243b6f8bd17f20ff715db89f9adcec.png","mobile_url":"https://i0.hdslb.com/bfs/live/48aecec2d7243b6f8bd17f20ff715db89f9adcec.png","usage":{"text":"3天头衔续期卡*1","url":""},"type":21,"expire":"1周","gift_type":"4bda2f960342d86a426ebc067d3633ed"},{"name":"LPL2020助威","num":1,"web_url":"https://i0.hdslb.com/bfs/live/d9ee9558fcc438c99deb00ed1f6bd3707bac3452.png","mobile_url":"https://i0.hdslb.com/bfs/live/d9ee9558fcc438c99deb00ed1f6bd3707bac3452.png","usage":{"text":"2020LPL限定头衔","url":""},"type":2,"expire":"1周","gift_type":"b114c47920fce2aca5fca7a27cca5915"},{"name":"随机英雄联盟角色手办","num":1,"web_url":"https://i0.hdslb.com/bfs/live/4a2f604ef7b3dad583c054d4ffdb30e37f37ad9c.png","mobile_url":"https://i0.hdslb.com/bfs/live/4a2f604ef7b3dad583c054d4ffdb30e37f37ad9c.png","usage":{"text":"随机英雄联盟角色手办*1","url":""},"type":100024,"expire":"当天","gift_type":"6a4ae5853753d67d07cea2b1750795f4"},{"name":"2020LPL彩色弹幕","num":1,"web_url":"https://i0.hdslb.com/bfs/live/9a571f9d82c2a8cbbe869fd92796e70b19f9c2cc.png","mobile_url":"https://i0.hdslb.com/bfs/live/9a571f9d82c2a8cbbe869fd92796e70b19f9c2cc.png","usage":{"text":"LPL专属彩色弹幕","url":""},"type":20,"expire":"3天","gift_type":"14e40c6949800b5d840011e47e54d0c5"},{"name":"7天头衔续期卡","num":1,"web_url":"https://i0.hdslb.com/bfs/live/a2ffb62dc90d4896ddc3d1dcdbe83ac5d1dd7328.png","mobile_url":"https://i0.hdslb.com/bfs/live/a2ffb62dc90d4896ddc3d1dcdbe83ac5d1dd7328.png","usage":{"text":"7天头衔续期卡*1","url":""},"type":21,"expire":"1周","gift_type":"bbfc114b65126486a40c81daedd911e5"},{"name":"2020LPL春季赛助威券","num":1,"web_url":"https://i0.hdslb.com/bfs/live/be4cdecc4809caf8aa21817880a3283672b5a477.png","mobile_url":"https://i0.hdslb.com/bfs/live/be4cdecc4809caf8aa21817880a3283672b5a477.png","usage":{"text":"再来一次！(✪ω✪)","url":""},"type":22,"expire":"当天","gift_type":"96d2b8187ec6564fa40733153a41ac14"},{"name":"30天头衔续期卡","num":1,"web_url":"https://i0.hdslb.com/bfs/live/fc49e08115db6edd0276fba69ed8835a64714441.png","mobile_url":"https://i0.hdslb.com/bfs/live/fc49e08115db6edd0276fba69ed8835a64714441.png","usage":{"text":"30天头衔续期卡*1","url":""},"type":21,"expire":"1周","gift_type":"02810fd04244c47952bd4ed0b35617db"},{"name":"辣条","num":233,"web_url":"https://i0.hdslb.com/bfs/live/48605b0fe9eca5aba87f93da0fa0aa361c419835.png","mobile_url":"https://i0.hdslb.com/bfs/live/8e7a4dc8de374faee22fca7f9a3f801a1712a36b.png","usage":{"text":"辣条是一种直播虚拟礼物，可以在直播间送给自己喜爱的主播哦~","url":""},"type":1,"expire":"3天","gift_type":"a6d260760dfb1fe9f5375b3c8c7bd7ad"},{"name":"随机提伯斯熊毛绒公仔","num":1,"web_url":"https://i0.hdslb.com/bfs/live/61414ab727c55cd1de8fb5c1c79a5a05dada3a55.png","mobile_url":"https://i0.hdslb.com/bfs/live/61414ab727c55cd1de8fb5c1c79a5a05dada3a55.png","usage":{"text":"提伯斯熊毛绒公仔*1","url":""},"type":100024,"expire":"当天","gift_type":"2df71ff3306a4a2b4a627889cbd63c5b"}],"change_num":10000,"status":0,"is_login":true,"user_score":90000,"list":[{"num":1,"gift":"随机英雄联盟角色手办","date":"2020-04-23","name":"nXBo7p0svjm","web_image":"https://i0.hdslb.com/bfs/live/4a2f604ef7b3dad583c054d4ffdb30e37f37ad9c.png","mobile_image":"https://i0.hdslb.com/bfs/live/4a2f604ef7b3dad583c054d4ffdb30e37f37ad9c.png","count":1},{"num":1,"gift":"随机提伯斯熊毛绒公仔","date":"2020-04-20","name":"z98rwt","web_image":"https://i0.hdslb.com/bfs/live/61414ab727c55cd1de8fb5c1c79a5a05dada3a55.png","mobile_image":"https://i0.hdslb.com/bfs/live/61414ab727c55cd1de8fb5c1c79a5a05dada3a55.png","count":1},{"num":1,"gift":"随机英雄联盟角色手办","date":"2020-04-18","name":"wBQW6Z6jgbb","web_image":"https://i0.hdslb.com/bfs/live/4a2f604ef7b3dad583c054d4ffdb30e37f37ad9c.png","mobile_image":"https://i0.hdslb.com/bfs/live/4a2f604ef7b3dad583c054d4ffdb30e37f37ad9c.png","count":1},{"num":1,"gift":"随机提伯斯熊毛绒公仔","date":"2020-04-13","name":"dU9449p1zkz","web_image":"https://i0.hdslb.com/bfs/live/61414ab727c55cd1de8fb5c1c79a5a05dada3a55.png","mobile_image":"https://i0.hdslb.com/bfs/live/61414ab727c55cd1de8fb5c1c79a5a05dada3a55.png","count":1},{"num":1,"gift":"随机英雄联盟角色手办","date":"2020-04-10","name":"ckcs8151","web_image":"https://i0.hdslb.com/bfs/live/4a2f604ef7b3dad583c054d4ffdb30e37f37ad9c.png","mobile_image":"https://i0.hdslb.com/bfs/live/4a2f604ef7b3dad583c054d4ffdb30e37f37ad9c.png","count":1},{"num":1,"gift":"随机提伯斯熊毛绒公仔","date":"2020-04-06","name":"l1d9fgn1gl","web_image":"https://i0.hdslb.com/bfs/live/61414ab727c55cd1de8fb5c1c79a5a05dada3a55.png","mobile_image":"https://i0.hdslb.com/bfs/live/61414ab727c55cd1de8fb5c1c79a5a05dada3a55.png","count":1},{"num":1,"gift":"随机提伯斯熊毛绒公仔","date":"2020-03-31","name":"rlBF7ivbffe","web_image":"https://i0.hdslb.com/bfs/live/61414ab727c55cd1de8fb5c1c79a5a05dada3a55.png","mobile_image":"https://i0.hdslb.com/bfs/live/61414ab727c55cd1de8fb5c1c79a5a05dada3a55.png","count":1},{"num":1,"gift":"随机英雄联盟角色手办","date":"2020-03-29","name":"卟要悔","web_image":"https://i0.hdslb.com/bfs/live/4a2f604ef7b3dad583c054d4ffdb30e37f37ad9c.png","mobile_image":"https://i0.hdslb.com/bfs/live/4a2f604ef7b3dad583c054d4ffdb30e37f37ad9c.png","count":1},{"num":1,"gift":"随机提伯斯熊毛绒公仔","date":"2020-03-23","name":"就这样8丶","web_image":"https://i0.hdslb.com/bfs/live/61414ab727c55cd1de8fb5c1c79a5a05dada3a55.png","mobile_image":"https://i0.hdslb.com/bfs/live/61414ab727c55cd1de8fb5c1c79a5a05dada3a55.png","count":1},{"num":1,"gift":"随机英雄联盟角色手办","date":"2020-03-17","name":"bIud77Vsory","web_image":"https://i0.hdslb.com/bfs/live/4a2f604ef7b3dad583c054d4ffdb30e37f37ad9c.png","mobile_image":"https://i0.hdslb.com/bfs/live/4a2f604ef7b3dad583c054d4ffdb30e37f37ad9c.png","count":1}]}}
-        $de_raw = json_decode($raw, true);
+        return json_decode($raw, true);
     }
+
+    /**
+     * @获取剩余抽奖次数
+     * @param int $coin_id
+     * @param string $referer
+     * @return int
+     */
+    private static function getLuckyNum(int $coin_id, string $referer): int
+    {
+        $capsule_info = self::getCapsuleInfo($coin_id, $referer);
+        if ($capsule_info['code'] == 0) {
+            Log::info("获取剩余抽奖次数成功 {$capsule_info['data']['coin']}");
+            return $capsule_info['data']['coin'];
+        }
+        Log::warning("获取剩余抽奖次数失败 {$capsule_info}");
+        return 0;
+    }
+
 
     /**
      * @use 获取用户活动任务
