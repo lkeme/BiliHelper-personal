@@ -65,11 +65,11 @@ class Silver2Coin
 
     /**
      * @use 处理结果
-     * @param int $type
+     * @param string $type
      * @param array $data
      * @return bool
      */
-    private static function handle(int $type, array $data): bool
+    private static function handle(string $type, array $data): bool
     {
         // {"code":403,"msg":"每天最多能兑换 1 个","message":"每天最多能兑换 1 个","data":[]}
         // {"code":403,"msg":"仅主站正式会员以上的用户可以兑换","message":"仅主站正式会员以上的用户可以兑换","data":[]}
