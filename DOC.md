@@ -130,7 +130,9 @@ $ php index.php
 
 6. 请保证配置文件存在，否则默认加载`user.ini`配置文件
 
-<p align="center"><img width="680px" src="https://i.loli.net/2018/04/21/5adb497dc3ece.png"></p>
+<p align="center"><img width="680px" src="https://user-images.githubusercontent.com/19500576/118621472-f8455d80-b7f8-11eb-9fec-500148a566b4.png"></p>
+
+[comment]: <> (<p align="center"><img width="680px" src="https://i.loli.net/2018/04/21/5adb497dc3ece.png"></p>)
 
 ## Docker使用指南
 
