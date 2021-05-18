@@ -201,7 +201,7 @@ class Notice
         $raw = Curl::put('other', $url, $payload, $headers);
         $de_raw = json_decode($raw, true);
         if ($de_raw['errcode'] == 0) {
-            Log::info("推送消息成功: {$de_raw['errmsg']}");
+            Log::notice("推送消息成功: {$de_raw['errmsg']}");
         } else {
             Log::warning("推送消息失败: {$raw}");
         }
@@ -215,18 +215,18 @@ class Notice
     private static function teleSend(array $info)
     {
         Log::info('使用Tele机器人推送消息');
-        $url = 'https://api.telegram.org/bot' . getConf('bottoken', 'notify.telegram');
+        $url = 'https://api.telegram.org/bot' . getConf('bottoken', 'notify.telegram') . '/sendMessage';
         $payload = [
-            'method' => 'sendMessage',
             'chat_id' => getConf('chatid', 'notify.telegram'),
             'text' => $info['content']
         ];
+        // {"ok":true,"result":{"message_id":7,"from":{"id":,"is_bot":true,"first_name":"","username":""},"chat":{"id":,"first_name":"","username":"","type":"private"},"date":,"text":""}}
         $raw = Curl::post('other', $url, $payload);
         $de_raw = json_decode($raw, true);
-        if (array_key_exists('message_id', $de_raw)) {
-            Log::info("推送消息成功: {$de_raw['message_id']}");
+        if ($de_raw['ok'] && array_key_exists('message_id', $de_raw['result'])) {
+            Log::notice("推送消息成功: MSG_ID->{$de_raw['result']['message_id']}");
         } else {
-            Log::info("推送消息失败: {$raw}");
+            Log::warning("推送消息失败: {$raw}");
         }
     }
 
@@ -247,7 +247,7 @@ class Notice
         $de_raw = json_decode($raw, true);
 
         if ($de_raw['errno'] == 0) {
-            Log::info("推送消息成功: {$de_raw['errmsg']}");
+            Log::notice("推送消息成功: {$de_raw['errmsg']}");
         } else {
             Log::warning("推送消息失败: {$raw}");
         }
@@ -271,7 +271,7 @@ class Notice
         // {'message': '[AUTH]用户不存在或者权限不足', 'code': 40001, 'info': '用户不存在或者权限不足', 'args': [None]}
         // {'code': 0, 'message': '', 'data': {'pushid': 'xxxx', 'readkey': 'xxxxx', 'error': 'SUCCESS', 'errno': 0}}
         if ($de_raw['code'] == 0) {
-            Log::info("推送消息成功: {$de_raw['data']['pushid']}");
+            Log::notice("推送消息成功: {$de_raw['data']['pushid']}");
         } else {
             Log::warning("推送消息失败: {$raw}");
         }
@@ -298,7 +298,7 @@ class Notice
         // {"code":200,"msg":"请求成功","data":"发送消息成功"}
         $de_raw = json_decode($raw, true);
         if ($de_raw['code'] == 200) {
-            Log::info("推送消息成功: {$de_raw['data']}");
+            Log::notice("推送消息成功: {$de_raw['data']}");
         } else {
             Log::warning("推送消息失败: {$raw}");
         }
@@ -322,7 +322,7 @@ class Notice
         // {"data":{"message_id":123456},"retcode":0,"status":"ok"}
         $de_raw = json_decode($raw, true);
         if ($de_raw['retcode'] == 0) {
-            Log::info("推送消息成功: {$de_raw['status']}");
+            Log::notice("推送消息成功: {$de_raw['status']}");
         } else {
             Log::warning("推送消息失败: {$raw}");
         }
@@ -347,7 +347,7 @@ class Notice
         $de_raw = json_decode($raw, true);
         // {"success": true, "msg": null, "data": {"errcode": 0, "errmsg": "ok", "msgid": 1231, "token": "456"}}
         if ($de_raw['success'] == true) {
-            Log::info("推送消息成功: {$de_raw['data']['msgid']}");
+            Log::notice("推送消息成功: {$de_raw['data']['msgid']}");
         } else {
             Log::warning("推送消息失败: {$raw}");
         }
