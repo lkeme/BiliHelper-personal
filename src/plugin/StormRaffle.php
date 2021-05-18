@@ -76,7 +76,7 @@ class StormRaffle extends BaseRaffle
      */
     private static function formatInfo($id, $num, $info): string
     {
-        return "风暴 {$id} 请求 {$num} 状态 {$info}";
+        return "节奏风暴 {$id} 请求 {$num} 状态 {$info}";
     }
 
     /**
@@ -88,7 +88,7 @@ class StormRaffle extends BaseRaffle
     {
         $url = 'https://api.live.bilibili.com/lottery/v1/Storm/join';
         foreach ($raffles as $raffle) {
-            self::$attempt = empty($attempt = getConf('attempt', 'live_storm')) ? [10, 20] : explode(',', $attempt);
+            self::$attempt = empty($attempt = getConf('attempt', 'live_storm')) ? [5, 10] : explode(',', $attempt);
             $num = mt_rand((int)self::$attempt[0], (int)self::$attempt[1]);
             $payload = [
                 'id' => $raffle['raffle_id'],

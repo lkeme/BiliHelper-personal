@@ -115,7 +115,10 @@ class ActivityLottery
                 self::addTimes($task['act']->sid, $task['act']->url, 3);
                 break;
             case 'draw':
-                self::doLottery($task['act']->sid, $task['act']->url, 0);
+                // 有抽奖机会才抽奖
+                if (self::initTimes($task['act']->sid, $task['act']->url, false)) {
+                    self::doLottery($task['act']->sid, $task['act']->url, 0);
+                }
                 break;
             default:
                 Log::info("当前 {$task['act']->title} #{$task['operation']} 任务不存在哦");
@@ -128,9 +131,10 @@ class ActivityLottery
      * @use 获取抽奖机会
      * @param string $sid
      * @param string $referer
+     * @param bool $init
      * @return bool
      */
-    private static function initTimes(string $sid, string $referer): bool
+    private static function initTimes(string $sid, string $referer, bool $init = true): bool
     {
         $url = 'https://api.bilibili.com/x/activity/lottery/mytimes';
         $headers = [
@@ -143,12 +147,25 @@ class ActivityLottery
         $raw = Curl::get('pc', $url, $payload, $headers);
         $de_raw = json_decode($raw, true);
         // {"code":0,"message":"0","ttl":1,"data":{"times":2}}
+        // {"code":0,"message":"0","ttl":1,"data":{"times":3}}
+        if ($init) {
+            if ($de_raw['code'] == 0) {
+                Log::notice("剩余抽奖次数 {$de_raw['data']['times']}");
+                return true;
+            }
+            Log::warning("获取抽奖次数失败 {$raw}");
+            return false;
+        }
         if ($de_raw['code'] == 0) {
-            Log::notice("获取抽奖机会成功 {$raw}");
+            Log::notice("剩余抽奖次数 {$de_raw['data']['times']}");
+            if ($de_raw['data']['times'] <= 0) {
+                return false;
+            }
             return true;
         }
-        Log::warning("获取抽奖机会失败 {$raw}");
+        Log::warning("获取抽奖次数失败 {$raw}");
         return false;
+
     }
 
     /**
@@ -172,9 +189,12 @@ class ActivityLottery
             'csrf' => getCsrf()
         ];
         $raw = Curl::post('pc', $url, $payload, $headers);
+        // {"code":75405,"message":"抽奖机会用尽啦","ttl":1}
+        // {"code":75003,"message":"活动已结束","ttl":1}
+        // {"code":0,"message":"0","ttl":1}
         $de_raw = json_decode($raw, true);
         Log::notice("增加抽奖机会#{$action_type} {$raw}");
-        // {"code":0,"message":"0","ttl":1}
+
         if ($de_raw['code'] == 0) {
             return true;
         }

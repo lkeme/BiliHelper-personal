@@ -13,7 +13,6 @@ namespace BiliHelper\Util;
 use BiliHelper\Core\Curl;
 use BiliHelper\Core\Log;
 use BiliHelper\Plugin\Live;
-use BiliHelper\Plugin\User;
 use BiliHelper\Tool\Generator;
 
 trait XliveHeartBeat
@@ -40,7 +39,6 @@ trait XliveHeartBeat
         'referer' => 'https://live.bilibili.com/',
         'user-agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.85 Safari/537.36'
     ];
-
 
     /**
      * @use 任务接口
@@ -239,7 +237,6 @@ trait XliveHeartBeat
         return false;
     }
 
-
     /**
      * @use 格式T
      * @param array $t
@@ -273,7 +270,7 @@ trait XliveHeartBeat
      * @use 重置变量
      * @param false $force
      */
-    protected static function resetVar($force = false)
+    protected static function resetVar(bool $force = false)
     {
         if ($force) {
             static::$_room_info = [];

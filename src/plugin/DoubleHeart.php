@@ -49,9 +49,9 @@ class DoubleHeart
         $data = json_decode($data, true);
 
         if (isset($data['code']) && $data['code']) {
-            Log::warning('[PC] 发送心跳异常', ['msg' => $data['message']]);
+            Log::warning('[PC] 发送在线心跳失败', ['msg' => $data['message']]);
         } else {
-            Log::notice('[PC] 发送心跳正常');
+            Log::notice('[PC] 发送在线心跳成功');
         }
     }
 
@@ -69,9 +69,9 @@ class DoubleHeart
         $data = json_decode($data, true);
 
         if (isset($data['code']) && $data['code']) {
-            Log::warning('[APP] 发送心跳异常', ['msg' => $data['message']]);
+            Log::warning('[APP] 发送在线心跳失败', ['msg' => $data['message']]);
         } else {
-            Log::notice('[APP] 发送心跳正常');
+            Log::notice('[APP] 发送在线心跳成功');
         }
     }
 }

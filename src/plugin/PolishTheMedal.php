@@ -31,10 +31,10 @@ class PolishTheMedal
         }
         // 获取灰色勋章
         if (self::$metal_lock < time()) {
-            // 如果勋章过多导致未处理完，就1小时一次，否则8小时一次。
+            // 如果勋章过多导致未处理完，就1小时一次，否则10小时一次。
             if (empty(self::$grey_fans_medals)) {
                 self::fetchGreyMedalList();
-                self::$metal_lock = time() + 8 * 60 * 60;
+                self::$metal_lock = time() + 10 * 60 * 60;
             } else {
                 self::$metal_lock = time() + 1 * 60 * 60;
             }
@@ -55,6 +55,9 @@ class PolishTheMedal
         $medal = array_pop(self::$grey_fans_medals);
         // 为空
         if (is_null($medal)) return;
+        // 特殊房间处理|央视未开播|CODE -> 11000 MSG -> ''
+        if (in_array($medal['roomid'], [21686237])) return;
+
         Log::info("开始点亮直播间@{$medal['roomid']}的勋章");
         // 擦亮
         $response = Live::sendBarrageAPP($medal['roomid'], Generator::emoji());

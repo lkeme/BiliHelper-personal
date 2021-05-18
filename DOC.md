@@ -1,5 +1,7 @@
 ## 环境依赖
 
+通常使用 `composer` 工具会自动检测以下依赖问题。
+
 |Requirement         |
 |--------------------|
 |PHP >=7.3           |
@@ -9,8 +11,6 @@
 |php_json            |
 |php_zlib            |
 |php_mbstring        |
-
-> 通常使用 `composer` 工具会自动检测上述依赖问题。
 
 ## Composer
 
@@ -102,8 +102,11 @@ $ cp user.ini.example user.ini
 
 ```
 $ composer install
-$ composer dump-autoload 
 ```
+
+[comment]: <> (composer dump-autoload &#40;-o&#41;)
+
+[comment]: <> (composer dumpautoload &#40;-o&#41;)
 
 3. 按照说明修改配置文件 `user.ini`
 
