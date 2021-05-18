@@ -4,7 +4,8 @@
   "branch": "master",
   "source": "https://github.com/lkeme/BiliHelper-personal",
   "raw_url": "https://cdn.jsdelivr.net/gh/lkeme/BiliHelper-personal@master/data/latest_version.json",
+  "purge_url": "https://purge.jsdelivr.net/gh/lkeme/BiliHelper-personal@master/data/latest_version.json",
   "version": "0.9.1.210518",
   "des": "程序有更新，请及时线上查看更新哦~",
-  "time": "2021年5月18日16:29:44"
+  "time": "2021年5月18日18:31:03"
 }
