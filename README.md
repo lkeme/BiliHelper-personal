@@ -9,6 +9,7 @@
 ![](https://img.shields.io/github/stars/lkeme/BiliHelper-personal.svg?style=plastic&logo=appveyor "Star数量")
 ![](https://img.shields.io/github/forks/lkeme/BiliHelper-personal.svg?style=plastic&logo=stackshare "Fork数量")
 ![](https://img.shields.io/github/contributors/lkeme/BiliHelper-personal "贡献者")
+[![Docker Pulls](https://img.shields.io/docker/pulls/lkeme/bilihelper-personal?style=flat-square)](https://hub.docker.com/r/lkeme/bilihelper-personal)
 
 </div>
 
@@ -22,6 +23,8 @@
 </p>
 
 ## 公告通知
+
+代码开源，本地化99.9%，项目不收集或使用任何敏感信息，兴趣所致，一切只为学习。
 
 ```notice
 ---- 免费的东西总是得不到人的珍惜。
@@ -52,7 +55,7 @@
 | GiftHeart       | true   | 21.05.18 | 日常心跳每日礼包礼物                        |
 | SmallHeart      | true   | 21.05.18 | 直播挂机，每日24个小心心                    |
 | MaterialObject  | true   | 21.05.18 | 直播金色宝箱实物抽奖                        |
-| AloneTcpClient  | true   | 21.05.18 | 作者的独立直播监控                          |
+| AloneTcpClient  | true   | 21.05.18 | 作者的独立直播监控(可支持本项目哦)           |
 | ZoneTcpClient   | true   | 21.05.18 | 官方的分区直播监控                          |
 | StormRaffle     | true   | 21.05.18 | 直播节奏风暴抽奖、亿元                      |
 | GiftRaffle      | true   | 21.05.18 | 直播礼物抽奖                                |
@@ -104,6 +107,14 @@ Group: [55308141](https://jq.qq.com/?_wv=1027&k=5AIDaJg) | **请不要来问如�
 * [BilibiliHelper](https://github.com/metowolf/BilibiliHelper)
 * [BiliHelper](https://github.com/lkeme/BiliHelper)
 * [Github](https://github.com/)
+
+## 致谢
+
+感谢 `JetBrains` 提供优秀的IDE。
+
+<a href="https://www.jetbrains.com/?from=BiliHelper-personal" target="_blank">
+<img src="https://tva1.sinaimg.cn/large/008eGmZEly1gov9g3tzrnj30u00wj0tn.jpg" width="150"/>
+</a>
 
 ## License 许可证
 

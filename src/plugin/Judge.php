@@ -36,8 +36,8 @@ class Judge
             return;
         }
         //  self::judgementIndex();
-        // 如果没有设置时间 就设置个默认时间
-        if (self::getLock() < time()) {
+        // 如果没有设置时间 就设置个默认时间 可能在一秒钟内处理完 所以 <=
+        if (self::getLock() <= time()) {
             self::setLock(mt_rand(15, 30) * 60);
         }
     }

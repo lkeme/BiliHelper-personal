@@ -243,7 +243,7 @@ class Curl
             'Connection' => 'keep-alive',
             // 'Content-Type' => 'application/x-www-form-urlencoded',
             // 'User-Agent' => 'Mozilla/5.0 BiliDroid/5.51.1 (bbcallen@gmail.com)',
-            'User-Agent' => 'Mozilla/5.0 BiliDroid/6.24.0 (bbcallen@gmail.com) os/android model/MuMu mobi_app/android build/6240300 channel/bili innerVer/6240300 osVer/6.0.1 network/2',
+            'User-Agent' => 'Mozilla/5.0 BiliDroid/6.25.0 (bbcallen@gmail.com) os/android model/MuMu mobi_app/android build/6250300 channel/bili innerVer/6250300 osVer/6.0.1 network/2',
             // 'Referer' => 'https://live.bilibili.com/',
         ];
         $pc_headers = [
