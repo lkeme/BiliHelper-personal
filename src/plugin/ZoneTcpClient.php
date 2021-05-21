@@ -471,10 +471,10 @@ class ZoneTcpClient
     /**
      * @use 读数据
      * @param $length
-     * @param $is_header
-     * @return array|bool|false
+     * @param bool $is_header
+     * @return array|bool
      */
-    private static function reader($length, $is_header = false)
+    private static function reader($length, bool $is_header = false)
     {
         $data = false;
         try {

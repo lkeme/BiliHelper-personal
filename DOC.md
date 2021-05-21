@@ -158,22 +158,22 @@ $ php index.php
 - 通过环境变量进行传入
 
 ```shell script
-  docker run -itd --rm -e USER_NAME=你的B站登录账号 -e USER_PASSWORD=你的B站密码 zsnmwy/bilihelper-personal
+$ docker run -itd --rm -e USER_NAME=你的B站登录账号 -e USER_PASSWORD=你的B站密码 lkeme/bilihelper-personal
 ```
 
-- 通过配置文件进行传入
+- 通过配置文件进行传入(能保留登录状态，自定义配置)
 
 1. 下载[配置文件](https://raw.githubusercontent.com/lkeme/BiliHelper-personal/master/conf/user.ini.example)
 2. 修改
 3. 通过下面的命令进行挂载并运行
 
 ```shell script
-docker run -itd --rm -v /path/to/your/confFileName.ini:/app/conf/user.ini zsnmwy/bilihelper-personal
+$ docker run -itd --rm -v /path/to/your/confFileName.ini:/app/conf/user.ini lkeme/bilihelper-personal
 ```
 
-```
-相关参数
+- 相关参数
 
+```ps
   -it 前台运行
   -itd 后台运行
   -v 本地文件:容器内部文件 ==> 挂载本地文件到容器中。本地文件路径随便变，容器内部文件路径不能变。
