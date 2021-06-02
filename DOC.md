@@ -171,6 +171,14 @@ $ docker run -itd --rm -e USER_NAME=你的B站登录账号 -e USER_PASSWORD=你�
 $ docker run -itd --rm -v /path/to/your/confFileName.ini:/app/conf/user.ini lkeme/bilihelper-personal
 ```
 
+- 使用github镜像加速
+
+```bash
+$ -e MIRRORS=0 # 使用 github.com 
+$ -e MIRRORS=1 # 使用 ghproxy.com
+$ -e MIRRORS=2 # 使用 github.com.cnpmjs.org
+```
+
 - 相关参数
 
 ```ps

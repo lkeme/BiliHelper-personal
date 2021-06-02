@@ -29,12 +29,21 @@ class PolishTheMedal
         if (!getEnable('polish_the_medal')) {
             return;
         }
+
         // 获取灰色勋章
         if (self::$metal_lock < time()) {
             // 如果勋章过多导致未处理完，就1小时一次，否则10小时一次。
             if (empty(self::$grey_fans_medals)) {
-                self::fetchGreyMedalList();
-                self::$metal_lock = time() + 10 * 60 * 60;
+                // 处理每日
+                if (getConf('everyday', 'polish_the_medal')) {
+                    // 如果是 直接定时到第二天7点
+                    self::fetchGreyMedalList(true);
+                    self::$metal_lock = time() + self::timing(7, 0, 0, true);
+                } else {
+                    // 否则按正常逻辑
+                    self::fetchGreyMedalList();
+                    self::$metal_lock = time() + 10 * 60 * 60;
+                }
             } else {
                 self::$metal_lock = time() + 1 * 60 * 60;
             }
@@ -68,10 +77,12 @@ class PolishTheMedal
         }
     }
 
+
     /**
      * @use 获取灰色勋章列表(过滤无勋章或已满)
+     * @param bool $all
      */
-    private static function fetchGreyMedalList()
+    private static function fetchGreyMedalList(bool $all = false)
     {
         $data = Live::fetchMedalList();
         foreach ($data as $vo) {
@@ -84,12 +95,20 @@ class PolishTheMedal
                 'uid' => $vo['target_id'],
                 'roomid' => $vo['roomid'],
             ];
-            //  灰色
-            if ($vo['medal_color_start'] == 12632256 && $vo['medal_color_end'] == 12632256 && $vo['medal_color_border'] == 12632256) {
+            // 如果是每天擦亮 ，就不过滤|否则过滤掉，只点亮灰色
+            if ($all) {
                 self::$grey_fans_medals[] = [
                     'uid' => $vo['target_id'],
                     'roomid' => $vo['roomid'],
                 ];
+            } else {
+                //  灰色
+                if ($vo['medal_color_start'] == 12632256 && $vo['medal_color_end'] == 12632256 && $vo['medal_color_border'] == 12632256) {
+                    self::$grey_fans_medals[] = [
+                        'uid' => $vo['target_id'],
+                        'roomid' => $vo['roomid'],
+                    ];
+                }
             }
         }
         // 乱序

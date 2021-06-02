@@ -67,9 +67,10 @@ enable = true
 [live_capsule]
 enable = true
 
-; 点亮灰色勋章
+; 点亮灰色勋章|100亲密度|每日或者只点亮灰色
 [polish_the_medal]
 enable = true
+everyday = false
 
 ; 主站九宫格抽奖活动助手
 [main_activity]
