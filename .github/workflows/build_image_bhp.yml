@@ -15,7 +15,8 @@ jobs:
           publish: true
           imageName: lkeme/bilihelper-personal
           dockerFile: docker/Dockerfile
-          platform: linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v8
+          platform: linux/amd64,linux/arm64,linux/arm/v7
+          # platform: linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v8
           tag: latest
           dockerUser: ${{ secrets.DOCKER_USERNAME }}
           dockerPassword: ${{ secrets.DOCKER_PASSWORD }}
