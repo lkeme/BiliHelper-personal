@@ -72,8 +72,13 @@ class GroupSignIn
 
         if ($de_raw['code'] != '0') {
             // TODO 任务失败原因
-            print_r($de_raw);
-            Log::warning('在应援团{' . $groupInfo['group_name'] . '}中签到失败, 原因待查');
+            // {"code": 710001, "msg": "应援失败>_<", "message": "应援失败>_<", "ttl": "1", "data": {"add_num": 0, "status": 0}}
+            if ($de_raw['code'] == '710001') {
+                Log::warning('在应援团{' . $groupInfo['group_name'] . '}中签到失败, 亲密度已达上限');
+            } else {
+                print_r($de_raw);
+                Log::warning('在应援团{' . $groupInfo['group_name'] . '}中签到失败, 原因待查');
+            }
             return false;
         }
         if ($de_raw['data']['status'] == '0') {
