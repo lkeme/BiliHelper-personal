@@ -28,3 +28,10 @@ conf/user1.ini
 /conf/test1.ini
 /log/
 /src/backup/
+
+# ignore all files in lib/
+task/*
+# except for .gitkeep
+!.gitkeep
+# ignore TODO file in root directory,not subdir/TODO
+/TODO

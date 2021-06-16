@@ -13,7 +13,6 @@
     "monolog/monolog": "^1.26.0",
     "bramus/monolog-colored-line-formatter": "^2.0.3",
     "clue/socket-raw": "^1.5.0",
-    "vlucas/phpdotenv": "^4.2.0",
     "amphp/amp": "^2.5.2",
     "guzzlehttp/guzzle": "^6.5.5",
     "mathieuviossat/arraytotexttable": "^1.0.8",

@@ -24,6 +24,7 @@ class App
         define('APP_CONF_PATH', $app_path . "/conf/");
         define('APP_DATA_PATH', $app_path . "/data/");
         define('APP_LOG_PATH', $app_path . "/log/");
+        define('APP_TASK_PATH', $app_path . "/task/");
     }
 
     /**

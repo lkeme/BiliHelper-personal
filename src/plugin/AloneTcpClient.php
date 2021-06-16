@@ -211,8 +211,8 @@ class AloneTcpClient
         Log::debug("(len=$len_body)");
         $body = self::reader($len_body);
         $raw_data = json_decode($body, true);
-        // 人气值(或者在线人数或者类似)以及心跳
-        $data_type = $raw_data['type'];
+        // 数据可能出现不全 DECODE返回NULL 索引错误 交给default处理
+        $data_type = is_null($raw_data) ? "unknown" : $raw_data['type'];
         switch ($data_type) {
             case 'raffle':
                 // 抽奖推送
@@ -259,6 +259,8 @@ class AloneTcpClient
                 // 未知信息
                 var_dump($raw_data);
                 Log::info("出现未知信息 {$body}");
+                // 出现未知信息 处理重连 防止内存益处
+                self::reConnect();
                 break;
         }
     }

@@ -45,8 +45,8 @@ class Barrage
          */
         $punctuations = $sep ? ['，', ',', '。', '!', '.', ';', '——'] : [];
         $apis = [
-            'https://api.ly522.com/yan.php?format=text',
             'https://v1.hitokoto.cn/?encode=text',
+            'https://api.ly522.com/Api/YiYan?format=text',
             'https://api.jysafe.cn/yy/',
             'https://api.imjad.cn/hitokoto/',
             'https://www.ly522.com/hitokoto/',
