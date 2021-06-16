@@ -11,6 +11,7 @@
 namespace BiliHelper\Util;
 
 use Amp\Delayed;
+use BiliHelper\Core\Task;
 use BiliHelper\Plugin\Schedule;
 
 trait TimeLock
@@ -25,7 +26,7 @@ trait TimeLock
     public static function setLock(int $lock)
     {
         if (!static::getpauseStatus()) {
-            static::$lock = time() + $lock;
+            Task::getInstance()::_setLock(static::getBaseClass(), time() + $lock);
         }
     }
 
@@ -35,7 +36,16 @@ trait TimeLock
      */
     public static function getLock(): int
     {
-        return static::$lock;
+        return Task::getInstance()::_getLock(static::getBaseClass());
+    }
+
+    /**
+     * @use 获取基础CLASS NAME
+     * @return string
+     */
+    public static function getBaseClass(): string
+    {
+        return basename(str_replace('\\', '/', __CLASS__));
     }
 
     /**
@@ -104,7 +114,7 @@ trait TimeLock
      */
     public static function cancelPause()
     {
-        static::$lock = false;
+        static::$pause_status = false;
     }
 
     /**

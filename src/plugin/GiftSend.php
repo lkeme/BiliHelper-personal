@@ -207,7 +207,7 @@ class GiftSend
         if (isset($data['code']) && $data['code']) {
             Log::warning('获取帐号信息失败!', ['msg' => $data['message']]);
             Log::warning('清空礼物功能禁用!');
-            self::$lock = time() + 100000000;
+            self::setLock(100000000);
             return;
         }
         self::$uid = $data['data']['uid'];
@@ -224,7 +224,7 @@ class GiftSend
         if (isset($data['code']) && $data['code']) {
             Log::warning('获取主播房间号失败!', ['msg' => $data['message']]);
             Log::warning('清空礼物功能禁用!');
-            self::$lock = time() + 100000000;
+            self::setLock(100000000);
             return;
         }
         Log::info('直播间信息生成完毕!');
