@@ -50,13 +50,15 @@ class MainSite
             'Referer' => "https://www.bilibili.com/video/av{$aid}",
             'User-Agent' => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.81 Safari/537.36",
         ];
+        // {"code":34005,"message":"超过投币上限啦~","ttl":1,"data":{"like":false}}
+        // {"code":0,"message":"0","ttl":1,"data":{"like":false}}
         $raw = Curl::post('app', $url, Sign::common($payload), $headers);
         $de_raw = json_decode($raw, true);
         if ($de_raw['code'] == 0) {
-            Log::notice("主站任务: av{$aid} 投币成功");
+            Log::notice("主站任务: av{$aid} 投币成功 {$de_raw['code']} MSG -> {$de_raw['message']}");
             return true;
         } else {
-            Log::warning("主站任务: av{$aid} 投币失败");
+            Log::warning("主站任务: av{$aid} 投币失败 CODE -> {$de_raw['code']} MSG -> {$de_raw['message']}");
             return false;
         }
     }
@@ -120,7 +122,7 @@ class MainSite
         // 稿件列表
         if (getConf('add_coin_mode', 'main_site') == 'random') {
             // 随机热门稿件榜单
-            $aids = self::getDayRankingAids($actual_num);
+            $aids = self::getTopRCmdAids($actual_num);
         } else {
             // 固定获取关注UP稿件榜单, 不足会随机补全
             $aids = self::getFollowUpAids($actual_num);
@@ -181,7 +183,7 @@ class MainSite
         }
         // 此处补全缺失
         if (count($aids) < $num) {
-            $aids = array_merge($aids, self::getDayRankingAids($num - count($aids)));
+            $aids = array_merge($aids, self::getTopRCmdAids($num - count($aids)));
         }
         return $aids;
     }
@@ -220,6 +222,34 @@ class MainSite
         }
 
         return $aids;
+    }
+
+    /**
+     * @use 首页推荐
+     * @param int $num
+     * @param int $ps
+     * @return array
+     */
+    private static function getTopRCmdAids(int $num, int $ps = 30): array
+    {
+        // 动画1 国创168 音乐3 舞蹈129 游戏4 知识36 科技188 汽车223 生活160 美食211 动物圈127 鬼畜119 时尚155 资讯202 娱乐5 影视181
+        $rids = [1, 168, 3, 129, 4, 36, 188, 223, 160, 211, 127, 119, 155, 202, 5, 181];
+        $aids = [];
+        $url = 'https://api.bilibili.com/x/web-interface/dynamic/region';
+        $payload = [
+            'ps' => $ps,
+            'rid' => $rids[array_rand($rids)],
+        ];
+        $raw = Curl::get('other', $url, $payload);
+        $de_raw = json_decode($raw, true);
+        if ($de_raw['code'] == 0) {
+            $temps = array_rand($de_raw['data']['archives'], $num);
+            foreach ($temps as $temp) {
+                array_push($aids, $de_raw['data']['archives'][$temp]['aid']);
+            }
+            return $aids;
+        }
+        return self::getDayRankingAids($num);
     }
 
     /**

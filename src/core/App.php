@@ -42,7 +42,7 @@ class App
      * @param string $load_file
      * @return $this
      */
-    public function load($load_file = 'user.ini'): App
+    public function load(string $load_file = 'user.ini'): App
     {
         Config::load($load_file);
         return $this;
