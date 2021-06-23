@@ -40,10 +40,10 @@ class Silver2Coin
         sleep(0.5);
         $url = 'https://api.live.bilibili.com/AppExchange/silver2coin';
         $payload = [];
-        $raw = Curl::get('app', $url, Sign::common($payload));
+        $raw = Curl::post('app', $url, Sign::common($payload));
         $de_raw = json_decode($raw, true);
 
-        return self::appHandle('APP', $de_raw);
+        return self::handle('APP', $de_raw);
 
     }
 
@@ -59,13 +59,13 @@ class Silver2Coin
             'csrf' => getCsrf(),
             'visit_id' => ''
         ];
-        $url = "https://api.live.bilibili.com/exchange/silver2coin";
-        $url = "https://api.live.bilibili.com/pay/v1/Exchange/silver2coin";
+        // $url = "https://api.live.bilibili.com/exchange/silver2coin";
+        // $url = "https://api.live.bilibili.com/pay/v1/Exchange/silver2coin";
         $url = "https://api.live.bilibili.com/xlive/revenue/v1/wallet/silver2coin";
         $raw = Curl::post('pc', $url, $payload);
         $de_raw = json_decode($raw, true);
 
-        return self::pcHandle('PC', $de_raw);
+        return self::handle('PC', $de_raw);
     }
 
     /**
@@ -74,35 +74,12 @@ class Silver2Coin
      * @param array $data
      * @return bool
      */
-    private static function appHandle(string $type, array $data): bool
+    private static function handle(string $type, array $data): bool
     {
         // {"code":403,"msg":"每天最多能兑换 1 个","message":"每天最多能兑换 1 个","data":[]}
         // {"code":403,"msg":"仅主站正式会员以上的用户可以兑换","message":"仅主站正式会员以上的用户可以兑换","data":[]}
         // {"code":0,"msg":"兑换成功","message":"兑换成功","data":{"gold":"5074","silver":"36734","tid":"727ab65376a15a6b117cf560a20a21122334","coin":1}}
-        switch ($data['code']) {
-            case 0:
-                Log::notice("[{$type}] 银瓜子兑换硬币: {$data['msg']}");
-                return true;
-            case 403:
-                Log::warning("[{$type}] 银瓜子兑换硬币: {$data['msg']}");
-                return true;
-            default:
-                Log::warning("[{$type}] 银瓜子兑换硬币: CODE -> {$data['code']} MSG -> {$data['msg']} ");
-                return false;
-        }
-    }
-
-    /**
-     * @use 处理结果
-     * @param string $type
-     * @param array $data
-     * @return bool
-     */
-    private static function pcHandle(string $type, array $data): bool
-    {
-        // {"code":403,"msg":"每天最多能兑换 1 个","message":"每天最多能兑换 1 个","data":[]}
-        // {"code":403,"msg":"仅主站正式会员以上的用户可以兑换","message":"仅主站正式会员以上的用户可以兑换","data":[]}
-        // {"code":0,"msg":"兑换成功","message":"兑换成功","data":{"gold":"5074","silver":"36734","tid":"727ab65376a15a6b117cf560a20a21122334","coin":1}}
+        // {"code":0,"data":{"coin":1,"gold":1234,"silver":4321,"tid":"Silver2Coin21062316490299678123456"},"message":"兑换成功"}
         switch ($data['code']) {
             case 0:
                 Log::notice("[{$type}] 银瓜子兑换硬币: {$data['message']}");
