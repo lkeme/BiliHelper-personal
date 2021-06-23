@@ -246,7 +246,7 @@ class Live
     {
         $room_id = self::getRealRoomID($room_id);
         if (!$room_id) {
-            return ['code' => 404, 'msg' => '直播间数据异常'];
+            return ['code' => 404, 'message' => '直播间数据异常'];
         }
         $url = 'https://api.live.bilibili.com/msg/send';
         $payload = [
@@ -279,7 +279,7 @@ class Live
     {
         $room_id = self::getRealRoomID($room_id);
         if (!$room_id) {
-            return ['code' => 404, 'msg' => '直播间数据异常'];
+            return ['code' => 404, 'message' => '直播间数据异常'];
         }
         $url = 'https://api.live.bilibili.com/msg/send';
         $payload = [
