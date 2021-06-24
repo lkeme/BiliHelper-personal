@@ -240,6 +240,7 @@ class Dynamic
      */
     protected static function filterLayer(array $item): bool
     {
+        self::loadJsonData();
         // 过滤描述
         $default_words = self::$store->get("DynamicForward.default");
         $custom_words = empty($words = getConf('filter_words', 'dynamic')) ? [] : explode(',', $words);
