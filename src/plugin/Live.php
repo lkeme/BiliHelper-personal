@@ -432,4 +432,39 @@ class Live
         }
         return $room_ids;
     }
+
+    /**
+     * @use 获取用户卡片
+     * @param int $mid
+     * @return array
+     */
+    public static function getMidCard(int $mid): array
+    {
+        $url = 'https://api.bilibili.com/x/web-interface/card';
+        $payload = [
+            'mid' => $mid,
+        ];
+        //{"code":0,"message":"0","ttl":1,"data":{"card":{"mid":"1","name":"bishi","approve":false,"sex":"男","rank":"10000","face":"http://i1.hdslb.com/bfs/face/34c5b30a990c7ce4a809626d8153fa7895ec7b63.gif","DisplayRank":"0","regtime":0,"spacesta":0,"birthday":"","place":"","description":"","article":0,"attentions":[],"fans":154167,"friend":5,"attention":5,"sign":"","level_info":{"current_level":4,"current_min":0,"current_exp":0,"next_exp":0},"pendant":{"pid":0,"name":"","image":"","expire":0,"image_enhance":"","image_enhance_frame":""},"nameplate":{"nid":0,"name":"","image":"","image_small":"","level":"","condition":""},"Official":{"role":0,"title":"","desc":"","type":-1},"official_verify":{"type":-1,"desc":""},"vip":{"type":2,"status":1,"due_date":1727625600000,"vip_pay_type":1,"theme_type":0,"label":{"path":"","text":"年度大会员","label_theme":"annual_vip","text_color":"#FFFFFF","bg_style":1,"bg_color":"#FB7299","border_color":""},"avatar_subscript":1,"nickname_color":"#FB7299","role":3,"avatar_subscript_url":"http://i0.hdslb.com/bfs/vip/icon_Certification_big_member_22_3x.png","vipType":2,"vipStatus":1}},"following":false,"archive_count":2,"article_count":0,"follower":154167}}
+        $raw = Curl::get('other', $url, $payload);
+        return json_decode($raw, true);
+    }
+
+    /**
+     * @use 获取用户关注数
+     * @param int $mid
+     * @return int
+     */
+    public static function getMidFollower(int $mid): int
+    {
+        $follower = 0;
+        // root->data->follower
+        $data = self::getMidCard($mid);
+        if (isset($data['code']) && $data['code']) {
+            Log::warning("获取用户资料卡片失败: CODE -> {$data['code']} MSG -> {$data['message']} ");
+        } else {
+            // root->data->follower
+            $follower = $data['data']['follower'];
+        }
+        return $follower;
+    }
 }

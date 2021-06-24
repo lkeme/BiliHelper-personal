@@ -136,12 +136,14 @@ bp2charge_uid = 6580464
 # 消费B币充值金瓜子|5000金瓜子
 bp2gold = false
 
-; 自动转发抽奖动态|自动取关未中奖动态|强制清除抽奖组关注|更改自动回复语言
+; 自动转发抽奖动态|自动取关未中奖动态|强制清除抽奖组关注|过滤低于多少粉丝|自定义回复|过滤词|逗号分割
 [dynamic]
 enable = false
 clear_dynamic = false
 clear_group_follow = false
-auto_reply_text = "从未中奖，从未放弃[doge]"
+min_fans_num = 1001
+auto_reply_text =
+filter_words =
 
 ; 游戏赛事竞猜预测|破产机|每日竞猜次数|每次竞猜硬币(1-10)|下注(1.压大,2.压小,3.随机)
 [match_forecast]

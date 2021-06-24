@@ -9,9 +9,12 @@
 namespace BiliHelper\Plugin;
 
 use BiliHelper\Core\Curl;
+use BiliHelper\Util\FilterWords;
 
 class Dynamic
 {
+    use FilterWords;
+
     //  228584  14027    434405   7019788   3230836
     private static $topic_list = [
         3230836 => '',
@@ -36,16 +39,22 @@ class Dynamic
             // new
             foreach ($data['data']['cards'] as $article) {
                 $article_id = $article['desc']['dynamic_id'];
+                // 获取 description
+                $card = json_decode($article['card'], true);
                 $item = [
                     'uid' => $article['desc']['uid'],
                     'rid' => $article['desc']['rid'],
                     'did' => $article_id,
                     'tm' => $article['desc']['timestamp'],
+                    'desc' => $card['item']['description']
                 ];
-
+                // 过滤为true 就跳过
+                if (self::filterLayer($item)) continue;
+                // 不要原始desc
+                unset($item['desc']);
                 self::$article_list[$article_id] = $item;
             }
-//            $has_more = 0;
+            // $has_more = 0;
             // more ??
             // https://api.vc.bilibili.com/topic_svr/v1/topic_svr/topic_history?topic_name=转发抽奖&offset_dynamic_id=454347930068783808
         }
@@ -62,7 +71,7 @@ class Dynamic
      * @param string $extension
      * @return bool
      */
-    public static function dynamicRepost($rid, $content = "", $type = 1, $repost_code = 3000, $from = "create.comment", $extension = '{"emoji_type":1}'): bool
+    public static function dynamicRepost($rid, string $content = "", int $type = 1, int $repost_code = 3000, string $from = "create.comment", string $extension = '{"emoji_type":1}'): bool
     {
         $url = "https://api.vc.bilibili.com/dynamic_repost/v1/dynamic_repost/reply";
         $payload = [
@@ -90,7 +99,7 @@ class Dynamic
      * @param int $plat
      * @return bool
      */
-    public static function dynamicReplyAdd(int $rid, $message = "", $type = 11, $plat = 1): bool
+    public static function dynamicReplyAdd(int $rid, string $message = "", int $type = 11, int $plat = 1): bool
     {
         $url = "https://api.bilibili.com/x/v2/reply/add";
         $payload = [
@@ -133,7 +142,7 @@ class Dynamic
      * @param int $uid
      * @return array
      */
-    public static function getMyDynamic($uid = 0): array
+    public static function getMyDynamic(int $uid = 0): array
     {
         $uid = $uid == 0 ? getUid() : $uid;
         $url = "https://api.vc.bilibili.com/dynamic_svr/v1/dynamic_svr/space_history";
@@ -197,7 +206,7 @@ class Dynamic
      * @param int $type_list
      * @return array|mixed
      */
-    public static function getDynamicTab($uid = 0, $type_list = 268435455)
+    public static function getDynamicTab(int $uid = 0, int $type_list = 268435455)
     {
         $uid = $uid == 0 ? getUid() : $uid;
         $url = "https://api.vc.bilibili.com/dynamic_svr/v1/dynamic_svr/dynamic_new";
@@ -222,6 +231,33 @@ class Dynamic
             }
         }
         return $card_list;
+    }
 
+    /**
+     * @use 过滤层
+     * @param array $item
+     * @return bool
+     */
+    protected static function filterLayer(array $item): bool
+    {
+        // 过滤描述
+        $default_words = self::$store->get("DynamicForward.default");
+        $custom_words = empty($words = getConf('filter_words', 'dynamic')) ? [] : explode(',', $words);
+        $total_words = array_merge($default_words, $custom_words);
+        foreach ($total_words as $word) {
+            if (strpos($item['desc'], $word) !== false) {
+                return true;
+            }
+        }
+        // 过滤UID
+        $uid_list = self::$store->get("Common.uid_list");
+        if (array_key_exists((int)$item['uid'], $uid_list)) {
+            return true;
+        }
+        // 过滤粉丝数量
+        if (Live::getMidFollower((int)$item['uid']) < getConf('min_fans_num', 'dynamic')) {
+            return true;
+        }
+        return false;
     }
 }
