@@ -287,6 +287,7 @@ class Forward
             $msg = array_pop($data);
         }
         Log::info("已将自动回复改为\"{$msg}\"");
+        return $msg;
     }
 
 }
