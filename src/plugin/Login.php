@@ -270,7 +270,9 @@ class Login
     private static function smsLogin(string $mode = '短信模式')
     {
         Log::info("尝试 {$mode} 登录");
-        self::checkPhone(self::$username);
+        if (getConf('phone', 'login.check')) {
+            self::checkPhone(self::$username);
+        }
         $captcha = self::sendSms(self::$username);
         $url = 'https://passport.bilibili.com/x/passport-login/login/sms';
         $payload = [

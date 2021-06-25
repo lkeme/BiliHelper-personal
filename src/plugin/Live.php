@@ -450,6 +450,22 @@ class Live
     }
 
     /**
+     * @use 获取用户状态
+     * @param int $mid
+     * @return array
+     */
+    public static function getMidStat(int $mid): array
+    {
+        $url = 'https://api.bilibili.com/x/relation/stat';
+        $payload = [
+            'vmid' => $mid,
+        ];
+        // {"code":0,"message":"0","ttl":1,"data":{"mid":50329118,"following":62,"whisper":0,"black":0,"follower":7610241}}
+        $raw = Curl::get('other', $url, $payload);
+        return json_decode($raw, true);
+    }
+
+    /**
      * @use 获取用户关注数
      * @param int $mid
      * @return int
@@ -458,7 +474,12 @@ class Live
     {
         $follower = 0;
         // root->data->follower
-        $data = self::getMidCard($mid);
+        if (mt_rand(0, 10) > 5) {
+            $data = self::getMidStat($mid);
+        } else {
+            $data = self::getMidCard($mid);
+        }
+
         if (isset($data['code']) && $data['code']) {
             Log::warning("获取用户资料卡片失败: CODE -> {$data['code']} MSG -> {$data['message']} ");
         } else {

@@ -9,11 +9,17 @@
 namespace BiliHelper\Plugin;
 
 use BiliHelper\Core\Curl;
+use BiliHelper\Core\Log;
 use BiliHelper\Util\FilterWords;
 
 class Dynamic
 {
     use FilterWords;
+
+    // TODO 活动订阅
+    // https://www.bilibili.com/blackboard/activity-WeqT10t1ep.html
+    // https://api.vc.bilibili.com/topic_svr/v1/topic_svr/fetch_dynamics?topic_name=%E4%BA%92%E5%8A%A8%E6%8A%BD%E5%A5%96&sortby=2
+    private static $tags = ['互动抽奖', '抽奖', '转发抽奖', '动态抽奖', '关注+转发'];
 
     //  228584  14027    434405   7019788   3230836
     private static $topic_list = [
@@ -41,12 +47,25 @@ class Dynamic
                 $article_id = $article['desc']['dynamic_id'];
                 // 获取 description
                 $card = json_decode($article['card'], true);
+                if (array_key_exists("description", $card['item'])) {
+                    // 主动态
+                    $description = $card['item']['description'];
+                } elseif (array_key_exists("content", $card['item'])) {
+                    // 子动态
+                    // TODO 暂时跳过 需要合适的处理方法
+                    // description = $card['item']['content'];
+                    continue;
+                } else {
+                    // 链接到视频的动态 少数 跳过
+                    // print_r($card);
+                    continue;
+                }
                 $item = [
                     'uid' => $article['desc']['uid'],
                     'rid' => $article['desc']['rid'],
                     'did' => $article_id,
                     'tm' => $article['desc']['timestamp'],
-                    'desc' => $card['item']['description']
+                    'desc' => $description
                 ];
                 // 过滤为true 就跳过
                 if (self::filterLayer($item)) continue;
@@ -58,6 +77,7 @@ class Dynamic
             // more ??
             // https://api.vc.bilibili.com/topic_svr/v1/topic_svr/topic_history?topic_name=转发抽奖&offset_dynamic_id=454347930068783808
         }
+        print_r(count(self::$article_list));
         return self::$article_list;
     }
 
@@ -243,20 +263,24 @@ class Dynamic
         self::loadJsonData();
         // 过滤描述
         $default_words = self::$store->get("DynamicForward.default");
+        $common_words = self::$store->get("Common.default");
         $custom_words = empty($words = getConf('filter_words', 'dynamic')) ? [] : explode(',', $words);
-        $total_words = array_merge($default_words, $custom_words);
+        $total_words = array_merge($default_words, $custom_words, $common_words);
         foreach ($total_words as $word) {
             if (strpos($item['desc'], $word) !== false) {
+                Log::warning("当前动态#{$item['did']}触发关键字过滤 {$word}");
                 return true;
             }
         }
         // 过滤UID
         $uid_list = self::$store->get("Common.uid_list");
         if (array_key_exists((int)$item['uid'], $uid_list)) {
+            Log::warning("当前动态#{$item['did']}触发UP黑名单过滤 {$item['uid']}");
             return true;
         }
         // 过滤粉丝数量
-        if (Live::getMidFollower((int)$item['uid']) < getConf('min_fans_num', 'dynamic')) {
+        if (($num = Live::getMidFollower((int)$item['uid'])) < getConf('min_fans_num', 'dynamic')) {
+            Log::warning("当前动态#{$item['did']}触发UP粉丝数量过滤 {$num}");
             return true;
         }
         return false;
