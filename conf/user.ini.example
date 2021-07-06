@@ -11,6 +11,10 @@ password = ""
 [login.mode]
 mode = 1
 
+; 国家代码|mode=2触发|例：大陆86 澳大利亚61
+[login.country]
+country_code = 86
+
 ; 校验|mode=2触发|校验国内手机号|国外手机号关闭校验
 [login.check]
 phone = true

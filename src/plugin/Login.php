@@ -311,9 +311,9 @@ class Login
     {
         $url = 'https://passport.bilibili.com//x/passport-login/sms/send';
         $payload = [
-            'cid' => '86',
+            'cid' => getConf('country_code', 'login.country') ,
             'tel' => $phone,
-            'statistics' => '{"appId":1,"platform":3,"version":"6.3.0","abtest":""}',
+            'statistics' => '{"appId":1,"platform":3,"version":"6.31.0","abtest":""}',
         ];
         $raw = Curl::post('app', $url, Sign::login($payload));
         $de_raw = json_decode($raw, true);
