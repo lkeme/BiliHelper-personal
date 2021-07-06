@@ -151,7 +151,7 @@ class MainSite
             $de_raw = json_decode($raw, true);
             // echo "getRandomAid " . count($de_raw['data']['archives']) . PHP_EOL;
             // $aid = array_rand($de_raw['data']['archives'])['aid'];
-        } while (count($de_raw['data']['archives']) == 0);
+        } while (count((array)$de_raw['data']['archives']) == 0);
         $aid = $de_raw['data']['archives'][0]['aid'];
         return (string)$aid;
     }
@@ -243,7 +243,11 @@ class MainSite
         $raw = Curl::get('other', $url, $payload);
         $de_raw = json_decode($raw, true);
         if ($de_raw['code'] == 0) {
-            $temps = array_rand($de_raw['data']['archives'], $num);
+            if ($num == 1) {
+                $temps = [array_rand($de_raw['data']['archives'], $num)];
+            } else {
+                $temps = array_rand($de_raw['data']['archives'], $num);
+            }
             foreach ($temps as $temp) {
                 array_push($aids, $de_raw['data']['archives'][$temp]['aid']);
             }
