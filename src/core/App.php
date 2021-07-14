@@ -11,7 +11,6 @@
 namespace BiliHelper\Core;
 
 use Amp\Loop;
-use Ahc\Cli\IO\Interactor;
 use function Amp\asyncCall;
 
 class App
