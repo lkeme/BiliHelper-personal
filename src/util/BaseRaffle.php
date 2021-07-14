@@ -97,7 +97,7 @@ abstract class BaseRaffle
         $raw = Curl::get('app', $url, Sign::common($payload));
         $de_raw = json_decode($raw, true);
         if (!isset($de_raw['data']) || $de_raw['code']) {
-            // TODO 请求被拦截 412
+            // Todo 请求被拦截 412
             Log::error("获取抽奖数据错误，{$de_raw['message']}");
             return [];
         }
@@ -133,7 +133,7 @@ abstract class BaseRaffle
      * @param string $type
      * @return array
      */
-    protected static function arrKeySort($arr, $key, $type = 'asc'): array
+    protected static function arrKeySort($arr, $key, string $type = 'asc'): array
     {
         switch ($type) {
             case 'desc':
@@ -153,7 +153,7 @@ abstract class BaseRaffle
      * @param bool $filter
      * @return bool
      */
-    protected static function toRepeatLid($lid, $filter = true): bool
+    protected static function toRepeatLid($lid, bool $filter = true): bool
     {
         $lid = (int)$lid;
         if (in_array($lid, static::$all_list)) {

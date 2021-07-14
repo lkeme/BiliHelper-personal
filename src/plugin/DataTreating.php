@@ -12,7 +12,7 @@ namespace BiliHelper\Plugin;
 
 class DataTreating
 {
-    // TODO 独立分发 Push||Pull数据
+    // Todo 独立分发 Push||Pull数据
     /**
      * @use 抽奖分发
      * @param array $data

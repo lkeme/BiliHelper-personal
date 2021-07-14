@@ -47,7 +47,7 @@ class CheckUpdate
             Log::info('项目已是最新版本');
         } else {
             Log::notice('项目有更新');
-            // TODO 完善提示信息
+            // Todo 完善提示信息
             $time = self::$latest_conf->get('time');
             $version = self::$latest_conf->get('version');
             $des = self::$latest_conf->get('des');

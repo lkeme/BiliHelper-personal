@@ -194,7 +194,7 @@ class MaterialObject
      */
     private static function calcAid($min, $max): bool
     {
-        // TODO 优化计算AID算法
+        // Todo 优化计算AID算法
         if (self::$end_aid != 0 && self::$start_aid != 0) {
             return false;
         }

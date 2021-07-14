@@ -23,7 +23,7 @@ class Statistics
     private static $success_list = [];
     private static $profit_list = [];
 
-    // TODO 统计开关 统计时间间隔  统计类型
+    // Todo 统计开关 统计时间间隔  统计类型
     public static function run()
     {
         if (self::getLock() > time()) {

@@ -86,7 +86,7 @@ class Barrage
         $response = Live::sendBarragePC($room_id, $content);
         // {"code":0,"data":[],"message":"","msg":""}
         // {"code":0,"message":"你被禁言啦","msg":"你被禁言啦"}
-        // TODO 长度限制
+        // Todo 长度限制
         if (isset($response['code']) && $response['code'] == 0 && isset($response['data'])) {
             Log::notice("在直播间@{$room_id} 发送活跃弹幕成功 CODE -> {$response['code']}");
             return true;

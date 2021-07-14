@@ -17,7 +17,7 @@ class Schedule
 {
     use TimeLock;
 
-    // TODO 黑白名单|考虑添加到每个插件内部自动添加|优化RUN逻辑代码
+    // Todo 黑白名单|考虑添加到每个插件内部自动添加|优化RUN逻辑代码
     private static $unlock_hour = 24;
     private static $unlock_timers = [];
     private static $sleep_section = [];

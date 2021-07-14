@@ -149,7 +149,7 @@ bp2gold = false
 enable = false
 clear_dynamic = false
 clear_group_follow = false
-min_fans_num = 4999
+min_fans_num = 15000
 auto_reply_text =
 filter_words =
 

@@ -40,7 +40,7 @@ class ManGa
         sleep(1);
         $url = 'https://manga.bilibili.com/twirp/activity.v1.Activity/ClockIn';
         $payload = [
-            'access_key' => getConf('access_token', 'login.auth'),
+            'access_key' => getAccessToken(),
             'ts' => time()
         ];
         $raw = Curl::post('app', $url, Sign::common($payload));
