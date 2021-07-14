@@ -104,3 +104,14 @@ function getCsrf(): string
 {
     return getConf('csrf', 'login.auth');
 }
+
+
+/**
+ * @use HttpClient
+ * @param string $url
+ * @return \HttpClient
+ */
+function newHttp(string $url): HttpClient
+{
+    return new HttpClient($url);
+}

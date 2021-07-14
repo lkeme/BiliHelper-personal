@@ -16,7 +16,7 @@ class Dynamic
 {
     use FilterWords;
 
-    // TODO 活动订阅
+    // Todo 活动订阅
     // https://www.bilibili.com/blackboard/activity-WeqT10t1ep.html
     // https://api.vc.bilibili.com/topic_svr/v1/topic_svr/fetch_dynamics?topic_name=%E4%BA%92%E5%8A%A8%E6%8A%BD%E5%A5%96&sortby=2
     private static $tags = ['互动抽奖', '抽奖', '转发抽奖', '动态抽奖', '关注+转发'];
@@ -52,7 +52,7 @@ class Dynamic
                     $description = $card['item']['description'];
                 } elseif (array_key_exists("content", $card['item'])) {
                     // 子动态
-                    // TODO 暂时跳过 需要合适的处理方法
+                    // Todo 暂时跳过 需要合适的处理方法
                     // description = $card['item']['content'];
                     continue;
                 } else {

@@ -29,7 +29,7 @@ class Login
             return;
         }
         Log::info('启动登录程序');
-        if (getConf('access_token', 'login.auth') == '') {
+        if (getAccessToken() == '') {
             Log::info('准备载入登录令牌');
             self::login();
         }
@@ -117,7 +117,7 @@ class Login
     {
         $url = 'https://passport.bilibili.com/api/v2/oauth2/info';
         $payload = [
-            'access_token' => getConf('access_token', 'login.auth'),
+            'access_token' => getAccessToken(),
         ];
         $data = Curl::get('app', $url, Sign::common($payload));
         // {"ts":1234,"code":0,"data":{"mid":1234,"access_token":"1234","expires_in":7759292}}
@@ -137,8 +137,8 @@ class Login
     {
         $url = 'https://passport.bilibili.com/api/v2/oauth2/refresh_token';
         $payload = [
-            'access_token' => getConf('access_token', 'login.auth'),
-            'refresh_token' => getConf('refresh_token', 'login.auth'),
+            'access_token' => getAccessToken(),
+            'refresh_token' => getRefreshToken(),
         ];
         $raw = Curl::post('app', $url, Sign::common($payload));
         $de_raw = json_decode($raw, true);
@@ -313,7 +313,7 @@ class Login
         $payload = [
             'cid' => getConf('country_code', 'login.country') ,
             'tel' => $phone,
-            'statistics' => '{"appId":1,"platform":3,"version":"6.31.0","abtest":""}',
+            'statistics' => '{"appId":1,"platform":3,"version":"6.32.0","abtest":""}',
         ];
         $raw = Curl::post('app', $url, Sign::login($payload));
         $de_raw = json_decode($raw, true);

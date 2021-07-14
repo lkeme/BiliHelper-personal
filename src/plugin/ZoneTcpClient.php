@@ -499,7 +499,7 @@ class ZoneTcpClient
                             break;
                         Log::debug("Socket debug: select timeout" . PHP_EOL);
                     }
-                    // TODO unable to read from socket[104]: Connection reset by peer
+                    // Todo unable to read from socket[104]: Connection reset by peer
                     $ret = socket_recv($socket, $buffer, $length, 0);
                     if ($ret < 1) {
                         Log::warning("Socket error: [{$ret}] [{$length}]" . PHP_EOL);

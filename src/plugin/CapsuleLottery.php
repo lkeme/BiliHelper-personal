@@ -108,7 +108,7 @@ class CapsuleLottery
         Log::info("执行 {$task['act']->title} #{$task['operation']} 任务");
         // 执行任务
         switch ($task['operation']) {
-            // TODO 观看 分享 签到任务
+            // Todo 观看 分享 签到任务
             case 'watch':
                 $interval = self::xliveHeartBeatTask($task['act']->room_id, 999, 999);
                 self::$interval = $interval == 0 ? 60 : $interval;

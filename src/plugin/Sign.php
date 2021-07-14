@@ -27,7 +27,7 @@ class Sign
 //        $appsecret = '59b43e04ad6965f34319062b478f83dd';
 //
 //        $default = [
-//            'access_key' => getConf('access_token', 'login.auth')
+//            'access_key' => getAccessToken()
 //            'actionKey' => 'appkey',
 //            'appkey' => $appkey,
 //            'build' => 101800,
@@ -52,10 +52,10 @@ class Sign
         $appsecret = '60698ba2f68e01ce44738920a0ffe768';
 
         $default = [
-            'access_key' => getConf('access_token', 'login.auth'),
+            'access_key' => getAccessToken(),
             'actionKey' => 'appkey',
             'appkey' => $appkey,
-            'build' => 6310200,
+            'build' => 6320200,
             'channel' => 'bili',
             'device' => 'phone',
             'mobi_app' => 'android',
@@ -81,10 +81,10 @@ class Sign
         $appsecret = '560c52ccd288fed045859ed18bffd973';
 
         $default = [
-            'access_key' => getConf('access_token', 'login.auth'),
+            'access_key' => getAccessToken(),
             'actionKey' => 'appkey',
             'appkey' => $appkey,
-            'build' => 6310200,
+            'build' => 6320200,
             'device' => 'phone',
             'mobi_app' => 'android',
             'platform' => 'android',

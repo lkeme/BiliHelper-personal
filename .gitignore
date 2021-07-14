@@ -28,6 +28,7 @@ conf/user1.ini
 /conf/test1.ini
 /log/
 /src/backup/
+script.php
 
 # ignore all files in lib/
 task/*
@@ -35,3 +36,4 @@ task/*
 !.gitkeep
 # ignore TODO file in root directory,not subdir/TODO
 /TODO
+/Todo

@@ -2,7 +2,33 @@
 
 # 本项目Log
 
+[comment]: <> (<details>)
 
+[comment]: <> (  <summary><strong>更新历史</strong><kbd>latest</kbd></summary>)
+
+[comment]: <> (</details>)
+
+## v0.9.7.210714 alpha (2021-07-14)
+
+### Added
+
+- 添加脚本模式 `php index.php -?`
+-
+
+### Changed
+
+- 省略
+-
+
+### Fixed
+
+- 省略
+-
+
+### Remarks
+
+- 注意配置文件有些许改动
+-
 
 ## v0.9.6.210625 alpha (2021-06-25)
 

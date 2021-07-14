@@ -11,10 +11,7 @@
 
 require 'vendor/autoload.php';
 
-
-$filename = $argv[1] ?? 'user.ini';
-
 $app = new BiliHelper\Core\App(__DIR__);
-$app->load($filename)
+$app->load($argv)
     ->inspect()
     ->start();
