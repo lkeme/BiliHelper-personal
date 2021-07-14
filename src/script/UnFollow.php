@@ -14,7 +14,7 @@ use BiliHelper\Core\Curl;
 
 class UnFollow extends BaseTask
 {
-    public static $description = '批量清理选定分组关注，默认单次最大清理300个关注.';
+    public static $description = '批量清理选定分组关注，默认单次最大清理600个关注.';
 
     /**
      * @throws \Exception
