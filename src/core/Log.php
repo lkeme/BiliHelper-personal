@@ -18,6 +18,9 @@ class Log
 {
     protected static $instance;
 
+    /**
+     * @use 实体
+     */
     static public function getLogger()
     {
         if (!self::$instance) {
@@ -26,53 +29,79 @@ class Log
         return self::$instance;
     }
 
+    /**
+     * @use 单例
+     */
     private static function configureInstance()
     {
         $logger = new Logger('BH');
-        $handler = new StreamHandler('php://stdout', getenv('APP_DEBUG') == 'true' ? Logger::DEBUG : Logger::INFO);
+        $handler = new StreamHandler('php://stdout', getConf('enable', 'debug') ? Logger::DEBUG : Logger::INFO);
         $handler->setFormatter(new ColoredLineFormatter());
         $logger->pushHandler($handler);
         self::$instance = $logger;
     }
 
-    private static function prefix()
+    /**
+     * @use 前缀
+     * @return string
+     */
+    private static function prefix(): string
     {
-        if (getenv('APP_MULTIPLE') == 'true') {
-            return '[' . (empty($t = getenv('APP_USER_IDENTITY')) ? getenv('APP_USER') : $t) . ']';
+        if (getConf('multiple', 'print')) {
+            return '[' . getConf('user_identity', 'print') ?? getConf('username', 'login.account') . ']';
         }
         return '';
     }
 
+    /**
+     * @use 写日志
+     * @param $type
+     * @param $message
+     */
     private static function writeLog($type, $message)
     {
-        if (getenv('APP_WRITE_LOG') == 'true') {
-            if ($type == 'DEBUG' && getenv("APP_DEBUG") != 'true') {
+        if (getConf('enable', 'log')) {
+            if ($type == 'DEBUG' && !getConf('enable', 'debug')) {
                 return;
             }
-            $path = './' . getenv("APP_LOG_PATH") . '/';
+            $path = './' . getConf('path', 'log') . '/';
             if (!file_exists($path)) {
                 mkdir($path);
                 chmod($path, 0777);
             }
-            $filename = $path . getenv('APP_USER') . ".log";
+            $filename = $path . getConf('username', 'login.account') . ".log";
             $date = date('[Y-m-d H:i:s] ');
             $data = $date . ' Log.' . $type . ' ' . $message . PHP_EOL;
             file_put_contents($filename, $data, FILE_APPEND);
         }
     }
 
+    /**
+     * @use 堆栈
+     * @return string
+     */
     private static function backtrace(): string
     {
         $backtraces = debug_backtrace();
         return "(" . pathinfo(basename($backtraces[1]['file']))['filename'] . ") => ";
     }
 
+    /**
+     * @use 调试
+     * @param $message
+     * @param array $context
+     */
     public static function debug($message, array $context = [])
     {
         self::writeLog('DEBUG', $message);
         self::getLogger()->addDebug($message, $context);
     }
 
+    /**
+     * @use 信息
+     * @param $message
+     * @param array $context
+     */
     public static function info($message, array $context = [])
     {
         $message = self::prefix() . self::backtrace() . $message;
@@ -81,6 +110,11 @@ class Log
         self::callback(Logger::INFO, 'INFO', $message);
     }
 
+    /**
+     * @use 提醒
+     * @param $message
+     * @param array $context
+     */
     public static function notice($message, array $context = [])
     {
         $message = self::prefix() . self::backtrace() . $message;
@@ -89,6 +123,11 @@ class Log
         self::callback(Logger::NOTICE, 'NOTICE', $message);
     }
 
+    /**
+     * @use 警告
+     * @param $message
+     * @param array $context
+     */
     public static function warning($message, array $context = [])
     {
         $message = self::prefix() . self::backtrace() . $message;
@@ -97,6 +136,11 @@ class Log
         self::callback(Logger::WARNING, 'WARNING', $message);
     }
 
+    /**
+     * @use 错误
+     * @param $message
+     * @param array $context
+     */
     public static function error($message, array $context = [])
     {
         $message = self::prefix() . self::backtrace() . $message;
@@ -105,11 +149,18 @@ class Log
         self::callback(Logger::ERROR, 'ERROR', $message);
     }
 
+    /**
+     * @use 回调
+     * @param $levelId
+     * @param $level
+     * @param $message
+     */
     public static function callback($levelId, $level, $message)
     {
-        $callback_level = (('APP_CALLBACK_LEVEL') == '') ? (Logger::ERROR) : intval(getenv('APP_CALLBACK_LEVEL'));
+        // $callback_level = Logger::ERROR ?? getConf('callback_level', 'log');
+        $callback_level = getConf('callback_level', 'log') ?? Logger::ERROR;
         if ($levelId >= $callback_level) {
-            $url = str_replace('{account}', self::prefix(), getenv('APP_CALLBACK'));
+            $url = str_replace('{account}', self::prefix(), getConf('callback', 'log'));
             $url = str_replace('{level}', $level, $url);
             $url = str_replace('{message}', urlencode($message), $url);
             Curl::request('get', str_replace(' ', '%20', $url));

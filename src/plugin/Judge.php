@@ -26,25 +26,28 @@ class Judge
 
     public static function run()
     {
-        if (self::getLock() > time() || self::$retry_time > time() || getenv('USE_JUDGE') == 'false') {
+        // https://www.bilibili.com/judgement/index
+        if (self::getLock() > time() || self::$retry_time > time() || !getEnable('judgement')) {
             return;
         }
-        # https://www.bilibili.com/judgement/index
-        $case_id = self::$wait_case_id ? self::$wait_case_id : self::caseObtain();
+        $case_id = self::$wait_case_id ?: self::caseObtain();
         if (!self::judgeCase($case_id)) {
             self::setLock(1 * 60 + 5);
             return;
         }
         //  self::judgementIndex();
-        self::setLock(mt_rand(15, 30) * 60);
+        // 如果没有设置时间 就设置个默认时间 可能在一秒钟内处理完 所以 <=
+        if (self::getLock() <= time()) {
+            self::setLock(mt_rand(15, 30) * 60);
+        }
     }
 
     /**
-     * @use 判案 TODO: 处理案例已满(MAX20例)
+     * @use 判案 Todo: 处理案例已满(MAX20例)
      * @param $case_id
      * @return bool
      */
-    private static function judgeCase($case_id)
+    private static function judgeCase($case_id): bool
     {
         if (is_null($case_id) || $case_id == 0) {
             return true;
@@ -95,7 +98,7 @@ class Judge
      * @param $pct
      * @return int|null
      */
-    private static function judgeAdvice($num_judged, $pct)
+    private static function judgeAdvice($num_judged, $pct): ?int
     {
         if ($num_judged >= 300) {
             # 认为这里可能出现了较多分歧，抬一手
@@ -137,8 +140,7 @@ class Judge
      */
     private static function juryVote($case_id, $decision)
     {
-        $user_info = User::parseCookies();
-        $url = 'http://api.bilibili.com/x/credit/jury/vote';
+        $url = 'https://api.bilibili.com/x/credit/jury/vote';
         $payload = [
             "jsonp" => "jsonp",
             "cid" => $case_id,
@@ -147,9 +149,10 @@ class Judge
             "likes" => "",
             "hates" => "",
             "attr" => "1",
-            "csrf" => $user_info['token'],
+            "csrf" => getCsrf(),
         ];
         $raw = Curl::post('pc', $url, $payload);
+        // {"code":25012,"message":"请勿重复投票","ttl":1}
         $de_raw = json_decode($raw, true);
         if (isset($de_raw['code']) && $de_raw['code']) {
             Log::warning("案件 {$case_id} 投票失败 {$raw}");
@@ -158,32 +161,39 @@ class Judge
         }
     }
 
-
     /**
      * @use 案件获取
-     * @return |null
+     * @return mixed|null
      */
     private static function caseObtain()
     {
-        $user_info = User::parseCookies();
-        $url = 'http://api.bilibili.com/x/credit/jury/caseObtain';
+        $url = 'https://api.bilibili.com/x/credit/jury/caseObtain';
         $payload = [
             "jsonp" => "jsonp",
-            "csrf" => $user_info['token']
+            "csrf" => getCsrf()
         ];
         $raw = Curl::post('pc', $url, $payload);
         $de_raw = json_decode($raw, true);
         // {"code":25008,"message":"真给力 , 移交众裁的举报案件已经被处理完了","ttl":1}
         // {"code":25014,"message":"25014","ttl":1}
         // {"code":25005,"message":"请成为风纪委员后再试","ttl":1}
-        if (isset($de_raw['code']) && $de_raw['code'] == 25005) {
-            Log::warning($de_raw['message']);
-            self::setLock(self::timing(10));
-            return null;
-        }
         if (isset($de_raw['code']) && $de_raw['code']) {
-            Log::info("没有获取到案件~ {$raw}");
-            return null;
+            switch ($de_raw['code']) {
+                case 25005:
+                    Log::warning($de_raw['message']);
+                    self::setLock(self::timing(10));
+                    return null;
+                case 25008:
+                    Log::info("暂时没有新的案件需要审理~ {$raw}");
+                    return null;
+                case 25014:
+                    Log::info("今日案件已审满，感谢您对社区的贡献！明天再来看看吧~");
+                    self::setLock(self::timing(7, 0, 0, true));
+                    return null;
+                default:
+                    Log::info("获取案件失败~ {$raw}");
+                    return null;
+            }
         } else {
             $case_id = $de_raw['data']['id'];
             Log::info("获取到案件 {$case_id} ~");
@@ -196,7 +206,7 @@ class Judge
      * @param $case_id
      * @return array
      */
-    private static function judgementVote($case_id)
+    private static function judgementVote($case_id): array
     {
         $url = 'https://api.bilibili.com/x/credit/jury/juryCase';
         $headers = [
@@ -227,6 +237,31 @@ class Judge
         ];
     }
 
+    /**
+     * @use 随机整数
+     * @param int $max
+     * @return string
+     */
+    private static function randInt(int $max = 17): string
+    {
+        $temp = [];
+        foreach (range(1, $max) as $_) {
+            array_push($temp, mt_rand(0, 9));
+        }
+        return implode("", $temp);
+    }
+
+    /**
+     * @use 初始化参数
+     */
+    private static function initParams()
+    {
+        self::$retry_time = 0;
+        self::$wait_case_id = 0;
+        self::$wait_time = 0;
+        self::$min_ok_pct = 1;
+        self::$max_ok_pct = 0;
+    }
 
     /**
      * @use 获取案例数据|风纪检测
@@ -272,32 +307,5 @@ class Judge
         }
         Log::info("今日投票{$sum_cases}（{$valid_cases}票有效（非弃权），{$judging_cases}票还在进行中）");
         return true;
-    }
-
-
-    /**
-     * @use 随机整数
-     * @param int $max
-     * @return string
-     */
-    private static function randInt(int $max = 17): string
-    {
-        $temp = [];
-        foreach (range(1, $max) as $index) {
-            array_push($temp, mt_rand(0, 9));
-        }
-        return implode("", $temp);
-    }
-
-    /**
-     * @use 初始化参数
-     */
-    private static function initParams()
-    {
-        self::$retry_time = 0;
-        self::$wait_case_id = 0;
-        self::$wait_time = 0;
-        self::$min_ok_pct = 1;
-        self::$max_ok_pct = 0;
     }
 }

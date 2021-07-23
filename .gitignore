@@ -17,14 +17,23 @@ gen
 /configs/
 /tests/
 config
-/conf/user*.conf
+/conf/user*.ini
 *.log
 Traits/
 README1.md
-conf/user.conf
-conf/user1.conf
-/conf/user.conf
-/conf/test.conf
-/conf/test1.conf
+conf/user.ini
+conf/user1.ini
+/conf/user.ini
+/conf/test.ini
+/conf/test1.ini
 /log/
 /src/backup/
+script.php
+
+# ignore all files in lib/
+task/*
+# except for .gitkeep
+!.gitkeep
+# ignore TODO file in root directory,not subdir/TODO
+/TODO
+/Todo

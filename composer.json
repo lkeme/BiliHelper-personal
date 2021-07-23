@@ -3,7 +3,7 @@
   "description": "B 站自动领瓜子、直播助手、直播挂机脚本、主站助手 - PHP 版（Personal）",
   "type": "project",
   "require": {
-    "php": ">=7.0.0",
+    "php": ">=7.3.0",
     "ext-curl": "*",
     "ext-openssl": "*",
     "ext-sockets": "*",
@@ -13,12 +13,15 @@
     "monolog/monolog": "^1.26.0",
     "bramus/monolog-colored-line-formatter": "^2.0.3",
     "clue/socket-raw": "^1.5.0",
-    "vlucas/phpdotenv": "^4.2.0",
     "amphp/amp": "^2.5.2",
     "guzzlehttp/guzzle": "^6.5.5",
     "mathieuviossat/arraytotexttable": "^1.0.8",
     "klkvsk/json-decode-stream": "^1.0",
-    "sven/file-config": "^3.1"
+    "sven/file-config": "^3.1",
+    "hassankhan/config": "^2.2",
+    "lkeme/inifile": "^3.4",
+    "adhocore/cli": "^0.9.0",
+    "vanilla/garden-cli": "^3.1"
   },
   "license": "MIT",
   "authors": [
@@ -34,7 +37,10 @@
       "BiliHelper\\Plugin\\": "src/plugin",
       "BiliHelper\\Util\\": "src/util",
       "BiliHelper\\Tool\\": "src/tool",
-      "BiliHelper\\Backup\\": "src/backup"
-    }
+      "BiliHelper\\Script\\": "src/script"
+    },
+    "files": [
+      "src/core/Helpers.php"
+    ]
   }
 }

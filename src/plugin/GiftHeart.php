@@ -20,7 +20,7 @@ class GiftHeart
 
     public static function run()
     {
-        if (self::getLock() > time()) {
+        if (self::getLock() > time() || !getEnable('gift_heart')) {
             return;
         }
         self::setPauseStatus();
@@ -31,7 +31,6 @@ class GiftHeart
         self::setLock(5 * 60);
     }
 
-
     /**
      * @use 礼物心跳
      * @return bool
@@ -40,7 +39,7 @@ class GiftHeart
     {
         $url = 'https://api.live.bilibili.com/gift/v2/live/heart_gift_receive';
         $payload = [
-            'roomid' => getenv('ROOM_ID'),
+            'roomid' => getConf('room_id', 'global_room'),
         ];
         $raw = Curl::get('app', $url, Sign::common($payload));
         $de_raw = json_decode($raw, true);

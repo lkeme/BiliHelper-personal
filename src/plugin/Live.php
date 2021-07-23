@@ -41,7 +41,6 @@ class Live
         return $areas;
     }
 
-
     /**
      * @use AREA_ID转ROOM_ID
      * @param $area_id
@@ -77,12 +76,11 @@ class Live
         return $area_info;
     }
 
-
     /**
      * @use 获取随机直播房间号
      * @return int
      */
-    public static function getUserRecommend()
+    public static function getUserRecommend(): int
     {
         $url = 'https://api.live.bilibili.com/room/v1/Area/getListByAreaID';
         $payload = [
@@ -93,21 +91,21 @@ class Live
         ];
         $raw = Curl::get('other', $url, $payload);
         $de_raw = json_decode($raw, true);
+        print_r($de_raw);
         if ($de_raw['code'] != '0') {
             return 23058;
         }
         return $de_raw['data'][mt_rand(1, 29)]['roomid'];
     }
 
-
     /**
      * @use 获取直播房间号
      * @param $room_id
-     * @return bool
+     * @return false|mixed
      */
     public static function getRealRoomID($room_id)
     {
-        $data = self::getRoomInfo($room_id);
+        $data = self::getRoomInfoV1($room_id);
         if (!isset($data['code']) || !isset($data['data'])) {
             return false;
         }
@@ -132,11 +130,26 @@ class Live
      * @param $room_id
      * @return array
      */
-    public static function getRoomInfo($room_id): array
+    public static function getRoomInfoV1($room_id): array
     {
         $url = 'https://api.live.bilibili.com/room/v1/Room/room_init';
         $payload = [
             'id' => $room_id
+        ];
+        $raw = Curl::get('other', $url, $payload);
+        return json_decode($raw, true);
+    }
+
+    /**
+     * @use 获取直播间信息
+     * @param $room_id
+     * @return array
+     */
+    public static function getRoomInfoV2($room_id): array
+    {
+        $url = ' https://api.live.bilibili.com/room/v1/Room/get_info_by_id';
+        $payload = [
+            'ids[]' => $room_id
         ];
         $raw = Curl::get('other', $url, $payload);
         return json_decode($raw, true);
@@ -159,7 +172,6 @@ class Live
         return json_decode($raw, true);
     }
 
-
     /**
      * @use 获取配置信息
      * @param $room_id
@@ -172,11 +184,11 @@ class Live
             $server = $data['data']['host_server_list'][0];
             $addr = "tcp://{$server['host']}:{$server['port']}/sub";
         } else {
-            $addr = getenv('ZONE_SERVER_ADDR');
+            $addr = getConf('server_addr', 'zone_monitor');
         }
         return [
             'addr' => $addr,
-            'token' => isset($data['data']['token']) ? $data['data']['token'] : '',
+            'token' => $data['data']['token'] ?? '',
         ];
     }
 
@@ -208,7 +220,6 @@ class Live
         return true;
     }
 
-
     /**
      * @use 访问直播间
      * @param $room_id
@@ -225,27 +236,18 @@ class Live
         return true;
     }
 
-
     /**
-     * @use 获取毫秒
-     * @return float
-     */
-    public static function getMillisecond()
-    {
-        list($t1, $t2) = explode(' ', microtime());
-        return (float)sprintf('%.0f', (floatval($t1) + floatval($t2)) * 1000);
-    }
-
-
-    /**
-     * @use 发送弹幕
+     * @use 发送弹幕pc
      * @param int $room_id
      * @param string $content
      * @return array
      */
-    public static function sendBarrage(int $room_id, string $content): array
+    public static function sendBarragePC(int $room_id, string $content): array
     {
-        $user_info = User::parseCookies();
+        $room_id = self::getRealRoomID($room_id);
+        if (!$room_id) {
+            return ['code' => 404, 'message' => '直播间数据异常'];
+        }
         $url = 'https://api.live.bilibili.com/msg/send';
         $payload = [
             'color' => '16777215',
@@ -255,17 +257,44 @@ class Live
             'rnd' => 0,
             'bubble' => 0,
             'roomid' => $room_id,
-            'csrf' => $user_info['token'],
-            'csrf_token' => $user_info['token'],
+            'csrf' => getCsrf(),
+            'csrf_token' => getCsrf(),
         ];
         $headers = [
             'origin' => 'https://live.bilibili.com',
             'referer' => "https://live.bilibili.com/{$room_id}"
         ];
         $raw = Curl::post('pc', $url, $payload, $headers);
+        // {"code":0,"data":[],"message":"","msg":""}
         return json_decode($raw, true) ?? ['code' => 404, 'msg' => '上层数据为空!'];
     }
 
+    /**
+     * @use 发送弹幕app
+     * @param int $room_id
+     * @param string $content
+     * @return array
+     */
+    public static function sendBarrageAPP(int $room_id, string $content): array
+    {
+        $room_id = self::getRealRoomID($room_id);
+        if (!$room_id) {
+            return ['code' => 404, 'message' => '直播间数据异常'];
+        }
+        $url = 'https://api.live.bilibili.com/msg/send';
+        $payload = [
+            'color' => '16777215',
+            'fontsize' => 25,
+            'mode' => 1,
+            'msg' => $content,
+            'rnd' => 0,
+            'roomid' => $room_id,
+            'csrf' => getCsrf(),
+            'csrf_token' => getCsrf(),
+        ];
+        $raw = Curl::post('app', $url, Sign::common($payload));
+        return json_decode($raw, true) ?? ['code' => 404, 'msg' => '上层数据为空!'];
+    }
 
     /**
      * @use 获取勋章列表
@@ -276,6 +305,7 @@ class Live
     {
         $metal_list = [];
         for ($i = 1; $i <= 10; $i++) {
+            // $url = 'https://api.live.bilibili.com/fans_medal/v5/live_fans_medal/iApiMedal';
             $url = 'https://api.live.bilibili.com/i/api/medal';
             $payload = [
                 'page' => $i,
@@ -347,9 +377,8 @@ class Live
     public static function sendGift(array $guest, array $gift, int $num)
     {
         $url = 'https://api.live.bilibili.com/gift/v2/live/bag_send';
-        $user_info = User::parseCookies();
         $payload = [
-            'uid' => $user_info['uid'], // 自己的UID
+            'uid' => getUid(), // 自己的UID
             'gift_id' => $gift['gift_id'],
             'ruid' => $guest['uid'], // UP的UID
             'send_ruid' => 0,
@@ -362,8 +391,8 @@ class Live
             'storm_beat_id' => 0,
             'metadata' => '',
             'price' => 0,
-            'csrf' => $user_info['token'],
-            'csrf_token' => $user_info['token']
+            'csrf' => getCsrf(),
+            'csrf_token' => getCsrf()
         ];
         // {"code":0,"msg":"success","message":"success","data":{"tid":"1595419985112400002","uid":4133274,"uname":"沙奈之朵","face":"https://i2.hdslb.com/bfs/face/eb101ef90ebc4e9bf79f65312a22ebac84946700.jpg","guard_level":0,"ruid":893213,"rcost":30834251,"gift_id":30607,"gift_type":5,"gift_name":"小心心","gift_num":1,"gift_action":"投喂","gift_price":5000,"coin_type":"silver","total_coin":5000,"pay_coin":5000,"metadata":"","fulltext":"","rnd":"1595419967","tag_image":"","effect_block":1,"extra":{"wallet":null,"gift_bag":{"bag_id":210196588,"gift_num":20},"top_list":[],"follow":null,"medal":null,"title":null,"pk":{"pk_gift_tips":"","crit_prob":0},"fulltext":"","event":{"event_score":0,"event_redbag_num":0},"capsule":null},"blow_switch":0,"send_tips":"赠送成功","gift_effect":{"super":0,"combo_timeout":0,"super_gift_num":0,"super_batch_gift_num":0,"batch_combo_id":"","broadcast_msg_list":[],"small_tv_list":[],"beat_storm":null,"smallTVCountFlag":true},"send_master":null,"crit_prob":0,"combo_stay_time":3,"combo_total_coin":0,"demarcation":2,"magnification":1,"combo_resources_id":1,"is_special_batch":0,"send_gift_countdown":6}}
         $data = Curl::post('app', $url, Sign::common($payload));
@@ -375,7 +404,6 @@ class Live
         }
     }
 
-
     /**
      * @use 获取分区直播间
      * @param int $parent_area_id
@@ -383,7 +411,7 @@ class Live
      * @param int $page
      * @return array
      */
-    public static function getAreaRoomList(int $parent_area_id, int $area_id, int $page=1): array
+    public static function getAreaRoomList(int $parent_area_id, int $area_id, int $page = 1): array
     {
         $url = 'https://api.live.bilibili.com/xlive/web-interface/v1/second/getList';
         $payload = [
@@ -403,5 +431,61 @@ class Live
             }
         }
         return $room_ids;
+    }
+
+    /**
+     * @use 获取用户卡片
+     * @param int $mid
+     * @return array
+     */
+    public static function getMidCard(int $mid): array
+    {
+        $url = 'https://api.bilibili.com/x/web-interface/card';
+        $payload = [
+            'mid' => $mid,
+        ];
+        //{"code":0,"message":"0","ttl":1,"data":{"card":{"mid":"1","name":"bishi","approve":false,"sex":"男","rank":"10000","face":"http://i1.hdslb.com/bfs/face/34c5b30a990c7ce4a809626d8153fa7895ec7b63.gif","DisplayRank":"0","regtime":0,"spacesta":0,"birthday":"","place":"","description":"","article":0,"attentions":[],"fans":154167,"friend":5,"attention":5,"sign":"","level_info":{"current_level":4,"current_min":0,"current_exp":0,"next_exp":0},"pendant":{"pid":0,"name":"","image":"","expire":0,"image_enhance":"","image_enhance_frame":""},"nameplate":{"nid":0,"name":"","image":"","image_small":"","level":"","condition":""},"Official":{"role":0,"title":"","desc":"","type":-1},"official_verify":{"type":-1,"desc":""},"vip":{"type":2,"status":1,"due_date":1727625600000,"vip_pay_type":1,"theme_type":0,"label":{"path":"","text":"年度大会员","label_theme":"annual_vip","text_color":"#FFFFFF","bg_style":1,"bg_color":"#FB7299","border_color":""},"avatar_subscript":1,"nickname_color":"#FB7299","role":3,"avatar_subscript_url":"http://i0.hdslb.com/bfs/vip/icon_Certification_big_member_22_3x.png","vipType":2,"vipStatus":1}},"following":false,"archive_count":2,"article_count":0,"follower":154167}}
+        $raw = Curl::get('other', $url, $payload);
+        return json_decode($raw, true);
+    }
+
+    /**
+     * @use 获取用户状态
+     * @param int $mid
+     * @return array
+     */
+    public static function getMidStat(int $mid): array
+    {
+        $url = 'https://api.bilibili.com/x/relation/stat';
+        $payload = [
+            'vmid' => $mid,
+        ];
+        // {"code":0,"message":"0","ttl":1,"data":{"mid":50329118,"following":62,"whisper":0,"black":0,"follower":7610241}}
+        $raw = Curl::get('other', $url, $payload);
+        return json_decode($raw, true);
+    }
+
+    /**
+     * @use 获取用户关注数
+     * @param int $mid
+     * @return int
+     */
+    public static function getMidFollower(int $mid): int
+    {
+        $follower = 0;
+        // root->data->follower
+        if (mt_rand(0, 10) > 5) {
+            $data = self::getMidStat($mid);
+        } else {
+            $data = self::getMidCard($mid);
+        }
+
+        if (isset($data['code']) && $data['code']) {
+            Log::warning("获取用户资料卡片失败: CODE -> {$data['code']} MSG -> {$data['message']} ");
+        } else {
+            // root->data->follower
+            $follower = $data['data']['follower'];
+        }
+        return $follower;
     }
 }

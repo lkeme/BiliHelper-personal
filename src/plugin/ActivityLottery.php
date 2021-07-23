@@ -22,9 +22,15 @@ class ActivityLottery
 
     private static $repository = APP_DATA_PATH . 'activity_infos.json';
 
+    /**
+     * @throws \JsonDecodeStream\Exception\TokenizerException
+     * @throws \JsonDecodeStream\Exception\SelectorException
+     * @throws \JsonDecodeStream\Exception\CollectorException
+     * @throws \JsonDecodeStream\Exception\ParserException
+     */
     public static function run()
     {
-        if (self::getLock() > time() || getenv('USE_ACTIVITY') == 'false') {
+        if (self::getLock() > time() || !getEnable('main_activity')) {
             return;
         }
         self::allotTasks();
@@ -34,7 +40,6 @@ class ActivityLottery
             self::setLock(self::timing(5) + mt_rand(1, 180));
         }
     }
-
 
     /**
      * @use 分配任务
@@ -86,7 +91,7 @@ class ActivityLottery
      * @use 执行任务
      * @return bool
      */
-    private static function workTask()
+    private static function workTask(): bool
     {
         if (self::$work_status['work_completed'] == date("Y/m/d")) {
             return false;
@@ -110,7 +115,10 @@ class ActivityLottery
                 self::addTimes($task['act']->sid, $task['act']->url, 3);
                 break;
             case 'draw':
-                self::doLottery($task['act']->sid, $task['act']->url, 0);
+                // 有抽奖机会才抽奖
+                if (self::initTimes($task['act']->sid, $task['act']->url, false)) {
+                    self::doLottery($task['act']->sid, $task['act']->url, 0);
+                }
                 break;
             default:
                 Log::info("当前 {$task['act']->title} #{$task['operation']} 任务不存在哦");
@@ -119,14 +127,14 @@ class ActivityLottery
         return true;
     }
 
-
     /**
      * @use 获取抽奖机会
      * @param string $sid
      * @param string $referer
+     * @param bool $init
      * @return bool
      */
-    private static function initTimes(string $sid, string $referer): bool
+    private static function initTimes(string $sid, string $referer, bool $init = true): bool
     {
         $url = 'https://api.bilibili.com/x/activity/lottery/mytimes';
         $headers = [
@@ -139,12 +147,25 @@ class ActivityLottery
         $raw = Curl::get('pc', $url, $payload, $headers);
         $de_raw = json_decode($raw, true);
         // {"code":0,"message":"0","ttl":1,"data":{"times":2}}
+        // {"code":0,"message":"0","ttl":1,"data":{"times":3}}
+        if ($init) {
+            if ($de_raw['code'] == 0) {
+                Log::notice("剩余抽奖次数 {$de_raw['data']['times']}");
+                return true;
+            }
+            Log::warning("获取抽奖次数失败 {$raw}");
+            return false;
+        }
         if ($de_raw['code'] == 0) {
-            Log::info("获取抽奖机会成功 {$raw}");
+            Log::notice("剩余抽奖次数 {$de_raw['data']['times']}");
+            if ($de_raw['data']['times'] <= 0) {
+                return false;
+            }
             return true;
         }
-        Log::warning("获取抽奖机会失败 {$raw}");
+        Log::warning("获取抽奖次数失败 {$raw}");
         return false;
+
     }
 
     /**
@@ -161,17 +182,19 @@ class ActivityLottery
             'origin' => 'https://www.bilibili.com',
             'referer' => $referer
         ];
-        $user_info = User::parseCookies();
         // $action_type  4 关注  3 分享
         $payload = [
             'sid' => $sid,
             'action_type' => $action_type,
-            'csrf' => $user_info['token']
+            'csrf' => getCsrf()
         ];
         $raw = Curl::post('pc', $url, $payload, $headers);
-        $de_raw = json_decode($raw, true);
-        Log::info("增加抽奖机会#{$action_type} {$raw}");
+        // {"code":75405,"message":"抽奖机会用尽啦","ttl":1}
+        // {"code":75003,"message":"活动已结束","ttl":1}
         // {"code":0,"message":"0","ttl":1}
+        $de_raw = json_decode($raw, true);
+        Log::notice("增加抽奖机会#{$action_type} {$raw}");
+
         if ($de_raw['code'] == 0) {
             return true;
         }
@@ -192,11 +215,10 @@ class ActivityLottery
             'origin' => 'https://www.bilibili.com',
             'referer' => $referer
         ];
-        $user_info = User::parseCookies();
         $payload = [
             'sid' => $sid,
             'type' => 1,
-            'csrf' => $user_info['token']
+            'csrf' => getCsrf()
         ];
         $raw = Curl::post('pc', $url, $payload, $headers);
         $de_raw = json_decode($raw, true);

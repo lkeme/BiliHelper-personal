@@ -18,7 +18,7 @@ trait FilterWords
 {
     protected static $store;
     protected static $store_status;
-    protected static $repository = APP_DATA_PATH . 'filter_words.json';
+    protected static $repository = APP_DATA_PATH . 'filter_library.json';
 
     /**
      * @use 加载配置信息

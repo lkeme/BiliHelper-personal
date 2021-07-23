@@ -12,18 +12,16 @@
  * @Blog   http://blog.jianxiaodai.com
  * @author  菜如狗怎么了
  * @date 2020-12
- */
-
-/**
+ *
  * 2021-3-14 FEAT:增加自动回复语言更改
  * @author:zymooll
  */
 
 namespace BiliHelper\Plugin;
 
-
 use BiliHelper\Core\Log;
 use BiliHelper\Util\TimeLock;
+use Noodlehaus\Config;
 
 class Forward
 {
@@ -40,9 +38,9 @@ class Forward
 
     private static $group_id = null;
 
-    private static $msg = '从未中奖，从未放弃[doge]';
-
     private static $draw_follow = [];
+
+    private static $repository = APP_DATA_PATH . 'reply_words.json';
 
 
     public static function run()
@@ -60,36 +58,22 @@ class Forward
     }
 
 
-    public static function start()
+    public static function start(): bool
     {
-        //更改自动回复
-        if (getenv('AUTO_REPLY_TEXT') != self::$msg) {
-            self::changeReply();
-        }
         // 取关未中奖
-        if (getenv('CLEAR_DYNAMIC') == 'true') {
+        if (getConf('clear_group_follow', 'dynamic')) {
             self::clearDynamic();
         }
         // 自动转发关注评论
-        if (getenv('AUTO_DYNAMIC') == 'true') {
+        if (getConf('enable', 'dynamic')) {
             self::autoRepost();
         }
         // 强制清除抽奖关注组
-        if (getenv('CLEAR_GROUP_FOLLOW') == 'true') {
+        if (getConf('clear_group_follow', 'dynamic')) {
             self::clearAllDynamic();
             self::clearFollowGroup();
         }
         return true;
-    }
-
-    /**
-     *更改自动回复
-     */
-    public static function changeReply()
-    {
-        self::$msg = getenv('AUTO_REPLY_TEXT');
-        $msg = self::$msg;
-        Log::info("已将自动回复改为\"{$msg}\"");
     }
 
     /**
@@ -107,10 +91,10 @@ class Forward
             }
             // 评论
             Log::info("[动态抽奖]-评论: {$did} {$article['rid']}");
-            if (Dynamic::dynamicReplyAdd($article['rid'], self::$msg)) {
+            if (Dynamic::dynamicReplyAdd($article['rid'], self::getReplyMsg())) {
                 // 转发
                 Log::info("[动态抽奖]-转发: {$did}");
-                if (Dynamic::dynamicRepost($did, self::$msg)) {
+                if (Dynamic::dynamicRepost($did, self::getReplyMsg())) {
                     // 关注
                     Log::info("[动态抽奖]-关注: {$did} {$article['uid']}");
                     self::addToGroup($article['uid']); //
@@ -120,7 +104,6 @@ class Forward
             sleep(1);
         }
     }
-
 
     /**
      * 清理无效的动态
@@ -198,6 +181,9 @@ class Forward
         }
     }
 
+    /**
+     * @use 取关
+     */
     private static function clearFollowGroup()
     {
         $tags = User::fetchTags();
@@ -214,19 +200,24 @@ class Forward
 
     }
 
+    /**
+     * @use 清理动态
+     */
     private static function clearAllDynamic()
     {
         $dynamicList = Dynamic::getMyDynamic();
+        $msg_list = self::getReplyMsgList();
         foreach ($dynamicList as $dynamic) {
             $did = $dynamic['desc']['dynamic_id'];
             $card = json_decode($dynamic['card'], true);
-            if (strpos($card['item']['content'], self::$msg) !== false) {
-                Log::info("[删除所有动态] 删除动态 {$did}");
-                Dynamic::removeDynamic($did);
+            foreach ($msg_list as $msg) {
+                if (strpos($card['item']['content'], $msg) !== false) {
+                    Log::info("[删除所有动态] 删除动态 {$did}");
+                    Dynamic::removeDynamic($did);
+                }
             }
         }
     }
-
 
     /**
      * @use 添加分组
@@ -241,7 +232,7 @@ class Forward
             $tags = User::fetchTags();
             $tag_id = array_search(self::$group_name, $tags);
             // 如果不存在则调用创建
-            self::$group_id = $tag_id ? $tag_id : User::createRelationTag(self::$group_name);
+            self::$group_id = $tag_id ?: User::createRelationTag(self::$group_name);
         }
         // 是否在关注里
         $default_follows = self::getDefaultFollows();
@@ -256,7 +247,7 @@ class Forward
      * @use 获取默认关注
      * @return array
      */
-    private static function getDefaultFollows()
+    private static function getDefaultFollows(): array
     {
         if (!empty(self::$default_follows)) {
             return self::$default_follows;
@@ -268,4 +259,35 @@ class Forward
         }
         return self::$default_follows;
     }
+
+    /**
+     * @use 获取回复 all
+     * @return array
+     */
+    private static function getReplyMsgList(): array
+    {
+        $data = Config::load(self::$repository);
+        $data = $data->get("DynamicForward.default");
+        array_push($data, getConf('auto_reply_text', 'dynamic'));
+        return $data;
+    }
+
+    /**
+     * @use 获取回复 1
+     * @return string
+     */
+    private static function getReplyMsg(): string
+    {
+        //更改自动回复
+        if (getConf('auto_reply_text', 'dynamic') != '') {
+            $msg = getConf('auto_reply_text', 'dynamic');
+        } else {
+            $data = self::getReplyMsgList();
+            shuffle($data);
+            $msg = array_pop($data);
+        }
+        Log::info("已将自动回复改为\"{$msg}\"");
+        return $msg;
+    }
+
 }

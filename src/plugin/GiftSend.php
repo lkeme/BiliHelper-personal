@@ -10,7 +10,6 @@
 
 namespace BiliHelper\Plugin;
 
-
 use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
 use BiliHelper\Util\TimeLock;
@@ -51,11 +50,10 @@ class GiftSend
         }
     }
 
-
     /**
      * @use 方案1
      */
-    protected static function procOne()
+    protected static function procOne(): bool
     {
         if (!self::setTargetList()) {
             return false;
@@ -63,7 +61,7 @@ class GiftSend
         self::getMedalList();
         foreach (self::$medal_list as $room_id => $total_intimacy) {
             $bag_list = self::fetchBagList();
-            if (getenv('FEED_FILL') == 'false') {
+            if (!getConf('feed_fill', 'intimacy')) {
                 $bag_list = self::checkExpireGift($bag_list);
             }
             if (count($bag_list)) {
@@ -116,12 +114,11 @@ class GiftSend
      */
     protected static function setTargetList(): bool
     {
-        $temp = empty(getenv('ROOM_LIST')) ? null : getenv('ROOM_LIST');
+        $temp = empty($temp = getConf('room_list', 'intimacy')) ? null : $temp;
         if (is_null($temp)) return false;
-        self::$room_list = explode(',', getenv('ROOM_LIST'));
+        self::$room_list = explode(',', $temp);
         return true;
     }
-
 
     /**
      * @use 获取背包列表
@@ -156,7 +153,6 @@ class GiftSend
         return $new_bag_list;
     }
 
-
     /**
      * @use 查找过期礼物
      * @param array $bag_list
@@ -172,7 +168,6 @@ class GiftSend
         }
         return $expire_gift_list;
     }
-
 
     /**
      * @use 获取勋章列表(过滤无勋章或已满)
@@ -200,7 +195,6 @@ class GiftSend
         }
     }
 
-
     /**
      * @use 获取UID
      */
@@ -213,7 +207,7 @@ class GiftSend
         if (isset($data['code']) && $data['code']) {
             Log::warning('获取帐号信息失败!', ['msg' => $data['message']]);
             Log::warning('清空礼物功能禁用!');
-            self::$lock = time() + 100000000;
+            self::setLock(100000000);
             return;
         }
         self::$uid = $data['data']['uid'];
@@ -225,12 +219,12 @@ class GiftSend
     protected static function getRoomInfo()
     {
         Log::info('正在生成直播间信息...');
-        $room_id = empty(self::$tid) ? getenv('ROOM_ID') : self::$tid;
-        $data = Live::getRoomInfo($room_id);
+        $room_id = empty(self::$tid) ? getConf('room_id', 'global_room') : self::$tid;
+        $data = Live::getRoomInfoV1($room_id);
         if (isset($data['code']) && $data['code']) {
             Log::warning('获取主播房间号失败!', ['msg' => $data['message']]);
             Log::warning('清空礼物功能禁用!');
-            self::$lock = time() + 100000000;
+            self::setLock(100000000);
             return;
         }
         Log::info('直播间信息生成完毕!');
@@ -238,7 +232,6 @@ class GiftSend
         self::$room_id = (string)$data['data']['room_id'];
         self::$short_id = $data['data']['short_id'] ? (string)$data['data']['short_id'] : self::$room_id;
     }
-
 
     /**
      * @use 计算赠送数量
@@ -257,7 +250,6 @@ class GiftSend
         }
         return ($amt < 1) ? 1 : $amt;
     }
-
 
     /**
      * @use 赠送礼物
