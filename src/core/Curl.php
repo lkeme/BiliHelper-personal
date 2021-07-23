@@ -92,7 +92,7 @@ class Curl
      * @param int $timeout
      * @return array
      */
-    public static function async($os, $url, $tasks = [], $headers = [], $timeout = 30)
+    public static function async($os, $url, $tasks = [], $headers = [], $timeout = 30): array
     {
         self::$async_opt = [
             'tasks' => $tasks,
@@ -155,7 +155,7 @@ class Curl
         );
         $result = $url ? @file_get_contents($url, false, stream_context_create($options)) : null;
         Log::debug($result);
-        return $result ? $result : null;
+        return $result ?: null;
     }
 
     /**
@@ -167,10 +167,9 @@ class Curl
             self::$async_opt['counter']++;
             return;
         }
-        # 请求结束！
+        // 请求结束
         self::$async_opt = [];
     }
-
 
     /**
      * @use 请求中心异常处理
@@ -178,7 +177,6 @@ class Curl
      * @param string $method
      * @param array $options
      * @return mixed
-     * @throws \Exception
      */
     private static function clientHandle(string $url, string $method, array $options)
     {
@@ -209,17 +207,17 @@ class Curl
      * @param float $timeout
      * @return array
      */
-    private static function getClientOpt(array $add_options, array $headers = [], float $timeout = 30.0)
+    private static function getClientOpt(array $add_options, array $headers = [], float $timeout = 30.0): array
     {
         self::$client = new \GuzzleHttp\Client();
         $default_options = [
             'headers' => $headers,
             'timeout' => $timeout,
             'http_errors' => false,
-            'verify' => getenv('VERIFY_SSL') == 'false' ? false : true,
+            'verify' => getConf('verify_ssl', 'network.ssl'),
         ];
-        if (getenv('USE_PROXY') == 'true') {
-            $default_options['proxy'] = getenv('NETWORK_PROXY');
+        if (getConf('enable', 'network.proxy')) {
+            $default_options['proxy'] = getConf('proxy', 'network.proxy');
         }
         return array_merge($default_options, $add_options);
     }
@@ -245,7 +243,7 @@ class Curl
             'Connection' => 'keep-alive',
             // 'Content-Type' => 'application/x-www-form-urlencoded',
             // 'User-Agent' => 'Mozilla/5.0 BiliDroid/5.51.1 (bbcallen@gmail.com)',
-            'User-Agent' => 'Mozilla/5.0 BiliDroid/6.20.5 (bbcallen@gmail.com) os/android model/MuMu mobi_app/android build/6205500 channel/bili innerVer/6205500 osVer/6.0.1 network/2',
+            'User-Agent' => 'Mozilla/5.0 BiliDroid/6.32.0 (bbcallen@gmail.com) os/android model/MuMu mobi_app/android build/6320200 channel/bili innerVer/6320200 osVer/7.1.2 network/2',
             // 'Referer' => 'https://live.bilibili.com/',
         ];
         $pc_headers = [
@@ -259,35 +257,12 @@ class Curl
         $other_headers = [
             'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4450.0 Safari/537.36',
         ];
-        $default_headers = isset(${$os . "_headers"}) ? ${$os . "_headers"} : $other_headers;
-        if (in_array($os, ['app', 'pc']) && getenv('COOKIE') != "") {
-            $default_headers['Cookie'] = getenv('COOKIE');
+        $default_headers = ${$os . "_headers"} ?? $other_headers;
+        if (in_array($os, ['app', 'pc']) && getCookie() != "") {
+            $default_headers['Cookie'] = getCookie();
         }
         // return self::formatHeaders(array_merge($default_headers, $headers));
         return array_merge($default_headers, $headers);
-    }
-
-    /**
-     * @use 格式化Headers
-     * @param $headers
-     * @return array
-     */
-    private static function formatHeaders(array $headers): array
-    {
-        return array_map(function ($k, $v) {
-            return $k . ': ' . $v;
-        }, array_keys($headers), $headers);
-    }
-
-    /**
-     * @use 字符串or其他
-     * @return array
-     */
-    private static function getResult()
-    {
-        $result = self::$result;
-        self::$result = [];
-        return array_shift($result);
     }
 
     /**
@@ -335,5 +310,28 @@ class Curl
         $request = self::clientHandle($url, 'get', $options);
         Log::debug("获取Headers");
         return $request->getHeaders();
+    }
+
+    /**
+     * @use 格式化Headers
+     * @param array $headers
+     * @return array
+     */
+    private static function formatHeaders(array $headers): array
+    {
+        return array_map(function ($k, $v) {
+            return $k . ': ' . $v;
+        }, array_keys($headers), $headers);
+    }
+
+    /**
+     * @use 字符串or其他
+     * @return array
+     */
+    private static function getResult(): array
+    {
+        $result = self::$result;
+        self::$result = [];
+        return array_shift($result);
     }
 }

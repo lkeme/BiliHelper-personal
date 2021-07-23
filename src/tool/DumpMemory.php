@@ -12,7 +12,6 @@
 namespace BiliHelper\Tool;
 
 use BiliHelper\Core\Log;
-use BiliHelper\Core\Curl;
 
 class DumpMemory
 {

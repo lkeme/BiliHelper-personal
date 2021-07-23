@@ -12,13 +12,12 @@ namespace BiliHelper\Plugin;
 
 use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
-use BiliHelper\Util\TimeLock;
 use BiliHelper\Util\BaseRaffle;
 
 class StormRaffle extends BaseRaffle
 {
     const ACTIVE_TITLE = '节奏风暴';
-    const ACTIVE_SWITCH = 'USE_STORM';
+    const ACTIVE_SWITCH = 'live_storm';
 
     protected static $wait_list = [];
     protected static $finish_list = [];
@@ -26,7 +25,6 @@ class StormRaffle extends BaseRaffle
 
     private static $drop_rate = null;
     private static $attempt = null;
-
 
     /**
      * @use 解析数据
@@ -49,7 +47,7 @@ class StormRaffle extends BaseRaffle
             return false;
         }
         // 过滤抽奖范围
-        self::$drop_rate = getenv('STORM_DROPRATE') !== "" ? (int)getenv('STORM_DROPRATE') : 0;
+        self::$drop_rate = (int)getConf('drop_rate', 'live_storm');
         if (mt_rand(1, 100) <= (int)self::$drop_rate) {
             return false;
         }
@@ -69,7 +67,6 @@ class StormRaffle extends BaseRaffle
         return true;
     }
 
-
     /**
      * 格式化日志输出
      * @param $id
@@ -79,9 +76,8 @@ class StormRaffle extends BaseRaffle
      */
     private static function formatInfo($id, $num, $info): string
     {
-        return "风暴 {$id} 请求 {$num} 状态 {$info}";
+        return "节奏风暴 {$id} 请求 {$num} 状态 {$info}";
     }
-
 
     /**
      * @use 创建抽奖任务
@@ -91,9 +87,8 @@ class StormRaffle extends BaseRaffle
     protected static function createLottery(array $raffles): array
     {
         $url = 'https://api.live.bilibili.com/lottery/v1/Storm/join';
-        $user_info = User::parseCookies();
         foreach ($raffles as $raffle) {
-            self::$attempt = getenv('STORM_ATTEMPT') !== "" ? explode(',', getenv('STORM_ATTEMPT')) : [30, 50];
+            self::$attempt = empty($attempt = getConf('attempt', 'live_storm')) ? [5, 10] : explode(',', $attempt);
             $num = mt_rand((int)self::$attempt[0], (int)self::$attempt[1]);
             $payload = [
                 'id' => $raffle['raffle_id'],
@@ -101,8 +96,8 @@ class StormRaffle extends BaseRaffle
                 "color" => "16772431",
                 "captcha_token" => "",
                 "captcha_phrase" => "",
-                "token" => $user_info['token'],
-                "csrf_token" => $user_info['token'],
+                "token" => getCsrf(),
+                "csrf_token" => getCsrf(),
                 "visit_id" => ""
             ];
             for ($i = 1; $i < $num; $i++) {
@@ -158,7 +153,7 @@ class StormRaffle extends BaseRaffle
     /**
      * @use 解析抽奖信息
      * @param array $results
-     * @return mixed|void
+     * @return void
      */
     protected static function parseLottery(array $results)
     {

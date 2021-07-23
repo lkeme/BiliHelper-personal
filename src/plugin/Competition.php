@@ -23,14 +23,12 @@ class Competition
      */
     public static function run()
     {
-        if (getenv('USE_COMPETITION') == 'false' || self::getLock() > time()) {
+        if (self::getLock() > time() || !getEnable('match_forecast')) {
             return;
         }
         self::startStake();
-
-        self::setLock(self::timing(1,30));
+        self::setLock(self::timing(1, 30));
     }
-
 
     /**
      * @use 开始破产
@@ -38,7 +36,7 @@ class Competition
     private static function startStake()
     {
         $questions = self::fetchQuestions();
-        $max_guess = intval(getenv('COMPET_MAX_NUM'));
+        $max_guess = getConf('max_num', 'match_forecast');
         foreach ($questions as $index => $question) {
             if ($index >= $max_guess) {
                 break;
@@ -56,7 +54,6 @@ class Competition
     {
         Log::info($guess['title']);
         Log::info($guess['estimate']);
-        $user_info = User::parseCookies();
         $url = 'https://api.bilibili.com/x/esports/guess/add';
         $payload = [
             'oid' => $guess['oid'],
@@ -64,7 +61,7 @@ class Competition
             'detail_id' => $guess['detail_id'],
             'count' => $guess['count'],
             'is_fav' => 0,
-            'csrf' => $user_info['token']
+            'csrf' => getCsrf()
         ];
         $headers = [
             'origin' => 'https://www.bilibili.com',
@@ -80,7 +77,6 @@ class Competition
         }
     }
 
-
     /**
      * @use 预计猜测结果
      * @param array $question
@@ -92,13 +88,13 @@ class Competition
         $guess['oid'] = $question['contest']['id'];
         $guess['main_id'] = $question['questions'][0]['id'];
         $details = $question['questions'][0]['details'];
-        $guess['count'] = intval(in_array(getenv('COMPET_MAX_COIN'), range(1, 10)) ? getenv('COMPET_MAX_COIN') : 10);
+        $guess['count'] = ($count = getConf('max_coin', 'match_forecast') <= 10) ? $count : 10;
         $guess['title'] = $question['questions'][0]['title'];
         foreach ($details as $detail) {
             $guess['title'] .= " 队伍: {$detail['option']} 赔率: {$detail['odds']}";
         }
         array_multisort(array_column($details, "odds"), SORT_ASC, $details);
-        switch (intval(getenv('COMPET_STAKE'))) {
+        switch (getConf('bet', 'match_forecast')) {
             case 1:
                 // 压大
                 $detail = array_pop($details);

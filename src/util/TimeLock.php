@@ -11,6 +11,7 @@
 namespace BiliHelper\Util;
 
 use Amp\Delayed;
+use BiliHelper\Core\Task;
 use BiliHelper\Plugin\Schedule;
 
 trait TimeLock
@@ -25,7 +26,7 @@ trait TimeLock
     public static function setLock(int $lock)
     {
         if (!static::getpauseStatus()) {
-            static::$lock = time() + $lock;
+            Task::getInstance()::_setLock(static::getBaseClass(), time() + $lock);
         }
     }
 
@@ -35,33 +36,44 @@ trait TimeLock
      */
     public static function getLock(): int
     {
-        return static::$lock;
+        return Task::getInstance()::_getLock(static::getBaseClass());
+    }
+
+    /**
+     * @use 获取基础CLASS NAME
+     * @return string
+     */
+    public static function getBaseClass(): string
+    {
+        return basename(str_replace('\\', '/', __CLASS__));
     }
 
     /**
      * @use used in Amp loop Delayed
      * @return delayed
      */
-    public static function Delayed()
+    public static function Delayed(): Delayed
     {
         return new Delayed(1000);
     }
 
     /**
      * @use 定时
-     * @param int $hour
-     * @param int $minute
-     * @param int $seconds
+     * @param int $hour 时
+     * @param int $minute 分
+     * @param int $seconds 秒
+     * @param bool $random 随机一个小时内
      * @return int
      */
-    public static function timing(int $hour, int $minute = 0, int $seconds = 0): int
+    public static function timing(int $hour, int $minute = 0, int $seconds = 0, bool $random = false): int
     {
         $time = strtotime('today') + ($hour * 60 * 60) + ($minute * 60) + ($seconds);
         if ($time > time()) {
-            return strtotime('today') + ($hour * 60 * 60) + ($minute * 60) + ($seconds) - time();
+            $timing = strtotime('today') + ($hour * 60 * 60) + ($minute * 60) + ($seconds) - time();
         } else {
-            return strtotime('tomorrow') + ($hour * 60 * 60) + ($minute * 60) + ($seconds) - time();
+            $timing = strtotime('tomorrow') + ($hour * 60 * 60) + ($minute * 60) + ($seconds) - time();
         }
+        return $random ? $timing + mt_rand(1, 60) * 60 : $timing;
     }
 
 
@@ -102,14 +114,14 @@ trait TimeLock
      */
     public static function cancelPause()
     {
-        static::$lock = false;
+        static::$pause_status = false;
     }
 
     /**
      * @use 暂停状态
      * @return bool
      */
-    public static function getPauseStatus()
+    public static function getPauseStatus(): bool
     {
         return static::$pause_status;
     }

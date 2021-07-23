@@ -21,6 +21,7 @@ abstract class BaseRaffle
 {
     use TimeLock;
     use FilterWords;
+
     const ACTIVE_TITLE = '';
     const ACTIVE_SWITCH = '';
 
@@ -31,7 +32,7 @@ abstract class BaseRaffle
 
     public static function run()
     {
-        if (getenv(static::ACTIVE_SWITCH) == 'false') {
+        if (!getEnable(static::ACTIVE_SWITCH)) {
             return;
         }
         if (static::getLock() > time()) {
@@ -96,13 +97,12 @@ abstract class BaseRaffle
         $raw = Curl::get('app', $url, Sign::common($payload));
         $de_raw = json_decode($raw, true);
         if (!isset($de_raw['data']) || $de_raw['code']) {
-            // TODO 请求被拦截 412
+            // Todo 请求被拦截 412
             Log::error("获取抽奖数据错误，{$de_raw['message']}");
             return [];
         }
         return $de_raw;
     }
-
 
     /**
      * @use 解析抽奖信息
@@ -112,14 +112,12 @@ abstract class BaseRaffle
      */
     abstract protected static function parseLotteryInfo(int $room_id, array $data): bool;
 
-
     /**
      * @use 创建抽奖
      * @param array $raffles
      * @return array
      */
     abstract protected static function createLottery(array $raffles): array;
-
 
     /**
      * @use 解析抽奖返回
@@ -135,7 +133,7 @@ abstract class BaseRaffle
      * @param string $type
      * @return array
      */
-    protected static function arrKeySort($arr, $key, $type = 'asc')
+    protected static function arrKeySort($arr, $key, string $type = 'asc'): array
     {
         switch ($type) {
             case 'desc':
@@ -149,14 +147,13 @@ abstract class BaseRaffle
         }
     }
 
-
     /**
      * @use 去重检测
      * @param $lid
      * @param bool $filter
      * @return bool
      */
-    protected static function toRepeatLid($lid, $filter = true): bool
+    protected static function toRepeatLid($lid, bool $filter = true): bool
     {
         $lid = (int)$lid;
         if (in_array($lid, static::$all_list)) {
@@ -179,7 +176,7 @@ abstract class BaseRaffle
     public static function pushToQueue(array $data): bool
     {
         // 开关
-        if (getenv(static::ACTIVE_SWITCH) == 'false') {
+        if (!getEnable(static::ACTIVE_SWITCH)) {
             return false;
         }
         // 黑屋

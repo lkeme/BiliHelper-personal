@@ -15,7 +15,6 @@ use BiliHelper\Core\Curl;
 use BiliHelper\Util\TimeLock;
 use BiliHelper\Util\FilterWords;
 
-
 class MaterialObject
 {
     use TimeLock;
@@ -27,13 +26,10 @@ class MaterialObject
 
     public static function run()
     {
-        if (getenv('USE_LIVE_BOX') == 'false') {
+        if (self::getLock() > time() || !getEnable('live_box')) {
             return;
         }
         self::setPauseStatus();
-        if (self::getLock() > time()) {
-            return;
-        }
         self::calcAid(700, 900);
         $lottery_list = self::fetchLottery();
         self::drawLottery($lottery_list);
@@ -56,7 +52,6 @@ class MaterialObject
         }
         return false;
     }
-
 
     /**
      * @use 抽奖盒子状态
@@ -91,7 +86,6 @@ class MaterialObject
                 return $de_raw;
         }
     }
-
 
     /**
      * @use 获取抽奖
@@ -141,7 +135,6 @@ class MaterialObject
         return $lottery_list;
     }
 
-
     /**
      * @use 过滤轮次
      * @param array $rounds
@@ -164,7 +157,6 @@ class MaterialObject
         }
         return 0;
     }
-
 
     /**
      * @use 抽奖
@@ -194,7 +186,6 @@ class MaterialObject
         return true;
     }
 
-
     /**
      * @use 计算Aid
      * @param $min
@@ -203,7 +194,7 @@ class MaterialObject
      */
     private static function calcAid($min, $max): bool
     {
-        // TODO 优化计算AID算法
+        // Todo 优化计算AID算法
         if (self::$end_aid != 0 && self::$start_aid != 0) {
             return false;
         }
