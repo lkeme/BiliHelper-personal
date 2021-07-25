@@ -71,7 +71,10 @@ class App
                     Log::error($error_msg);
                     // Notice::push('error', $error_msg);
                 }
-                yield call_user_func(array("BiliHelper\\$dir\\" . $taskName, 'Delayed'), []);
+                if ($dir == 'Plugin')
+                    yield call_user_func(array("BiliHelper\\$dir\\" . $taskName, 'Delayed'), []);
+                else
+                    break;
             }
         });
     }
