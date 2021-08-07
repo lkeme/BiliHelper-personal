@@ -47,10 +47,9 @@ class App
      */
     public function load($argv): App
     {
-        $args = (new Command($argv))->run();
-        $filename = $args->getArg(0) ?? 'user.ini';
-        $this->script_mode = $args->getOpt('script');
-
+        $args = (new BCommand($argv))->run();
+        $filename = $args->args()[0] ?? 'user.ini';
+        $this->script_mode = $args->script;
         Config::load($filename);
         return $this;
     }

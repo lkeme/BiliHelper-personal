@@ -10,10 +10,9 @@
 
 namespace BiliHelper\Core;
 
-use Garden\Cli\Cli;
-use Garden\Cli\Args;
+use Ahc\Cli\Input\Command;
 
-class Command
+class BCommand
 {
 
     private $argv;
@@ -27,18 +26,13 @@ class Command
         $this->argv = $argv;
     }
 
-    /**
-     * @return \Garden\Cli\Args
-     */
-    public function run(): Args
+    public function run()
     {
-        $cli = new Cli();
-
-        $cli->description('BHP命令行工具.')
-            ->opt('script:s', '执行的Script模式.', false, 'bool');
-
+        $cli = new Command('BHP-S', 'BHP命令行工具.');
+        $cli->version('0.0.1-dev')
+            ->option('-s --script', '执行的Script模式.',null,false);
         try {
-            $args = $cli->parse($this->argv, true);
+            $args = $cli->parse($this->argv);
         } catch (\Exception $e) {
             die('解析命令行参数错误');
         }
@@ -46,7 +40,3 @@ class Command
     }
 
 }
-
-
-
-
