@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0678ecd04eed6db66de4668ffffec283",
+    "content-hash": "ec8eee201c31224952f597aab5be4ea8",
     "packages": [
         {
             "name": "adhocore/cli",
@@ -1790,67 +1790,6 @@
                 }
             ],
             "time": "2021-05-27T09:17:38+00:00"
-        },
-        {
-            "name": "vanilla/garden-cli",
-            "version": "v3.1.2",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/vanilla/garden-cli.git",
-                "reference": "d9844c47f4f2812259ee1b583aa66e7b6b5d85c5"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/vanilla/garden-cli/zipball/d9844c47f4f2812259ee1b583aa66e7b6b5d85c5",
-                "reference": "d9844c47f4f2812259ee1b583aa66e7b6b5d85c5",
-                "shasum": "",
-                "mirrors": [
-                    {
-                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
-                        "preferred": true
-                    }
-                ]
-            },
-            "require": {
-                "ext-json": "*",
-                "php": ">=7.2",
-                "psr/log": "^1.0"
-            },
-            "require-dev": {
-                "ergebnis/composer-normalize": "^2.8",
-                "phpdocumentor/reflection-docblock": "^4.3",
-                "phpunit/phpunit": "^8",
-                "vanilla/garden-container": "^3.0",
-                "vanilla/standards": "^1.3",
-                "vimeo/psalm": "^3.16"
-            },
-            "suggest": {
-                "ext-pdo": "Required for the DbUtils class.",
-                "phpdocumentor/reflection-docblock": "Required for the CliApplication functionality.",
-                "vanilla/garden-container": "Required for the CliApplication functionality."
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "Garden\\Cli\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Todd Burry",
-                    "email": "todd@vanillaforums.com"
-                }
-            ],
-            "description": "A full-featured, yet ridiculously simple commandline parser for your next php cli script. Stop fighting with getopt().",
-            "support": {
-                "issues": "https://github.com/vanilla/garden-cli/issues",
-                "source": "https://github.com/vanilla/garden-cli/tree/v3.1.2"
-            },
-            "time": "2020-10-25T13:36:44+00:00"
         }
     ],
     "packages-dev": [],
