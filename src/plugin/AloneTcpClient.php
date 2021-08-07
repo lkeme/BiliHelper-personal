@@ -79,7 +79,7 @@ class AloneTcpClient
      */
     private static function unPackMsg($value, string $fmt = "N")
     {
-        return unpack($fmt, $value);
+        return unpack($fmt, $value)[1];
     }
 
     /**
@@ -126,12 +126,6 @@ class AloneTcpClient
                     throw new Exception("Connection failure");
                 }
                 if ($length == 4) $data = self::unPackMsg($data);
-                // 防止解包异常
-                if (!$data) {
-                    throw new Exception("Connection failure");
-                } else {
-                    $data = $data[1];
-                }
                 break;
             }
         } catch (Exception $exception) {
