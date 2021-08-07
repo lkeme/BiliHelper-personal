@@ -16,7 +16,7 @@ use BiliHelper\Util\BaseRaffle;
 
 class AnchorRaffle extends BaseRaffle
 {
-    const ACTIVE_TITLE = '天选时刻';
+    const ACTIVE_TITLE = '天选之子';
     const ACTIVE_SWITCH = 'live_anchor';
 
     protected static $wait_list = [];
@@ -178,10 +178,11 @@ class AnchorRaffle extends BaseRaffle
             'room_id' => $room_id,
             'raffle_id' => $de_raw['id'],
             'raffle_name' => $de_raw['award_name'],
+            'remarks' => self::ACTIVE_TITLE,
             'wait' => time() + mt_rand(5, 25)
         ];
 //        Statistics::addPushList($data['raffle_name']);
-        Statistics::addPushList("天选之子");
+        Statistics::addPushList(self::ACTIVE_TITLE);
         array_push(self::$wait_list, $data);
         return true;
     }
@@ -230,13 +231,13 @@ class AnchorRaffle extends BaseRaffle
             $de_raw = json_decode($content, true);
             // {"code":-403,"data":null,"message":"访问被拒绝","msg":"访问被拒绝"}
             if (isset($de_raw['code']) && $de_raw['code'] == 0) {
-                Statistics::addSuccessList($data['raffle_name']);
-                Log::notice("房间 {$data['room_id']} 编号 {$data['raffle_id']} " . self::ACTIVE_TITLE . ": 参与抽奖成功~");
+                Statistics::addSuccessList(self::ACTIVE_TITLE);
+                Log::notice("房间 {$data['room_id']} 编号 {$data['raffle_id']} " . self::ACTIVE_TITLE . "-(" . $data['raffle_name'] . "): 参与抽奖成功~");
             } elseif (isset($de_raw['msg']) && $de_raw['code'] == -403 && $de_raw['msg'] == '访问被拒绝') {
-                Log::debug("房间 {$data['room_id']} 编号 {$data['raffle_id']} " . self::ACTIVE_TITLE . ": {$de_raw['message']}");
+                Log::debug("房间 {$data['room_id']} 编号 {$data['raffle_id']} " . self::ACTIVE_TITLE . "-(" . $data['raffle_name'] . "): {$de_raw['message']}");
                 self::pauseLock();
             } else {
-                Log::notice("房间 {$data['room_id']} 编号 {$data['raffle_id']} " . self::ACTIVE_TITLE . ": {$de_raw['message']}");
+                Log::notice("房间 {$data['room_id']} 编号 {$data['raffle_id']} " . self::ACTIVE_TITLE . "-(" . $data['raffle_name'] . "): {$de_raw['message']}");
             }
         }
     }
