@@ -61,10 +61,10 @@ class AloneTcpClient
     /**
      * @use 数据封装
      * @param $value
-     * @param $fmt
+     * @param string $fmt
      * @return string
      */
-    private static function packMsg($value, $fmt = "N"): string
+    private static function packMsg($value, string $fmt = "N"): string
     {
         $head = pack($fmt, strlen($value));
         return $head . $value;
@@ -75,11 +75,11 @@ class AloneTcpClient
      * @param $value
      * @param string $fmt
      * @return array|false
+     * @throws \Exception
      */
-    private static function unPackMsg($value, $fmt = "N")
+    private static function unPackMsg($value, string $fmt = "N")
     {
-        $data = unpack($fmt, $value);
-        return $data[1];
+        return unpack($fmt, $value);
     }
 
     /**
@@ -126,6 +126,12 @@ class AloneTcpClient
                     throw new Exception("Connection failure");
                 }
                 if ($length == 4) $data = self::unPackMsg($data);
+                // 防止解包异常
+                if (!$data) {
+                    throw new Exception("Connection failure");
+                } else {
+                    $data = $data[1];
+                }
                 break;
             }
         } catch (Exception $exception) {
