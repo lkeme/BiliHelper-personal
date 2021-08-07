@@ -110,8 +110,11 @@ class CapsuleLottery
         switch ($task['operation']) {
             // Todo 观看 分享 签到任务
             case 'watch':
-                $interval = self::xliveHeartBeatTask($task['act']->room_id, 999, 999);
-                self::$interval = $interval == 0 ? 60 : $interval;
+                // 处理值为空
+                if (!is_null($task['act']->room_id)) {
+                    $interval = self::xliveHeartBeatTask($task['act']->room_id, 999, 999);
+                    self::$interval = ($interval == 0 ? 60 : $interval);
+                }
                 break;
             case 'draw':
                 // 抽奖次数 > 0 开始抽奖

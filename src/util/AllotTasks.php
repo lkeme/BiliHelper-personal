@@ -24,7 +24,6 @@ trait AllotTasks
         'work_completed' => null,
     ];
 
-
     /**
      * @use 加载json数据
      * @return Parser
@@ -46,11 +45,8 @@ trait AllotTasks
         $task = [
             'operation' => $operation,
             'act' => $act,
-            'time' => false
+            'time' => $time
         ];
-        if ($time) {
-            $task['time'] = $time;
-        }
         array_push(static::$tasks, $task);
         return true;
     }
@@ -67,10 +63,18 @@ trait AllotTasks
         }
         // 先进先出 弹出一个任务
         $task = array_shift(static::$tasks);
+        // 如果需要时间限制
         if ($task['time']) {
+            // 如果预计时间为空 或  时间未到 推回队列
             if (is_null(static::$work_status['estimated_time']) || time() < intval(static::$work_status['estimated_time'])) {
                 array_unshift(static::$tasks, $task);
+            } else {
+                // 不再需要推回时  需要制空 不影响下一个任务操作
+                static::$work_status['estimated_time'] = null;
             }
+        } else {
+            // 切换任务 制空
+            static::$work_status['estimated_time'] = null;
         }
         return $task;
     }

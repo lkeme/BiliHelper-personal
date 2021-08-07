@@ -67,6 +67,7 @@ class App
                 try {
                     call_user_func(array("BiliHelper\\$dir\\" . $taskName, 'run'), []);
                 } catch (\Throwable  $e) {
+                    // TODO 多次错误删除tasks_***.json文件
                     $error_msg = "MSG: {$e->getMessage()} CODE: {$e->getCode()} FILE: {$e->getFile()} LINE: {$e->getLine()}";
                     Log::error($error_msg);
                     // Notice::push('error', $error_msg);
