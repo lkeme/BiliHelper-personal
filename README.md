@@ -16,7 +16,7 @@
 
 <p align="center">
 
-<img src="https://img.shields.io/badge/Version-0.9.7.210714-orange.svg?longCache=true&style=for-the-badge">
+<img src="https://img.shields.io/badge/Version-0.9.9.210807-orange.svg?longCache=true&style=for-the-badge">
 <img src="https://img.shields.io/badge/PHP-7.3+-green.svg?longCache=true&style=for-the-badge">
 <img src="https://img.shields.io/badge/Composer-latest-blueviolet.svg?longCache=true&style=for-the-badge">
 <img src="https://img.shields.io/badge/License-mit-blue.svg?longCache=true&style=for-the-badge">
@@ -42,40 +42,40 @@
 
 | plugin          | status | version  | cycle  | description                                 |
 |-----------------|--------|----------|--------|---------------------------------------------|
-| CheckUpdate     | true   | 21.07.14 | 待整理 | 程序检查更新                                |
-| Login           | true   | 21.07.14 | 待整理 | 账号登录、刷新、维持                        |
-| Schedule        | true   | 21.07.14 | 待整理 | 控制插件运行周期                            |
-| MainSite        | true   | 21.07.14 | 待整理 | 投币、观看、分享视频 (速升6级不是梦)        |
-| DailyBag        | true   | 21.07.14 | 待整理 | 双端领取日常/周常礼包                       |
-| ManGa           | true   | 21.07.14 | 待整理 | 漫画签到、分享                              |
-| ActivityLottery | true   | 21.07.14 | 待整理 | 主站活动九宫格抽奖                          |
-| Competition     | true   | 21.07.14 | 待整理 | 游戏赛事竞猜                                |
-| DoubleHeart     | true   | 21.07.14 | 待整理 | 双端心跳 (姥爷直播经验)                     |
-| DailyTask       | true   | 21.07.14 | 待整理 | 直播每日任务(签到、观看)                    |
-| Barrage         | true   | 21.07.14 | 待整理 | 保持活跃弹幕                                |
-| Silver2Coin     | true   | 21.07.14 | 待整理 | 银瓜子兑换硬币                              |
-| Judge           | true   | 21.07.14 | 待整理 | 风纪委员投票                                |
-| GiftSend        | true   | 21.07.14 | 待整理 | 礼物赠送、维持每日勋章亲密度                |
-| GroupSignIn     | true   | 21.07.14 | 待整理 | 友爱社签到                                  |
-| GiftHeart       | true   | 21.07.14 | 待整理 | 日常心跳每日礼包礼物                        |
-| SmallHeart      | true   | 21.07.14 | 待整理 | 直播挂机，每日24个小心心                    |
-| MaterialObject  | true   | 21.07.14 | 待整理 | 直播金色宝箱实物抽奖                        |
-| AloneTcpClient  | true   | 21.07.14 | 待整理 | 作者的独立直播监控(可支持本项目哦)          |
-| ZoneTcpClient   | true   | 21.07.14 | 待整理 | 官方的分区直播监控                          |
-| StormRaffle     | true   | 21.07.14 | 待整理 | 直播节奏风暴抽奖、亿元                      |
-| GiftRaffle      | true   | 21.07.14 | 待整理 | 直播礼物抽奖                                |
-| PkRaffle        | true   | 21.07.14 | 待整理 | 直播大乱斗抽奖                              |
-| GuardRaffle     | true   | 21.07.14 | 待整理 | 直播大航海抽奖                              |
-| AnchorRaffle    | true   | 21.07.14 | 待整理 | 直播天选时刻抽奖                            |
-| GiftRaffle      | true   | 21.07.14 | 待整理 | 直播礼物抽奖                                |
-| AwardRecord     | true   | 21.07.14 | 待整理 | 最新的中奖纪录通知                          |
-| Forward         | true   | 21.07.14 | 待整理 | 主站动态抽奖转发                            |
-| CapsuleLottery  | true   | 21.07.14 | 待整理 | 直播扭蛋活动抽奖                            |
-| PolishTheMedal  | true   | 21.07.14 | 待整理 | 每日自动点亮灰色勋章                        |
-| CapsuleLottery  | true   | 21.07.14 | 待整理 | 直播扭蛋活动抽奖                            |
-| VipPrivilege    | true   | 21.07.14 | 待整理 | 每月领取年度大会员特权(B币券、会员购优惠券) |
-| BpConsumption   | true   | 21.07.14 | 待整理 | 每月消费使用年度大会员特权的B币券           |
-| Statistics      | true   | 21.07.14 | 待整理 | 全局抽奖结果统计                            |
+| CheckUpdate     | true   | 21.08.07 | 待整理 | 程序检查更新                                |
+| Login           | true   | 21.08.07 | 待整理 | 账号登录、刷新、维持                        |
+| Schedule        | true   | 21.08.07 | 待整理 | 控制插件运行周期                            |
+| MainSite        | true   | 21.08.07 | 待整理 | 投币、观看、分享视频 (速升6级不是梦)        |
+| DailyBag        | true   | 21.08.07 | 待整理 | 双端领取日常/周常礼包                       |
+| ManGa           | true   | 21.08.07 | 待整理 | 漫画签到、分享                              |
+| ActivityLottery | true   | 21.08.07 | 待整理 | 主站活动九宫格抽奖                          |
+| Competition     | true   | 21.08.07 | 待整理 | 游戏赛事竞猜                                |
+| DoubleHeart     | true   | 21.08.07 | 待整理 | 双端心跳 (姥爷直播经验)                     |
+| DailyTask       | true   | 21.08.07 | 待整理 | 直播每日任务(签到、观看)                    |
+| Barrage         | true   | 21.08.07 | 待整理 | 保持活跃弹幕                                |
+| Silver2Coin     | true   | 21.08.07 | 待整理 | 银瓜子兑换硬币                              |
+| Judge           | true   | 21.08.07 | 待整理 | 风纪委员投票                                |
+| GiftSend        | true   | 21.08.07 | 待整理 | 礼物赠送、维持每日勋章亲密度                |
+| GroupSignIn     | true   | 21.08.07 | 待整理 | 友爱社签到                                  |
+| GiftHeart       | true   | 21.08.07 | 待整理 | 日常心跳每日礼包礼物                        |
+| SmallHeart      | true   | 21.08.07 | 待整理 | 直播挂机，每日24个小心心                    |
+| MaterialObject  | true   | 21.08.07 | 待整理 | 直播金色宝箱实物抽奖                        |
+| AloneTcpClient  | true   | 21.08.07 | 待整理 | 作者的独立直播监控(可支持本项目哦)          |
+| ZoneTcpClient   | true   | 21.08.07 | 待整理 | 官方的分区直播监控                          |
+| StormRaffle     | true   | 21.08.07 | 待整理 | 直播节奏风暴抽奖、亿元                      |
+| GiftRaffle      | true   | 21.08.07 | 待整理 | 直播礼物抽奖                                |
+| PkRaffle        | true   | 21.08.07 | 待整理 | 直播大乱斗抽奖                              |
+| GuardRaffle     | true   | 21.08.07 | 待整理 | 直播大航海抽奖                              |
+| AnchorRaffle    | true   | 21.08.07 | 待整理 | 直播天选时刻抽奖                            |
+| GiftRaffle      | true   | 21.08.07 | 待整理 | 直播礼物抽奖                                |
+| AwardRecord     | true   | 21.08.07 | 待整理 | 最新的中奖纪录通知                          |
+| Forward         | true   | 21.08.07 | 待整理 | 主站动态抽奖转发                            |
+| CapsuleLottery  | true   | 21.08.07 | 待整理 | 直播扭蛋活动抽奖                            |
+| PolishTheMedal  | true   | 21.08.07 | 待整理 | 每日自动点亮灰色勋章                        |
+| CapsuleLottery  | true   | 21.08.07 | 待整理 | 直播扭蛋活动抽奖                            |
+| VipPrivilege    | true   | 21.08.07 | 待整理 | 每月领取年度大会员特权(B币券、会员购优惠券) |
+| BpConsumption   | true   | 21.08.07 | 待整理 | 每月消费使用年度大会员特权的B币券           |
+| Statistics      | true   | 21.08.07 | 待整理 | 全局抽奖结果统计                            |
 | Silver          | false  | 21.03.27 | 待整理 | 直播银瓜子自动开启宝箱                      |
 
 
