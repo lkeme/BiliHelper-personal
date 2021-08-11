@@ -70,7 +70,12 @@ abstract class BaseRaffle
             }
             array_push($room_list, $raffle['room_id']);
             array_push($raffle_list, $raffle);
-            Statistics::addJoinList($raffle['raffle_name']);
+            // 有备注要单独处理
+            if (isset($raffle['remarks'])) {
+                Statistics::addJoinList($raffle['remarks']);
+            } else {
+                Statistics::addJoinList($raffle['raffle_name']);
+            }
         }
         if (count($raffle_list) && count($room_list)) {
             $room_list = array_unique($room_list);
