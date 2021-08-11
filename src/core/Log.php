@@ -48,7 +48,8 @@ class Log
     private static function prefix(): string
     {
         if (getConf('multiple', 'print')) {
-            return '[' . getConf('user_identity', 'print') ?? getConf('username', 'login.account') . ']';
+            // return '[' . (getConf('user_identity', 'print') ?? getConf('username', 'login.account')) . ']';
+            return sprintf("[%s]",getConf('user_identity', 'print') ?? getConf('username', 'login.account'));
         }
         return '';
     }

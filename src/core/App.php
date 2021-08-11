@@ -47,10 +47,9 @@ class App
      */
     public function load($argv): App
     {
-        $args = (new Command($argv))->run();
-        $filename = $args->getArg(0) ?? 'user.ini';
-        $this->script_mode = $args->getOpt('script');
-
+        $args = (new BCommand($argv))->run();
+        $filename = $args->args()[0] ?? 'user.ini';
+        $this->script_mode = $args->script;
         Config::load($filename);
         return $this;
     }
@@ -67,11 +66,15 @@ class App
                 try {
                     call_user_func(array("BiliHelper\\$dir\\" . $taskName, 'run'), []);
                 } catch (\Throwable  $e) {
+                    // TODO 多次错误删除tasks_***.json文件
                     $error_msg = "MSG: {$e->getMessage()} CODE: {$e->getCode()} FILE: {$e->getFile()} LINE: {$e->getLine()}";
                     Log::error($error_msg);
                     // Notice::push('error', $error_msg);
                 }
-                yield call_user_func(array("BiliHelper\\$dir\\" . $taskName, 'Delayed'), []);
+                if ($dir == 'Plugin')
+                    yield call_user_func(array("BiliHelper\\$dir\\" . $taskName, 'Delayed'), []);
+                else
+                    break;
             }
         });
     }

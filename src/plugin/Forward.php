@@ -211,6 +211,10 @@ class Forward
             $did = $dynamic['desc']['dynamic_id'];
             $card = json_decode($dynamic['card'], true);
             foreach ($msg_list as $msg) {
+                // 异常情况 跳过
+                if (!isset($card['item']['content']) || !$msg) {
+                    continue;
+                }
                 if (strpos($card['item']['content'], $msg) !== false) {
                     Log::info("[删除所有动态] 删除动态 {$did}");
                     Dynamic::removeDynamic($did);
