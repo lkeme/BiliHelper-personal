@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ec8eee201c31224952f597aab5be4ea8",
+    "content-hash": "28d262a352d5f6367f17a5e73ab48ade",
     "packages": [
         {
             "name": "adhocore/cli",
@@ -391,6 +391,63 @@
             },
             "abandoned": "psr/container",
             "time": "2017-02-14T19:40:03+00:00"
+        },
+        {
+            "name": "fire015/flintstone",
+            "version": "v2.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/fire015/flintstone.git",
+                "reference": "406bcaebb4c0e352aa097d141ffd90a2f57cf679"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/fire015/flintstone/zipball/406bcaebb4c0e352aa097d141ffd90a2f57cf679",
+                "reference": "406bcaebb4c0e352aa097d141ffd90a2f57cf679",
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
+            },
+            "require": {
+                "php": ">=7.3"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^9"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Flintstone\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Jason M",
+                    "email": "emailfire@gmail.com"
+                }
+            ],
+            "description": "A key/value database store using flat files for PHP",
+            "homepage": "https://github.com/fire015/flintstone",
+            "keywords": [
+                "cache",
+                "database",
+                "files",
+                "flintstone",
+                "memory"
+            ],
+            "support": {
+                "issues": "https://github.com/fire015/flintstone/issues",
+                "source": "https://github.com/fire015/flintstone/tree/v2.3.0"
+            },
+            "time": "2021-01-20T10:36:23+00:00"
         },
         {
             "name": "guzzlehttp/guzzle",
