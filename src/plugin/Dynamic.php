@@ -19,13 +19,21 @@ class Dynamic
     // Todo 活动订阅
     // https://www.bilibili.com/blackboard/activity-WeqT10t1ep.html
     // https://api.vc.bilibili.com/topic_svr/v1/topic_svr/fetch_dynamics?topic_name=%E4%BA%92%E5%8A%A8%E6%8A%BD%E5%A5%96&sortby=2
-    private static $tags = ['互动抽奖', '抽奖', '转发抽奖', '动态抽奖', '关注+转发'];
+    // https://t.bilibili.com/topic/name/%E5%8A%A8%E6%80%81%E6%8A%BD%E5%A5%96/feed
 
-    //  228584  14027    434405   7019788   3230836
     private static $topic_list = [
-        3230836 => '',
-        434405 => '',
-        7019788 => ''
+        '互动抽奖' => '3230836',
+        '转发抽奖' => '434405',
+        '动态抽奖' => '7146512',
+        '关注抽奖' => '5608480',
+        // '关注+转发' => '7544627',
+        // '评论抽奖'=>'2630459',
+        // '转发关注评论抽奖'=>'8339319',
+        // '转发+评论抽奖'=> '7169938',
+        // '关注评论抽奖'=>'8078587',
+        // '转发评论抽奖' => '7019788',
+        // '抽奖'=>'228584',
+
     ];
 
 
@@ -36,8 +44,8 @@ class Dynamic
      */
     public static function getAwardTopic(): array
     {
-
-        foreach (self::$topic_list as $t_id => $t_name) {
+        foreach (self::$topic_list as $t_name => $t_id) {
+            Log::info("获取关键字 {$t_name}-{$t_id}");
             $url = 'https://api.vc.bilibili.com/topic_svr/v1/topic_svr/topic_new?topic_id=' . $t_id;
             $data = Curl::request('get', $url);
             $data = json_decode($data, true);
@@ -47,7 +55,14 @@ class Dynamic
                 $article_id = $article['desc']['dynamic_id'];
                 // 获取 description
                 $card = json_decode($article['card'], true);
-                if (array_key_exists("description", $card['item'])) {
+
+                if (isset($card['category']) && isset($card['categories'])) {
+                    // 处理专栏 提前处理
+                    continue;
+                } elseif (isset($card['aid']) && isset($card['cid'])) {
+                    //  处理视频转发
+                    $description = $card['dynamic'];
+                } elseif (array_key_exists("description", $card['item'])) {
                     // 主动态
                     $description = $card['item']['description'];
                 } elseif (array_key_exists("content", $card['item'])) {
@@ -77,7 +92,8 @@ class Dynamic
             // more ??
             // https://api.vc.bilibili.com/topic_svr/v1/topic_svr/topic_history?topic_name=转发抽奖&offset_dynamic_id=454347930068783808
         }
-        print_r(count(self::$article_list));
+        $num = count(self::$article_list);
+        Log::info("获取到 {$num} 条有效动态");
         return self::$article_list;
     }
 
