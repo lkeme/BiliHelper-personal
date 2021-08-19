@@ -76,7 +76,7 @@ class GroupSignIn
             if ($de_raw['code'] == '710001') {
                 Log::warning('在应援团{' . $groupInfo['group_name'] . '}中签到失败, 亲密度已达上限');
             } else {
-                print_r($de_raw);
+//                print_r($de_raw);
                 Log::warning('在应援团{' . $groupInfo['group_name'] . '}中签到失败, 原因待查');
             }
             return false;

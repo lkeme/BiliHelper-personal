@@ -91,7 +91,7 @@ class Live
         ];
         $raw = Curl::get('other', $url, $payload);
         $de_raw = json_decode($raw, true);
-        print_r($de_raw);
+//        print_r($de_raw);
         if ($de_raw['code'] != '0') {
             return 23058;
         }
