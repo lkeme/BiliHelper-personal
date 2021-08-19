@@ -181,7 +181,7 @@ class Notice
 
     /**
      * @use DingTalkbot推送
-     * @doc https://developers.dingtalk.com/document/app/document-upgrade-notice#/serverapi2/qf2nxq
+     * @doc https://developers.dingtalk.com/document/robots/custom-robot-access
      * @param array $info
      */
     private static function dingTalkSend(array $info)

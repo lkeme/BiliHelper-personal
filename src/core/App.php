@@ -15,8 +15,7 @@ use function Amp\asyncCall;
 
 class App
 {
-    private $script_mode = false;
-    private $loop_mode = true;
+    private $mode = 0;
 
     /**
      * App constructor.
@@ -50,19 +49,20 @@ class App
     {
         $args = (new BCommand($argv))->run();
         $filename = $args->args()[0] ?? 'user.ini';
-        $this->script_mode = $args->script;
+        $this->selectMode($args);
         Config::load($filename);
         return $this;
     }
+
 
     /**
      * @use 新任务
      * @param string $taskName
      * @param string $dir
      */
-    public function newTask(string $taskName, string $dir)
+    private function newTask(string $taskName, string $dir)
     {
-        asyncCall(function() use ($taskName, $dir) {
+        asyncCall(function () use ($taskName, $dir) {
             while (true) {
                 try {
                     call_user_func(array("BiliHelper\\$dir\\" . $taskName, 'run'), []);
@@ -141,19 +141,38 @@ class App
         Loop::run();
     }
 
+    /**
+     * @use 选择模式
+     * @param object $args
+     */
+    private function selectMode(object $args)
+    {
+        // 可能会有其他模式出现 暂定
+        // 0 默认值 默认模式，1 脚本模式 ...
+        if ($args->script) {
+            $this->mode = 1;
+        }
+    }
 
     /**
      * @use 核心运行
      */
     public function start()
     {
-        // Todo 模式名称需要优化
-        if (__MODE__ == 2) {
-            Log::info('执行Script模式');
-            $this->script_m();
-        } else {
-            Log::info('执行Loop模式');
-            $this->loop_m();
+        switch ($this->mode) {
+            case 0:
+                // 默认
+                Log::info('执行Loop模式');
+                $this->loop_m();
+                break;
+            case 1:
+                // 脚本
+                Log::info('执行Script模式');
+                $this->script_m();
+                break;
+            default:
+                Log::error("请检查，没有选定的执行模式");
+                exit();
         }
     }
 }
