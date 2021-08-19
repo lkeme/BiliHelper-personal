@@ -62,7 +62,7 @@ class App
      */
     public function newTask(string $taskName, string $dir)
     {
-        asyncCall(function () use ($taskName, $dir) {
+        asyncCall(function() use ($taskName, $dir) {
             while (true) {
                 try {
                     call_user_func(array("BiliHelper\\$dir\\" . $taskName, 'run'), []);
@@ -148,7 +148,7 @@ class App
     public function start()
     {
         // Todo 模式名称需要优化
-        if ($this->script_mode) {
+        if (__MODE__ == 2) {
             Log::info('执行Script模式');
             $this->script_m();
         } else {
