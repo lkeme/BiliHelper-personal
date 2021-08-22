@@ -13,15 +13,20 @@ use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
 use BiliHelper\Util\TimeLock;
 use BiliHelper\Tool\Common;
+use JetBrains\PhpStorm\ArrayShape;
+use JetBrains\PhpStorm\NoReturn;
 
 class Login
 {
     use TimeLock;
 
     // 账密
-    private static $username;
-    private static $password;
+    private static string $username;
+    private static string $password;
 
+    /**
+     * @throws \Jelix\IniFile\IniException
+     */
     public static function run()
     {
         if (self::getLock()) {
@@ -47,6 +52,7 @@ class Login
 
     /**
      * @use 登录控制中心
+     * @throws \Jelix\IniFile\IniException
      */
     private static function login()
     {
@@ -73,6 +79,7 @@ class Login
 
     /**
      * @use 检查登录
+     * @throws \Jelix\IniFile\IniException
      */
     private static function checkLogin()
     {
@@ -90,6 +97,7 @@ class Login
     /**
      * @use 保持认证
      * @return bool
+     * @throws \Jelix\IniFile\IniException
      */
     private static function keepAuth(): bool
     {
@@ -132,6 +140,7 @@ class Login
 
     /**
      * @use 刷新Token
+     * @throws \Jelix\IniFile\IniException
      */
     private static function refreshToken(): bool
     {
@@ -179,7 +188,7 @@ class Login
 
     /**
      * @use 获取验证码
-     * @return array|string[]
+     * @return array
      */
     private static function getCaptcha(): array
     {
@@ -210,6 +219,7 @@ class Login
      * @param array $captcha
      * @return array
      */
+    #[ArrayShape(['validate' => "mixed", 'challenge' => "mixed"])]
     private static function ocrCaptcha(array $captcha): array
     {
         $url = 'https://captcha-v1.mudew.com:19951/';
@@ -236,14 +246,15 @@ class Login
      * @param string $validate
      * @param string $challenge
      * @param string $mode
+     * @throws \Jelix\IniFile\IniException
      */
     private static function accountLogin(string $validate = '', string $challenge = '', string $mode = '账密模式')
     {
-        Log::info("尝试 {$mode} 登录");
+        Log::info("尝试 $mode 登录");
         // $url = 'https://passport.bilibili.com/api/v3/oauth2/login';
         $url = 'https://passport.bilibili.com/x/passport-login/oauth2/login';
         $payload = [
-            'seccode' => $validate ? "{$validate}|jordan" : '',
+            'seccode' => $validate ? "$validate|jordan" : '',
             'validate' => $validate,
             'challenge' => $challenge,
             'permission' => 'ALL',
@@ -266,10 +277,11 @@ class Login
     /**
      * @use 短信登录
      * @param string $mode
+     * @throws \Jelix\IniFile\IniException
      */
     private static function smsLogin(string $mode = '短信模式')
     {
-        Log::info("尝试 {$mode} 登录");
+        Log::info("尝试 $mode 登录");
         if (getConf('phone', 'login.check')) {
             self::checkPhone(self::$username);
         }
@@ -293,7 +305,7 @@ class Login
      * @param int $max_char
      * @return string
      */
-    private static function cliInput(string $msg, $max_char = 100): string
+    private static function cliInput(string $msg, int $max_char = 100): string
     {
         $stdin = fopen('php://stdin', 'r');
         echo '# ' . $msg;
@@ -307,11 +319,12 @@ class Login
      * @param string $phone
      * @return array
      */
+    #[ArrayShape(['cid' => "mixed", 'tel' => "string", 'statistics' => "string", 'captcha_key' => "mixed"])]
     private static function sendSms(string $phone): array
     {
         $url = 'https://passport.bilibili.com//x/passport-login/sms/send';
         $payload = [
-            'cid' => getConf('country_code', 'login.country') ,
+            'cid' => getConf('country_code', 'login.country'),
             'tel' => $phone,
             'statistics' => '{"appId":1,"platform":3,"version":"6.32.0","abtest":""}',
         ];
@@ -324,7 +337,7 @@ class Login
             $payload['captcha_key'] = $de_raw['data']['captcha_key'];
             return $payload;
         }
-        Log::error("短信验证码发送失败 {$raw}");
+        Log::error("短信验证码发送失败 $raw");
         die();
     }
 
@@ -333,6 +346,7 @@ class Login
      * @param $mode
      * @param $code
      * @param $data
+     * @throws \Jelix\IniFile\IniException
      */
     private static function loginAfter($mode, $code, $data)
     {
@@ -349,11 +363,9 @@ class Login
                         case 2:
                             // 异常高危
                             self::loginFail($mode, $data['data']['message']);
-                            break;
                         default:
                             // 未知错误
                             self::loginFail($mode, '未知错误: ' . $data['data']['message']);
-                            break;
                     }
                 } else {
                     // 正常登录
@@ -363,19 +375,15 @@ class Login
             case -105:
                 // 需要验证码
                 self::loginFail($mode, '此次登录需要验证码或' . $data['message']);
-                break;
             case -629:
                 // 密码错误
                 self::loginFail($mode, $data['message']);
-                break;
             case  -2100:
                 // 验证手机号
                 self::loginFail($mode, '账号启用了设备锁或异地登录需验证手机号');
-                break;
             default:
                 // 未知错误
                 self::loginFail($mode, '未知错误: ' . $data['message']);
-                break;
         }
 
     }
@@ -384,10 +392,11 @@ class Login
      * @use 登录成功
      * @param $mode
      * @param $data
+     * @throws \Jelix\IniFile\IniException
      */
     private static function loginSuccess($mode, $data)
     {
-        Log::info("{$mode} 登录成功");
+        Log::info("$mode 登录成功");
         self::successHandle($data);
         Log::info('生成信息配置完毕');
     }
@@ -395,6 +404,7 @@ class Login
     /**
      * @use 刷新成功
      * @param $data
+     * @throws \Jelix\IniFile\IniException
      */
     private static function refreshSuccess($data)
     {
@@ -406,6 +416,7 @@ class Login
     /**
      * @use 成功处理
      * @param $data
+     * @throws \Jelix\IniFile\IniException
      */
     private static function successHandle($data)
     {
@@ -424,9 +435,10 @@ class Login
      * @param $mode
      * @param $data
      */
+    #[NoReturn]
     private static function loginFail($mode, $data)
     {
-        Log::error("{$mode} 登录失败", ['msg' => $data]);
+        Log::error("$mode 登录失败", ['msg' => $data]);
         die();
     }
 
@@ -436,7 +448,8 @@ class Login
      */
     private static function checkPhone(string $phone)
     {
-        if (!preg_match("/^1[3456789]{1}\d{9}$/", $phone)) {
+        //  /^1[3456789]{1}\d{9}$/
+        if (!preg_match("/^1[3456789]\d{9}$/", $phone)) {
             Log::error("当前用户名不是有效手机号格式");
             die();
         }
@@ -449,12 +462,13 @@ class Login
      * @param string $section
      * @param bool $print
      * @param bool $hide
+     * @throws \Jelix\IniFile\IniException
      */
-    private static function saveConfig(string $key, string $value, string $section, $print = true, $hide = true)
+    private static function saveConfig(string $key, string $value, string $section, bool $print = true, bool $hide = true)
     {
         setConf($key, $value, $section);
         if ($print) {
-            Log::info(" > {$key}: " . ($hide ? Common::replaceStar($value, 6, 6) : $value));
+            Log::info(" > $key: " . ($hide ? Common::replaceStar($value, 6, 6) : $value));
         }
     }
 
@@ -475,6 +489,7 @@ class Login
 
     /**
      * @use 清除已有
+     * @throws \Jelix\IniFile\IniException
      */
     private static function clearAccount()
     {
@@ -507,6 +522,7 @@ class Login
     /**
      * @use 验证码登录
      * @param string $mode
+     * @throws \Jelix\IniFile\IniException
      */
     private static function captchaLogin(string $mode = '验证码模式')
     {

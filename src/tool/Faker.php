@@ -22,7 +22,7 @@ class Faker
      * @example 79907610
      *
      */
-    public static function numberBetween($int1 = 0, $int2 = 2147483647): int
+    public static function numberBetween(int $int1 = 0, int $int2 = 2147483647): int
     {
         $min = $int1 < $int2 ? $int1 : $int2;
         $max = $int1 < $int2 ? $int2 : $int1;
@@ -36,7 +36,7 @@ class Faker
      * @param int $except
      * @return int
      */
-    public static function randomDigitNot($except): int
+    public static function randomDigitNot(int $except): int
     {
         $result = self::numberBetween(0, 8);
         if ($result >= $except) {
@@ -53,7 +53,7 @@ class Faker
      * @param string $string String that needs to bet parsed
      * @return string
      */
-    public static function asciify($string = '****'): string
+    public static function asciify(string $string = '****'): string
     {
         return preg_replace_callback('/\*/u', 'static::randomAscii', $string);
     }
@@ -73,7 +73,7 @@ class Faker
     /**
      * @example '237.149.115.38'
      */
-    public function ipv4()
+    public function ipv4(): bool|string
     {
         return long2ip(mt_rand(0, 1) == 0 ? mt_rand(-2147483648, -2) : mt_rand(16777216, 2147483647));
     }
@@ -94,7 +94,7 @@ class Faker
     /**
      * @example '10.1.1.17'
      */
-    public static function localIpv4()
+    public static function localIpv4(): bool|string
     {
         if (static::numberBetween(0, 1) === 0) {
             // 10.x.x.x range
@@ -113,17 +113,15 @@ class Faker
         for ($i = 0; $i < 6; $i++) {
             $mac[] = sprintf('%02X', static::numberBetween(0, 0xff));
         }
-        $mac = implode(':', $mac);
-
-        return $mac;
+        return implode(':', $mac);
     }
 
     /**
      * @use 转Ascii
      * @param $string
-     * @return array|string|string[]
+     * @return array|string
      */
-    protected static function toAscii($string)
+    protected static function toAscii($string): array|string
     {
         static $arrayFrom, $arrayTo;
 

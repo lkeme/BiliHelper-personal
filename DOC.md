@@ -18,7 +18,7 @@
 
 |Requirement         |
 |--------------------|
-|PHP >=7.3           |
+|PHP >=8.0           |
 |php_curl            |
 |php_sockets         |
 |php_openssl         |
@@ -36,7 +36,7 @@
 
 + 阿里云(全量镜像)
 
-```bash
+```shell script
 # 使用帮助
 > https://developer.aliyun.com/composer
 # 使用命令
@@ -45,7 +45,7 @@
 
 + 恢复默认镜像|Composer.phar加速下载
 
-```bash
+```shell script
 > composer config -g --unset repos.packagist
 
 > https://mirrors.cloud.tencent.com/composer/composer.phar
@@ -56,7 +56,7 @@
 <summary>其余镜像 展开查看</summary>
 <pre><code>
 + cnpkg(全量镜像)
-```bash
+```shell script
 # 使用帮助
 > https://php.cnpkg.org/
 # 使用命令
@@ -65,16 +65,16 @@
 
 + 腾讯云(全量镜像)
 
-```bash
+```shell script
 # 使用帮助
 > https://mirrors.cloud.tencent.com/help/composer.html
 # 使用命令
 > composer config -g repos.packagist composer https://mirrors.cloud.tencent.com/composer/
 ```
 
-+ phpcomposer(全量镜像)
++ PhpComposer(全量镜像)
 
-```bash
+```shell script
 # 使用帮助
 > https://pkg.phpcomposer.com/
 # 使用命令
@@ -83,7 +83,7 @@
 
 + 华为云(全量镜像)
 
-```bash
+```shell script
 # 使用帮助
 > https://mirrors.huaweicloud.com/repository/php/
 # 使用命令
@@ -92,7 +92,7 @@
 
 + 交通大学(非全量镜像)
 
-```bash
+```shell script
 # 使用帮助
 > https://packagist.mirrors.sjtug.sjtu.edu.cn/
 # 使用命令
@@ -106,7 +106,7 @@
 
 1. 下载（克隆）项目代码，初始化项目
 
-```
+```shell script
 $ git clone https://github.com/lkeme/BiliHelper-personal.git
 $ cd BiliHelper-personal/conf
 $ cp user.ini.example user.ini
@@ -114,7 +114,7 @@ $ cp user.ini.example user.ini
 
 2. 使用 [composer](https://getcomposer.org/download/) 工具进行安装
 
-```
+```shell script
 $ composer install
 ```
 
@@ -124,13 +124,14 @@ $ composer install
 
 3. 按照说明修改配置文件 `user.ini`
 
- ```
+ ```shell script
  # 默认只需填写帐号密码，按需求开启其他功能即可
+ ...
  ```
 
 4. 运行测试
 
-```
+```shell script
 $ php index.php
 ```
 
@@ -138,11 +139,26 @@ $ php index.php
 
 5. 复制一份example配置文件，修改账号密码即可
 
- ```
+ ```shell script
  $ php index.php example.ini
  ```
 
-6. 请保证配置文件存在，否则默认加载`user.ini`配置文件
+6. 自定义设备方案
+
+ ```shell script
+ $ cd conf
+ $ cp bili.yaml user_bili.yaml
+ $ cp device.yaml user_device.yaml
+ ```
+
+7. 命令模式
+
+```shell script
+# 获取所有命令
+$  php index.php -? 
+```
+
+8. 请保证配置文件存在，否则默认加载`user.ini`配置文件
 
 <p align="center"><img width="680px" src="https://user-images.githubusercontent.com/19500576/118621472-f8455d80-b7f8-11eb-9fec-500148a566b4.png"></p>
 
@@ -173,7 +189,7 @@ $ docker run -itd --rm -v /path/to/your/confFileName.ini:/app/conf/user.ini lkem
 
 - 使用github镜像加速
 
-```bash
+```shell script
 $ -e MIRRORS=0 # 使用 github.com 
 $ -e MIRRORS=1 # 使用 ghproxy.com
 $ -e MIRRORS=2 # 使用 github.com.cnpmjs.org

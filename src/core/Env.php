@@ -14,12 +14,12 @@ use Noodlehaus\Config;
 
 class Env
 {
-    private $app_name;
-    private $app_version;
-    private $app_branch;
-    private $app_source;
+    private string $app_name;
+    private string $app_version;
+    private string $app_branch;
+    private string $app_source;
 
-    private $repository = APP_DATA_PATH . 'latest_version.json';
+    private string $repository = APP_DATA_PATH . 'latest_version.json';
 
 
     /**
@@ -45,9 +45,9 @@ class Env
         $default_extensions = ['curl', 'openssl', 'sockets', 'json', 'zlib', 'mbstring'];
         foreach ($default_extensions as $extension) {
             if (!extension_loaded($extension)) {
-                Log::error("检查到项目依赖 {$extension} 扩展未加载。");
-                Log::error("请在 php.ini中启用 {$extension} 扩展后重试。");
-                Log::error("程序常见问题请移步 {$this->app_source} 文档部分查看。");
+                Log::error("检查到项目依赖 $extension 扩展未加载。");
+                Log::error("请在 php.ini中启用 $extension 扩展后重试。");
+                Log::error("程序常见问题请移步 $this->app_source 文档部分查看。");
                 exit();
             }
         }
@@ -58,18 +58,18 @@ class Env
      */
     public function inspect_configure(): Env
     {
-        Log::info("欢迎使用 项目: {$this->app_name}@{$this->app_branch} 版本: {$this->app_version}");
-        Log::info("使用说明请移步 {$this->app_source} 查看");
+        Log::info("欢迎使用 项目: $this->app_name@$this->app_branch 版本: $this->app_version");
+        Log::info("使用说明请移步 $this->app_source 查看");
 
         if (PHP_SAPI != 'cli') {
             die("Please run this script from command line .");
         }
-        if (version_compare(PHP_VERSION, '7.3.0', '<')) {
-            die("Please upgrade PHP version > 7.3.0 .");
-        }
-//        if (version_compare(PHP_VERSION, '8.0.0', '>')) {
-//            die("Please upgrade PHP version < 8.0.0 .");
+//        if (version_compare(PHP_VERSION, '7.4.0', '<')) {
+//            die("Please upgrade PHP version > 7.4.0 .");
 //        }
+        if (version_compare(PHP_VERSION, '8.0.0', '<')) {
+            die("Please upgrade PHP version < 8.0.0 .");
+        }
         return $this;
     }
 

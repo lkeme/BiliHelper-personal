@@ -20,12 +20,12 @@ class AloneTcpClient
 {
     use TimeLock;
 
-    private static $heart_lock = 0;
+    private static int $heart_lock = 0;
     private static $client = null;
     private static $server_addr = null;
     private static $server_key = null;
-    private static $socket_timeout = 0;
-    private static $max_errors_num = 0; // 最大连续错误5次
+    private static int $socket_timeout = 0;
+    private static int $max_errors_num = 0; // 最大连续错误5次
 
     /**
      * @use 入口
@@ -74,10 +74,10 @@ class AloneTcpClient
      * @use 数据解包
      * @param $value
      * @param string $fmt
-     * @return array|false
+     * @return mixed
      * @throws \Exception
      */
-    private static function unPackMsg($value, string $fmt = "N")
+    private static function unPackMsg($value, string $fmt = "N"):mixed
     {
         return unpack($fmt, $value)[1];
     }
@@ -114,9 +114,9 @@ class AloneTcpClient
     /**
      * @use 读数据
      * @param $length
-     * @return array|bool
+     * @return mixed
      */
-    private static function reader($length)
+    private static function reader($length): mixed
     {
         $data = false;
         try {
@@ -216,7 +216,7 @@ class AloneTcpClient
         switch ($data_type) {
             case 'raffle':
                 // 抽奖推送
-                Log::debug("(receive={$body})");
+                Log::debug("(receive=$body)");
                 DataTreating::distribute($raw_data['data']);
                 break;
             case 'entered':
@@ -229,7 +229,7 @@ class AloneTcpClient
                 Log::error("推送服务器异常 {$raw_data['data']['msg']}, 程序错误5次后将挂起, 请手动关闭!");
                 if (self::$max_errors_num == 5) {
                     // KEY到期推送提醒
-                    Notice::push('key_expired', '');
+                    Notice::push('key_expired');
                     // 程序挂起 防止systemd无限重启导致触发过多推送提醒
                     sleep(86400);
                     exit();
@@ -258,7 +258,7 @@ class AloneTcpClient
             default:
                 // 未知信息
                 var_dump($raw_data);
-                Log::info("出现未知信息 {$body}");
+                Log::info("出现未知信息 $body");
                 // 出现未知信息 处理重连 防止内存益处
                 self::reConnect();
                 break;
@@ -278,8 +278,7 @@ class AloneTcpClient
         }
         $filename = $path . getConf('username', 'login.account') . ".log";
         $date = date('[Y-m-d H:i:s] ');
-        $data = "[{$date}]{$message}" . PHP_EOL;
+        $data = "[$date]$message" . PHP_EOL;
         file_put_contents($filename, $data, FILE_APPEND);
-        return;
     }
 }

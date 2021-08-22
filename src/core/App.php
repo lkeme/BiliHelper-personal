@@ -10,12 +10,16 @@
 
 namespace BiliHelper\Core;
 
+use BiliHelper\Plugin\Live;
+use Throwable;
 use Amp\Loop;
+use BiliHelper\Script\BaseTask;
+
 use function Amp\asyncCall;
 
 class App
 {
-    private $mode = 0;
+    private int $mode = 0;
 
     /**
      * App constructor.
@@ -49,8 +53,14 @@ class App
     {
         $args = (new BCommand($argv))->run();
         $filename = $args->args()[0] ?? 'user.ini';
+        // 加载配置
+        Config::getInstance()->load($filename);
+        // 加载设备
+        Device::getInstance()->load($filename);
+        // 引导参数
         $this->selectMode($args);
-        Config::load($filename);
+        $this->restoreMode($args);
+
         return $this;
     }
 
@@ -66,7 +76,7 @@ class App
             while (true) {
                 try {
                     call_user_func(array("BiliHelper\\$dir\\" . $taskName, 'run'), []);
-                } catch (\Throwable  $e) {
+                } catch (Throwable  $e) {
                     // TODO 多次错误删除tasks_***.json文件
                     $error_msg = "MSG: {$e->getMessage()} CODE: {$e->getCode()} FILE: {$e->getFile()} LINE: {$e->getLine()}";
                     Log::error($error_msg);
@@ -90,7 +100,7 @@ class App
             'DelDynamic' => '批量清理动态(未完成)'
         ];
 
-        $choice = \BiliHelper\Script\BaseTask::choice($scripts, 'UnFollow');
+        $choice = BaseTask::choice($scripts, 'UnFollow');
         $this->newTask($choice, 'Script');
     }
 
@@ -153,6 +163,19 @@ class App
             $this->mode = 1;
         }
     }
+
+    /**
+     * @use 复位模式
+     * @param object $args
+     */
+    private function restoreMode(object $args)
+    {
+        // 复位 后期添加其他复位
+        if ($args->restore) {
+            Task::getInstance()->restore();
+        }
+    }
+
 
     /**
      * @use 核心运行

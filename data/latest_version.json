@@ -1,11 +1,11 @@
 {
   "code": 0,
-  "project":"BiliHelper-personal",
+  "project": "BiliHelper-personal",
   "branch": "master",
   "source": "https://github.com/lkeme/BiliHelper-personal",
   "raw_url": "https://cdn.jsdelivr.net/gh/lkeme/BiliHelper-personal@master/data/latest_version.json",
   "purge_url": "https://purge.jsdelivr.net/gh/lkeme/BiliHelper-personal@master/data/latest_version.json",
-  "version": "0.9.9.210807",
+  "version": "1.0.0.210822",
   "des": "程序有更新，请及时线上查看更新哦~",
-  "time": "2021年8月7日11:40:35"
+  "time": "2021年8月22日11:40:35"
 }

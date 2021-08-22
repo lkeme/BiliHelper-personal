@@ -12,6 +12,8 @@
 namespace BiliHelper\Tool;
 
 
+use Exception;
+
 /** **********************************************************************************
  * Generate hundreds of thousands of unique mobile & desktop User Agents that are 100% authentic.
  * Supports Hundreds of Android devices, 32 & 64 bit versions of Windows XP-10.5, Linux 540-686, and Mac 7-10.12
@@ -23,7 +25,7 @@ class UserAgent
      * Windows Operating System list with dynamic versioning
      * @var array $windows_os
      */
-    public $windows_os = [
+    public array $windows_os = [
         '[Windows; |Windows; U; |]Windows NT 6.:number0-3:;[ Win64; x64| WOW64| x64|]',
         '[Windows; |Windows; U; |]Windows NT 10.:number0-5:;[ Win64; x64| WOW64| x64|]'
     ];
@@ -31,7 +33,7 @@ class UserAgent
      * Linux Operating Systems [limited]
      * @var array $linux_os
      */
-    public $linux_os = [
+    public array $linux_os = [
         '[Linux; |][U; |]Linux x86_64',
         '[Linux; |][U; |]Linux i:number5-6::number4-8::number0-6: [x86_64|]'
     ];
@@ -39,7 +41,7 @@ class UserAgent
      * Mac Operating System (OS X) with dynamic versioning
      * @var array $mac_os
      */
-    public $mac_os = [
+    public array $mac_os = [
         'Macintosh; [U; |]Intel Mac OS X :number7-9:_:number0-9:_:number0-9:',
         'Macintosh; [U; |]Intel Mac OS X 10_:number0-12:_:number0-9:'
     ];
@@ -47,7 +49,7 @@ class UserAgent
      * Versions of Android to be used
      * @var array $androidVersions
      */
-    public $androidVersions = [
+    public array $androidVersions = [
         '4.3.1',
         '4.4',
         '4.4.1',
@@ -67,12 +69,12 @@ class UserAgent
      * Holds the version of android for the User Agent being generated
      * @property string $androidVersion
      */
-    public $androidVersion;
+    public string $androidVersion;
     /**
      * Android devices and for specific android versions
      * @var array $androidDevices
      */
-    public $androidDevices = [
+    public array $androidDevices = [
         '4.3' => [
             'GT-I9:number2-5:00 Build/JDQ39',
             'Nokia 3:number1-3:[10|15] Build/IMM76D',
@@ -165,12 +167,12 @@ class UserAgent
             'LG-H:number90-93:0 Build/NRD90[C|M]'
         ]
     ];
-    public $locale = 'en-US';
+    public string $locale = 'en-US';
     /**
      * List of "OS" strings used for android
      * @var array $android_os
      */
-    public $android_os = [
+    public array $android_os = [
         'Linux; Android :androidVersion:; :androidDevice:',
         //Todo: Add a $windowsDevices variable that does the same as androidDevice
         //'Windows Phone 10.0; Android :androidVersion:; :windowsDevice:',
@@ -181,7 +183,7 @@ class UserAgent
      * List of "OS" strings used for iOS
      * @var array $mobile_ios
      */
-    public $mobile_ios = [
+    public array $mobile_ios = [
         'iphone' => 'iPhone; CPU iPhone OS :number7-11:_:number0-9:_:number0-9:; like Mac OS X;',
         'ipad' => 'iPad; CPU iPad OS :number7-11:_:number0-9:_:number0-9: like Mac OS X;',
         'ipod' => 'iPod; CPU iPod OS :number7-11:_:number0-9:_:number0-9:; like Mac OS X;'
@@ -190,9 +192,10 @@ class UserAgent
     /**
      * Get a random operating system
      * @param string|null $os
-     * @return string *
+     * @return array|string|null *
+     * @throws \Exception
      */
-    public function getOS(string $os = NULL)
+    public function getOS(string $os = NULL): array|string|null
     {
         $_os = [];
         if ($os === NULL || in_array($os, ['chrome', 'firefox', 'explorer'])) {
@@ -204,12 +207,12 @@ class UserAgent
         $selected_os = rtrim($_os[random_int(0, count($_os) - 1)], ';');
 
         // check for spin syntax
-        if (strpos($selected_os, '[') !== FALSE) {
+        if (str_contains($selected_os, '[')) {
             $selected_os = self::processSpinSyntax($selected_os);
         }
 
         // check for random number syntax
-        if (strpos($selected_os, ':number') !== FALSE) {
+        if (str_contains($selected_os, ':number')) {
             $selected_os = self::processRandomNumbers($selected_os);
         }
 
@@ -222,9 +225,10 @@ class UserAgent
     /**
      * Get Mobile OS
      * @param string|null $os Can specifiy android, iphone, ipad, ipod, or null/blank for random
-     * @return string *
+     * @return array|string|null *
+     * @throws \Exception
      */
-    public function getMobileOS(string $os = NULL)
+    public function getMobileOS(string $os = NULL): array|string|null
     {
         $os = strtolower($os);
         $_os = [];
@@ -242,13 +246,13 @@ class UserAgent
         }
         // select random mobile os
         $selected_os = rtrim($_os[random_int(0, count($_os) - 1)], ';');
-        if (strpos($selected_os, ':androidVersion:') !== FALSE) {
+        if (str_contains($selected_os, ':androidVersion:')) {
             $selected_os = $this->processAndroidVersion($selected_os);
         }
-        if (strpos($selected_os, ':androidDevice:') !== FALSE) {
+        if (str_contains($selected_os, ':androidDevice:')) {
             $selected_os = $this->addAndroidDevice($selected_os);
         }
-        if (strpos($selected_os, ':number') !== FALSE) {
+        if (str_contains($selected_os, ':number')) {
             $selected_os = self::processRandomNumbers($selected_os);
         }
         return $selected_os;
@@ -258,8 +262,9 @@ class UserAgent
      *  static::processRandomNumbers
      * @param $selected_os
      * @return null|string|string[] *
+     * @throws \Exception
      */
-    public static function processRandomNumbers($selected_os)
+    public static function processRandomNumbers($selected_os): array|string|null
     {
         return preg_replace_callback('/:number(\d+)-(\d+):/i', function ($matches) {
             return random_int($matches[1], $matches[2]);
@@ -271,7 +276,7 @@ class UserAgent
      * @param $selected_os
      * @return null|string|string[] *
      */
-    public static function processSpinSyntax($selected_os)
+    public static function processSpinSyntax($selected_os): array|string|null
     {
         return preg_replace_callback('/\[([\w\-\s|;]*?)\]/i', function ($matches) {
             $shuffle = explode('|', $matches[1]);
@@ -284,7 +289,7 @@ class UserAgent
      * @param $selected_os
      * @return null|string|string[] *
      */
-    public function processAndroidVersion($selected_os)
+    public function processAndroidVersion($selected_os): array|string|null
     {
         $this->androidVersion = $version = $this->androidVersions[array_rand($this->androidVersions)];
         return preg_replace_callback('/:androidVersion:/i', function ($matches) use ($version) {
@@ -297,7 +302,7 @@ class UserAgent
      * @param $selected_os
      * @return null|string|string[] *
      */
-    public function addAndroidDevice($selected_os)
+    public function addAndroidDevice($selected_os): array|string|null
     {
         $devices = $this->androidDevices[substr($this->androidVersion, 0, 3)];
         $device = $devices[array_rand($devices)];
@@ -312,6 +317,7 @@ class UserAgent
      *  static::chromeVersion
      * @param $version
      * @return string *
+     * @throws \Exception
      */
     public static function chromeVersion($version): string
     {
@@ -323,6 +329,7 @@ class UserAgent
      *  static::firefoxVersion
      * @param $version
      * @return string *
+     * @throws \Exception
      */
     public static function firefoxVersion($version): string
     {
@@ -333,6 +340,7 @@ class UserAgent
      *  static::windows
      * @param $version
      * @return string *
+     * @throws \Exception
      */
     public static function windows($version): string
     {
@@ -343,6 +351,7 @@ class UserAgent
      * generate
      * @param null $userAgent
      * @return string *
+     * @throws \Exception
      */
     public function generate($userAgent = NULL, $locale = null): string
     {
@@ -395,7 +404,7 @@ class UserAgent
                 . (random_int(1, 100) > 50 ? random_int(533, 537) : random_int(600, 603))
                 . '.' . random_int(0, 9);
         } else {
-            new Exception('Unable to determine user agent to generate');
+            throw new Exception('Unable to determine user agent to generate');
         }
     }
 }

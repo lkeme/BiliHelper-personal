@@ -18,11 +18,11 @@ class SmallHeart
     use TimeLock;
     use XliveHeartBeat;
 
-    private static $fans_medals = []; // 全部勋章
-    private static $metal_lock = 0; // 勋章时间锁
-    private static $interval = 60; // 每次跳动时间
-    private static $total_time = 0;
-    private static $metal = null;
+    private static array $fans_medals = []; // 全部勋章
+    private static int $metal_lock = 0; // 勋章时间锁
+    private static int $interval = 60; // 每次跳动时间
+    private static int $total_time = 0;
+    private static array|null $metal = null;
 
     public static function run()
     {

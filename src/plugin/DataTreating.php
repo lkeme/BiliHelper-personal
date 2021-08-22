@@ -10,6 +10,8 @@
 
 namespace BiliHelper\Plugin;
 
+use Exception;
+
 class DataTreating
 {
     // Todo 独立分发 Push||Pull数据
@@ -23,7 +25,7 @@ class DataTreating
         // room_id raffle_id raffle_title raffle_type
         try {
             $info = ['rid' => $data['room_id'], 'lid' => $data['raffle_id']];
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return;
         }
         switch ($data['raffle_type']) {

@@ -18,12 +18,12 @@ class AwardRecord
 {
     use TimeLock;
 
-    private static $raffle_lock = 0;
-    private static $raffle_list = [];
-    private static $anchor_lock = 0;
-    private static $anchor_list = [];
-    private static $gift_lock = 0;
-    private static $gift_list = [];
+    private static int $raffle_lock = 0;
+    private static array $raffle_list = [];
+    private static int $anchor_lock = 0;
+    private static array $anchor_list = [];
+    private static int $gift_lock = 0;
+    private static array $gift_list = [];
 
     public static function run()
     {
@@ -69,7 +69,7 @@ class AwardRecord
             // 范围
             if ($day <= 2) {
                 $info = $anchor['award_name'] . 'x' . $anchor['award_num'];
-                Log::notice("天选时刻于" . $anchor['end_time'] . "获奖: {$info} ,请留意查看...");
+                Log::notice("天选时刻于" . $anchor['end_time'] . "获奖: $info ,请留意查看...");
                 Notice::push('anchor', $info);
             }
             array_push(self::$anchor_list, $anchor['id']);
@@ -82,7 +82,7 @@ class AwardRecord
             if (in_array($wait_un_follow['anchor_id'], self::$anchor_list)) {
                 AnchorRaffle::delToGroup($wait_un_follow['uid'], $wait_un_follow['anchor_id'], false);
             } else {
-                AnchorRaffle::delToGroup($wait_un_follow['uid'], $wait_un_follow['anchor_id'], true);
+                AnchorRaffle::delToGroup($wait_un_follow['uid'], $wait_un_follow['anchor_id']);
             }
         }
 
@@ -118,7 +118,7 @@ class AwardRecord
             // 范围
             if ($day <= 2 && empty($raffle['update_time'])) {
                 $info = $raffle['gift_name'] . 'x' . $raffle['gift_num'];
-                Log::notice("实物奖励于" . $raffle['create_time'] . "获奖: {$info} ,请留意查看...");
+                Log::notice("实物奖励于" . $raffle['create_time'] . "获奖: $info ,请留意查看...");
                 Notice::push('raffle', $info);
             }
             array_push(self::$raffle_list, $raffle['id']);

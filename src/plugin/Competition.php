@@ -73,7 +73,7 @@ class Competition
         if ($de_raw['code'] == 0) {
             Log::notice("破产成功: {$de_raw['message']}");
         } else {
-            Log::warning("破产失败: {$raw}");
+            Log::warning("破产失败: $raw");
         }
     }
 
@@ -115,7 +115,7 @@ class Competition
         }
         $guess['detail_id'] = $detail['detail_id'];
         $profit = ceil($guess['count'] * $detail['odds']);
-        $guess['estimate'] = "竞猜队伍: {$detail['option']} 预计下注: {$guess['count']} 预计赚取: {$profit} 预计亏损: {$guess['count']} (硬币)";
+        $guess['estimate'] = "竞猜队伍: {$detail['option']} 预计下注: {$guess['count']} 预计赚取: $profit 预计亏损: {$guess['count']} (硬币)";
         return $guess;
     }
 

@@ -7,11 +7,13 @@
  *  Email: Useri@live.cn
  *  Updated: 2021 ~ 2022
  */
+declare(strict_types=1);
 
+namespace BiliHelper\Exceptions;
 
-require 'vendor/autoload.php';
+use Exception;
 
-$app = new BiliHelper\Core\App(__DIR__);
-$app->load($argv)
-    ->inspect()
-    ->start();
+class TaskException extends Exception
+{
+
+}

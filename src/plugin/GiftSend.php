@@ -18,13 +18,13 @@ class GiftSend
 {
     use TimeLock;
 
-    protected static $uid = 0;
-    protected static $tid = 0;
-    protected static $r_uid = 0;
-    protected static $room_id = 0;
-    protected static $short_id = 0;
-    protected static $room_list = [];
-    protected static $medal_list = [];
+    protected static int $uid = 0;
+    protected static int $tid = 0;
+    protected static int $r_uid = 0;
+    protected static int $room_id = 0;
+    protected static int $short_id = 0;
+    protected static array $room_list = [];
+    protected static array $medal_list = [];
 
 
     public static function run()
@@ -77,12 +77,12 @@ class GiftSend
                 if (!in_array($gift['gift_id'], [1, 6])) {
                     continue;
                 }
-                Log::notice("直播间 {$room_id} 需赠送亲密度 {$total_intimacy} 剩余亲密度 " . ($total_intimacy - $current_intimacy));
+                Log::notice("直播间 $room_id 需赠送亲密度 $total_intimacy 剩余亲密度 " . ($total_intimacy - $current_intimacy));
                 $amt = self::calcAmt($gift, $total_intimacy - $current_intimacy);
                 self::sendGift($gift, $amt);
                 $current_intimacy += ($gift['gift_id'] == 6) ? ($amt * 10) : $amt;
                 if (!($current_intimacy - $total_intimacy)) {
-                    Log::notice("直播间 {$room_id} 亲密度 {$total_intimacy} 送满啦~送满啦~");
+                    Log::notice("直播间 $room_id 亲密度 $total_intimacy 送满啦~送满啦~");
                     break;
                 }
             }
@@ -275,7 +275,7 @@ class GiftSend
         if (isset($data['code']) && $data['code']) {
             Log::warning('送礼失败!', ['msg' => $data['message']]);
         } else {
-            Log::notice("成功向 {$payload['biz_id']} 投喂了 {$amt} 个{$value['gift_name']}");
+            Log::notice("成功向 {$payload['biz_id']} 投喂了 $amt 个{$value['gift_name']}");
         }
     }
 }
