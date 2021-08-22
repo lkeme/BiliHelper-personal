@@ -36,11 +36,13 @@ class Cache
         if (!isset($this->caches[$classname])) {
             // 如果不存在缓存 初始化  "BHP_username_APP.dat"
             $this->caches[$classname] = new Flintstone(
-                'BHP_' . getConf('username', 'login.account') . '_' . $classname, [
-                'dir' => APP_CACHE_PATH,
-                'gzip' => true,
-                'formatter' => new JsonFormatter()
-            ]);
+                $this->removeSpecStr('BHP_' . getConf('username', 'login.account') . '_' . $classname),
+                [
+                    'dir' => APP_CACHE_PATH,
+                    'gzip' => true,
+                    'formatter' => new JsonFormatter()
+                ]
+            );
         }
         $this->cache = $this->caches[$classname];
         return $this;
@@ -72,7 +74,6 @@ class Cache
         return $this->load($classname);
     }
 
-
     /**
      * @use 获取值
      * @param string $key
@@ -99,4 +100,20 @@ class Cache
         // $users->set('bob', ['email' => 'bob@site.com', 'password' => '123456']);
         $this->getClassObj($extra_name)->cache->set($key, $data);
     }
+
+    /**
+     * @use 去除特殊符号
+     * @param string $data
+     * @return string
+     */
+    private function removeSpecStr(string $data): string
+    {
+        $specs = str_split(".,:;'*?~`!@#$%^&+=)(<>{}]|\/、");
+        foreach ($specs as $spec) {
+            $data = str_replace($spec, '', $data);
+        }
+        return $data;
+    }
 }
+
+
