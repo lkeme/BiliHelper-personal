@@ -32,10 +32,10 @@ script.php
 
 # ignore all files in lib/
 task/*
+cache/*
 # except for .gitkeep
 !.gitkeep
 # ignore TODO file in root directory,not subdir/TODO
 /TODO
 /Todo
 
-cache/*
