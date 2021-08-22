@@ -13,6 +13,7 @@ namespace BiliHelper\Plugin;
 use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
 use BiliHelper\Util\TimeLock;
+use Exception;
 
 class Barrage
 {
@@ -69,10 +70,11 @@ class Barrage
                 }
                 return $data;
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $e->getMessage();
         }
     }
+
 
     /**
      * @use 活跃弹幕
@@ -88,10 +90,10 @@ class Barrage
         // {"code":0,"message":"你被禁言啦","msg":"你被禁言啦"}
         // Todo 长度限制
         if (isset($response['code']) && $response['code'] == 0 && isset($response['data'])) {
-            Log::notice("在直播间@{$room_id} 发送活跃弹幕成功 CODE -> {$response['code']}");
+            Log::notice("在直播间@$room_id 发送活跃弹幕成功 CODE -> {$response['code']}");
             return true;
         } else {
-            Log::warning("在直播间@{$room_id} 发送活跃弹幕失败 CODE -> {$response['code']} MSG -> {$response['message']} ");
+            Log::warning("在直播间@$room_id 发送活跃弹幕失败 CODE -> {$response['code']} MSG -> {$response['message']} ");
             return false;
         }
     }

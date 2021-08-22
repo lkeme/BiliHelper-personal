@@ -76,6 +76,7 @@ class GiftHeart
             }
             return false;
         }
+        return false;
     }
 
 }

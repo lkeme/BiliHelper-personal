@@ -11,6 +11,8 @@
 
 namespace BiliHelper\Tool;
 
+use JetBrains\PhpStorm\Pure;
+
 class File
 {
 
@@ -131,9 +133,10 @@ class File
     /**
      * @use 获取文件详细信息
      * @param string $filename
-     * @return array|false
+     * @return array|bool
      */
-    public static function getInfo(string $filename): bool
+    #[Pure]
+    public static function getInfo(string $filename): array|bool
     {
         // 如果不是文件 或者 不可读返回false
         if (!is_file($filename) || !is_readable($filename)) {
@@ -143,7 +146,7 @@ class File
         return [
             "文件名称" => basename($filename),
             "文件类型" => filetype($filename),
-            "文件大小" => trans_byte(filesize($filename)),
+            "文件大小" => static::transByte(filesize($filename)),
             "创建时间" => date('Y-m-d H:i:s', filectime($filename)),
             "修改时间" => date('Y-m-d H:i:s', filemtime($filename)),
             "上一次访问时间" => date('Y-m-d H:i:s', fileatime($filename)),
@@ -157,7 +160,7 @@ class File
      * @param int $precision 小数点保留位数
      * @return string 转换后的单位
      */
-    public static function transByte(int $byte, $precision = 2): string
+    public static function transByte(int $byte, int $precision = 2): string
     {
         $kb = 1024;
         $mb = 1024 * $kb;
@@ -180,6 +183,7 @@ class File
         if ($byte < $tb) {
             return round($byte / $tb, $precision) . ' GB';
         }
+        return '';
     }
 
 
@@ -188,7 +192,7 @@ class File
      * @param string $filename
      * @return false|string
      */
-    public static function readString(string $filename)
+    public static function readString(string $filename): bool|string
     {
         if (is_file($filename) && is_readable($filename)) {
             return file_get_contents($filename);
@@ -203,7 +207,7 @@ class File
      * @param bool $skip_empty_lines
      * @return array|false
      */
-    public static function readArray(string $filename, bool $skip_empty_lines = false)
+    public static function readArray(string $filename, bool $skip_empty_lines = false): bool|array
     {
         if (is_file($filename) && is_readable($filename)) {
             if ($skip_empty_lines) {
@@ -214,6 +218,7 @@ class File
                 return file($filename);
             }
         }
+        return false;
     }
 
 
@@ -224,8 +229,9 @@ class File
      * @param boolean $clear_content 是否清空原始内容再写入
      * @return bool                 true|false
      */
-    public static function write(string $filename, $data, bool $clear_content = false)
+    public static function write(string $filename, mixed $data, bool $clear_content = false): bool
     {
+        $srcData = '';
         $dirname = dirname($filename);
         // 检测目标路径是否存在
         if (!file_exists($dirname)) {

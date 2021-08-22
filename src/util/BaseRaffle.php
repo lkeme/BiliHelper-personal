@@ -25,10 +25,10 @@ abstract class BaseRaffle
     const ACTIVE_TITLE = '';
     const ACTIVE_SWITCH = '';
 
-    protected static $wait_list;
-    protected static $finish_list;
-    protected static $all_list;
-    protected static $banned_rids = [];
+    protected static array $wait_list;
+    protected static array $finish_list;
+    protected static array $all_list;
+    protected static array $banned_rids = [];
 
     public static function run()
     {
@@ -129,7 +129,7 @@ abstract class BaseRaffle
      * @param array $results
      * @return mixed
      */
-    abstract protected static function parseLottery(array $results);
+    abstract protected static function parseLottery(array $results): mixed;
 
     /**
      * @use 二维数组按key排序
@@ -209,7 +209,7 @@ abstract class BaseRaffle
         }
         $wait_num = count(static::$wait_list);
         if ($wait_num > 10 && ($wait_num % 2)) {
-            Log::info("当前队列中共有 {$wait_num} 个" . static::ACTIVE_TITLE . "待抽奖");
+            Log::info("当前队列中共有 $wait_num 个" . static::ACTIVE_TITLE . "待抽奖");
         }
         return true;
     }

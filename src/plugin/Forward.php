@@ -27,20 +27,20 @@ class Forward
 {
     use TimeLock;
 
-    public static $default_follows = [];
+    public static array $default_follows = [];
 
-    public static $un_follows = [];
-    public static $del_dynamic = [];
+    public static array $un_follows = [];
+    public static array $del_dynamic = [];
 
-    public static $already = [];
+    public static array $already = [];
 
-    private static $group_name = "氪可改命";
+    private static string $group_name = "氪可改命";
 
-    private static $group_id = null;
+    private static int|null $group_id = null;
 
-    private static $draw_follow = [];
+    private static array $draw_follow = [];
 
-    private static $repository = APP_DATA_PATH . 'reply_words.json';
+    private static string $repository = APP_DATA_PATH . 'reply_words.json';
 
 
     public static function run()
@@ -86,17 +86,17 @@ class Forward
 
             if (isset(self::$already[$did])) {
                 //重复
-                Log::info("[动态抽奖]-已转发 跳过: {$did} {$article['uid']}");
+                Log::info("[动态抽奖]-已转发 跳过: $did {$article['uid']}");
                 continue;
             }
             // 评论
-            Log::info("[动态抽奖]-评论: {$did} {$article['rid']}");
+            Log::info("[动态抽奖]-评论: $did {$article['rid']}");
             if (Dynamic::dynamicReplyAdd($article['rid'], self::getReplyMsg())) {
                 // 转发
-                Log::info("[动态抽奖]-转发: {$did}");
+                Log::info("[动态抽奖]-转发: $did");
                 if (Dynamic::dynamicRepost($did, self::getReplyMsg())) {
                     // 关注
-                    Log::info("[动态抽奖]-关注: {$did} {$article['uid']}");
+                    Log::info("[动态抽奖]-关注: $did {$article['uid']}");
                     self::addToGroup($article['uid']); //
                     self::$already[$did] = 1;
                 }
@@ -122,20 +122,20 @@ class Forward
 
             if (isset($card["item"]["miss"]) && $card["item"]["miss"] == 1) {
                 $flag = true;
-                $msg = "[动态抽奖]-删除动态 源动态已删除  {$did}";
+                $msg = "[动态抽奖]-删除动态 源动态已删除  $did";
             }
             if (isset($card["origin_extension"]['lott'])) {
                 $lott = json_decode($card["origin_extension"]["lott"], true);
                 if (isset($lott["lottery_time"]) && $lott["lottery_time"] <= time()) {
                     $flag = true;
-                    $msg = "[动态抽奖]-删除动态 抽奖已过期 {$did}";
+                    $msg = "[动态抽奖]-删除动态 抽奖已过期 $did";
                 }
             }
             if (isset($card["item"]["orig_dy_id"])) {
                 $ret = Dynamic::getLotteryNotice($card["item"]["orig_dy_id"]);
                 if (isset($ret['data']['lottery_time']) && $ret['data']['lottery_time'] <= time()) {
                     $flag = true;
-                    $msg = "[动态抽奖]-删除动态 抽奖已过期 {$did}";
+                    $msg = "[动态抽奖]-删除动态 抽奖已过期 $did";
                 }
             }
 
@@ -175,7 +175,7 @@ class Forward
         foreach (self::$un_follows as $uid) {
             // 非转发抽奖动态关注的up 不取关
             if (isset(self::$draw_follow[$uid])) {
-                Log::info("[动态抽奖]-未中奖-取关 {$uid}");
+                Log::info("[动态抽奖]-未中奖-取关 $uid");
                 User::setUserFollow($uid, true);
             }
         }
@@ -193,7 +193,7 @@ class Forward
             }
             $r = User::fetchTagFollowings($gid);
             foreach ($r as $uid) {
-                Log::info("[清除抽奖组关注]  : {$uid}");
+                Log::info("[清除抽奖组关注]  : $uid");
                 User::setUserFollow($uid, true);
             }
         }
@@ -215,8 +215,8 @@ class Forward
                 if (!isset($card['item']['content']) || !$msg) {
                     continue;
                 }
-                if (strpos($card['item']['content'], $msg) !== false) {
-                    Log::info("[删除所有动态] 删除动态 {$did}");
+                if (str_contains($card['item']['content'], $msg)) {
+                    Log::info("[删除所有动态] 删除动态 $did");
                     Dynamic::removeDynamic($did);
                 }
             }
@@ -290,7 +290,7 @@ class Forward
             shuffle($data);
             $msg = array_pop($data);
         }
-        Log::info("已将自动回复改为\"{$msg}\"");
+        Log::info("已将自动回复改为\"$msg\"");
         return $msg;
     }
 

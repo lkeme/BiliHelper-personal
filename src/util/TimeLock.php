@@ -13,11 +13,12 @@ namespace BiliHelper\Util;
 use Amp\Delayed;
 use BiliHelper\Core\Task;
 use BiliHelper\Plugin\Schedule;
+use ReflectionClass;
 
 trait TimeLock
 {
-    public static $lock = 0;
-    public static $pause_status = false;
+    public static int $lock = 0;
+    public static bool $pause_status = false;
 
     /**
      * @use 设置时间
@@ -26,7 +27,7 @@ trait TimeLock
     public static function setLock(int $lock)
     {
         if (!static::getpauseStatus()) {
-            Task::getInstance()::_setLock(static::getBaseClass(), time() + $lock);
+            Task::getInstance()->_setLock(static::getBaseClass(), time() + $lock);
         }
     }
 
@@ -36,7 +37,7 @@ trait TimeLock
      */
     public static function getLock(): int
     {
-        return Task::getInstance()::_getLock(static::getBaseClass());
+        return Task::getInstance()->_getLock(static::getBaseClass());
     }
 
     /**
@@ -106,7 +107,7 @@ trait TimeLock
         // substr(strrchr($class, "\\"), 1);
         // substr($class, strrpos($class, '\\') + 1);
         // array_pop(explode('\\', $class));
-        Schedule::triggerRefused((new \ReflectionClass(static::class))->getShortName());
+        Schedule::triggerRefused((new ReflectionClass(static::class))->getShortName());
     }
 
     /**

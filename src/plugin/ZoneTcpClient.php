@@ -15,23 +15,25 @@ use BiliHelper\Util\TimeLock;
 
 use Amp\Delayed;
 use Exception;
+use JetBrains\PhpStorm\Pure;
 use Socket\Raw\Factory;
+use function get_class;
 
 class ZoneTcpClient
 {
     use TimeLock;
 
-    private static $raffle_id = 0;
-    private static $raffle_list = [];
-    private static $server = [];
-    private static $server_key = null;
+    private static int $raffle_id = 0;
+    private static array $raffle_list = [];
+    private static array $server = [];
+    private static string|null $server_key = null;
 
-    private static $area_id;
-    private static $room_id;
+    private static int|string $area_id;
+    private static int|string $room_id;
     private static $client;
-    private static $client_maps = [];
-    private static $trigger_restart = [];
-    private static $socket_timeout = 0;
+    private static array $client_maps = [];
+    private static array $trigger_restart = [];
+    private static int $socket_timeout = 0;
 
 
     /**
@@ -70,7 +72,7 @@ class ZoneTcpClient
     {
         $areas = Live::fetchLiveAreas();
         foreach ($areas as $area_id) {
-            self::$client_maps["server{$area_id}"] = ["area_id" => null, "room_id" => null, "client" => null, "heart_beat" => 0, "status" => false];
+            self::$client_maps["server$area_id"] = ["area_id" => null, "room_id" => null, "client" => null, "heart_beat" => 0, "status" => false];
             self::triggerReConnect([
                 'area_id' => $area_id,
                 'wait_time' => time()
@@ -85,7 +87,7 @@ class ZoneTcpClient
      */
     private static function triggerReConnect(array $area_data, string $reason)
     {
-        Log::debug("Reconnect Reason: {$area_data['area_id']} -> {$reason}");
+        Log::debug("Reconnect Reason: {$area_data['area_id']} -> $reason");
         self::$client_maps["server" . $area_data['area_id']]['status'] = false;
         array_push(self::$trigger_restart, $area_data);
     }
@@ -152,7 +154,7 @@ class ZoneTcpClient
      * @param bool $assoc 是否返回对象or关联数组，默认返回关联数组
      * @return array|bool|object 成功返回转换后的对象或数组，失败返回 false
      */
-    private static function analyJson($data = '', $assoc = true)
+    private static function analyJson(string $data = '', bool $assoc = true): object|bool|array
     {
         if (is_array($data)) {
             return $data;
@@ -178,14 +180,14 @@ class ZoneTcpClient
             // Log::info("当前直播间现有 {$num} 人聚众搞基!");
             return false;
         }
-        $de_raw = self::analyJson($msg, true);
+        $de_raw = self::analyJson($msg);
         // 进入房间返回
         if (isset($de_raw['code']) && !$de_raw['code']) {
             return false;
         }
         // 部分cmd抽风
         if (!$de_raw || !isset($de_raw['cmd'])) {
-            Log::warning("解析错误: {$msg}");
+            Log::warning("解析错误: $msg");
             return false;
         }
         $data = [];
@@ -301,7 +303,7 @@ class ZoneTcpClient
                     ];
                     // echo self::$room_id . '--' . $real_room_id . PHP_EOL;
                 }
-                if ($msg_type == 6 && strpos($msg_common, '节奏风暴') !== false) {
+                if ($msg_type == 6 && str_contains($msg_common, '节奏风暴')) {
                     $data = [
                         'room_id' => $real_room_id,
                         'raffle_id' => self::$raffle_id++,
@@ -397,6 +399,7 @@ class ZoneTcpClient
      * @use 心跳包
      * @return string
      */
+    #[Pure]
     private static function genHeartBeatPkg(): string
     {
         return self::packMsg('', 0x0002);
@@ -437,12 +440,12 @@ class ZoneTcpClient
      * @param $value
      * @return array|false
      */
-    private static function unPackMsg($value)
+    private static function unPackMsg($value): bool|array
     {
         if (strlen($value) < 4) {
             Log::warning("unPackMsg: 包头异常 " . strlen($value));
             return [];
-        };
+        }
         // Log::info(json_encode($head, true));
         return unpack('Npacklen/nheadlen/nver/Nop/Nseq', $value);
     }
@@ -472,9 +475,9 @@ class ZoneTcpClient
      * @use 读数据
      * @param $length
      * @param bool $is_header
-     * @return array|bool
+     * @return bool|array|string
      */
-    private static function reader($length, bool $is_header = false)
+    private static function reader($length, bool $is_header = false): bool|array|string
     {
         $data = false;
         try {
@@ -483,8 +486,8 @@ class ZoneTcpClient
                 $socket = self::$client->getResource();
                 while ($length) {
                     if ($length < 1 || $length > 65535) {
-                        Log::warning("Socket error: [{$ret}] [{$length}]" . PHP_EOL);
-                        throw new Exception("Socket error: [{$ret}] [{$length}]");
+                        Log::warning("Socket error: [$ret] [$length]" . PHP_EOL);
+                        throw new Exception("Socket error: [$ret] [$length]");
                     }
                     $cnt = 0;
                     $w = NULL;
@@ -502,8 +505,8 @@ class ZoneTcpClient
                     // Todo unable to read from socket[104]: Connection reset by peer
                     $ret = socket_recv($socket, $buffer, $length, 0);
                     if ($ret < 1) {
-                        Log::warning("Socket error: [{$ret}] [{$length}]" . PHP_EOL);
-                        throw new Exception("Socket error: [{$ret}] [{$length}]");
+                        Log::warning("Socket error: [$ret] [$length]" . PHP_EOL);
+                        throw new Exception("Socket error: [$ret] [$length]");
                     }
                     $data .= $buffer;
                     unset($buffer);
@@ -564,7 +567,7 @@ class ZoneTcpClient
             $length = $head['packlen'] ?? 16;
             $type = $head['op'] ?? 0x0000;
             $len_body = $length - 16;
-            Log::debug("(AreaId={$client_info['area_id']} -> RoomId={$client_info['room_id']} -> Len={$len_body})");
+            Log::debug("(AreaId={$client_info['area_id']} -> RoomId={$client_info['room_id']} -> Len=$len_body)");
             if (!$len_body)
                 continue;
             $body = self::reader($len_body);
@@ -595,9 +598,9 @@ class ZoneTcpClient
         $total = strlen($data);
         while (true) {
             if ($step > 165535) {
-                Log::warning("v2_split: 数据step异常 {$step}");
+                Log::warning("v2_split: 数据step异常 $step");
                 break;
-            };
+            }
             if ($step == $total) break;
             $bin = substr($data, $step, 16);
             $head = self::unPackMsg($bin);
@@ -615,8 +618,8 @@ class ZoneTcpClient
      */
     private static function getClass($object): string
     {
-        $class = \get_class($object);
-        return 'c' === $class[0] && 0 === strpos($class, "class@anonymous\0") ? get_parent_class($class) . '@anonymous' : $class;
+        $class = get_class($object);
+        return 'c' === $class[0] && str_starts_with($class, "class@anonymous\0") ? get_parent_class($class) . '@anonymous' : $class;
     }
 
     /**

@@ -44,7 +44,6 @@ class BpConsumption
             // 消费B币充值金瓜子
             if (getConf('bp2gold', 'bp_consumption')) {
                 self::BP2gold($bp_balance);
-                return;
             }
         }
     }
@@ -76,7 +75,7 @@ class BpConsumption
             Log::notice('获取钱包成功 B币券余额剩余' . $de_raw['data']['couponBalance']);
             return intval($de_raw['data']['couponBalance']);
         } else {
-            Log::warning("获取钱包失败 {$raw}");
+            Log::warning("获取钱包失败 $raw");
             return 0;
         }
     }

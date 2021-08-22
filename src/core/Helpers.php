@@ -8,46 +8,33 @@
  *  Updated: 2021 ~ 2022
  */
 
+use BiliHelper\Core\Cache;
 use BiliHelper\Core\Config;
+use BiliHelper\Core\Device;
 
 /**
- * @use 读取
+ * @use 配置读取
  * @param $name
- * @param int $section
+ * @param int|string $section
  * @param null $key
  * @return mixed
  */
-function getConf($name, $section = 0, $key = null)
+function getConf($name, int|string $section = 0, $key = null): mixed
 {
-    return Config::_get($name, $section, $key);
+    return Config::getInstance()->_get($name, $section, $key);
 }
 
 /**
- * @use 写入
+ * @use 配置写入
  * @param $name
  * @param $value
- * @param int $section
+ * @param int|string $section
  * @param null $key
+ * @throws \Jelix\IniFile\IniException
  */
-function setConf($name, $value, $section = 0, $key = null)
+function setConf($name, $value, int|string $section = 0, $key = null)
 {
-    Config::_set($name, $value, $section, $key);
-}
-
-/**
- * @use 更新
- */
-function putConf()
-{
-
-}
-
-/**
- * @use 删除
- */
-function delConf()
-{
-
+    Config::getInstance()->_set($name, $value, $section, $key);
 }
 
 /**
@@ -105,13 +92,35 @@ function getCsrf(): string
     return getConf('csrf', 'login.auth');
 }
 
+/**
+ * @use 获取设备信息
+ * @param $key
+ * @param null $defaultFallback
+ * @return mixed
+ */
+function getDevice($key, $defaultFallback = null): mixed
+{
+    return Device::getInstance()->_get($key, $defaultFallback);
+}
 
 /**
- * @use HttpClient
- * @param string $url
- * @return \HttpClient
+ * @use 缓存读取
+ * @param string $key
+ * @param string $extra_name
+ * @return mixed
  */
-function newHttp(string $url): HttpClient
+function getCache(string $key, string $extra_name = ''): mixed
 {
-    return new HttpClient($url);
+    return Cache::getInstance()->_get($key, $extra_name);
+}
+
+/**
+ * @use 缓存写入
+ * @param string $key
+ * @param $data
+ * @param string $extra_name
+ */
+function setCache(string $key, $data, string $extra_name = '')
+{
+    Cache::getInstance()->_set($key, $data, $extra_name);
 }

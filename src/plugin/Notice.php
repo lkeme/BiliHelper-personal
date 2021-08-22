@@ -43,12 +43,12 @@ class Notice
     private static function filterResultWords(string $result): bool
     {
         self::loadJsonData();
-        $default_words = self::$store->get("Notice.default");;
+        $default_words = self::$store->get("Notice.default");
         $custom_words = explode(',', getConf('filter_words', 'notify'));
         $total_words = array_merge($default_words, $custom_words);
         foreach ($total_words as $word) {
             if (empty($word)) continue;
-            if (strpos($result, $word) !== false) {
+            if (str_contains($result, $word)) {
                 return true;
             }
         }
@@ -65,86 +65,60 @@ class Notice
     private static function sendInfoHandle(string $type, string $uname, string $result): bool
     {
         $now_time = date('Y-m-d H:i:s');
-        switch ($type) {
-            case 'update':
-                $info = [
-                    'title' => '程序更新通知',
-                    'content' => "[{$now_time}] 用户: {$uname} 程序更新通知: {$result}"
-                ];
-                break;
-            case 'anchor':
-                $info = [
-                    'title' => '天选时刻获奖记录',
-                    'content' => "[{$now_time}] 用户: {$uname} 在天选时刻中获得: {$result}"
-                ];
-                break;
-            case 'raffle':
-                $info = [
-                    'title' => '实物奖励获奖纪录',
-                    'content' => "[{$now_time}] 用户: {$uname} 在实物奖励中获得: {$result}"
-                ];
-                break;
-            case 'gift':
-                $info = [
-                    'title' => '活动礼物获奖纪录',
-                    'content' => "[{$now_time}] 用户: {$uname} 在活动礼物中获得: {$result}"
-                ];
-                break;
-            case 'storm':
-                $info = [
-                    'title' => '节奏风暴获奖纪录',
-                    'content' => "[{$now_time}] 用户: {$uname} 在节奏风暴中获得: {$result}"
-                ];
-                break;
-            case 'cookieRefresh':
-                $info = [
-                    'title' => 'Cookie刷新',
-                    'content' => "[{$now_time}] 用户: {$uname} 刷新Cookie: {$result}"
-                ];
-                break;
-            case 'todaySign':
-                $info = [
-                    'title' => '每日签到',
-                    'content' => "[{$now_time}] 用户: {$uname} 签到: {$result}"
-                ];
-                break;
-            case 'banned':
-                $info = [
-                    'title' => '任务小黑屋',
-                    'content' => "[{$now_time}] 用户: {$uname} 小黑屋: {$result}"
-                ];
-                break;
-            case 'error':
-                $info = [
-                    'title' => '程序运行错误',
-                    'content' => "[{$now_time}] 用户: {$uname} 错误详情: {$result}"
-                ];
-                break;
-            case 'key_expired':
-                $info = [
-                    'title' => '监控KEY异常',
-                    'content' => "[{$now_time}] 用户: {$uname} 监控KEY到期或者错误，请及时查错或续期后重试哦~"
-                ];
-                break;
-            case 'capsule_lottery':
-                $info = [
-                    'title' => '直播扭蛋抽奖活动',
-                    'content' => "[{$now_time}] 用户: {$uname} 详情: {$result}"
-                ];
-                break;
-            case 'activity_lottery':
-                $info = [
-                    'title' => '主站九宫格抽奖活动',
-                    'content' => "[{$now_time}] 用户: {$uname} 详情: {$result}"
-                ];
-                break;
-            default:
-                $info = [
-                    'title' => '推送消息异常记录',
-                    'content' => "[{$now_time}] 用户: {$uname} 推送消息key错误: {$type}->{$result}"
-                ];
-                break;
-        }
+        $info = match ($type) {
+            'update' => [
+                'title' => '程序更新通知',
+                'content' => "[$now_time] 用户: $uname 程序更新通知: $result"
+            ],
+            'anchor' => [
+                'title' => '天选时刻获奖记录',
+                'content' => "[$now_time] 用户: $uname 在天选时刻中获得: $result"
+            ],
+            'raffle' => [
+                'title' => '实物奖励获奖纪录',
+                'content' => "[$now_time] 用户: $uname 在实物奖励中获得: $result"
+            ],
+            'gift' => [
+                'title' => '活动礼物获奖纪录',
+                'content' => "[$now_time] 用户: $uname 在活动礼物中获得: $result"
+            ],
+            'storm' => [
+                'title' => '节奏风暴获奖纪录',
+                'content' => "[$now_time] 用户: $uname 在节奏风暴中获得: $result"
+            ],
+            'cookieRefresh' => [
+                'title' => 'Cookie刷新',
+                'content' => "[$now_time] 用户: $uname 刷新Cookie: $result"
+            ],
+            'todaySign' => [
+                'title' => '每日签到',
+                'content' => "[$now_time] 用户: $uname 签到: $result"
+            ],
+            'banned' => [
+                'title' => '任务小黑屋',
+                'content' => "[$now_time] 用户: $uname 小黑屋: $result"
+            ],
+            'error' => [
+                'title' => '程序运行错误',
+                'content' => "[$now_time] 用户: $uname 错误详情: $result"
+            ],
+            'key_expired' => [
+                'title' => '监控KEY异常',
+                'content' => "[$now_time] 用户: $uname 监控KEY到期或者错误，请及时查错或续期后重试哦~"
+            ],
+            'capsule_lottery' => [
+                'title' => '直播扭蛋抽奖活动',
+                'content' => "[$now_time] 用户: $uname 详情: $result"
+            ],
+            'activity_lottery' => [
+                'title' => '主站九宫格抽奖活动',
+                'content' => "[$now_time] 用户: $uname 详情: $result"
+            ],
+            default => [
+                'title' => '推送消息异常记录',
+                'content' => "[$now_time] 用户: $uname 推送消息key错误: $type->$result"
+            ],
+        };
 
         self::sendLog($info);
         return true;
@@ -203,7 +177,7 @@ class Notice
         if ($de_raw['errcode'] == 0) {
             Log::notice("推送消息成功: {$de_raw['errmsg']}");
         } else {
-            Log::warning("推送消息失败: {$raw}");
+            Log::warning("推送消息失败: $raw");
         }
     }
 
@@ -226,7 +200,7 @@ class Notice
         if ($de_raw['ok'] && array_key_exists('message_id', $de_raw['result'])) {
             Log::notice("推送消息成功: MSG_ID->{$de_raw['result']['message_id']}");
         } else {
-            Log::warning("推送消息失败: {$raw}");
+            Log::warning("推送消息失败: $raw");
         }
     }
 
@@ -249,7 +223,7 @@ class Notice
         if ($de_raw['errno'] == 0) {
             Log::notice("推送消息成功: {$de_raw['errmsg']}");
         } else {
-            Log::warning("推送消息失败: {$raw}");
+            Log::warning("推送消息失败: $raw");
         }
     }
 
@@ -273,7 +247,7 @@ class Notice
         if ($de_raw['code'] == 0) {
             Log::notice("推送消息成功: {$de_raw['data']['pushid']}");
         } else {
-            Log::warning("推送消息失败: {$raw}");
+            Log::warning("推送消息失败: $raw");
         }
     }
 
@@ -285,7 +259,7 @@ class Notice
     private static function pushPlusSend(array $info)
     {
         Log::info('使用PushPlus酱推送消息');
-        $url = 'http://www.pushplus.plus/send';
+        $url = 'https://www.pushplus.plus/send';
         $payload = [
             'token' => getConf('token', 'notify.pushplus'),
             'title' => $info['title'],
@@ -300,7 +274,7 @@ class Notice
         if ($de_raw['code'] == 200) {
             Log::notice("推送消息成功: {$de_raw['data']}");
         } else {
-            Log::warning("推送消息失败: {$raw}");
+            Log::warning("推送消息失败: $raw");
         }
     }
 
@@ -324,7 +298,7 @@ class Notice
         if ($de_raw['retcode'] == 0) {
             Log::notice("推送消息成功: {$de_raw['status']}");
         } else {
-            Log::warning("推送消息失败: {$raw}");
+            Log::warning("推送消息失败: $raw");
         }
     }
 
@@ -349,7 +323,7 @@ class Notice
         if ($de_raw['success'] == true) {
             Log::notice("推送消息成功: {$de_raw['data']['msgid']}");
         } else {
-            Log::warning("推送消息失败: {$raw}");
+            Log::warning("推送消息失败: $raw");
         }
 
     }

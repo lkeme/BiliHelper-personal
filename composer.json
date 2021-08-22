@@ -3,7 +3,7 @@
   "description": "B 站自动领瓜子、直播助手、直播挂机脚本、主站助手 - PHP 版（Personal）",
   "type": "project",
   "require": {
-    "php": ">=7.3.0",
+    "php": ">=8.0",
     "ext-curl": "*",
     "ext-openssl": "*",
     "ext-sockets": "*",
@@ -21,7 +21,9 @@
     "hassankhan/config": "^2.2",
     "lkeme/inifile": "^3.4",
     "adhocore/cli": "^0.9.0",
-    "fire015/flintstone": "^2.3"
+    "fire015/flintstone": "^2.3",
+    "symfony/yaml": "^5.3",
+    "consolidation/config": "^2.0"
   },
   "license": "MIT",
   "authors": [
@@ -37,7 +39,8 @@
       "BiliHelper\\Plugin\\": "src/plugin",
       "BiliHelper\\Util\\": "src/util",
       "BiliHelper\\Tool\\": "src/tool",
-      "BiliHelper\\Script\\": "src/script"
+      "BiliHelper\\Script\\": "src/script",
+      "BiliHelper\\Exceptions\\": "src/exception"
     },
     "files": [
       "src/core/Helpers.php"

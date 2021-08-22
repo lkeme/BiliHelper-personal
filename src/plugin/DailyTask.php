@@ -36,9 +36,9 @@ class DailyTask
 
     /**
      * @use 检查每日任务
-     * @return bool|mixed|string
+     * @return mixed
      */
-    private static function check()
+    private static function check(): mixed
     {
         $url = 'https://api.live.bilibili.com/i/api/taskInfo';
         $payload = [];

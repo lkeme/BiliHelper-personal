@@ -13,6 +13,7 @@ namespace BiliHelper\Plugin;
 use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
 use BiliHelper\Util\TimeLock;
+use JetBrains\PhpStorm\ArrayShape;
 
 class MainSite
 {
@@ -47,7 +48,7 @@ class MainSite
         $headers = [
             'Host' => "api.bilibili.com",
             'Origin' => "https://www.bilibili.com",
-            'Referer' => "https://www.bilibili.com/video/av{$aid}",
+            'Referer' => "https://www.bilibili.com/video/av$aid",
             'User-Agent' => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.81 Safari/537.36",
         ];
         // {"code":34005,"message":"超过投币上限啦~","ttl":1,"data":{"like":false}}
@@ -55,10 +56,10 @@ class MainSite
         $raw = Curl::post('app', $url, Sign::common($payload), $headers);
         $de_raw = json_decode($raw, true);
         if ($de_raw['code'] == 0) {
-            Log::notice("主站任务: av{$aid} 投币成功 {$de_raw['code']} MSG -> {$de_raw['message']}");
+            Log::notice("主站任务: av$aid 投币成功 {$de_raw['code']} MSG -> {$de_raw['message']}");
             return true;
         } else {
-            Log::warning("主站任务: av{$aid} 投币失败 CODE -> {$de_raw['code']} MSG -> {$de_raw['message']}");
+            Log::warning("主站任务: av$aid 投币失败 CODE -> {$de_raw['code']} MSG -> {$de_raw['message']}");
             return false;
         }
     }
@@ -83,7 +84,7 @@ class MainSite
             if ($log_date != $now_date) {
                 break;
             }
-            if (strpos($log['reason'], "打赏") !== false) {
+            if (str_contains($log['reason'], "打赏")) {
                 switch ($log['delta']) {
                     case -1:
                         $coins += 1;
@@ -113,7 +114,7 @@ class MainSite
         $stock_num = self::getCoin();
         // 实际数量 处理硬币库存少于预计数量
         $actual_num = intval($estimate_num > $stock_num ? $stock_num : $estimate_num) - self::coinLog();
-        Log::info("当前硬币库存 {$stock_num} 预计投币 {$estimate_num} 实际投币 {$actual_num}");
+        Log::info("当前硬币库存 $stock_num 预计投币 $estimate_num 实际投币 $actual_num");
         // 上限
         if ($actual_num <= 0) {
             Log::notice('今日投币上限已满');
@@ -361,6 +362,7 @@ class MainSite
      * @use 解析AID到CID
      * @return array
      */
+    #[ArrayShape(['aid' => "string", 'cid' => "mixed", 'duration' => "mixed"])]
     private static function parseAid(): array
     {
         while (true) {

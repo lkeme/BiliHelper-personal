@@ -1,0 +1,27 @@
+bili_version: 0.0.1
+
+# Android
+bili_a:
+  package: "tv.danmaku.bili"
+  version: "6.38.0"
+  build: "6380500"
+  channel: "bili"
+  device: "phone"
+  mobi_app: "android"
+  platform: "android"
+  s_locale: "zh-Hans_CN"
+  c_locale: "zh-Hans_CH"
+  app_key: "MWQ4YjZlN2Q0NTIzMzQzNg=="
+  secret_key: "NTYwYzUyY2NkMjg4ZmVkMDQ1ODU5ZWQxOGJmZmQ5NzM"
+  app_key_n: "YmNhN2U4NGMyZDk0N2FjNg=="
+  secret_key_n: "NjA2OThiYTJmNjhlMDFjZTQ0NzM4OTIwYTBmZmU3Njg="
+
+# IOS
+bili_i:
+  app_key: "MjdlYjUzZmM5MDU4ZjhjMw=="
+  secret_key: "YzJlZDUzYTc0ZWVlZmUzY2Y5OWZiZDAxZDhjOWMzNzU="
+
+# Tv
+bili_t:
+  app_key: "NDQwOWUyY2U4ZmZkMTJiOA=="
+  secret_key: "NTliNDNlMDRhZDY5NjVmMzQzMTkwNjJiNDc4ZjgzZGQ="

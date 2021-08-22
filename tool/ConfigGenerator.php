@@ -11,10 +11,10 @@
 
 class ConfigGenerator
 {
-    public $filename;
-    public $template;
-    private $options = ['APP_USER', 'APP_PASS'];
-    private $default_filename = 'user.ini.example';
+    public string $filename;
+    public string $template;
+    private array $options = ['APP_USER', 'APP_PASS'];
+    private string $default_filename = 'user.ini.example';
 
     /**
      * ConfigGenerator constructor.
@@ -30,7 +30,7 @@ class ConfigGenerator
      * @param string $content
      * @return string|string[]|null
      */
-    private function envReplace(string $key, string $value, string $content)
+    private function envReplace(string $key, string $value, string $content): array|string|null
     {
         return preg_replace(
             '/^' . $key . '=.*' . '/m',
@@ -44,7 +44,7 @@ class ConfigGenerator
      * @param int $max_char
      * @return string
      */
-    private function cliInput(string $msg, $max_char = 100): string
+    private function cliInput(string $msg, int $max_char = 100): string
     {
         $stdin = fopen('php://stdin', 'r');
         echo '# ' . $msg;
@@ -61,7 +61,7 @@ class ConfigGenerator
         $this->filename = $this->cliInput('请输入配置文件名: ');
         $this->template = file_get_contents($this->default_filename);
         foreach ($this->options as $index => $option) {
-            $value = $this->cliInput("请输入{$option}: ");
+            $value = $this->cliInput("请输入$option: ");
             $this->template = $this->envReplace($option, $value, $this->template);
         }
         file_put_contents(__DIR__ . "\\$this->filename.ini", $this->template);

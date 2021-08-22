@@ -20,7 +20,7 @@ class ActivityLottery
     use TimeLock;
     use AllotTasks;
 
-    private static $repository = APP_DATA_PATH . 'activity_infos.json';
+    private static string $repository = APP_DATA_PATH . 'activity_infos.json';
 
     /**
      * @throws \JsonDecodeStream\Exception\TokenizerException
@@ -78,7 +78,7 @@ class ActivityLottery
             }
             // draw_times
             $arr = range(1, $act->draw_times);
-            foreach ($arr as $_) {
+            foreach ($arr as $ignored) {
                 self::pushTask('draw', $act);
             }
         }
@@ -153,7 +153,7 @@ class ActivityLottery
                 Log::notice("剩余抽奖次数 {$de_raw['data']['times']}");
                 return true;
             }
-            Log::warning("获取抽奖次数失败 {$raw}");
+            Log::warning("获取抽奖次数失败 $raw");
             return false;
         }
         if ($de_raw['code'] == 0) {
@@ -163,7 +163,7 @@ class ActivityLottery
             }
             return true;
         }
-        Log::warning("获取抽奖次数失败 {$raw}");
+        Log::warning("获取抽奖次数失败 $raw");
         return false;
 
     }
@@ -193,7 +193,7 @@ class ActivityLottery
         // {"code":75003,"message":"活动已结束","ttl":1}
         // {"code":0,"message":"0","ttl":1}
         $de_raw = json_decode($raw, true);
-        Log::notice("增加抽奖机会#{$action_type} {$raw}");
+        Log::notice("增加抽奖机会#$action_type $raw");
 
         if ($de_raw['code'] == 0) {
             return true;
@@ -222,11 +222,11 @@ class ActivityLottery
         ];
         $raw = Curl::post('pc', $url, $payload, $headers);
         $de_raw = json_decode($raw, true);
-        Log::notice("开始抽奖#{$num} {$raw}");
+        Log::notice("开始抽奖#$num $raw");
         // {"code":0,"message":"0","ttl":1,"data":[{"id":0,"mid":4133274,"num":1,"gift_id":1152,"gift_name":"硬币x6","gift_type":0,"img_url":"https://i0.hdslb.com/bfs/activity-plat/static/b6e956937ee4aefd1e19c01283145fc0/JQ9Y9-KCm_w96_h102.png","type":5,"ctime":1596255796,"cid":0}]}
         // {"code":0,"message":"0","ttl":1,"data":[{"id":0,"mid":4133274,"ip":0,"num":1,"gift_id":0,"gift_name":"未中奖0","gift_type":0,"img_url":"","type":1,"ctime":1616825625,"cid":0,"extra":{}}]}
         if ($de_raw['code'] == 0) {
-            $result = "活动->{$referer} 获得->{$de_raw['data'][0]['gift_name']}";
+            $result = "活动->$referer 获得->{$de_raw['data'][0]['gift_name']}";
             Notice::push('activity_lottery', $result);
             return true;
         }

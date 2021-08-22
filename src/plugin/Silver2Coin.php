@@ -82,13 +82,13 @@ class Silver2Coin
         // {"code":0,"data":{"coin":1,"gold":1234,"silver":4321,"tid":"Silver2Coin21062316490299678123456"},"message":"兑换成功"}
         switch ($data['code']) {
             case 0:
-                Log::notice("[{$type}] 银瓜子兑换硬币: {$data['message']}");
+                Log::notice("[$type] 银瓜子兑换硬币: {$data['message']}");
                 return true;
             case 403:
-                Log::warning("[{$type}] 银瓜子兑换硬币: {$data['message']}");
+                Log::warning("[$type] 银瓜子兑换硬币: {$data['message']}");
                 return true;
             default:
-                Log::warning("[{$type}] 银瓜子兑换硬币: CODE -> {$data['code']} MSG -> {$data['message']} ");
+                Log::warning("[$type] 银瓜子兑换硬币: CODE -> {$data['code']} MSG -> {$data['message']} ");
                 return false;
         }
     }
