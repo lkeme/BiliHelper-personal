@@ -18,7 +18,7 @@ class VipPrivilege
 {
     use TimeLock;
 
-    private static $privilege = [
+    private static array $privilege = [
         0 => '未知奖励',
         1 => 'B币劵',
         2 => '会员购优惠券'
@@ -66,7 +66,7 @@ class VipPrivilege
         if ($de_raw['code'] == 0) {
             Log::notice('大会员权益 ' . self::$privilege[$type] . ' 领取成功');
         } else {
-            Log::warning('大会员权益 ' . self::$privilege[$type] . " 领取失败, {$raw}");
+            Log::warning('大会员权益 ' . self::$privilege[$type] . " 领取失败, $raw");
         }
     }
 
@@ -89,7 +89,7 @@ class VipPrivilege
             Log::info('获取大会员权益列表成功');
             return $de_raw['data']['list'];
         } else {
-            Log::warning("获取大会员权益列表失败 {$raw}");
+            Log::warning("获取大会员权益列表失败 $raw");
             return [];
         }
     }

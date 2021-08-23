@@ -24,8 +24,8 @@ class CapsuleLottery
     use AllotTasks;
     use XliveHeartBeat;
 
-    private static $repository = APP_DATA_PATH . 'capsule_infos.json';
-    private static $interval = 60;
+    private static string $repository = APP_DATA_PATH . 'capsule_infos.json';
+    private static int $interval = 60;
 
 
     /**
@@ -78,7 +78,7 @@ class CapsuleLottery
             self::pushTask('watch', $act, true);
             // 抽奖次数
             $arr = range(1, $act->draw_times);
-            foreach ($arr as $_) {
+            foreach ($arr as $ignored) {
                 self::pushTask('draw', $act);
             }
         }
@@ -155,10 +155,10 @@ class CapsuleLottery
         ];
         $raw = Curl::post('pc', $url, $payload, $headers);
         $de_raw = json_decode($raw, true);
-        Log::notice("开始抽奖#{$num} {$raw}");
+        Log::notice("开始抽奖#$num $raw");
         // {"code":0,"message":"0","ttl":1,"data":{"status":false,"isEntity":false,"info":{"coin":1},"awards":[{"name":"谢谢参与","num":1,"text":"谢谢参与 X 1","web_url":"https://i0.hdslb.com/bfs/live/b0fccfb3bac2daae35d7e514a8f6d31530b9add2.png","mobile_url":"https://i0.hdslb.com/bfs/live/b0fccfb3bac2daae35d7e514a8f6d31530b9add2.png","usage":{"text":"很遗憾您未能中奖","url":""},"type":32,"expire":"当天","gift_type":"7290bc172e5ab9e151eb141749adb9dd","gift_value":""}],"text":["谢谢参与 X 1"],"isExCode":false}}
         if ($de_raw['code'] == 0) {
-            $result = "活动->{$referer} 获得->{$de_raw['data']['text'][0]}";
+            $result = "活动->$referer 获得->{$de_raw['data']['text'][0]}";
             Notice::push('capsule_lottery', $result);
             return true;
         }
@@ -248,7 +248,7 @@ class CapsuleLottery
             Log::info("获取剩余抽奖次数成功 {$capsule_info['data']['coin']}");
             return $capsule_info['data']['coin'];
         }
-        Log::warning("获取剩余抽奖次数失败 {$capsule_info}");
+        Log::warning("获取剩余抽奖次数失败 $capsule_info");
         return 0;
     }
 

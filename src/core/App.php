@@ -10,13 +10,16 @@
 
 namespace BiliHelper\Core;
 
+use BiliHelper\Plugin\Live;
+use Throwable;
 use Amp\Loop;
+use BiliHelper\Script\BaseTask;
+
 use function Amp\asyncCall;
 
 class App
 {
-    private $script_mode = false;
-    private $loop_mode = true;
+    private int $mode = 0;
 
     /**
      * App constructor.
@@ -50,23 +53,30 @@ class App
     {
         $args = (new BCommand($argv))->run();
         $filename = $args->args()[0] ?? 'user.ini';
-        $this->script_mode = $args->script;
-        Config::load($filename);
+        // 加载配置
+        Config::getInstance()->load($filename);
+        // 加载设备
+        Device::getInstance()->load($filename);
+        // 引导参数
+        $this->selectMode($args);
+        $this->restoreMode($args);
+
         return $this;
     }
+
 
     /**
      * @use 新任务
      * @param string $taskName
      * @param string $dir
      */
-    public function newTask(string $taskName, string $dir)
+    private function newTask(string $taskName, string $dir)
     {
         asyncCall(function () use ($taskName, $dir) {
             while (true) {
                 try {
                     call_user_func(array("BiliHelper\\$dir\\" . $taskName, 'run'), []);
-                } catch (\Throwable  $e) {
+                } catch (Throwable  $e) {
                     // TODO 多次错误删除tasks_***.json文件
                     $error_msg = "MSG: {$e->getMessage()} CODE: {$e->getCode()} FILE: {$e->getFile()} LINE: {$e->getLine()}";
                     Log::error($error_msg);
@@ -90,7 +100,7 @@ class App
             'DelDynamic' => '批量清理动态(未完成)'
         ];
 
-        $choice = \BiliHelper\Script\BaseTask::choice($scripts, 'UnFollow');
+        $choice = BaseTask::choice($scripts, 'UnFollow');
         $this->newTask($choice, 'Script');
     }
 
@@ -141,19 +151,51 @@ class App
         Loop::run();
     }
 
+    /**
+     * @use 选择模式
+     * @param object $args
+     */
+    private function selectMode(object $args)
+    {
+        // 可能会有其他模式出现 暂定
+        // 0 默认值 默认模式，1 脚本模式 ...
+        if ($args->script) {
+            $this->mode = 1;
+        }
+    }
+
+    /**
+     * @use 复位模式
+     * @param object $args
+     */
+    private function restoreMode(object $args)
+    {
+        // 复位 后期添加其他复位
+        if ($args->restore) {
+            Task::getInstance()->restore();
+        }
+    }
+
 
     /**
      * @use 核心运行
      */
     public function start()
     {
-        // Todo 模式名称需要优化
-        if ($this->script_mode) {
-            Log::info('执行Script模式');
-            $this->script_m();
-        } else {
-            Log::info('执行Loop模式');
-            $this->loop_m();
+        switch ($this->mode) {
+            case 0:
+                // 默认
+                Log::info('执行Loop模式');
+                $this->loop_m();
+                break;
+            case 1:
+                // 脚本
+                Log::info('执行Script模式');
+                $this->script_m();
+                break;
+            default:
+                Log::error("请检查，没有选定的执行模式");
+                exit();
         }
     }
 }

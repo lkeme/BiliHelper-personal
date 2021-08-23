@@ -13,6 +13,7 @@ namespace BiliHelper\Plugin;
 use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
 use BiliHelper\Util\TimeLock;
+use JetBrains\PhpStorm\ArrayShape;
 
 class Live
 {
@@ -25,7 +26,7 @@ class Live
     public static function fetchLiveAreas(): array
     {
         $areas = [];
-        $url = "http://api.live.bilibili.com/room/v1/Area/getList";
+        $url = "https://api.live.bilibili.com/room/v1/Area/getList";
         $payload = [];
         $raw = Curl::get('other', $url, $payload);
         $de_raw = json_decode($raw, true);
@@ -46,6 +47,7 @@ class Live
      * @param $area_id
      * @return array
      */
+    #[ArrayShape(['area_id' => "", 'room_id' => "int|mixed"])]
     public static function areaToRid($area_id): array
     {
         $url = "https://api.live.bilibili.com/room/v1/area/getRoomList";
@@ -101,28 +103,56 @@ class Live
     /**
      * @use 获取直播房间号
      * @param $room_id
-     * @return false|mixed
+     * @param bool $uid
+     * @return mixed
      */
-    public static function getRealRoomID($room_id)
+    public static function getRealRoomID($room_id, bool $uid = false): mixed
     {
-        $data = self::getRoomInfoV1($room_id);
-        if (!isset($data['code']) || !isset($data['data'])) {
-            return false;
+        $room_infos = [];
+        // 缓存开始 如果存在就赋值 否则默认值
+        if ($temp = getCache('room_infos')) {
+            $room_infos = $temp;
         }
-        if ($data['code']) {
-            Log::warning($room_id . ' : ' . $data['msg']);
-            return false;
+        // 取缓存
+        if (isset($room_infos[strval($room_id)])) {
+            $data = $room_infos[strval($room_id)];
+        } else {
+            // 默认数据
+            $_data = ['uid' => false, 'room_id' => false];
+            // TODO 优化
+            $data = self::getRoomInfoV1($room_id);
+            if (!isset($data['code']) || !isset($data['data'])) {
+                // 访问错误
+                $data = $_data;
+            } elseif ($data['code']) {
+                // 访问错误
+                $data = $_data;
+                Log::warning($room_id . ' : ' . $data['msg']);
+            } elseif ($data['data']['is_hidden']) {
+                // 隐藏
+                $data = $_data;
+            } elseif ($data['data']['is_locked']) {
+                // 锁定
+                $data = $_data;
+            } elseif ($data['data']['encrypted']) {
+                // 加密
+                $data = $_data;
+            } else {
+                // 有效
+                $data = [
+                    'uid' => $data['data']['uid'],
+                    'room_id' => $data['data']['room_id'],
+                ];
+            }
+            // 推入缓存前
+            $room_infos[strval($room_id)] = $data;
         }
-        if ($data['data']['is_hidden']) {
-            return false;
-        }
-        if ($data['data']['is_locked']) {
-            return false;
-        }
-        if ($data['data']['encrypted']) {
-            return false;
-        }
-        return $data['data']['room_id'];
+        // 缓存结束 需要的数据的放进缓存
+        setCache('room_infos', $room_infos);
+        // 如果需要UID
+        if ($uid) return $data;
+        // 否
+        return $data['room_id'];
     }
 
     /**
@@ -177,6 +207,7 @@ class Live
      * @param $room_id
      * @return array
      */
+    #[ArrayShape(['addr' => "mixed|string", 'token' => "mixed|string"])]
     public static function getDanMuInfo($room_id): array
     {
         $data = self::getDanMuConf($room_id);
@@ -262,7 +293,7 @@ class Live
         ];
         $headers = [
             'origin' => 'https://live.bilibili.com',
-            'referer' => "https://live.bilibili.com/{$room_id}"
+            'referer' => "https://live.bilibili.com/$room_id"
         ];
         $raw = Curl::post('pc', $url, $payload, $headers);
         // {"code":0,"data":[],"message":"","msg":""}
@@ -400,7 +431,7 @@ class Live
         if (isset($data['code']) && $data['code']) {
             Log::warning('送礼失败!', ['msg' => $data['message']]);
         } else {
-            Log::notice("成功向 {$payload['biz_id']} 投喂了 {$num} 个{$gift['gift_name']}");
+            Log::notice("成功向 {$payload['biz_id']} 投喂了 $num 个{$gift['gift_name']}");
         }
     }
 

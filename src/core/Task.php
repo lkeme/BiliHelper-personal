@@ -10,37 +10,26 @@
 
 namespace BiliHelper\Core;
 
+use BiliHelper\Tool\File;
+use BiliHelper\Util\Singleton;
+
 class Task
 {
-    private static $init = true;
-    private static $repository = null;
-    private static $instance;
+    use Singleton;
 
-    /**
-     * @use 单例
-     * @return \BiliHelper\Core\Task
-     */
-    public static function getInstance(): Task
-    {
-        if (is_null(self::$instance)) {
-            self::$instance = new static;
-        }
-        return self::$instance;
-    }
+    private string $repository = '';
 
     /**
      * @use 初始化
      */
-    private static function init()
+    protected function init()
     {
-        if (self::$init) {
-            // 赋值仓库地址
-            if (is_null(self::$repository)) {
-                self::$repository = APP_TASK_PATH . 'tasks_' . getConf('username', 'login.account') . '.json';
-            }
+        // 赋值仓库地址
+        if ($this->repository == '') {
+            $this->repository = APP_TASK_PATH . 'tasks_' . getConf('username', 'login.account') . '.json';
             // 仓库不存在自动创建
-            if (!file_exists(self::$repository)) {
-                $fh = fopen(self::$repository, "w");
+            if (!file_exists($this->repository)) {
+                $fh = fopen($this->repository, "w");
                 fwrite($fh, "{}");
                 fclose($fh);
                 Log::info('任务排程文件不存在，初始化所有任务。');
@@ -48,18 +37,15 @@ class Task
                 Log::info('任务排程文件存在，继续执行所有任务。');
             }
         }
-        // 限制初始化
-        self::$init = false;
     }
 
     /**
      * @use 读
      * @return array
      */
-    private static function read(): array
+    private function read(): array
     {
-        self::init();
-        $data = file_get_contents(self::$repository);
+        $data = file_get_contents($this->repository);
         return json_decode($data, true);
     }
 
@@ -68,10 +54,9 @@ class Task
      * @param array $data
      * @return bool
      */
-    private static function write(array $data): bool
+    private function write(array $data): bool
     {
-        self::init();
-        return file_put_contents(self::$repository, json_encode($data));
+        return file_put_contents($this->repository, json_encode($data));
     }
 
     /**
@@ -80,11 +65,11 @@ class Task
      * @param int $lock
      * @return bool
      */
-    public static function _setLock(string $class, int $lock): bool
+    public function _setLock(string $class, int $lock): bool
     {
-        $data = self::read();
+        $data = $this->read();
         $data[$class] = $lock;
-        return self::write($data);
+        return $this->write($data);
     }
 
     /**
@@ -92,13 +77,24 @@ class Task
      * @param string $class
      * @return int
      */
-    public static function _getLock(string $class): int
+    public function _getLock(string $class): int
     {
-        $data = self::read();
+        $data = $this->read();
         if (array_key_exists($class, $data)) {
             return $data[$class];
         }
         return 0;
+    }
+
+    /**
+     * @use 复位
+     */
+    public function restore()
+    {
+        Log::info('复位任务排程文件。');
+        File::del($this->repository);
+        $this->repository = '';
+        $this->init();
     }
 
 }

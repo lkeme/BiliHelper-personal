@@ -10,36 +10,8 @@
 
 namespace BiliHelper\Plugin;
 
-use BiliHelper\Core\Log;
-
 class Sign
 {
-
-//    /**
-//     * @use 登录
-//     * @param $payload
-//     * @return array
-//     */
-//    public static function login($payload)
-//    {
-//        # 云视听 TV
-//        $appkey = '4409e2ce8ffd12b8';
-//        $appsecret = '59b43e04ad6965f34319062b478f83dd';
-//
-//        $default = [
-//            'access_key' => getAccessToken()
-//            'actionKey' => 'appkey',
-//            'appkey' => $appkey,
-//            'build' => 101800,
-//            'device' => 'android',
-//            'mobi_app' => 'android_tv_yst',
-//            'platform' => 'android',
-//            'ts' => time(),
-//        ];
-//        $payload = array_merge($payload, $default);
-//        return self::encryption($payload, $appsecret);
-//    }
-
     /**
      * @use 登录
      * @param $payload
@@ -48,22 +20,22 @@ class Sign
     public static function login($payload): array
     {
         # Android 新
-        $appkey = 'bca7e84c2d947ac6';
-        $appsecret = '60698ba2f68e01ce44738920a0ffe768';
+        $app_key = base64_decode(getDevice('bili_a.app_key_n'));
+        $app_secret = base64_decode(getDevice('bili_a.secret_key_n'));
 
         $default = [
             'access_key' => getAccessToken(),
             'actionKey' => 'appkey',
-            'appkey' => $appkey,
-            'build' => 6360400,
-            'channel' => 'bili',
-            'device' => 'phone',
-            'mobi_app' => 'android',
-            'platform' => 'android',
+            'appkey' => $app_key,
+            'build' => getDevice('bili_a.build'),
+            'channel' => getDevice('bili_a.channel'),
+            'device' => getDevice('bili_a.device'),
+            'mobi_app' => getDevice('bili_a.mobi_app'),
+            'platform' => getDevice('bili_a.platform'),
             'ts' => time(),
         ];
         $payload = array_merge($payload, $default);
-        return self::encryption($payload, $appsecret);
+        return self::encryption($payload, $app_secret);
     }
 
     /**
@@ -73,25 +45,22 @@ class Sign
      */
     public static function common($payload): array
     {
-        # iOS 6680
-//        $appkey = '27eb53fc9058f8c3';
-//        $appsecret = 'c2ed53a74eeefe3cf99fbd01d8c9c375';
         # Android 旧
-        $appkey = '1d8b6e7d45233436';
-        $appsecret = '560c52ccd288fed045859ed18bffd973';
+        $app_key = base64_decode(getDevice('bili_a.app_key'));
+        $app_secret = base64_decode(getDevice('bili_a.secret_key'));
 
         $default = [
             'access_key' => getAccessToken(),
             'actionKey' => 'appkey',
-            'appkey' => $appkey,
-            'build' => 6360400,
-            'device' => 'phone',
-            'mobi_app' => 'android',
-            'platform' => 'android',
+            'appkey' => $app_key,
+            'build' => getDevice('bili_a.build'),
+            'device' => getDevice('bili_a.device'),
+            'mobi_app' => getDevice('bili_a.mobi_app'),
+            'platform' => getDevice('bili_a.platform'),
             'ts' => time(),
         ];
         $payload = array_merge($payload, $default);
-        return self::encryption($payload, $appsecret);
+        return self::encryption($payload, $app_secret);
     }
 
 

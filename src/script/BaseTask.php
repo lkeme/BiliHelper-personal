@@ -26,10 +26,10 @@ class BaseTask
      * @param null $default
      * @return mixed
      */
-    public static function choice(array $options, $default = null)
+    public static function choice(array $options, $default = null): mixed
     {
         $option = static::interactor()->choice('Select', $options, $default, true);
-        static::interactor()->greenBold("You selected: {$options[$option]}", true);
+        static::interactor()->greenBold("You selected: $options[$option]", true);
         // return $options[$option];
         return $option;
     }

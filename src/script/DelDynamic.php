@@ -10,13 +10,13 @@
 namespace BiliHelper\Script;
 
 use BiliHelper\Core\Log;
-use BiliHelper\Core\Curl;
 
 class DelDynamic extends BaseTask
 {
-    public static $description = '批量删除动态，默认单次最大清理300个动态.';
+    public static string $description = '批量删除动态，默认单次最大清理300个动态.';
 
-    public static function run(){
+    public static function run()
+    {
         Log::error('当前功能未完成');
     }
 }

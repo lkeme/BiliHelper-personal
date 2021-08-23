@@ -18,10 +18,10 @@ class Statistics
 {
     use TimeLock;
 
-    private static $push_list = [];
-    private static $join_list = [];
-    private static $success_list = [];
-    private static $profit_list = [];
+    private static array $push_list = [];
+    private static array $join_list = [];
+    private static array $success_list = [];
+    private static array $profit_list = [];
 
     // Todo 统计开关 统计时间间隔  统计类型
     public static function run()
@@ -111,6 +111,7 @@ class Statistics
                 return $c . $v . '前';
             }
         }
+        return '';
     }
 
     /**
@@ -121,7 +122,7 @@ class Statistics
      * @param null $second_key
      * @return bool
      */
-    private static function initKeyValue(array &$target, string $key, $value = 0, $second_key = null): bool
+    private static function initKeyValue(array &$target, string $key, int $value = 0, $second_key = null): bool
     {
         if (!array_key_exists(self::getTodayKey(), $target)) {
             $target[self::getTodayKey()] = [];
@@ -142,7 +143,7 @@ class Statistics
      * @param null $second_key
      * @return mixed
      */
-    private static function getResult(array &$target, string $key, $second_key = null)
+    private static function getResult(array &$target, string $key, $second_key = null): mixed
     {
         is_null($second_key) ? self::initKeyValue($target, $key) : self::initKeyValue($target, $key, 0, $second_key);
         return is_null($second_key) ? $target[self::getTodayKey()][$key] : $target[self::getTodayKey()][$key][$second_key];
@@ -152,10 +153,10 @@ class Statistics
      * @use 获取所有结果
      * @param array $target
      * @param string $key
-     * @param string $second_key
+     * @param string|null $second_key
      * @return int
      */
-    private static function getResults(array &$target, string $key, $second_key = null): int
+    private static function getResults(array &$target, string $key, string $second_key = null): int
     {
         $results = 0;
         is_null($second_key) ? self::initKeyValue($target, $key) : self::initKeyValue($target, $key, 0, $second_key);
@@ -176,7 +177,7 @@ class Statistics
      * @param null $second_key
      * @return bool
      */
-    private static function valIncrease(array &$target, string $key, $num = 1, $second_key = null): bool
+    private static function valIncrease(array &$target, string $key, int $num = 1, $second_key = null): bool
     {
         is_null($second_key) ? $target[self::getTodayKey()][$key] += $num : $target[self::getTodayKey()][$key][$second_key] += $num;
         return true;
@@ -190,7 +191,7 @@ class Statistics
      * @param string $second_key
      * @return bool
      */
-    private static function valReplace(array &$target, string $key, $data = null, $second_key = ''): bool
+    private static function valReplace(array &$target, string $key, $data = null, string $second_key = ''): bool
     {
         is_null($second_key) ? $target[self::getTodayKey()][$key] = $data : $target[self::getTodayKey()][$key][$second_key] = $data;
         return true;

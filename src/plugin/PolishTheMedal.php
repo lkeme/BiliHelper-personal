@@ -18,9 +18,9 @@ class PolishTheMedal
 {
     use TimeLock;
 
-    private static $metal_lock = 0; // 勋章时间锁
-    private static $fans_medals = []; // 全部勋章
-    private static $grey_fans_medals = []; // 灰色勋章
+    private static int $metal_lock = 0; // 勋章时间锁
+    private static array $fans_medals = []; // 全部勋章
+    private static array $grey_fans_medals = []; // 灰色勋章
 
     /**
      */
@@ -65,7 +65,7 @@ class PolishTheMedal
         // 为空
         if (is_null($medal)) return;
         // 特殊房间处理|央视未开播|CODE -> 11000 MSG -> ''
-        if (in_array($medal['roomid'], [21686237])) return;
+        if (in_array($medal['roomid'], [21686237, 0])) return;
 
         Log::info("开始点亮直播间@{$medal['roomid']}的勋章");
         // 擦亮

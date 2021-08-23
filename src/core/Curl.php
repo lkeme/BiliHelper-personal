@@ -10,15 +10,19 @@
 
 namespace BiliHelper\Core;
 
+use Exception;
+use GuzzleHttp\Pool;
+use GuzzleHttp\Client;
 use BiliHelper\Tool\Generator;
+use GuzzleHttp\Exception\RequestException;
 
 class Curl
 {
-    private static $client;
-    private static $async_opt;
-    private static $results = [];
-    private static $result = [];
-    private static $buvid = '';
+    private static Client $client;
+    private static array $async_opt;
+    private static array $results = [];
+    private static array $result = [];
+    private static string $buvid = '';
 
     /**
      * @use POST请求
@@ -26,15 +30,15 @@ class Curl
      * @param $url
      * @param array $params
      * @param array $headers
-     * @param int $timeout
+     * @param float $timeout
      * @return mixed
      */
-    public static function post($os, $url, $params = [], $headers = [], $timeout = 30)
+    public static function post($os, $url, array $params = [], array $headers = [], float $timeout = 30.0): mixed
     {
-        Log::debug("POST: {$url}");
+        Log::debug("POST: $url");
         $headers = self::getHeaders($os, $headers);
         $payload['form_params'] = count($params) ? $params : [];
-        $options = self::getClientOpt($payload, $headers);
+        $options = self::getClientOpt($payload, $headers, $timeout);
         $request = self::clientHandle($url, 'post', $options);
         $body = $request->getBody();
         Log::debug($body);
@@ -47,15 +51,15 @@ class Curl
      * @param $url
      * @param array $params
      * @param array $headers
-     * @param int $timeout
+     * @param float $timeout
      * @return mixed
      */
-    public static function get($os, $url, $params = [], $headers = [], $timeout = 30)
+    public static function get($os, $url, array $params = [], array $headers = [], float $timeout = 30.0): mixed
     {
-        Log::debug("GET: {$url}");
+        Log::debug("GET: $url");
         $headers = self::getHeaders($os, $headers);
         $payload['query'] = count($params) ? $params : [];
-        $options = self::getClientOpt($payload, $headers);
+        $options = self::getClientOpt($payload, $headers, $timeout);
         $request = self::clientHandle($url, 'get', $options);
         $body = $request->getBody();
         Log::debug($body);
@@ -68,15 +72,15 @@ class Curl
      * @param $url
      * @param array $params
      * @param array $headers
-     * @param int $timeout
+     * @param float $timeout
      * @return mixed
      */
-    public static function put($os, $url, $params = [], $headers = [], $timeout = 30)
+    public static function put($os, $url, array $params = [], array $headers = [], float $timeout = 30.0): mixed
     {
-        Log::debug("PUT: {$url}");
+        Log::debug("PUT: $url");
         $headers = self::getHeaders($os, $headers);
         $payload['json'] = count($params) ? $params : [];
-        $options = self::getClientOpt($payload, $headers);
+        $options = self::getClientOpt($payload, $headers, $timeout);
         $request = self::clientHandle($url, 'post', $options);
         $body = $request->getBody();
         Log::debug($body);
@@ -89,10 +93,10 @@ class Curl
      * @param $url
      * @param array $tasks
      * @param array $headers
-     * @param int $timeout
+     * @param float $timeout
      * @return array
      */
-    public static function async($os, $url, $tasks = [], $headers = [], $timeout = 30): array
+    public static function async($os, $url, array $tasks = [], array $headers = [], float $timeout = 30.0): array
     {
         self::$async_opt = [
             'tasks' => $tasks,
@@ -100,18 +104,18 @@ class Curl
             'count' => count($tasks),
             'concurrency' => count($tasks) < 10 ? count($tasks) : 10
         ];
-        Log::debug("ASYNC: {$url}");
+        Log::debug("ASYNC: $url");
         $headers = self::getHeaders($os, $headers);
-        $requests = function ($total) use ($url, $headers, $tasks) {
+        $requests = function ($total) use ($url, $headers, $tasks, $timeout) {
             foreach ($tasks as $task) {
-                yield function () use ($url, $headers, $task) {
+                yield function () use ($url, $headers, $task, $timeout) {
                     $payload['form_params'] = $task['payload'];
-                    $options = self::getClientOpt($payload, $headers);
+                    $options = self::getClientOpt($payload, $headers, $timeout);
                     return self::clientHandle($url, 'postAsync', $options);
                 };
             }
         };
-        $pool = new \GuzzleHttp\Pool(self::$client, $requests(self::$async_opt['count']), [
+        $pool = new Pool(self::$client, $requests(self::$async_opt['count']), [
             'concurrency' => self::$async_opt['concurrency'],
             'fulfilled' => function ($response, $index) {
                 $res = $response->getBody();
@@ -123,7 +127,7 @@ class Curl
                 self::countedAndCheckEnded();
             },
             'rejected' => function ($reason, $index) {
-                Log::error("多线程第{$index}个请求失败, ERROR: {$reason}");
+                Log::error("多线程第 $index 个请求失败, ERROR: $reason");
                 self::countedAndCheckEnded();
             },
         ]);
@@ -142,9 +146,9 @@ class Curl
      * @param int $timeout
      * @return false|string|null
      */
-    public static function request($method, $url, $payload = [], $headers = [], $timeout = 10)
+    public static function request($method, $url, array $payload = [], array $headers = [], int $timeout = 10): bool|string|null
     {
-        Log::debug("REQUEST: {$url}");
+        Log::debug("REQUEST: $url");
         $options = array(
             'http' => array(
                 'method' => strtoupper($method),
@@ -178,23 +182,23 @@ class Curl
      * @param array $options
      * @return mixed
      */
-    private static function clientHandle(string $url, string $method, array $options)
+    private static function clientHandle(string $url, string $method, array $options): mixed
     {
         $max_retry = range(1, 40);
         foreach ($max_retry as $retry) {
             try {
                 $response = call_user_func_array([self::$client, $method], [$url, $options]);
-                if (is_null($response) or empty($response)) throw new \Exception("Value IsEmpty");
+                if (is_null($response) or empty($response)) throw new Exception("Value IsEmpty");
                 return $response;
-            } catch (\GuzzleHttp\Exception\RequestException $e) {
+            } catch (RequestException $e) {
                 // var_dump($e->getRequest());
                 if ($e->hasResponse()) var_dump($e->getResponse());
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 // $e->getHandlerContext()
                 // var_dump($e);
             }
-            Log::warning("Target -> URL: {$url} METHOD: {$method}");
-            Log::warning("CURl -> RETRY: {$retry} ERROR: {$e->getMessage()} ERRNO: {$e->getCode()} STATUS:  Waiting for recovery!");
+            Log::warning("Target -> URL: $url METHOD: $method");
+            Log::warning("CURl -> RETRY: $retry ERROR: {$e->getMessage()} ERRNO: {$e->getCode()} STATUS:  Waiting for recovery!");
             sleep(15);
         }
         exit('网络异常，超出最大尝试次数，退出程序~');
@@ -209,7 +213,7 @@ class Curl
      */
     private static function getClientOpt(array $add_options, array $headers = [], float $timeout = 30.0): array
     {
-        self::$client = new \GuzzleHttp\Client();
+        self::$client = new Client();
         $default_options = [
             'headers' => $headers,
             'timeout' => $timeout,
@@ -231,8 +235,16 @@ class Curl
     private static function getHeaders(string $os = 'app', array $headers = []): array
     {
         if (!self::$buvid) {
-            self::$buvid = Generator::buvid();
+            // 缓存开始 如果存在就赋值 否则默认值
+            if ($temp = getCache('buvid')) {
+                self::$buvid = $temp;
+            } else {
+                self::$buvid = Generator::buvid();
+            }
+            // 缓存结束 需要的数据的放进缓存
+            setCache('buvid', self::$buvid);
         }
+
         $app_headers = [
             'env' => 'prod',
             'APP-KEY' => 'android',
@@ -241,21 +253,21 @@ class Curl
             'Accept-Encoding' => 'gzip',
             'Accept-Language' => 'zh-cn',
             'Connection' => 'keep-alive',
+            'User-Agent' => getDevice('device.app_headers.ua'),
             // 'Content-Type' => 'application/x-www-form-urlencoded',
             // 'User-Agent' => 'Mozilla/5.0 BiliDroid/5.51.1 (bbcallen@gmail.com)',
-            'User-Agent' => 'Mozilla/5.0 BiliDroid/6.36.0 (bbcallen@gmail.com) os/android model/MuMu mobi_app/android build/6360400 channel/bili innerVer/6360400 osVer/7.1.2 network/2',
             // 'Referer' => 'https://live.bilibili.com/',
         ];
         $pc_headers = [
             'Accept' => "application/json, text/plain, */*",
             'Accept-Encoding' => 'gzip, deflate',
             'Accept-Language' => "zh-CN,zh;q=0.9",
+            'User-Agent' => getDevice('device.pc_headers.ua'),
             // 'Content-Type' => 'application/x-www-form-urlencoded',
-            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.30 Safari/537.36 Edg/90.0.818.8',
             // 'Referer' => 'https://live.bilibili.com/',
         ];
         $other_headers = [
-            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4450.0 Safari/537.36',
+            'User-Agent' => getDevice('device.other_headers.ua')
         ];
         $default_headers = ${$os . "_headers"} ?? $other_headers;
         if (in_array($os, ['app', 'pc']) && getCookie() != "") {
@@ -279,14 +291,13 @@ class Curl
     /**
      * @use 关联数组转字符串
      * @param array $array
-     * @param string $separator
      * @return string
      */
-    private static function arr2str(array $array, string $separator = "\r\n"): string
+    private static function arr2str(array $array): string
     {
         $tmp = '';
         foreach ($array as $key => $value) {
-            $tmp .= "{$key}:{$value}{$separator}";
+            $tmp .= "$key:$value\r\n";
         }
         return $tmp;
     }
@@ -297,16 +308,16 @@ class Curl
      * @param $url
      * @param array $params
      * @param array $headers
-     * @param int $timeout
+     * @param float $timeout
      * @return mixed
      */
-    public static function headers($os, $url, $params = [], $headers = [], $timeout = 30)
+    public static function headers($os, $url, array $params = [], array $headers = [], float $timeout = 30.0): mixed
     {
         Log::debug('HEADERS: ' . $url);
         $headers = self::getHeaders($os, $headers);
         $payload['query'] = count($params) ? $params : [];
         $payload['allow_redirects'] = false;
-        $options = self::getClientOpt($payload, $headers);
+        $options = self::getClientOpt($payload, $headers, $timeout);
         $request = self::clientHandle($url, 'get', $options);
         Log::debug("获取Headers");
         return $request->getHeaders();

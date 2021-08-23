@@ -27,12 +27,11 @@ class Generator
         $chars = md5(uniqid(mt_rand(), true));
         $chars = substr_replace($chars, "4", 12, 1);
         $chars = substr_replace($chars, "a", 16, 1);
-        $uuid = substr($chars, 0, 8) . '-'
+        return substr($chars, 0, 8) . '-'
             . substr($chars, 8, 4) . '-'
             . substr($chars, 12, 4) . '-'
             . substr($chars, 16, 4) . '-'
             . substr($chars, 20, 12);
-        return $uuid;
     }
 
     /**
@@ -54,11 +53,15 @@ class Generator
      */
     public static function buvid(): string
     {
+        // XW UUID
+        // XX AndroidID
+        // XY MAC
+        // XZ IMEI
         // XYD5B85DA7212341F51C612344A6B8C6C21234
         $mac = Faker::macAddress();
         $md5 = md5($mac);
         $md5_arr = str_split($md5);
-        return strtoupper("XY{$md5_arr[2]}{$md5_arr[12]}{$md5_arr[22]}{$md5}");
+        return strtoupper("XY$md5_arr[2]$md5_arr[12]$md5_arr[22]$md5");
     }
 
     /**

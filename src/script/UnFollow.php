@@ -14,7 +14,7 @@ use BiliHelper\Core\Curl;
 
 class UnFollow extends BaseTask
 {
-    public static $description = '批量清理选定分组关注，默认单次最大清理600个关注.';
+    public static string $description = '批量清理选定分组关注，默认单次最大清理600个关注.';
 
     /**
      * @throws \Exception
@@ -59,9 +59,9 @@ class UnFollow extends BaseTask
             // {"code":0,"message":"0","ttl":1}
             $data = json_decode($raw, true);
             if ($data['code'] == 0) {
-                Log::notice("UP.{$up_uid} - {$up_uname} 取关成功");
+                Log::notice("UP.$up_uid - $up_uname 取关成功");
             } else {
-                Log::error("UP.{$up_uid} - {$up_uname} 取关失败 CODE -> {$data['code']} MSG -> {$data['message']} ");
+                Log::error("UP.$up_uid - $up_uname 取关失败 CODE -> {$data['code']} MSG -> {$data['message']} ");
                 break;
             }
             sleep(random_int(5, 10));
@@ -99,7 +99,7 @@ class UnFollow extends BaseTask
                     $following[$up['mid']] = $up['uname'];
                 }
                 // 打印和延迟
-                Log::info("已获取分组 {$tag_id} 页码 {$pn}");
+                Log::info("已获取分组 $tag_id 页码 $pn");
                 sleep(random_int(4, 8));
                 // 如果页面不等于 max_ps  跳出
                 if (count($data['data']) != $max_ps) {
@@ -111,7 +111,7 @@ class UnFollow extends BaseTask
             }
         }
         $following_num = count($following);
-        Log::notice("已获取分组 {$tag_id} 有效关注数 {$following_num}");
+        Log::notice("已获取分组 $tag_id 有效关注数 $following_num");
         return $following;
     }
 
@@ -120,7 +120,7 @@ class UnFollow extends BaseTask
      * @use 获取分组
      * @return mixed
      */
-    private static function relationTags()
+    private static function relationTags(): mixed
     {
         $url = 'https://api.bilibili.com/x/relation/tags';
         $payload = [];
@@ -135,7 +135,7 @@ class UnFollow extends BaseTask
                 $options[$tag['tagid']] = "分组:{$tag['name']} - 关注数:{$tag['count']}";
             }
             $option = self::choice($options);
-            Log::notice("已获取分组 {$option} - {$options[$option]}");
+            Log::notice("已获取分组 $option - $options[$option]");
             return $option;
         } else {
             Log::error("获取关注分组失败 CODE -> {$data['code']} MSG -> {$data['message']} ");

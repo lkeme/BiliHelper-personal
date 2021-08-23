@@ -11,14 +11,15 @@
 namespace BiliHelper\Util;
 
 use JsonDecodeStream\Parser;
+use stdClass;
 
 
 trait AllotTasks
 {
 
 //    protected static $repository = '';
-    protected static $tasks = [];
-    protected static $work_status = [
+    protected static array $tasks = [];
+    protected static array $work_status = [
         'work_updated' => null,
         'estimated_time' => null,
         'work_completed' => null,
@@ -40,7 +41,7 @@ trait AllotTasks
      * @param bool $time
      * @return bool
      */
-    protected static function pushTask(string $operation, \stdClass $act, bool $time = false): bool
+    protected static function pushTask(string $operation, stdClass $act, bool $time = false): bool
     {
         $task = [
             'operation' => $operation,
@@ -53,9 +54,9 @@ trait AllotTasks
 
     /**
      * @use 拉取任务
-     * @return false|mixed
+     * @return mixed
      */
-    protected static function pullTask()
+    protected static function pullTask(): mixed
     {
         // 任务列表为空
         if (empty(static::$tasks)) {

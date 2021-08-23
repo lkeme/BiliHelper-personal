@@ -19,9 +19,9 @@ class GiftRaffle extends BaseRaffle
     const ACTIVE_TITLE = '活动礼物';
     const ACTIVE_SWITCH = 'live_gift';
 
-    protected static $wait_list = [];
-    protected static $finish_list = [];
-    protected static $all_list = [];
+    protected static array $wait_list = [];
+    protected static array $finish_list = [];
+    protected static array $all_list = [];
 
     /**
      * @use 解析数据
@@ -98,9 +98,9 @@ class GiftRaffle extends BaseRaffle
     /**
      * @use 解析抽奖信息
      * @param array $results
-     * @return void
+     * @return mixed
      */
-    protected static function parseLottery(array $results)
+    protected static function parseLottery(array $results):mixed
     {
         foreach ($results as $result) {
             $data = $result['source'];
@@ -123,5 +123,6 @@ class GiftRaffle extends BaseRaffle
                 Log::notice("房间 {$data['room_id']} 编号 {$data['raffle_id']} {$data['raffle_name']}: " . isset($de_raw['msg']) ? $de_raw['msg'] : $de_raw);
             }
         }
+        return '';
     }
 }

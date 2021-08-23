@@ -49,7 +49,7 @@ class Log
     {
         if (getConf('multiple', 'print')) {
             // return '[' . (getConf('user_identity', 'print') ?? getConf('username', 'login.account')) . ']';
-            return sprintf("[%s]",getConf('user_identity', 'print') ?? getConf('username', 'login.account'));
+            return sprintf("[%s]", getConf('user_identity', 'print') ?? getConf('username', 'login.account'));
         }
         return '';
     }

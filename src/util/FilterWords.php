@@ -16,9 +16,9 @@ use Sven\FileConfig\Drivers\Json;
 
 trait FilterWords
 {
-    protected static $store;
+    protected static Store $store;
     protected static $store_status;
-    protected static $repository = APP_DATA_PATH . 'filter_library.json';
+    protected static string $repository = APP_DATA_PATH . 'filter_library.json';
 
     /**
      * @use 加载配置信息

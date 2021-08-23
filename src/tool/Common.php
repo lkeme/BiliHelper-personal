@@ -48,7 +48,7 @@ class Common
      * @param string $charset
      * @return string
      */
-    public static function replaceStar($str, $start, $end = 0, $dot = "*", $charset = "UTF-8"): string
+    public static function replaceStar($str, $start, int $end = 0, string $dot = "*", string $charset = "UTF-8"): string
     {
         $len = mb_strlen($str, $charset);
         if ($start == 0 || $start > $len) {
