@@ -1,3 +1,5 @@
+version = 0.0.1
+
 #######################
 #       账户设置       #
 #######################
@@ -265,10 +267,9 @@ proxy = "http://127.0.0.1:8888"
 [debug]
 enable = false
 
-; 记录日志|日志路径|日志回调地址
+; 记录日志|日志回调地址
 [log]
 enable = false
-path = log
 callback = "http://www.example.com/api.send?text={account}[{level}]: {message}"
 # 错误回调级别
 #
