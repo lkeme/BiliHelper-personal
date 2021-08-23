@@ -27,11 +27,29 @@ class App
      */
     public function __construct(string $app_path)
     {
-        define('APP_CONF_PATH', $app_path . "/conf/");
-        define('APP_DATA_PATH', $app_path . "/data/");
-        define('APP_LOG_PATH', $app_path . "/log/");
-        define('APP_TASK_PATH', $app_path . "/task/");
-        define('APP_CACHE_PATH', $app_path . "/cache/");
+        define('APP_CONF_PATH', $app_path . '/conf/');
+        define('APP_DATA_PATH', $app_path . '/data/');
+        define('APP_LOG_PATH', $app_path . '/log/');
+        define('APP_TASK_PATH', $app_path . '/task/');
+        define('APP_CACHE_PATH', $app_path . '/cache/');
+    }
+
+    /**
+     * @use 初始化数据文件夹
+     * @param int $permissions
+     * @return $this
+     */
+    private function initDataFolder(int $permissions = 0777): App
+    {
+        // log task cache
+        $data_folder = [APP_LOG_PATH, APP_TASK_PATH, APP_CACHE_PATH];
+        foreach ($data_folder as $path) {
+            if (!file_exists($path)) {
+                mkdir($path);
+                chmod($path, $permissions);
+            }
+        }
+        return $this;
     }
 
     /**
@@ -51,6 +69,7 @@ class App
      */
     public function load($argv): App
     {
+        $this->initDataFolder();
         $args = (new BCommand($argv))->run();
         $filename = $args->args()[0] ?? 'user.ini';
         // 加载配置

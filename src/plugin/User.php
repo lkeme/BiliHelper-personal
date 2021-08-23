@@ -191,7 +191,7 @@ class User
      * @param bool $un_follow
      * @return bool
      */
-    public static function setUserFollow(int $follow_uid, bool $un_follow): bool
+    public static function setUserFollow(int $follow_uid, bool $un_follow = false): bool
     {
         $url = 'https://api.live.bilibili.com/relation/v1/Feed/SetUserFollow';
         $payload = [
