@@ -49,6 +49,10 @@ class Dynamic
             $url = 'https://api.vc.bilibili.com/topic_svr/v1/topic_svr/topic_new?topic_id=' . $t_id;
             $data = Curl::request('get', $url);
             $data = json_decode($data, true);
+            if (!isset($data['data'])) {
+                Log::warning("获取抽奖贴失败: {$data['message']}");
+                continue;
+            }
 
             // new
             foreach ($data['data']['cards'] as $article) {
