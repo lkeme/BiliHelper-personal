@@ -65,12 +65,8 @@ class Log
             if ($type == 'DEBUG' && !getConf('enable', 'debug')) {
                 return;
             }
-            $path = './' . getConf('path', 'log') . '/';
-            if (!file_exists($path)) {
-                mkdir($path);
-                chmod($path, 0777);
-            }
-            $filename = $path . getConf('username', 'login.account') . ".log";
+            
+            $filename = APP_LOG_PATH . getConf('username', 'login.account') . ".log";
             $date = date('[Y-m-d H:i:s] ');
             $data = $date . ' Log.' . $type . ' ' . $message . PHP_EOL;
             file_put_contents($filename, $data, FILE_APPEND);

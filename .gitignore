@@ -29,10 +29,14 @@ conf/user1.ini
 /src/backup/
 script.php
 
-# ignore all files in lib/
 task/*
 cache/*
 log/*
+
+# ignore all files in lib/
+#task/*
+#cache/*
+#log/*
 # except for .gitkeep
 !.gitkeep
 # ignore TODO file in root directory,not subdir/TODO
