@@ -20,9 +20,9 @@ class CheckUpdate
 {
     use TimeLock;
 
-    private static $current_conf;
-    private static $latest_conf;
-    private static $repository = APP_DATA_PATH . 'latest_version.json';
+    private static object $current_conf;
+    private static object $latest_conf;
+    private static string $repository = APP_DATA_PATH . 'latest_version.json';
 
 
     public static function run()
@@ -51,7 +51,7 @@ class CheckUpdate
             $time = self::$latest_conf->get('time');
             $version = self::$latest_conf->get('version');
             $des = self::$latest_conf->get('des');
-            $info = "最新版本-{$version}, {$des}";
+            $info = "最新版本-$version, $des";
             Notice::push('update', $info);
         }
     }

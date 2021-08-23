@@ -41,7 +41,7 @@ class User
      * @use 用户
      * @return mixed
      */
-    public static function userInfo()
+    public static function userInfo(): mixed
     {
         $url = 'https://api.bilibili.com/x/web-interface/nav';
         $payload = [];

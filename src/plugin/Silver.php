@@ -18,7 +18,7 @@ class Silver
 {
     use TimeLock;
 
-    protected static $task = [];
+    protected static array $task = [];
 
     public static function run()
     {

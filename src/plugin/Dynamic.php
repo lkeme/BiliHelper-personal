@@ -21,7 +21,7 @@ class Dynamic
     // https://api.vc.bilibili.com/topic_svr/v1/topic_svr/fetch_dynamics?topic_name=%E4%BA%92%E5%8A%A8%E6%8A%BD%E5%A5%96&sortby=2
     // https://t.bilibili.com/topic/name/%E5%8A%A8%E6%80%81%E6%8A%BD%E5%A5%96/feed
 
-    private static $topic_list = [
+    private static array $topic_list = [
         '互动抽奖' => '3230836',
         '转发抽奖' => '434405',
         '动态抽奖' => '7146512',
@@ -37,7 +37,7 @@ class Dynamic
     ];
 
 
-    private static $article_list = [];
+    private static array $article_list = [];
 
     /**
      * 获取抽奖话题下的帖子
@@ -45,7 +45,7 @@ class Dynamic
     public static function getAwardTopic(): array
     {
         foreach (self::$topic_list as $t_name => $t_id) {
-            Log::info("获取关键字 {$t_name}-{$t_id}");
+            Log::info("获取关键字 $t_name - $t_id");
             $url = 'https://api.vc.bilibili.com/topic_svr/v1/topic_svr/topic_new?topic_id=' . $t_id;
             $data = Curl::request('get', $url);
             $data = json_decode($data, true);
@@ -93,7 +93,7 @@ class Dynamic
             // https://api.vc.bilibili.com/topic_svr/v1/topic_svr/topic_history?topic_name=转发抽奖&offset_dynamic_id=454347930068783808
         }
         $num = count(self::$article_list);
-        Log::info("获取到 {$num} 条有效动态");
+        Log::info("获取到 $num 条有效动态");
         return self::$article_list;
     }
 
@@ -210,7 +210,7 @@ class Dynamic
      * @param $did
      * @return mixed
      */
-    public static function getDynamicDetail($did)
+    public static function getDynamicDetail($did): mixed
     {
         $url = "https://api.vc.bilibili.com/dynamic_svr/v1/dynamic_svr/get_dynamic_detail";
         $payload = [
@@ -226,7 +226,7 @@ class Dynamic
      * @param $did
      * @return mixed
      */
-    public static function getLotteryNotice($did)
+    public static function getLotteryNotice($did): mixed
     {
         $url = 'https://api.vc.bilibili.com/lottery_svr/v1/lottery_svr/lottery_notice';
         $payload = [
@@ -240,9 +240,9 @@ class Dynamic
      * 获取个人动态TAB列表
      * @param int $uid
      * @param int $type_list
-     * @return array|mixed
+     * @return mixed
      */
-    public static function getDynamicTab(int $uid = 0, int $type_list = 268435455)
+    public static function getDynamicTab(int $uid = 0, int $type_list = 268435455): mixed
     {
         $uid = $uid == 0 ? getUid() : $uid;
         $url = "https://api.vc.bilibili.com/dynamic_svr/v1/dynamic_svr/dynamic_new";
@@ -283,8 +283,8 @@ class Dynamic
         $custom_words = empty($words = getConf('filter_words', 'dynamic')) ? [] : explode(',', $words);
         $total_words = array_merge($default_words, $custom_words, $common_words);
         foreach ($total_words as $word) {
-            if (strpos($item['desc'], $word) !== false) {
-                Log::warning("当前动态#{$item['did']}触发关键字过滤 {$word}");
+            if (str_contains($item['desc'], $word)) {
+                Log::warning("当前动态#{$item['did']}触发关键字过滤 $word");
                 return true;
             }
         }
@@ -296,7 +296,7 @@ class Dynamic
         }
         // 过滤粉丝数量
         if (($num = Live::getMidFollower((int)$item['uid'])) < getConf('min_fans_num', 'dynamic')) {
-            Log::warning("当前动态#{$item['did']}触发UP粉丝数量过滤 {$num}");
+            Log::warning("当前动态#{$item['did']}触发UP粉丝数量过滤 $num");
             return true;
         }
         return false;

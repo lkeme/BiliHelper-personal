@@ -11,14 +11,12 @@
 
 namespace BiliHelper\Tool;
 
-use BiliHelper\Core\Log;
-
 class BvToAv
 {
-    protected $tr = "fZodR9XQDSUm21yCkr6zBqiveYah8bt4xsWpHnJE7jL5VG3guMTKNPAwcF";
-    protected $xor = 177451812;
-    protected $add = 8728348608;
-    protected $s = [11, 10, 3, 8, 4, 6];
+    protected string $tr = "fZodR9XQDSUm21yCkr6zBqiveYah8bt4xsWpHnJE7jL5VG3guMTKNPAwcF";
+    protected int $xor = 177451812;
+    protected int $add = 8728348608;
+    protected array $s = [11, 10, 3, 8, 4, 6];
 
 
     /**
@@ -26,7 +24,7 @@ class BvToAv
      * @param $bv
      * @return int|string
      */
-    public function dec($bv)
+    public function dec($bv): int|string
     {
         $r = 0;
         $tr = array_flip(str_split($this->tr));

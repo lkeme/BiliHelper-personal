@@ -13,6 +13,7 @@ namespace BiliHelper\Plugin;
 use BiliHelper\Core\Curl;
 use BiliHelper\Core\Log;
 use BiliHelper\Tool\Common;
+use JetBrains\PhpStorm\ArrayShape;
 
 class User
 {
@@ -68,7 +69,7 @@ class User
      * @param null $room_id
      * @return mixed
      */
-    public static function webGetUserInfo($room_id = null)
+    public static function webGetUserInfo($room_id = null): mixed
     {
         $url = 'https://api.live.bilibili.com/xlive/web-room/v1/index/getInfoByUser';
         $payload = [
@@ -84,7 +85,7 @@ class User
      * @param null $room_id
      * @return mixed
      */
-    public static function appGetUserInfo($room_id = null)
+    public static function appGetUserInfo($room_id = null): mixed
     {
         $url = 'https://api.live.bilibili.com/xlive/app-room/v1/index/getInfoByUser';
         $payload = [
@@ -98,6 +99,7 @@ class User
      * @use 转换信息
      * @return array
      */
+    #[ArrayShape(['csrf' => "mixed|string", 'uid' => "mixed|string", 'sid' => "mixed|string"])]
     public static function parseCookies(): array
     {
         $cookies = getCookie();
@@ -127,7 +129,7 @@ class User
                 'ps' => 50,
             ];
             $headers = [
-                'referer' => "https://space.bilibili.com/{$uid}/fans/follow?tagid=-1",
+                'referer' => "https://space.bilibili.com/$uid/fans/follow?tagid=-1",
             ];
             $raw = Curl::get('pc', $url, $payload, $headers);
             $de_raw = json_decode($raw, true);
@@ -165,7 +167,7 @@ class User
                 'ps' => $page_size,
             ];
             $headers = [
-                'referer' => "https://space.bilibili.com/{$uid}/fans/follow?tagid={$tag_id}",
+                'referer' => "https://space.bilibili.com/$uid/fans/follow?tagid=$tag_id",
             ];
             $raw = Curl::get('pc', $url, $payload, $headers);
             $de_raw = json_decode($raw, true);
@@ -189,7 +191,7 @@ class User
      * @param bool $un_follow
      * @return bool
      */
-    public static function setUserFollow(int $follow_uid, $un_follow = false): bool
+    public static function setUserFollow(int $follow_uid, bool $un_follow): bool
     {
         $url = 'https://api.live.bilibili.com/relation/v1/Feed/SetUserFollow';
         $payload = [
@@ -312,7 +314,7 @@ class User
             }
             Log::debug("获取会员成功 不是年度大会员或已过期");
         } else {
-            Log::debug("获取会员信息失败 {$raw}");
+            Log::debug("获取会员信息失败 $raw");
         }
         return false;
     }

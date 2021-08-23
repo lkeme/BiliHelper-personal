@@ -19,12 +19,12 @@ class StormRaffle extends BaseRaffle
     const ACTIVE_TITLE = '节奏风暴';
     const ACTIVE_SWITCH = 'live_storm';
 
-    protected static $wait_list = [];
-    protected static $finish_list = [];
-    protected static $all_list = [];
+    protected static array $wait_list = [];
+    protected static array $finish_list = [];
+    protected static array $all_list = [];
 
-    private static $drop_rate = null;
-    private static $attempt = null;
+    private static string|null $drop_rate = null;
+    private static array|null $attempt = null;
 
     /**
      * @use 解析数据
@@ -76,7 +76,7 @@ class StormRaffle extends BaseRaffle
      */
     private static function formatInfo($id, $num, $info): string
     {
-        return "节奏风暴 {$id} 请求 {$num} 状态 {$info}";
+        return "节奏风暴 $id 请求 $num 状态 $info";
     }
 
     /**
@@ -102,7 +102,7 @@ class StormRaffle extends BaseRaffle
             ];
             for ($i = 1; $i < $num; $i++) {
                 $raw = Curl::post('app', $url, Sign::common($payload));
-                if (strpos((string)$raw, 'html') !== false) {
+                if (str_contains((string)$raw, 'html')) {
                     Log::notice(self::formatInfo($raffle['raffle_id'], $num, '触发哔哩哔哩安全风控策略(412)'));
                     break;
                 }
@@ -144,7 +144,6 @@ class StormRaffle extends BaseRaffle
                     continue;
                 }
                 Log::notice(self::formatInfo($raffle['raffle_id'], $num, $de_raw['msg']));
-                continue;
             }
         }
         return [];
@@ -153,14 +152,15 @@ class StormRaffle extends BaseRaffle
     /**
      * @use 解析抽奖信息
      * @param array $results
-     * @return void
+     * @return mixed
      */
-    protected static function parseLottery(array $results)
+    protected static function parseLottery(array $results):mixed
     {
         foreach ($results as $result) {
             $data = $result['source'];
             $content = $result['content'];
             echo '';
         }
+        return '';
     }
 }

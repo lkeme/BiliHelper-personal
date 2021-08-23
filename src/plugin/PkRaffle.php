@@ -20,9 +20,9 @@ class PkRaffle extends BaseRaffle
     const ACTIVE_TITLE = '主播乱斗';
     const ACTIVE_SWITCH = 'live_pk';
 
-    protected static $wait_list = [];
-    protected static $finish_list = [];
-    protected static $all_list = [];
+    protected static array $wait_list = [];
+    protected static array $finish_list = [];
+    protected static array $all_list = [];
 
     /**
      * @use 解析数据
@@ -95,9 +95,9 @@ class PkRaffle extends BaseRaffle
     /**
      * @use 解析抽奖信息
      * @param array $results
-     * @return void
+     * @return mixed
      */
-    protected static function parseLottery(array $results)
+    protected static function parseLottery(array $results):mixed
     {
         foreach ($results as $result) {
             $data = $result['source'];
@@ -122,5 +122,6 @@ class PkRaffle extends BaseRaffle
                 Log::notice("房间 {$data['room_id']} 编号 {$data['raffle_id']} {$data['raffle_name']}: {$de_raw['message']}");
             }
         }
+        return '';
     }
 }

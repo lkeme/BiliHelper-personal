@@ -19,18 +19,18 @@ class AnchorRaffle extends BaseRaffle
     const ACTIVE_TITLE = '天选之子';
     const ACTIVE_SWITCH = 'live_anchor';
 
-    protected static $wait_list = [];
-    protected static $finish_list = [];
-    protected static $all_list = [];
+    protected static array $wait_list = [];
+    protected static array $finish_list = [];
+    protected static array $all_list = [];
     // 过滤类型
-    private static $filter_type = [];
+    private static array $filter_type = [];
     // 默认关注 特殊关注  等待关注
-    private static $default_follows = [];
-    private static $special_follows = [];
-    public static $wait_un_follows = [];
+    private static array $default_follows = [];
+    private static array $special_follows = [];
+    public static array $wait_un_follows = [];
     // 特殊分组  分组ID
-    private static $group_name = "玄不改非"; // 氪不改命
-    private static $group_id = null;
+    private static string $group_name = "玄不改非"; // 氪不改命
+    private static int|null $group_id = null;
 
 
     /**
@@ -64,9 +64,9 @@ class AnchorRaffle extends BaseRaffle
             self::$group_id = $tag_id ?: User::createRelationTag(self::$group_name);
         }
         // 获取需要关注的
-        $data = Live::getRoomInfoV1($room_id);
-        if ($data['code'] == 0 && isset($data['data'])) {
-            $need_follow_uid = $data['data']['uid'];
+        $data = Live::getRealRoomID($room_id, true);
+        if ($data['uid']) {
+            $need_follow_uid = $data['uid'];
         } else {
             return;
         }
@@ -129,7 +129,7 @@ class AnchorRaffle extends BaseRaffle
         $custom_words = empty($words = getConf('filter_words', 'live_anchor')) ? [] : explode(',', $words);
         $total_words = array_merge($default_words, $custom_words);
         foreach ($total_words as $word) {
-            if (strpos($prize_name, $word) !== false) {
+            if (str_contains($prize_name, $word)) {
                 return true;
             }
         }
@@ -221,9 +221,9 @@ class AnchorRaffle extends BaseRaffle
     /**
      * @use 解析抽奖信息
      * @param array $results
-     * @return void
+     * @return mixed
      */
-    protected static function parseLottery(array $results)
+    protected static function parseLottery(array $results): mixed
     {
         foreach ($results as $result) {
             $data = $result['source'];
@@ -240,5 +240,6 @@ class AnchorRaffle extends BaseRaffle
                 Log::notice("房间 {$data['room_id']} 编号 {$data['raffle_id']} " . self::ACTIVE_TITLE . "-(" . $data['raffle_name'] . "): {$de_raw['message']}");
             }
         }
+        return '';
     }
 }

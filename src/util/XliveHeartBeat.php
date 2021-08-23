@@ -14,26 +14,27 @@ use BiliHelper\Core\Curl;
 use BiliHelper\Core\Log;
 use BiliHelper\Plugin\Live;
 use BiliHelper\Tool\Generator;
+use JetBrains\PhpStorm\ArrayShape;
 
 trait XliveHeartBeat
 {
 
-    protected static $_data = ['id' => []]; // data [ets, benchmark, time, secret_rule, id]  data->id [parent_area_id, area_id, 0, room_id]
-    protected static $_secret_rule = []; // secret_rule [2, 3, 1, 5]
-    protected static $_room_info = []; // 心跳房间信息
+    protected static array|null $_data = ['id' => []]; // data [ets, benchmark, time, secret_rule, id]  data->id [parent_area_id, area_id, 0, room_id]
+    protected static array $_secret_rule = []; // secret_rule [2, 3, 1, 5]
+    protected static array $_room_info = []; // 心跳房间信息
 
-    protected static $_retry = 3; // 重试次数
-    protected static $_count_num = 0; // 计数
-    protected static $_count_time = 0; // 计时间
+    protected static int $_retry = 3; // 重试次数
+    protected static int $_count_num = 0; // 计数
+    protected static int $_count_time = 0; // 计时间
 
-    protected static $_current_room_id = 0; // 当前运行的ROOM_ID
-    protected static $_enc_server = null; // 加密服务器 依赖配置文件
+    protected static int $_current_room_id = 0; // 当前运行的ROOM_ID
+    protected static string|null $_enc_server = null; // 加密服务器 依赖配置文件
 
-    protected static $_default = 0; // 默认值
+    protected static int $_default = 0; // 默认值
 
     // 请求配置
-    protected static $_user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.85 Safari/537.36';
-    protected static $_headers = [
+    protected static string $_user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.85 Safari/537.36';
+    protected static array $_headers = [
         'content-type' => 'application/x-www-form-urlencoded',
         'origin' => 'https://live.bilibili.com',
         'referer' => 'https://live.bilibili.com/',
@@ -45,9 +46,9 @@ trait XliveHeartBeat
      * @param int $room_id
      * @param int $max_time
      * @param int $max_num
-     * @return int|mixed
+     * @return mixed
      */
-    protected static function xliveHeartBeatTask(int $room_id, int $max_time, int $max_num)
+    protected static function xliveHeartBeatTask(int $room_id, int $max_time, int $max_num): mixed
     {
         // 加载依赖
         if (!static::depend()) {
@@ -150,7 +151,7 @@ trait XliveHeartBeat
     /**
      * @use E心跳
      * @param array $id
-     * @return array|false[]
+     * @return array
      */
     protected static function eHeartBeat(array $id): array
     {
@@ -180,7 +181,7 @@ trait XliveHeartBeat
     /**
      * @use X心跳
      * @param array $id
-     * @return array|bool[]
+     * @return array
      */
     protected static function xHeartBeat(array $id): array
     {
@@ -212,7 +213,7 @@ trait XliveHeartBeat
      * @param array $r
      * @return string|false
      */
-    protected static function encParamS(array $t, array $r)
+    protected static function encParamS(array $t, array $r): bool|string
     {
         $headers = [
             'Content-Type' => 'application/json',
@@ -242,6 +243,7 @@ trait XliveHeartBeat
      * @param array $t
      * @return array
      */
+    #[ArrayShape(['id' => "mixed", 'device' => "mixed", 'ets' => "mixed", 'benchmark' => "mixed", 'time' => "mixed", 'ts' => "mixed", 'ua' => "mixed"])]
     protected static function formatT(array $t): array
     {
 //        print_r($t);

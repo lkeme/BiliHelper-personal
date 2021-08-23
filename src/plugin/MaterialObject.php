@@ -20,9 +20,9 @@ class MaterialObject
     use TimeLock;
     use FilterWords;
 
-    private static $invalid_aids = [];
-    private static $start_aid = 0;
-    private static $end_aid = 0;
+    private static array $invalid_aids = [];
+    private static int $start_aid = 0;
+    private static int $end_aid = 0;
 
     public static function run()
     {
@@ -46,7 +46,7 @@ class MaterialObject
         self::loadJsonData();
         $sensitive_words = self::$store->get("MaterialObject.sensitive");
         foreach ($sensitive_words as $word) {
-            if (strpos($title, $word) !== false) {
+            if (str_contains($title, $word)) {
                 return true;
             }
         }
@@ -57,9 +57,9 @@ class MaterialObject
      * @use 抽奖盒子状态
      * @param int $aid
      * @param string $reply
-     * @return array|bool|mixed
+     * @return mixed
      */
-    private static function boxStatus(int $aid, $reply = 'bool')
+    private static function boxStatus(int $aid, string $reply = 'bool'): mixed
     {
         // $url = 'https://api.live.bilibili.com/lottery/v1/box/getStatus';
         $url = 'https://api.live.bilibili.com/xlive/lottery-interface/v2/Box/getStatus';
@@ -93,6 +93,11 @@ class MaterialObject
      */
     private static function fetchLottery(): array
     {
+        // 缓存开始 如果存在就赋值 否则默认值
+        if ($temp = getCache('invalid_aids')) {
+            self::$invalid_aids = $temp;
+        }
+
         $lottery_list = [];
         $max_probe = 10;
         $probes = range(self::$start_aid, self::$end_aid);
@@ -132,6 +137,9 @@ class MaterialObject
                 'num' => $round_num,
             ]);
         }
+        // 缓存结束 需要的数据的放进缓存
+        setCache('invalid_aids', self::$invalid_aids);
+
         return $lottery_list;
     }
 
@@ -168,7 +176,7 @@ class MaterialObject
         foreach ($lottery_list as $lottery) {
             $aid = $lottery['aid'];
             $num = $lottery['num'];
-            Log::notice("实物抽奖 {$aid} 轮次 {$num} 可参与抽奖~");
+            Log::notice("实物抽奖 $aid 轮次 $num 可参与抽奖~");
             // $url = 'https://api.live.bilibili.com/lottery/v1/Box/draw';
             $url = 'https://api.live.bilibili.com/xlive/lottery-interface/v2/Box/draw';
             $payload = [
@@ -178,9 +186,9 @@ class MaterialObject
             $raw = Curl::get('pc', $url, $payload);
             $de_raw = json_decode($raw, true);
             if ($de_raw['code'] == 0) {
-                Log::notice("实物抽奖 {$aid} 轮次 {$num} 参与抽奖成功~");
+                Log::notice("实物抽奖 $aid 轮次 $num 参与抽奖成功~");
             } else {
-                Log::notice("实物抽奖 {$aid} 轮次 {$num} {$de_raw['msg']}~");
+                Log::notice("实物抽奖 $aid 轮次 $num {$de_raw['msg']}~");
             }
         }
         return true;
