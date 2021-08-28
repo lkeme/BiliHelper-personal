@@ -37,9 +37,9 @@ class App
     /**
      * @use 初始化数据文件夹
      * @param int $permissions
-     * @return $this
+     * @return void
      */
-    private function initDataFolder(int $permissions = 0777): App
+    private function initDataFolder(int $permissions = 0777): void
     {
         // log task cache
         $data_folder = [APP_LOG_PATH, APP_TASK_PATH, APP_CACHE_PATH];
@@ -49,7 +49,6 @@ class App
                 chmod($path, $permissions);
             }
         }
-        return $this;
     }
 
     /**
