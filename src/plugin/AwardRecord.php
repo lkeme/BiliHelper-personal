@@ -86,7 +86,7 @@ class AwardRecord
             }
         }
 
-        self::$anchor_lock = time() + 6 * 60 * 60;
+        self::$anchor_lock = time() + 10 * 60;
     }
 
     /**
