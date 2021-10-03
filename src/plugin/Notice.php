@@ -189,7 +189,8 @@ class Notice
     private static function teleSend(array $info)
     {
         Log::info('使用Tele机器人推送消息');
-        $url = 'https://api.telegram.org/bot' . getConf('bottoken', 'notify.telegram') . '/sendMessage';
+        $base_url = getConf('url', 'notify.telegram') ?: 'https://api.telegram.org/bot';
+        $url = $base_url . getConf('bottoken', 'notify.telegram') . '/sendMessage';
         $payload = [
             'chat_id' => getConf('chatid', 'notify.telegram'),
             'text' => $info['content']
