@@ -28,6 +28,7 @@ conf/user1.ini
 /conf/test1.ini
 /src/backup/
 script.php
+ABOUT.md
 
 task/*
 cache/*
