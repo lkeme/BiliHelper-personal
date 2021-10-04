@@ -5,9 +5,9 @@
   "data": [
     {
       "_url": "注释: 活动地址",
-      "url": "https://www.bilibili.com/blackboard/activity-kiOl0D1nF8.html",
+      "url": "https://www.bilibili.com/blackboard/genshin-1st-anniversary.html",
       "_title": "注释: 活动标题",
-      "title": "原神2.0版本UP主激励计划",
+      "title": "原神一周年庆典UP主激励计划",
       "_description": "注释: 活动描述",
       "description": "每日在原神分区任意直播间观看，20分钟1张、1小时2张、2小时3张，每日最高6张。",
       "_room_id": "注释: 活动直播间，如果为0，则取分区随机一个",
@@ -17,15 +17,27 @@
       "_parent_area_id": "注释: 主分区id",
       "parent_area_id": 3,
       "_coin_id": "注释: 抽奖id",
-      "coin_id": 209,
+      "coin_id": 249,
       "_pool_id": "注释: 抽奖id",
-      "pool_id": 219,
+      "pool_id": 257,
       "_watch_time": "注释: 观看时长 单位秒",
       "watch_time": 7320,
       "_draw_times": "注释: 抽奖次数",
       "draw_times": 6,
       "_expire_at": "注释: 活动有效时间",
-      "expire_at": "2021-08-31 23:59:59"
+      "expire_at": "2021-10-12 23:59:59"
+    },
+    {
+      "url": "https://live.bilibili.com/6",
+      "title": "S11，LOL，英雄联盟，全球总决赛",
+      "description": "每日在LOL直播间观看，1分钟1张，3分钟2张，5分钟3张",
+      "room_id": 0,
+      "area_id": 86,
+      "parent_area_id": 2,
+      "coin_id": 76,
+      "watch_time": 600,
+      "draw_times": 0,
+      "expire_at": "2021-11-06 23:59:59"
     },
     {
       "url": "https://www.bilibili.com/blackboard/activity-aCrSakaiX5.html",
@@ -156,18 +168,6 @@
       "watch_time": 1000,
       "draw_times": 2,
       "expire_at": "2021-08-29 23:59:59"
-    },
-    {
-      "url": "https://live.bilibili.com/6",
-      "title": "2021LPL春季赛",
-      "description": "每日在LOL直播间观看，5分钟1张，15分钟1张",
-      "room_id": 7734200,
-      "area_id": 86,
-      "parent_area_id": 2,
-      "coin_id": 76,
-      "watch_time": 3720,
-      "draw_times": 3,
-      "expire_at": "2021-05-31 23:59:59"
     }
   ]
 }
