@@ -14,6 +14,7 @@ tmp/
 out
 gen
 /vendor/
+composer.lock
 /configs/
 /tests/
 config

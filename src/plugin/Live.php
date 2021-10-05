@@ -332,12 +332,14 @@ class Live
      * @param int $page_size
      * @return array
      */
-    public static function fetchMedalList(int $page_size = 100): array
+    public static function fetchMedalList(int $page_size = 10): array
     {
         $metal_list = [];
-        for ($i = 1; $i <= 10; $i++) {
+        for ($i = 1; $i <= 100; $i++) {
+            // https://live.bilibili.com/p/html/live-app-fansmedal-manange/index.html
             // $url = 'https://api.live.bilibili.com/fans_medal/v5/live_fans_medal/iApiMedal';
             $url = 'https://api.live.bilibili.com/i/api/medal';
+            // TODO size变小 需要优化获取逻辑 可能会412
             $payload = [
                 'page' => $i,
                 'pageSize' => $page_size
