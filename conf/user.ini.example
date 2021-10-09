@@ -180,8 +180,9 @@ filter_words =
 [notify.dingtalk]
 token =
 
-; Tele机器人|token|chatid|依赖USE_NOTIFY
+; Tele机器人|url(可选)|token|chatid|依赖USE_NOTIFY
 [notify.telegram]
+url =
 bottoken =
 chatid =
 

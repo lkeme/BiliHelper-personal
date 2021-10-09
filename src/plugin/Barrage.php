@@ -26,7 +26,7 @@ class Barrage
         }
         self::setPauseStatus();
         if (self::sendMsg()) {
-            self::setLock(mt_rand(40, 80) * 60);
+            self::setLock(mt_rand(180, 240) * 60);
             return;
         }
         self::setLock(15 * 60);
