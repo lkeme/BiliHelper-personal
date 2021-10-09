@@ -77,7 +77,7 @@ class UnFollow extends BaseTask
      * @return array
      * @throws \Exception
      */
-    private static function relationTag($tag_id, int $max_pn = 30, int $max_ps = 20): array
+    private static function relationTag($tag_id, int $max_pn = 60, int $max_ps = 20): array
     {
         $following = [];
         $url = 'https://api.bilibili.com/x/relation/tag';

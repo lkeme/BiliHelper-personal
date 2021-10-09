@@ -50,7 +50,6 @@ class Dynamic
             $data = Curl::request('get', $url);
             // 失败跳过
             if (is_null($data)) continue;
-
             $data = json_decode($data, true);
             // new
             foreach ($data['data']['cards'] as $article) {

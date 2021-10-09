@@ -17,7 +17,7 @@
 <p align="center">
 
 <img src="https://img.shields.io/badge/Version-1.0.0.210822-orange.svg?longCache=true&style=for-the-badge">
-<img src="https://img.shields.io/badge/PHP-7.3+-green.svg?longCache=true&style=for-the-badge">
+<img src="https://img.shields.io/badge/PHP-8.0+-green.svg?longCache=true&style=for-the-badge">
 <img src="https://img.shields.io/badge/Composer-latest-blueviolet.svg?longCache=true&style=for-the-badge">
 <img src="https://img.shields.io/badge/License-mit-blue.svg?longCache=true&style=for-the-badge">
 

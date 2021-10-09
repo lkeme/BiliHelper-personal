@@ -23,22 +23,33 @@ class Device
     private string $bili_file = 'bili.yaml';
     private string $device_file = 'device.yaml';
 
+
     /**
-     * 加载配置
+     * @use 真实路径
+     * @param string $file
+     * @return string
+     */
+    private function fileRealPath(string $file): string
+    {
+        return APP_CONF_PATH . $file;
+    }
+
+    /**
+     * @use 加载配置
      */
     public function load(string $load_file)
     {
         // 提前处理 后缀
         $custom_file = str_replace(strrchr($load_file, "."), "", $load_file) . '_';
         // 自定义客户端
-        if (is_file(APP_CONF_PATH . $custom_file . $this->bili_file)) {
-            $this->bili_file = APP_CONF_PATH . $custom_file . $this->bili_file;
-            Log::info('使用自定义Bili.yaml');
+        if (is_file($this->fileRealPath($custom_file . $this->bili_file))) {
+            $this->bili_file = $custom_file . $this->bili_file;
+            Log::info('使用自定义' . $this->bili_file);
         }
         // 自定义设备
-        if (is_file(APP_CONF_PATH . $custom_file . $this->device_file)) {
-            $this->device_file = APP_CONF_PATH . $custom_file . $this->device_file;
-            Log::info('使用自定义Device.yaml');
+        if (is_file($this->fileRealPath($custom_file . $this->device_file))) {
+            $this->device_file = $custom_file . $this->device_file;
+            Log::info('使用自定义' . $this->device_file);
         }
         // 加载数据
         $this->device = new Config();
@@ -47,7 +58,7 @@ class Device
         $files = [$this->bili_file, $this->device_file];
         // 循环加载
         foreach ($files as $file) {
-            $processor->extend($loader->load(APP_CONF_PATH . $file));
+            $processor->extend($loader->load($this->fileRealPath($file)));
         }
         $this->device->import($processor->export());
     }
