@@ -129,7 +129,7 @@ content =
 [manga]
 enable = false
 
-; 风纪委员投票|需要实名认证
+; 风纪委员投票|需要实名认证|慎用
 [judgement]
 enable = false
 

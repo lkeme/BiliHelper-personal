@@ -17,144 +17,99 @@ use JetBrains\PhpStorm\ArrayShape;
 
 class Judge
 {
+    // https://www.bilibili.com/judgement/index
+
+    // 评论 case_type: 1 default_vote: 4
+    // 0: {vote: 1, vote_text: "合适"}
+    // 1: {vote: 2, vote_text: "一般"}
+    // 2: {vote: 3, vote_text: "不合适"}
+    // 3: {vote: 4, vote_text: "无法判断"}
+
+    // 弹幕氛围 case_type: 4 default_vote: 14
+    // 0: {vote: 11, vote_text: "好"}
+    // 1: {vote: 12, vote_text: "普通"}
+    // 2: {vote: 13, vote_text: "差"}
+    // 3: {vote: 14, vote_text: "无法判断"}
+
+
     use TimeLock;
 
-    private static int $retry_time = 0;
-    private static int $wait_case_id = 0;
-    private static int $wait_time = 0;
-    private static int $min_ok_pct = 1;
-    private static int $max_ok_pct = 0;
+    private static array $wait_case = [];
 
     public static function run()
     {
-        // https://www.bilibili.com/judgement/index
-        if (self::getLock() > time() || self::$retry_time > time() || !getEnable('judgement')) {
+        // 基础判断
+        if (self::getLock() > time() || !getEnable('judgement')) {
             return;
         }
-        $case_id = self::$wait_case_id ?: self::caseObtain();
-        if (!self::judgeCase($case_id)) {
+        // 资格判断 没有资格就60-120分钟后计息 不排除其他错误
+        if (!self::jury()) {
+            self::setLock(mt_rand(60, 120) * 60);
+        }
+        //
+        if (empty(self::$wait_case)) {
+            // 获取任务
+            $case_id = self::caseObtain();
+            self::caseCheck($case_id);
             self::setLock(1 * 60 + 5);
             return;
+        } else {
+            $case = array_pop(self::$wait_case);
+            self::vote($case['id'], $case['vote']);
         }
-        //  self::judgementIndex();
         // 如果没有设置时间 就设置个默认时间 可能在一秒钟内处理完 所以 <=
         if (self::getLock() <= time()) {
             self::setLock(mt_rand(15, 30) * 60);
         }
     }
 
+
     /**
-     * @use 判案 Todo: 处理案例已满(MAX20例)
+     * @use 案件核查
      * @param $case_id
-     * @return bool
+     * @return bool|void
      */
-    private static function judgeCase($case_id): bool
+    private static function caseCheck($case_id)
     {
-        if (is_null($case_id) || $case_id == 0) {
+        if ($case_id == "") {
             return true;
         }
-        // Log::info("尝试判定案件 {$case_id}");
-        $data = self::judgementVote($case_id);
-        $num_judged = $data['num_voted'];
-        $ok_pct = $data['ok_percent'];
-        $advice = self::judgeAdvice($num_judged, $ok_pct);
-        if ($num_judged >= 50) {
+        $case_info = self::caseInfo($case_id);
+        $case_opinion = self::caseOpinion($case_id);
+        if (!$case_opinion && empty($case_opinion)) {
+            $vote_info = $case_info[array_rand($case_info)];
 
-            self::$min_ok_pct = min(self::$min_ok_pct, $ok_pct);
-            self::$max_ok_pct = max(self::$max_ok_pct, $ok_pct);
-            // user.info('更新统计投票波动情况')
+        } else {
+            $vote_info = $case_opinion[array_rand($case_opinion)];
         }
-        // Log::info("案件 $case_id 已经等待" . self::$wait_time . "s，统计波动区间为" . self::$min_ok_pct . "-" . self::$max_ok_pct);
-        if (is_null($advice)) {
-            if (self::$wait_time >= 1200) {
-                // 如果case判定中，波动很小，则表示趋势基本一致
-                if ((self::$max_ok_pct - self::$min_ok_pct) >= 0 && (self::$max_ok_pct - self::$min_ok_pct) <= 0.1 && $num_judged > 200) {
-                    $num_judged += 100;
-                    $advice0 = self::judgeAdvice($num_judged, self::$max_ok_pct);
-                    $advice1 = self::judgeAdvice($num_judged, self::$min_ok_pct);
-                    $advice = ($advice0 == $advice1) ? $advice0 : null;
-                }
-                Log::info("判定结果 $advice");
-            } else {
-                $sleep_wait_time = ($num_judged < 300) ? 200 : 60;
-                Log::info("案件 $case_id 暂无法判定，{$sleep_wait_time}S 后重新尝试");
-                self::$wait_time += $sleep_wait_time;
-                self::$retry_time = $sleep_wait_time + time();
-                self::$wait_case_id = $case_id;
-                return false;
-            }
-        }
-        // 如果还不行就放弃
-        $decision = !is_null($advice) ? $advice : 3;
-        $dicision_info = ($decision == 3) ? '作废票' : '有效票';
-        Log::info("案件 $case_id 的投票结果：$dicision_info($decision)");
-        self::juryVote($case_id, $decision);
-        self::initParams();
-        return true;
-    }
-
-    /**
-     * @use 投票建议
-     * @param $num_judged
-     * @param $pct
-     * @return int|null
-     */
-    private static function judgeAdvice($num_judged, $pct): ?int
-    {
-        if ($num_judged >= 300) {
-            # 认为这里可能出现了较多分歧，抬一手
-            if ($pct >= 0.4) {
-                return 2;
-            } elseif ($pct <= 0.25) {
-                return 4;
-            } else {
-                return null;
-            }
-        } elseif ($num_judged >= 150) {
-            if ($pct >= 0.9) {
-                return 2;
-            } elseif ($pct <= 0.1) {
-                return 4;
-            } else {
-                return null;
-            }
-        } elseif ($num_judged >= 50) {
-            if ($pct >= 0.97) {
-                return 2;
-            } elseif ($pct <= 0.03) {
-                return 4;
-            } else {
-                return null;
-            }
-        }
-        # 抬一手
-        if ($num_judged >= 400) {
-            return 2;
-        }
-        return null;
+        $vote = $vote_info['vote'];
+        $vote_text = $vote_info['vote_text'];
+        Log::info("案件 $case_id 的预测投票结果：$vote($vote_text)");
+        array_push(self::$wait_case, ["id" => $case_id, 'vote' => $vote]);
     }
 
     /**
      * @use 投票
-     * @param $case_id
-     * @param $decision
+     * @param string $case_id
+     * @param int $vote
      */
-    private static function juryVote($case_id, $decision)
+    private static function vote(string $case_id, int $vote)
     {
-        $url = 'https://api.bilibili.com/x/credit/jury/vote';
+        $url = 'https://api.bilibili.com/x/credit/v2/jury/vote';
         $payload = [
-            "jsonp" => "jsonp",
-            "cid" => $case_id,
-            "vote" => $decision,
+            "case_id" => $case_id,
+            "vote" => $vote,
             "content" => "",
-            "likes" => "",
-            "hates" => "",
-            "attr" => "1",
+            "anonymous" => 0,
             "csrf" => getCsrf(),
         ];
-        $raw = Curl::post('pc', $url, $payload);
-        // {"code":25012,"message":"请勿重复投票","ttl":1}
+        $headers = [
+            'origin' => 'https://www.bilibili.com',
+            'referer' => 'https://www.bilibili.com/',
+        ];
+        $raw = Curl::post('pc', $url, $payload, $headers);
         $de_raw = json_decode($raw, true);
+        //{"code":0,"message":"0","ttl":1}
         if (isset($de_raw['code']) && $de_raw['code']) {
             Log::warning("案件 $case_id 投票失败 $raw");
         } else {
@@ -162,19 +117,73 @@ class Judge
         }
     }
 
+
     /**
-     * @use 案件获取
+     * @use 获取众议观点
+     */
+    private static function caseOpinion(string $case_id, int $pn = 1, int $ps = 5)
+    {
+        $url = 'https://api.bilibili.com/x/credit/v2/jury/case/opinion';
+        $payload = [
+            'case_id' => $case_id,
+            'pn' => $pn,
+            'ps' => $ps
+        ];
+        $headers = [
+            'origin' => 'https://www.bilibili.com',
+            'referer' => 'https://www.bilibili.com/',
+        ];
+        $raw = Curl::get('pc', $url, $payload, $headers);
+        $de_raw = json_decode($raw, true);
+        // {"code":0,"message":"0","ttl":1,"data":{"total":438,"list":[]}}
+        if (isset($de_raw['code']) && $de_raw['code']) {
+            return false;
+        } else {
+            return $de_raw['data']['list'];
+        }
+    }
+
+
+    /**
+     * @use 获取案例详情
+     * @param string $case_id
      * @return mixed
      */
-    private static function caseObtain(): mixed
+    private static function caseInfo(string $case_id): mixed
     {
-        $url = 'https://api.bilibili.com/x/credit/jury/caseObtain';
+        $url = 'https://api.bilibili.com/x/credit/v2/jury/case/info';
         $payload = [
-            "jsonp" => "jsonp",
-            "csrf" => getCsrf()
+            'case_id' => $case_id,
         ];
-        $raw = Curl::post('pc', $url, $payload);
+        $headers = [
+            'origin' => 'https://www.bilibili.com',
+            'referer' => 'https://www.bilibili.com/',
+        ];
+        $raw = Curl::get('pc', $url, $payload, $headers);
         $de_raw = json_decode($raw, true);
+        // {"code":0,"message":"0","ttl":1,"data":{"case_id":"","case_type":1,"vote_items":[{"vote":1,"vote_text":"合适"},{"vote":2,"vote_text":"一般"},{"vote":3,"vote_text":"不合适"},{"vote":4,"vote_text":"无法判断"}],"default_vote":4,"status":0,"origin_start":0,"avid":,"cid":,"vote_cd":5,"case_info":{"comment":{"uname":"用户1","face":"xxxx"},"danmu_img":""}}}
+        if (isset($de_raw['code']) && $de_raw['code']) {
+            return false;
+        } else {
+            return $de_raw['data']['vote_items'];
+        }
+    }
+
+    /**
+     * @use 获取案件任务
+     * @return string
+     */
+    private static function caseObtain(): string
+    {
+        $url = 'https://api.bilibili.com/x/credit/v2/jury/case/next';
+        $payload = [];
+        $headers = [
+            'origin' => 'https://www.bilibili.com',
+            'referer' => 'https://www.bilibili.com/',
+        ];
+        $raw = Curl::get('pc', $url, $payload, $headers);
+        $de_raw = json_decode($raw, true);
+        // {"code":0,"message":"0","ttl":1,"data":{"case_id":"AC1xx411c7At"}}
         // {"code":25008,"message":"真给力 , 移交众裁的举报案件已经被处理完了","ttl":1}
         // {"code":25014,"message":"25014","ttl":1}
         // {"code":25005,"message":"请成为风纪委员后再试","ttl":1}
@@ -183,86 +192,52 @@ class Judge
                 case 25005:
                     Log::warning($de_raw['message']);
                     self::setLock(self::timing(10));
-                    return null;
+                    break;
                 case 25008:
                     Log::info("暂时没有新的案件需要审理~ $raw");
-                    return null;
+                    break;
                 case 25014:
                     Log::info("今日案件已审满，感谢您对社区的贡献！明天再来看看吧~");
                     self::setLock(self::timing(7, 0, 0, true));
-                    return null;
+                    break;
                 default:
                     Log::info("获取案件失败~ $raw");
-                    return null;
             }
+            return '';
         } else {
-            $case_id = $de_raw['data']['id'];
-            Log::info("获取到案件 $case_id ~");
+            $case_id = $de_raw['data']['case_id'];
+            Log::info("获取到案例ID $case_id ~");
             return $case_id;
         }
+
     }
 
     /**
-     * @use 判断投票
-     * @param $case_id
-     * @return array
+     * @use 陪审团
+     * @return bool
      */
-    #[ArrayShape(['num_voted' => "mixed", 'ok_percent' => "float|int"])]
-    private static function judgementVote($case_id): array
+    private static function jury(): bool
     {
-        $url = 'https://api.bilibili.com/x/credit/jury/juryCase';
+        $url = 'https://api.bilibili.com/x/credit/v2/jury/jury';
+        $payload = [];
         $headers = [
-            'Referer' => "https://www.bilibili.com/judgement/vote/$case_id"
-        ];
-        $payload = [
-            'callback' => "jQuery1720" . self::randInt() . "_" . time(),
-            'cid' => $case_id,
-            '_' => time()
+            'origin' => 'https://www.bilibili.com',
+            'referer' => 'https://www.bilibili.com/',
         ];
         $raw = Curl::get('pc', $url, $payload, $headers);
         $de_raw = json_decode($raw, true);
-        $data = $de_raw['data'];
-        # 3 放弃
-        # 2 否 vote_rule
-        # 4 删除 vote_delete
-        # 1 封杀 vote_break
-        $vote_break = $data['voteBreak'];
-        $vote_delete = $data['voteDelete'];
-        $vote_rule = $data['voteRule'];
-        $num_voted = $vote_break + $vote_delete + $vote_rule;
-        $ok_percent = $num_voted ? ($vote_rule / $num_voted) : 0;
-        // 言论合理比例 {$ok_percent}
-        Log::info("案件 $case_id 目前已投票 $num_voted");
-        return [
-            'num_voted' => $num_voted,
-            'ok_percent' => $ok_percent
-        ];
-    }
-
-    /**
-     * @use 随机整数
-     * @param int $max
-     * @return string
-     */
-    private static function randInt(int $max = 17): string
-    {
-        $temp = [];
-        foreach (range(1, $max) as $ignored) {
-            array_push($temp, mt_rand(0, 9));
+        // {"code":25005,"message":"请成为风纪委员后再试","ttl":1}
+        // {"code":0,"message":"0","ttl":1,"data":{"uname":"","face":"http://i2.hdslb.com/bfs/face/.jpg","case_total":,"term_end":,"status":1}}
+        if (isset($de_raw['code']) && $de_raw['code']) {
+            return false;
         }
-        return implode("", $temp);
-    }
+        // 理论上正常
+        if ($de_raw['data']['status'] == 1) {
+            Log::info('你可以参与社区众裁，共创良好环境哦~');
+            return true;
+        }
+        return false;
 
-    /**
-     * @use 初始化参数
-     */
-    private static function initParams()
-    {
-        self::$retry_time = 0;
-        self::$wait_case_id = 0;
-        self::$wait_time = 0;
-        self::$min_ok_pct = 1;
-        self::$max_ok_pct = 0;
     }
 
     /**
@@ -310,4 +285,19 @@ class Judge
         Log::info("今日投票{$sum_cases}（{$valid_cases}票有效（非弃权），{$judging_cases}票还在进行中）");
         return true;
     }
+
+    /**
+     * @use 随机整数
+     * @param int $max
+     * @return string
+     */
+    private static function randInt(int $max = 17): string
+    {
+        $temp = [];
+        foreach (range(1, $max) as $ignored) {
+            array_push($temp, mt_rand(0, 9));
+        }
+        return implode("", $temp);
+    }
+
 }
