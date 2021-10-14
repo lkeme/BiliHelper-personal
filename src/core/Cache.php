@@ -13,6 +13,7 @@ namespace BiliHelper\Core;
 
 use BiliHelper\Util\Singleton;
 use Flintstone\Flintstone;
+use Overtrue\Pinyin\Pinyin;
 use Flintstone\Formatter\JsonFormatter;
 
 
@@ -34,9 +35,15 @@ class Cache
     private function load(string $classname): static
     {
         if (!isset($this->caches[$classname])) {
+            $username = getConf('username', 'login.account');
+            // 判断字符串中是否有中文
+            if (preg_match("/[\x7f-\xff]/", $username)) {
+                $pinyin = new Pinyin(); // 默认
+                $username = $pinyin->permalink($username); // yong-hu-ming
+            }
             // 如果不存在缓存 初始化  "BHP_username_APP.dat"
             $this->caches[$classname] = new Flintstone(
-                $this->removeSpecStr('BHP_' . getConf('username', 'login.account') . '_' . $classname),
+                $this->removeSpecStr('BHP_' . $username . '_' . $classname),
                 [
                     'dir' => APP_CACHE_PATH,
                     'gzip' => true,
@@ -108,7 +115,7 @@ class Cache
      */
     private function removeSpecStr(string $data): string
     {
-        $specs = str_split(".,:;'*?~`!@#$%^&+=)(<>{}]|\/、");
+        $specs = str_split("-.,:;'*?~`!@#$%^&+=)(<>{}]|\/、");
         foreach ($specs as $spec) {
             $data = str_replace($spec, '', $data);
         }
