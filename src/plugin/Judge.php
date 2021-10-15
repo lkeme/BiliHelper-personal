@@ -51,16 +51,19 @@ class Judge
             // 获取任务
             $case_id = self::caseObtain();
             self::caseCheck($case_id);
-            self::setLock(1 * 60 + 5);
-            return;
+            // 如果没有设置时间 就设置个默认时间 可能在一秒钟内处理完 所以 <=
+            if (self::getLock() <= time()) {
+                self::setLock(1 * 60 + 5);
+            }
         } else {
             $case = array_pop(self::$wait_case);
             self::vote($case['id'], $case['vote']);
+            // 如果没有设置时间 就设置个默认时间 可能在一秒钟内处理完 所以 <=
+            if (self::getLock() <= time()) {
+                self::setLock(mt_rand(15, 30) * 60);
+            }
         }
-        // 如果没有设置时间 就设置个默认时间 可能在一秒钟内处理完 所以 <=
-        if (self::getLock() <= time()) {
-            self::setLock(mt_rand(15, 30) * 60);
-        }
+
     }
 
 
