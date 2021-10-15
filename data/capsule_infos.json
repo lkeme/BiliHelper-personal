@@ -5,9 +5,9 @@
   "data": [
     {
       "_url": "注释: 活动地址",
-      "url": "https://www.bilibili.com/blackboard/genshin-1st-anniversary.html",
+      "url": "https://www.bilibili.com/blackboard/activity-aEe0qbEc8N.html",
       "_title": "注释: 活动标题",
-      "title": "原神一周年庆典UP主激励计划",
+      "title": "原神2.2应援激励计划",
       "_description": "注释: 活动描述",
       "description": "每日在原神分区任意直播间观看，20分钟1张、1小时2张、2小时3张，每日最高6张。",
       "_room_id": "注释: 活动直播间，如果为0，则取分区随机一个",
@@ -17,15 +17,15 @@
       "_parent_area_id": "注释: 主分区id",
       "parent_area_id": 3,
       "_coin_id": "注释: 抽奖id",
-      "coin_id": 249,
+      "coin_id": 284,
       "_pool_id": "注释: 抽奖id",
-      "pool_id": 257,
+      "pool_id": 290,
       "_watch_time": "注释: 观看时长 单位秒",
       "watch_time": 7320,
       "_draw_times": "注释: 抽奖次数",
       "draw_times": 6,
       "_expire_at": "注释: 活动有效时间",
-      "expire_at": "2021-10-12 23:59:59"
+      "expire_at": "2021-11-23 23:59:59"
     },
     {
       "url": "https://live.bilibili.com/6",
