@@ -88,7 +88,7 @@ class Competition
         $guess['oid'] = $question['contest']['id'];
         $guess['main_id'] = $question['questions'][0]['id'];
         $details = $question['questions'][0]['details'];
-        $guess['count'] = ($count = getConf('max_coin', 'match_forecast') <= 10) ? $count : 10;
+        $guess['count'] = (($count = getConf('max_coin', 'match_forecast')) <= 10) ? $count : 10;
         $guess['title'] = $question['questions'][0]['title'];
         foreach ($details as $detail) {
             $guess['title'] .= " 队伍: {$detail['option']} 赔率: {$detail['odds']}";
