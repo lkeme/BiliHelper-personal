@@ -87,6 +87,9 @@ class Judge
         $vote_text = $vote_info['vote_text'];
         Log::info("案件 $case_id 的预测投票结果：$vote($vote_text)");
         array_push(self::$wait_case, ["id" => $case_id, 'vote' => $vote]);
+        // 尝试修复25018 未测试
+        self::vote($case_id, 0);
+
         self::setLock(1 * 60 + 5);
     }
 
