@@ -46,14 +46,13 @@ class Judge
         if (!self::jury()) {
             self::setLock(mt_rand(60, 120) * 60);
         }
-        //
+        // 任务
         if (empty(self::$wait_case)) {
-            // 获取任务
+            // 获取
             $case_id = self::caseObtain();
             self::caseCheck($case_id);
-            self::setLock(1 * 60 + 5);
-            return;
         } else {
+            // 执行
             $case = array_pop(self::$wait_case);
             self::vote($case['id'], $case['vote']);
         }
@@ -61,6 +60,7 @@ class Judge
         if (self::getLock() <= time()) {
             self::setLock(mt_rand(15, 30) * 60);
         }
+
     }
 
 
@@ -71,13 +71,14 @@ class Judge
      */
     private static function caseCheck($case_id)
     {
-        if ($case_id == "") {
+        if ($case_id == '') {
             return true;
         }
         $case_info = self::caseInfo($case_id);
         $case_opinion = self::caseOpinion($case_id);
         if (!$case_opinion && empty($case_opinion)) {
-            $vote_info = $case_info[array_rand($case_info)];
+//            $vote_info = $case_info[array_rand($case_info)];
+            $vote_info = $case_info[self::probability()];
 
         } else {
             $vote_info = $case_opinion[array_rand($case_opinion)];
@@ -86,6 +87,10 @@ class Judge
         $vote_text = $vote_info['vote_text'];
         Log::info("案件 $case_id 的预测投票结果：$vote($vote_text)");
         array_push(self::$wait_case, ["id" => $case_id, 'vote' => $vote]);
+        // 尝试修复25018 未测试
+        self::vote($case_id, 0);
+
+        self::setLock(1 * 60 + 5);
     }
 
     /**
@@ -109,7 +114,8 @@ class Judge
         ];
         $raw = Curl::post('pc', $url, $payload, $headers);
         $de_raw = json_decode($raw, true);
-        //{"code":0,"message":"0","ttl":1}
+        // {"code":0,"message":"0","ttl":1}
+        // {"code":25018,"message":"不能进行此操作","ttl":1}
         if (isset($de_raw['code']) && $de_raw['code']) {
             Log::warning("案件 $case_id 投票失败 $raw");
         } else {
@@ -298,6 +304,27 @@ class Judge
             array_push($temp, mt_rand(0, 9));
         }
         return implode("", $temp);
+    }
+
+    /**
+     * @use 概率
+     * @return int
+     */
+    private static function probability(): int
+    {
+        $result = 0;
+        $prize_arr = [0 => 25, 1 => 40, 2 => 25, 3 => 10];
+        // 概率数组的总概率精度
+        $sum = array_sum($prize_arr);
+        // 概率数组循环
+        foreach ($prize_arr as $key => $value) {
+            if (mt_rand(1, $sum) <= $value) {
+                $result = $key;
+                break;
+            }
+            $sum -= $value;
+        }
+        return $result;
     }
 
 }
