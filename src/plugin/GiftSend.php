@@ -73,8 +73,8 @@ class GiftSend
             }
             $current_intimacy = 0;
             foreach ($bag_list as $gift) {
-                // 是辣条、亿元 && 不是过期礼物
-                if (!in_array($gift['gift_id'], [1, 6])) {
+                // 是辣条、亿元 && 不是过期礼物 加入小心心，暂不清楚是否有逻辑冲突
+                if (!in_array($gift['gift_id'], [1, 6, 30607])) {
                     continue;
                 }
                 Log::notice("直播间 $room_id 需赠送亲密度 $total_intimacy 剩余亲密度 " . ($total_intimacy - $current_intimacy));
