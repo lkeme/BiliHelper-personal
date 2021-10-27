@@ -80,7 +80,7 @@ class GiftSend
                 Log::notice("直播间 $room_id 需赠送亲密度 $total_intimacy 剩余亲密度 " . ($total_intimacy - $current_intimacy));
                 $amt = self::calcAmt($gift, $total_intimacy - $current_intimacy);
                 self::sendGift($gift, $amt);
-                $current_intimacy += ($gift['gift_id'] == 6) ? ($amt * 10) : $amt;
+                $current_intimacy += ($gift['gift_id'] == 30607) ? ($amt * 50) : (($gift['gift_id'] == 6) ? ($amt * 10) : $amt);
                 if (!($current_intimacy - $total_intimacy)) {
                     Log::notice("直播间 $room_id 亲密度 $total_intimacy 送满啦~送满啦~");
                     break;
