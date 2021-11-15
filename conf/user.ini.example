@@ -204,10 +204,21 @@ url = ""
 token =
 target_qq =
 
-; Debug|个人调试推送|url|token|
+; Debug|个人调试推送|url|token
 [notify.debug]
 url = ""
 token =
+
+; 企业微信群机器人|token
+[notify.we_com]
+token =
+
+; 企业微信应用消息|corp_id|corp_secret|agent_id|to_user
+[notify.we_com_app]
+corp_id =
+corp_secret =
+agent_id =
+to_user =
 
 #######################
 #       基础设置       #
