@@ -159,6 +159,7 @@ class App
             'PolishTheMedal',
             'VipPrivilege',
             'BpConsumption',
+            'LiveReservation',
             // 'Silver', // Abandoned
             'Statistics',
 

@@ -57,7 +57,7 @@ class User
     {
         $url = 'https://api.live.bilibili.com/User/getUserInfo';
         $payload = [
-            'ts' => Common::getMillisecond(),
+            'ts' => Common::getUnixTimestamp(),
         ];
         $raw = Curl::get('app', $url, Sign::common($payload));
         return json_decode($raw, true);
@@ -308,7 +308,7 @@ class User
         // {"code":0,"message":"0","ttl":1,"data":{"mid":1234,"vip_type":2,"vip_status":1,"vip_due_date":1667750400000,"vip_pay_type":0,"theme_type":0,"label":{"text":"年度大会员","label_theme":"annual_vip","text_color":"#FFFFFF","bg_style":1,"bg_color":"#FB7299","border_color":""},"avatar_subscript":1,"avatar_subscript_url":"http://i0.hdslb.com/bfs/vip/icon_Certification_big_member_22_3x.png","nickname_color":"#FB7299","is_new_user":false}}
         $de_raw = json_decode($raw, true);
         if ($de_raw['code'] == 0) {
-            if ($de_raw['data']['vip_type'] == 2 && $de_raw['data']['vip_due_date'] > Common::getMillisecond()) {
+            if ($de_raw['data']['vip_type'] == 2 && $de_raw['data']['vip_due_date'] > Common::getUnixTimestamp()) {
                 Log::debug("获取会员成功 有效年度大会员");
                 return true;
             }
