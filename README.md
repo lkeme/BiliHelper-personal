@@ -40,7 +40,6 @@
 
 [comment]: <> (![Image]&#40;https://i.loli.net/2019/07/13/5d2963e5cc1eb22973.png&#41;)
 
-
 ## 功能组件
 
 以下任务都是按设定周期自动执行，`true`为正常使用，`false`为暂停使用或抛弃。
@@ -104,7 +103,6 @@ Group: [163955623](https://jq.qq.com/?_wv=1027&k=1QMFTUEO) | **请不要来问�
 
 [![Stargazers over time](https://starchart.cc/lkeme/BiliHelper-personal.svg)](https://starchart.cc/lkeme/BiliHelper-personal)
 [![Stargazers over time](https://starchart.cc/lkeme/BiliHelper.svg)](https://starchart.cc/lkeme/BiliHelper)
-
 
 ## 运行效果
 
