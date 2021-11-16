@@ -60,7 +60,7 @@ class BpConsumption
             'origin' => 'https://pay.bilibili.com',
             'referer' => 'https://pay.bilibili.com/paywallet-fe/bb_balance.html'
         ];
-        $ts = Common::getMillisecond();
+        $ts = Common::getUnixTimestamp();
         $payload = [
             'panelType' => 3,
             'platformType' => 3,

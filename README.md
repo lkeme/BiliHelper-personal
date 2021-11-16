@@ -16,7 +16,7 @@
 
 <p align="center">
 
-<img src="https://img.shields.io/badge/Version-1.0.1.211014-orange.svg?longCache=true&style=for-the-badge">
+<img src="https://img.shields.io/badge/Version-1.0.2.211115-orange.svg?longCache=true&style=for-the-badge">
 <img src="https://img.shields.io/badge/PHP-8.0+-green.svg?longCache=true&style=for-the-badge">
 <img src="https://img.shields.io/badge/Composer-latest-blueviolet.svg?longCache=true&style=for-the-badge">
 <img src="https://img.shields.io/badge/License-mit-blue.svg?longCache=true&style=for-the-badge">
@@ -40,47 +40,47 @@
 
 [comment]: <> (![Image]&#40;https://i.loli.net/2019/07/13/5d2963e5cc1eb22973.png&#41;)
 
-
 ## 功能组件
 
 以下任务都是按设定周期自动执行，`true`为正常使用，`false`为暂停使用或抛弃。
 
 | plugin          | status | version  | cycle  | description                                 |
 |-----------------|--------|----------|--------|---------------------------------------------|
-| CheckUpdate     | true   | 21.10.13 | 待整理 | 程序检查更新                                |
-| Login           | true   | 21.10.13 | 待整理 | 账号登录、刷新、维持                        |
-| Schedule        | true   | 21.10.13 | 待整理 | 控制插件运行周期                            |
-| MainSite        | true   | 21.10.13 | 待整理 | 投币、观看、分享视频 (速升6级不是梦)        |
-| DailyBag        | true   | 21.10.13 | 待整理 | 双端领取日常/周常礼包                       |
-| ManGa           | true   | 21.10.13 | 待整理 | 漫画签到、分享                              |
-| ActivityLottery | true   | 21.10.13 | 待整理 | 主站活动九宫格抽奖                          |
-| Competition     | true   | 21.10.13 | 待整理 | 游戏赛事竞猜                                |
-| DoubleHeart     | true   | 21.10.13 | 待整理 | 双端心跳 (姥爷直播经验)                     |
-| DailyTask       | true   | 21.10.13 | 待整理 | 直播每日任务(签到、观看)                    |
-| Barrage         | true   | 21.10.13 | 待整理 | 保持活跃弹幕                                |
-| Silver2Coin     | true   | 21.10.13 | 待整理 | 银瓜子兑换硬币                              |
-| Judge           | true   | 21.10.13 | 待整理 | 风纪委员投票                                |
-| GiftSend        | true   | 21.10.13 | 待整理 | 礼物赠送、维持每日勋章亲密度                |
-| GroupSignIn     | true   | 21.10.13 | 待整理 | 友爱社签到                                  |
-| GiftHeart       | true   | 21.10.13 | 待整理 | 日常心跳每日礼包礼物                        |
-| SmallHeart      | true   | 21.10.13 | 待整理 | 直播挂机，每日24个小心心                    |
-| MaterialObject  | true   | 21.10.13 | 待整理 | 直播金色宝箱实物抽奖                        |
-| AloneTcpClient  | true   | 21.10.13 | 待整理 | 作者的独立直播监控(可支持本项目哦)          |
-| ZoneTcpClient   | true   | 21.10.13 | 待整理 | 官方的分区直播监控                          |
-| StormRaffle     | true   | 21.10.13 | 待整理 | 直播节奏风暴抽奖、亿元                      |
-| GiftRaffle      | true   | 21.10.13 | 待整理 | 直播礼物抽奖                                |
-| PkRaffle        | true   | 21.10.13 | 待整理 | 直播大乱斗抽奖                              |
-| GuardRaffle     | true   | 21.10.13 | 待整理 | 直播大航海抽奖                              |
-| AnchorRaffle    | true   | 21.10.13 | 待整理 | 直播天选时刻抽奖                            |
-| GiftRaffle      | true   | 21.10.13 | 待整理 | 直播礼物抽奖                                |
-| AwardRecord     | true   | 21.10.13 | 待整理 | 最新的中奖纪录通知                          |
-| Forward         | true   | 21.10.13 | 待整理 | 主站动态抽奖转发                            |
-| CapsuleLottery  | true   | 21.10.13 | 待整理 | 直播扭蛋活动抽奖                            |
-| PolishTheMedal  | true   | 21.10.13 | 待整理 | 每日自动点亮灰色勋章                        |
-| CapsuleLottery  | true   | 21.10.13 | 待整理 | 直播扭蛋活动抽奖                            |
-| VipPrivilege    | true   | 21.10.13 | 待整理 | 每月领取年度大会员特权(B币券、会员购优惠券) |
-| BpConsumption   | true   | 21.10.13 | 待整理 | 每月消费使用年度大会员特权的B币券           |
-| Statistics      | true   | 21.10.13 | 待整理 | 全局抽奖结果统计                            |
+| CheckUpdate     | true   | 21.11.15 | 待整理 | 程序检查更新                                |
+| Login           | true   | 21.11.15 | 待整理 | 账号登录、刷新、维持                        |
+| Schedule        | true   | 21.11.15 | 待整理 | 控制插件运行周期                            |
+| MainSite        | true   | 21.11.15 | 待整理 | 投币、观看、分享视频 (速升6级不是梦)        |
+| DailyBag        | true   | 21.11.15 | 待整理 | 双端领取日常/周常礼包                       |
+| ManGa           | true   | 21.11.15 | 待整理 | 漫画签到、分享                              |
+| ActivityLottery | true   | 21.11.15 | 待整理 | 主站活动九宫格抽奖                          |
+| Competition     | true   | 21.11.15 | 待整理 | 游戏赛事竞猜                                |
+| DoubleHeart     | true   | 21.11.15 | 待整理 | 双端心跳 (姥爷直播经验)                     |
+| DailyTask       | true   | 21.11.15 | 待整理 | 直播每日任务(签到、观看)                    |
+| Barrage         | true   | 21.11.15 | 待整理 | 保持活跃弹幕                                |
+| Silver2Coin     | true   | 21.11.15 | 待整理 | 银瓜子兑换硬币                              |
+| Judge           | true   | 21.11.15 | 待整理 | 风纪委员投票                                |
+| GiftSend        | true   | 21.11.15 | 待整理 | 礼物赠送、维持每日勋章亲密度                |
+| GroupSignIn     | true   | 21.11.15 | 待整理 | 友爱社签到                                  |
+| GiftHeart       | true   | 21.11.15 | 待整理 | 日常心跳每日礼包礼物                        |
+| SmallHeart      | true   | 21.11.15 | 待整理 | 直播挂机，每日24个小心心                    |
+| MaterialObject  | true   | 21.11.15 | 待整理 | 直播金色宝箱实物抽奖                        |
+| AloneTcpClient  | true   | 21.11.15 | 待整理 | 作者的独立直播监控(可支持本项目哦)          |
+| ZoneTcpClient   | true   | 21.11.15 | 待整理 | 官方的分区直播监控                          |
+| StormRaffle     | true   | 21.11.15 | 待整理 | 直播节奏风暴抽奖、亿元                      |
+| GiftRaffle      | true   | 21.11.15 | 待整理 | 直播礼物抽奖                                |
+| PkRaffle        | true   | 21.11.15 | 待整理 | 直播大乱斗抽奖                              |
+| GuardRaffle     | true   | 21.11.15 | 待整理 | 直播大航海抽奖                              |
+| AnchorRaffle    | true   | 21.11.15 | 待整理 | 直播天选时刻抽奖                            |
+| GiftRaffle      | true   | 21.11.15 | 待整理 | 直播礼物抽奖                                |
+| AwardRecord     | true   | 21.11.15 | 待整理 | 最新的中奖纪录通知                          |
+| Forward         | true   | 21.11.15 | 待整理 | 主站动态抽奖转发                            |
+| CapsuleLottery  | true   | 21.11.15 | 待整理 | 直播扭蛋活动抽奖                            |
+| PolishTheMedal  | true   | 21.11.15 | 待整理 | 每日自动点亮灰色勋章                        |
+| CapsuleLottery  | true   | 21.11.15 | 待整理 | 直播扭蛋活动抽奖                            |
+| VipPrivilege    | true   | 21.11.15 | 待整理 | 每月领取年度大会员特权(B币券、会员购优惠券) |
+| BpConsumption   | true   | 21.11.15 | 待整理 | 每月消费使用年度大会员特权的B币券           |
+| Statistics      | true   | 21.11.15 | 待整理 | 全局抽奖结果统计                            |
+| LiveReservation | true   | 21.11.15 | 待整理 | 直播预约有奖                               |
 | Silver          | false  | 21.03.27 | 待整理 | 直播银瓜子自动开启宝箱                      |
 
 ## 交流反馈
@@ -94,6 +94,7 @@ Group: [163955623](https://jq.qq.com/?_wv=1027&k=1QMFTUEO) | **请不要来问�
 [comment]: <> (:cherry_blossom: :gift: :gift_heart: :confetti_ball:)
 
 * [使用文档 / DOC.md](./DOC.md)
+* [推送文档 / DOC.md](./NOTIFY.md)
 * [更新日志 / CHANGELOG.md](./CHANGELOG.md)
 * [配置文档 / WIKI.md](https://github.com/lkeme/BiliHelper-personal/wiki/%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E8%AF%A6%E8%A7%A3)
 * [常见问题 / WIKI.md](https://github.com/lkeme/BiliHelper-personal/wiki/%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98)
@@ -102,7 +103,6 @@ Group: [163955623](https://jq.qq.com/?_wv=1027&k=1QMFTUEO) | **请不要来问�
 
 [![Stargazers over time](https://starchart.cc/lkeme/BiliHelper-personal.svg)](https://starchart.cc/lkeme/BiliHelper-personal)
 [![Stargazers over time](https://starchart.cc/lkeme/BiliHelper.svg)](https://starchart.cc/lkeme/BiliHelper)
-
 
 ## 运行效果
 

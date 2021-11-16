@@ -7,8 +7,8 @@ device:
   network: "2" # 1 流量 2 WIFI
 
   other_headers:
-    ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4450.0 Safari/537.36"
+    ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
   pc_headers:
-    ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.30 Safari/537.36 Edg/90.0.818.8"
+    ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36 Edg/95.0.1020.53Chrome/95.0.4638.69 Safari/537.36 Edg/95.0.1020.53"
   app_headers:
     ua: "Mozilla/5.0 BiliDroid/${bili_a.version} (bbcallen@gmail.com) os/${device.os} model/${device.model} mobi_app/${bili_a.mobi_app} build/${bili_a.build} channel/${bili_a.channel} innerVer/${bili_a.build} osVer/${device.os_ver} network/${device.network}"

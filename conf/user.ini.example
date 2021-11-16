@@ -69,6 +69,11 @@ enable = true
 [live_box]
 enable = true
 
+; 直播预约有奖|UP_UID|逗号分隔
+[live_reservation]
+enable = true
+vmids = 9617619
+
 ; 每日24个小心心|依赖加密心跳服务器
 [small_heart]
 enable = true
@@ -204,10 +209,21 @@ url = ""
 token =
 target_qq =
 
-; Debug|个人调试推送|url|token|
+; Debug|个人调试推送|url|token
 [notify.debug]
 url = ""
 token =
+
+; 企业微信群机器人|token
+[notify.we_com]
+token =
+
+; 企业微信应用消息|corp_id|corp_secret|agent_id|to_user
+[notify.we_com_app]
+corp_id =
+corp_secret =
+agent_id =
+to_user =
 
 #######################
 #       基础设置       #
