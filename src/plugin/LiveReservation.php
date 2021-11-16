@@ -130,5 +130,6 @@ class LiveReservation
                 'text' => $data['lottery_prize_info']['text'], // "预约有奖：小电视年糕抱枕、哔哩哔哩小电视樱花毛绒抱枕大号、哔哩哔哩小夜灯"
             ];
         }
+        return false;
     }
 }

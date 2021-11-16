@@ -48,9 +48,9 @@ class Dynamic
             Log::info("获取关键字 $t_name - $t_id");
             $url = 'https://api.vc.bilibili.com/topic_svr/v1/topic_svr/topic_new?topic_id=' . $t_id;
             $data = Curl::request('get', $url);
+            // 失败跳过
             if (is_null($data)) continue;
             $data = json_decode($data, true);
-
             // new
             foreach ($data['data']['cards'] as $article) {
                 $article_id = $article['desc']['dynamic_id'];
