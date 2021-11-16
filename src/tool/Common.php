@@ -17,7 +17,7 @@ class Common
      * @use 获取十三位时间戳
      * @return int
      */
-    public static function getMillisecond(): int
+    public static function getUnixTimestamp(): int
     {
         list($t1, $t2) = explode(' ', microtime());
         // return (float)sprintf('%.0f', (floatval($t1) + floatval($t2)) * 1000);

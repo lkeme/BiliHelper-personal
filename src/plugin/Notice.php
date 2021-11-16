@@ -19,6 +19,13 @@ class Notice
     use FilterWords;
 
     /**
+     * @var array|string[]
+     */
+    private static array $json_headers = [
+        'Content-Type' => 'application/json'
+    ];
+
+    /**
      * @use 推送消息
      * @param string $type
      * @param string $result
@@ -151,6 +158,12 @@ class Notice
         if (getConf('token', 'notify.debug') && getConf('url', 'notify.debug')) {
             self::debug($info);
         }
+        if (getConf('token', 'notify.we_com')) {
+            self::weCom($info);
+        }
+        if (getConf('corp_id', 'notify.we_com_app') && getConf('corp_secret', 'notify.we_com_app') && getConf('agent_id', 'notify.we_com_app')) {
+            self::weComApp($info);
+        }
     }
 
     /**
@@ -266,10 +279,7 @@ class Notice
             'title' => $info['title'],
             'content' => $info['content']
         ];
-        $headers = [
-            'Content-Type' => 'application/json'
-        ];
-        $raw = Curl::put('other', $url, $payload, $headers);
+        $raw = Curl::put('other', $url, $payload, self::$json_headers);
         // {"code":200,"msg":"请求成功","data":"发送消息成功"}
         $de_raw = json_decode($raw, true);
         if ($de_raw['code'] == 200) {
@@ -305,7 +315,7 @@ class Notice
 
     /**
      * @use 个人调试使用
-     * @doc
+     * @doc https://localhost:8921/doc
      * @param array $info
      */
     private static function debug(array $info)
@@ -326,7 +336,80 @@ class Notice
         } else {
             Log::warning("推送消息失败: $raw");
         }
+    }
 
+    /**
+     * @use 企业微信群机器人
+     * @doc https://open.work.weixin.qq.com/api/doc/90000/90136/91770
+     * @param array $info
+     */
+    private static function weCom(array $info)
+    {
+        Log::info('使用weCom推送消息');
+        $url = 'https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=' . getConf('token', 'notify.we_com');
+
+        $payload = [
+            'msgtype' => 'markdown',
+            'markdown' => [
+                'content' => "{$info['title']} \n\n{$info['content']}"
+            ]
+        ];
+        $raw = Curl::put('other', $url, $payload, self::$json_headers);
+        // {"errcode":0,"errmsg":"ok","created_at":"1380000000"}
+        $de_raw = json_decode($raw, true);
+        if ($de_raw['errcode'] == 0) {
+            Log::notice("推送消息成功: {$de_raw['errmsg']}");
+        } else {
+            Log::warning("推送消息失败: $raw");
+        }
+    }
+
+    /**
+     * @use 企业微信应用消息
+     * @doc https://open.work.weixin.qq.com/wwopen/devtool/interface?doc_id=10167
+     * @param array $info
+     */
+    private static function weComApp(array $info)
+    {
+        Log::info('使用weComApp推送消息');
+        $corp_id = getConf('corp_id', 'notify.we_com_app');
+        $corp_secret = getConf('corp_secret', 'notify.we_com_app');
+        $agent_id = getConf('agent_id', 'notify.we_com_app');
+        $to_user = getConf('to_user', 'notify.we_com_app') ?? '@all';
+
+        // 获取token
+        $url = 'https://qyapi.weixin.qq.com/cgi-bin/gettoken';
+        $payload = [
+            'corpid' => $corp_id,
+            'corpsecret' => $corp_secret,
+        ];
+        $raw = Curl::get('other', $url, $payload);
+        // {"errcode":0,"errmsg":"ok","created_at":"1380000000"}
+        $de_raw = json_decode($raw, true);
+        if ($de_raw['errcode'] == 0) {
+            Log::info("access_token 获取成功: {$de_raw['access_token']}");
+        } else {
+            Log::warning("access_token 获取失败: $raw");
+            return;
+        }
+        // 推送
+        $url = 'https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=' . $de_raw['access_token'];
+        $payload = [
+            'touser' => $to_user,
+            'msgtype' => 'text',
+            'agentid' => $agent_id,
+            'text' => [
+                'content' => "{$info['title']} \n\n{$info['content']}"
+            ]
+        ];
+        $raw = Curl::put('other', $url, $payload, self::$json_headers);
+        // {"errcode":0,"errmsg":"ok","created_at":"1380000000"}
+        $de_raw = json_decode($raw, true);
+        if ($de_raw['errcode'] == 0) {
+            Log::notice("推送消息成功: {$de_raw['errmsg']}");
+        } else {
+            Log::warning("推送消息失败: $raw");
+        }
     }
 
 }

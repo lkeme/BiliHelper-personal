@@ -65,7 +65,7 @@ class Log
             if ($type == 'DEBUG' && !getConf('enable', 'debug')) {
                 return;
             }
-            
+
             $filename = APP_LOG_PATH . getConf('username', 'login.account') . ".log";
             $date = date('[Y-m-d H:i:s] ');
             $data = $date . ' Log.' . $type . ' ' . $message . PHP_EOL;

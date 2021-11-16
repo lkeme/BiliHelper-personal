@@ -363,9 +363,12 @@ class Login
                         case 2:
                             // 异常高危
                             self::loginFail($mode, $data['data']['message']);
+                        case 3:
+                            // 需要验证手机号
+                            self::loginFail($mode, "需要验证手机号: {$data['data']['url']}");
                         default:
                             // 未知错误
-                            self::loginFail($mode, '未知错误: ' . $data['data']['message']);
+                            self::loginFail($mode, '未知错误: ' . json_encode($data));
                     }
                 } else {
                     // 正常登录
