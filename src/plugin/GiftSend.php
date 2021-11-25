@@ -248,6 +248,9 @@ class GiftSend
         if ($gift['gift_id'] == 6) {
             $amt = (floor($surplus_num / 10) > $gift['gift_num']) ? $gift['gift_num'] : floor($surplus_num / 10);
         }
+        if ($gift['gift_id'] == 30607) {
+            $amt = (floor($surplus_num / 50) > $gift['gift_num']) ? $gift['gift_num'] : floor($surplus_num / 50);
+        }
         return ($amt < 1) ? 1 : $amt;
     }
 
