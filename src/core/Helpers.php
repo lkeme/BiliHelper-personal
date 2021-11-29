@@ -40,11 +40,12 @@ function setConf($name, $value, int|string $section = 0, $key = null)
 /**
  * @use 开关
  * @param string $plugin
+ * @param bool $default
  * @return bool
  */
-function getEnable(string $plugin): bool
+function getEnable(string $plugin, bool $default = false): bool
 {
-    return getConf('enable', $plugin);
+    return getConf('enable', $plugin) ?: $default;
 }
 
 /**
