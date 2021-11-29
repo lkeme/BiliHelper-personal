@@ -5,7 +5,10 @@
   "source": "https://github.com/lkeme/BiliHelper-personal",
   "raw_url": "https://cdn.jsdelivr.net/gh/lkeme/BiliHelper-personal@master/data/latest_version.json",
   "purge_url": "https://purge.jsdelivr.net/gh/lkeme/BiliHelper-personal@master/data/latest_version.json",
-  "version": "1.0.2.211115",
+  "version": "1.0.2.211114",
   "des": "程序有更新，请及时线上查看更新哦~",
-  "time": "2021年11月15日15:40:35"
+  "time": "2021年11月15日15:40:35",
+  "ini_version": "0.0.1",
+  "ini_des": "配置有更新，请及时线上查看更新哦~",
+  "ini_time": "2021年11月15日15:40:35"
 }

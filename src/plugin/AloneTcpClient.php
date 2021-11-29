@@ -77,7 +77,7 @@ class AloneTcpClient
      * @return mixed
      * @throws \Exception
      */
-    private static function unPackMsg($value, string $fmt = "N"):mixed
+    private static function unPackMsg($value, string $fmt = "N"): mixed
     {
         return unpack($fmt, $value)[1];
     }

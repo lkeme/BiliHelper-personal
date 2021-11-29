@@ -74,7 +74,7 @@ class Notice
         $now_time = date('Y-m-d H:i:s');
         $info = match ($type) {
             'update' => [
-                'title' => '程序更新通知',
+                'title' => '版本更新通知',
                 'content' => "[$now_time] 用户: $uname 程序更新通知: $result"
             ],
             'anchor' => [
@@ -126,6 +126,9 @@ class Notice
                 'content' => "[$now_time] 用户: $uname 推送消息key错误: $type->$result"
             ],
         };
+
+        // 添加前缀
+        $info['title'] = "【BHP】" . $info['title'];
 
         self::sendLog($info);
         return true;

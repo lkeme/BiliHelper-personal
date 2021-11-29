@@ -14,7 +14,7 @@ filter_words =
 
 **钉钉**
 
-> 文档: https://developers.dingtalk.com/文档ument/robots/custom-robot-access  
+> 文档: https://developers.dingtalk.com/document/robots/custom-robot-access  
 > 说明: 钉钉推送的密钥
 
 ```ini
