@@ -114,7 +114,7 @@ class GuardRaffle extends BaseRaffle
      * @param array $results
      * @return mixed
      */
-    protected static function parseLottery(array $results):mixed
+    protected static function parseLottery(array $results): mixed
     {
         foreach ($results as $result) {
             $data = $result['source'];

@@ -23,7 +23,7 @@
 
 </p>
 
-## 公告通知
+## 📌公告通知
 
 代码开源，本地化99.9%，项目不收集或使用任何敏感信息，兴趣所致，一切只为学习。
 
@@ -32,7 +32,13 @@
 ---- 只有花大价钱去买到的东西，才会令人信任。
 ```
 
-## 打赏支持
+## 👤游客访问
+
+<p align="center"> 
+   <img alingn="center" src="https://profile-counter.glitch.me/BiliHelper-personal/count.svg" />
+ </p>
+
+## 🎁打赏支持
 
 如果觉得本项目好用，对你有所帮助，欢迎打赏支持本项目哦。
 
@@ -40,7 +46,23 @@
 
 [comment]: <> (![Image]&#40;https://i.loli.net/2019/07/13/5d2963e5cc1eb22973.png&#41;)
 
-## 功能组件
+## 🖨️相关文档
+
+有疑问一定要先看看文档或Issue里是否存在相同的问题，再考虑其他渠道咨询。
+
+[comment]: <> (:cherry_blossom: :gift: :gift_heart: :confetti_ball:)
+
+* [使用文档 / DOC.md](./DOC.md)
+* [推送文档 / DOC.md](./NOTIFY.md)
+* [更新日志 / CHANGELOG.md](./CHANGELOG.md)
+* [配置文档 / WIKI.md](https://github.com/lkeme/BiliHelper-personal/wiki/%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E8%AF%A6%E8%A7%A3)
+* [常见问题 / WIKI.md](https://github.com/lkeme/BiliHelper-personal/wiki/%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98)
+
+## 💬交流反馈
+
+Group: [163955623](https://jq.qq.com/?_wv=1027&k=1QMFTUEO) | **请不要来问如何使用， 文档齐全， 仅用于BUG提交反馈**
+
+## 🧑‍🏭功能组件
 
 以下任务都是按设定周期自动执行，`true`为正常使用，`false`为暂停使用或抛弃。
 
@@ -83,21 +105,6 @@
 | LiveReservation | true   | 21.11.15 | 待整理 | 直播预约有奖                               |
 | Silver          | false  | 21.03.27 | 待整理 | 直播银瓜子自动开启宝箱                      |
 
-## 交流反馈
-
-Group: [163955623](https://jq.qq.com/?_wv=1027&k=1QMFTUEO) | **请不要来问如何使用， 文档齐全， 仅用于BUG提交反馈**
-
-## 相关文档
-
-有疑问一定要先看看文档或Issue里是否存在相同的问题，再考虑其他渠道咨询。
-
-[comment]: <> (:cherry_blossom: :gift: :gift_heart: :confetti_ball:)
-
-* [使用文档 / DOC.md](./DOC.md)
-* [推送文档 / DOC.md](./NOTIFY.md)
-* [更新日志 / CHANGELOG.md](./CHANGELOG.md)
-* [配置文档 / WIKI.md](https://github.com/lkeme/BiliHelper-personal/wiki/%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E8%AF%A6%E8%A7%A3)
-* [常见问题 / WIKI.md](https://github.com/lkeme/BiliHelper-personal/wiki/%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98)
 
 ## 🖥️星图
 

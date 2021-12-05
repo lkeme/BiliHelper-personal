@@ -10,7 +10,7 @@
 
 namespace BiliHelper\Core;
 
-use Noodlehaus\Config;
+use function JBZoo\Data\json;
 
 class Env
 {
@@ -78,10 +78,10 @@ class Env
      */
     private function loadJsonData()
     {
-        $conf = new Config($this->repository);
-        $this->app_name = $conf->get('project');
-        $this->app_version = $conf->get('version');
-        $this->app_branch = $conf->get('branch');
-        $this->app_source = $conf->get('source');
+        $conf = json($this->repository);
+        $this->app_name = $conf->get('project', 'BiliHelper-personal');
+        $this->app_version = $conf->get('version', '0.0.0.000000');
+        $this->app_branch = $conf->get('branch', 'master');
+        $this->app_source = $conf->get('source', 'https://github.com/lkeme/BiliHelper-personal');
     }
 }

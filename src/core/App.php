@@ -27,6 +27,7 @@ class App
      */
     public function __construct(string $app_path)
     {
+        define('APP_MICROSECOND', 1000000);
         define('APP_CONF_PATH', $app_path . '/conf/');
         define('APP_DATA_PATH', $app_path . '/data/');
         define('APP_LOG_PATH', $app_path . '/log/');

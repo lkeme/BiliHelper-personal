@@ -23,10 +23,7 @@ class ActivityLottery
     private static string $repository = APP_DATA_PATH . 'activity_infos.json';
 
     /**
-     * @throws \JsonDecodeStream\Exception\TokenizerException
-     * @throws \JsonDecodeStream\Exception\SelectorException
-     * @throws \JsonDecodeStream\Exception\CollectorException
-     * @throws \JsonDecodeStream\Exception\ParserException
+     * @use run
      */
     public static function run()
     {
@@ -44,10 +41,6 @@ class ActivityLottery
     /**
      * @use 分配任务
      * @return bool
-     * @throws \JsonDecodeStream\Exception\CollectorException
-     * @throws \JsonDecodeStream\Exception\ParserException
-     * @throws \JsonDecodeStream\Exception\SelectorException
-     * @throws \JsonDecodeStream\Exception\TokenizerException
      */
     private static function allotTasks(): bool
     {
@@ -55,7 +48,9 @@ class ActivityLottery
             return false;
         }
         $parser = self::loadJsonData();
-        foreach ($parser->items('data[]') as $act) {
+        foreach ($parser->get('data', []) as $act) {
+            // todo 优化处理
+            $act = json_decode(json_encode($act));
             // 活动无效
             if (is_null($act->sid)) {
                 continue;

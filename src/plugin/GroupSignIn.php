@@ -18,6 +18,9 @@ class GroupSignIn
 {
     use TimeLock;
 
+    /**
+     * @use run
+     */
     public static function run()
     {
         if (self::getLock() > time() || !getEnable('love_club')) {

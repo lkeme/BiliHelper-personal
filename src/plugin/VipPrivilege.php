@@ -24,6 +24,9 @@ class VipPrivilege
         2 => '会员购优惠券'
     ];
 
+    /**
+     * @use run
+     */
     public static function run()
     {
         if (self::getLock() > time() || !getEnable('vip_privilege')) {

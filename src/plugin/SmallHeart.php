@@ -24,6 +24,9 @@ class SmallHeart
     private static int $total_time = 0;
     private static array|null $metal = null;
 
+    /**
+     * @use run
+     */
     public static function run()
     {
         if (!getEnable('small_heart')) {

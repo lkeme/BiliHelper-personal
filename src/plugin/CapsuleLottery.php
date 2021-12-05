@@ -29,10 +29,7 @@ class CapsuleLottery
 
 
     /**
-     * @throws \JsonDecodeStream\Exception\TokenizerException
-     * @throws \JsonDecodeStream\Exception\SelectorException
-     * @throws \JsonDecodeStream\Exception\ParserException
-     * @throws \JsonDecodeStream\Exception\CollectorException
+     * @use run
      */
     public static function run()
     {
@@ -50,10 +47,6 @@ class CapsuleLottery
     /**
      * @use 分配任务
      * @return bool
-     * @throws \JsonDecodeStream\Exception\CollectorException
-     * @throws \JsonDecodeStream\Exception\ParserException
-     * @throws \JsonDecodeStream\Exception\SelectorException
-     * @throws \JsonDecodeStream\Exception\TokenizerException
      */
     private static function allotTasks(): bool
     {
@@ -61,7 +54,10 @@ class CapsuleLottery
             return false;
         }
         $parser = self::loadJsonData();
-        foreach ($parser->items('data[]') as $act) {
+        // Converting to array
+        foreach ($parser->get('data', []) as $act) {
+            // todo 优化处理
+            $act = json_decode(json_encode($act));
             // 活动无效
             if (is_null($act->coin_id)) {
                 continue;
@@ -248,7 +244,7 @@ class CapsuleLottery
             Log::info("获取剩余抽奖次数成功 {$capsule_info['data']['coin']}");
             return $capsule_info['data']['coin'];
         }
-        Log::warning("获取剩余抽奖次数失败 $capsule_info");
+        Log::warning("获取剩余抽奖次数失败 " . json_encode($capsule_info, true));
         return 0;
     }
 

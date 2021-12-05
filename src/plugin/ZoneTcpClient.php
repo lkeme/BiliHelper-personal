@@ -37,7 +37,7 @@ class ZoneTcpClient
 
 
     /**
-     * @use 入口
+     * @use run
      */
     public static function run()
     {

@@ -26,7 +26,9 @@ class GiftSend
     protected static array $room_list = [];
     protected static array $medal_list = [];
 
-
+    /**
+     * @use run
+     */
     public static function run()
     {
         if (self::getLock() > time() || !self::inTime('23:50:00', '23:59:50')) {

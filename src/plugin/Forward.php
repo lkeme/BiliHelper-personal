@@ -21,7 +21,7 @@ namespace BiliHelper\Plugin;
 
 use BiliHelper\Core\Log;
 use BiliHelper\Util\TimeLock;
-use Noodlehaus\Config;
+use function JBZoo\Data\json;
 
 class Forward
 {
@@ -42,7 +42,9 @@ class Forward
 
     private static string $repository = APP_DATA_PATH . 'reply_words.json';
 
-
+    /**
+     * @use run
+     */
     public static function run()
     {
 
@@ -270,8 +272,9 @@ class Forward
      */
     private static function getReplyMsgList(): array
     {
-        $data = Config::load(self::$repository);
-        $data = $data->get("DynamicForward.default");
+        $data = json(self::$repository);
+        // 给个默认值
+        $data = $data->find("DynamicForward.default", []);
         array_push($data, getConf('auto_reply_text', 'dynamic'));
         return $data;
     }

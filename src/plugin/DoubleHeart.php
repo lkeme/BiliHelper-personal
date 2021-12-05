@@ -18,6 +18,9 @@ class DoubleHeart
 {
     use TimeLock;
 
+    /**
+     * @use run
+     */
     public static function run()
     {
         if (self::getLock() > time() || !getEnable('double_heart')) {

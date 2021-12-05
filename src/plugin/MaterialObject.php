@@ -24,6 +24,9 @@ class MaterialObject
     private static int $start_aid = 0;
     private static int $end_aid = 0;
 
+    /**
+     * @use run
+     */
     public static function run()
     {
         if (self::getLock() > time() || !getEnable('live_box')) {

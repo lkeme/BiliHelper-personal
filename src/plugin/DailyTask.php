@@ -18,6 +18,9 @@ class DailyTask
 {
     use TimeLock;
 
+    /**
+     * @use run
+     */
     public static function run()
     {
         if (self::getLock() > time() || !getEnable('daily_task')) {
@@ -72,6 +75,7 @@ class DailyTask
         $payload = [];
         $data = Curl::get('app', $url, Sign::common($payload));
         $data = json_decode($data, true);
+        // 您被封禁了,无法进行操作
         // {"code":1011040,"message":"今日已签到过,无法重复签到","ttl":1,"data":null}
         // {"code":0,"message":"0","ttl":1,"data":{"text":"3000点用户经验,2根辣条","specialText":"再签到3天可以获得666银瓜子","allDays":31,"hadSignDays":2,"isBonusDay":0}}
         // {"code":0,"message":"0","ttl":1,"data":{"text":"3000点用户经验,2根辣条,50根辣条","specialText":"","allDays":31,"hadSignDays":20,"isBonusDay":1}}

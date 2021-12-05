@@ -17,6 +17,7 @@ class UnFollow extends BaseTask
     public static string $description = '批量清理选定分组关注，默认单次最大清理600个关注.';
 
     /**
+     * @use run
      * @throws \Exception
      */
     public static function run()
