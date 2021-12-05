@@ -20,6 +20,9 @@ class BpConsumption
 
     use TimeLock;
 
+    /**
+     * @use run
+     */
     public static function run()
     {
         if (self::getLock() > time() || !getEnable('bp_consumption')) {

@@ -18,6 +18,9 @@ class GiftHeart
 {
     use TimeLock;
 
+    /**
+     * @use run
+     */
     public static function run()
     {
         if (self::getLock() > time() || !getEnable('gift_heart')) {

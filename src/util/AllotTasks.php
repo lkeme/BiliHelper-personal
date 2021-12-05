@@ -10,8 +10,8 @@
 
 namespace BiliHelper\Util;
 
-use JsonDecodeStream\Parser;
 use stdClass;
+use PhpPkg\Config\ConfigBox;
 
 
 trait AllotTasks
@@ -27,11 +27,10 @@ trait AllotTasks
 
     /**
      * @use 加载json数据
-     * @return Parser
      */
-    protected static function loadJsonData(): Parser
+    protected static function loadJsonData(): ConfigBox
     {
-        return Parser::fromFile(static::$repository);
+        return ConfigBox::newFromFile(static::$repository);
     }
 
     /**
@@ -48,7 +47,7 @@ trait AllotTasks
             'act' => $act,
             'time' => $time
         ];
-        array_push(static::$tasks, $task);
+        static::$tasks[] = $task;
         return true;
     }
 

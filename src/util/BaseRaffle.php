@@ -30,6 +30,9 @@ abstract class BaseRaffle
     protected static array $all_list;
     protected static array $banned_rids = [];
 
+    /**
+     * @use run
+     */
     public static function run()
     {
         if (!getEnable(static::ACTIVE_SWITCH)) {

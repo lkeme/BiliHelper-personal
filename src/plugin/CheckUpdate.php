@@ -10,11 +10,10 @@
 
 namespace BiliHelper\Plugin;
 
-use Noodlehaus\Config;
-use Noodlehaus\Parser\Json;
 use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
 use BiliHelper\Util\TimeLock;
+use function JBZoo\Data\json;
 
 class CheckUpdate
 {
@@ -24,7 +23,9 @@ class CheckUpdate
     private static object $latest_conf;
     private static string $repository = APP_DATA_PATH . 'latest_version.json';
 
-
+    /**
+     * @use run
+     */
     public static function run()
     {
         if (self::getLock() > time()) {
@@ -77,7 +78,7 @@ class CheckUpdate
         $url = self::$current_conf->get('raw_url');
         $payload = [];
         $raw = Curl::get('other', $url, $payload);
-        self::$latest_conf = Config::load($raw, new Json, true);
+        self::$latest_conf = json(json_decode($raw, true));
     }
 
     /**
@@ -85,7 +86,7 @@ class CheckUpdate
      */
     private static function loadJsonData()
     {
-        self::$current_conf = Config::load(self::$repository);
+        self::$current_conf = json(self::$repository);
     }
 
     /**

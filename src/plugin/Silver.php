@@ -20,6 +20,9 @@ class Silver
 
     protected static array $task = [];
 
+    /**
+     * @use run
+     */
     public static function run()
     {
         if (self::getLock() > time()) {

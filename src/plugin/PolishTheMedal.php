@@ -23,6 +23,7 @@ class PolishTheMedal
     private static array $grey_fans_medals = []; // 灰色勋章
 
     /**
+     * @use run
      */
     public static function run()
     {

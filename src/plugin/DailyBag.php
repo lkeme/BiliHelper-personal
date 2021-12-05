@@ -18,6 +18,9 @@ class DailyBag
 {
     use TimeLock;
 
+    /**
+     * @use run
+     */
     public static function run()
     {
         if (self::getLock() > time() || !getEnable('daily_bag')) {

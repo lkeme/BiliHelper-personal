@@ -25,6 +25,7 @@ class Login
     private static string $password;
 
     /**
+     * @use run
      * @throws \Jelix\IniFile\IniException
      */
     public static function run()

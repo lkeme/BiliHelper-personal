@@ -12,7 +12,7 @@ namespace BiliHelper\Plugin;
 
 use BiliHelper\Core\Log;
 use BiliHelper\Util\TimeLock;
-use MathieuViossat\Util\ArrayToTextTable;
+use BiliHelper\Tool\ArrayToTextTable;
 
 class Statistics
 {
@@ -23,7 +23,10 @@ class Statistics
     private static array $success_list = [];
     private static array $profit_list = [];
 
-    // Todo 统计开关 统计时间间隔  统计类型
+    /**
+     * @use run
+     * @todo 统计开关 统计时间间隔  统计类型
+     */
     public static function run()
     {
         if (self::getLock() > time()) {

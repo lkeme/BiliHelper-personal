@@ -19,6 +19,9 @@ class MainSite
 {
     use TimeLock;
 
+    /**
+     * @use run
+     */
     public static function run()
     {
         if (self::getLock() > time() || !getEnable('main_site')) {
@@ -53,6 +56,9 @@ class MainSite
         ];
         // {"code":34005,"message":"超过投币上限啦~","ttl":1,"data":{"like":false}}
         // {"code":0,"message":"0","ttl":1,"data":{"like":false}}
+        // CODE -> 137001 MSG -> 账号封禁中，无法完成操作
+        // CODE -> -650 MSG -> 用户等级太低
+
         $raw = Curl::post('app', $url, Sign::common($payload), $headers);
         $de_raw = json_decode($raw, true);
         if ($de_raw['code'] == 0) {

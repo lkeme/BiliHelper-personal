@@ -36,7 +36,9 @@ class Schedule
     // 暂定不做处理 大会员类
     private static array $guarded_fifth = ['VipPrivilege', 'BpConsumption'];
 
-
+    /**
+     * @use run
+     */
     public static function run()
     {
         if (self::getLock() > time()) {

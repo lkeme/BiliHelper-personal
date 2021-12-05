@@ -28,7 +28,7 @@ class AloneTcpClient
     private static int $max_errors_num = 0; // 最大连续错误5次
 
     /**
-     * @use 入口
+     * @use run
      */
     public static function run()
     {

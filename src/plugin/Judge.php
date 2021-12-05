@@ -36,6 +36,9 @@ class Judge
 
     private static array $wait_case = [];
 
+    /**
+     * @use run
+     */
     public static function run()
     {
         // 基础判断

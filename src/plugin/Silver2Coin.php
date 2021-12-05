@@ -18,6 +18,9 @@ class Silver2Coin
 {
     use TimeLock;
 
+    /**
+     * @use run
+     */
     public static function run()
     {
         if (self::getLock() > time() || !getEnable('silver2coin')) {
@@ -37,7 +40,7 @@ class Silver2Coin
      */
     protected static function appSilver2coin(): bool
     {
-        sleep(0.5);
+        usleep(0.5 * APP_MICROSECOND);
         $url = 'https://api.live.bilibili.com/AppExchange/silver2coin';
         $payload = [];
         $raw = Curl::post('app', $url, Sign::common($payload));
@@ -53,7 +56,7 @@ class Silver2Coin
      */
     protected static function pcSilver2coin(): bool
     {
-        sleep(0.5);
+        usleep(0.5 * APP_MICROSECOND);
         $payload = [
             'csrf_token' => getCsrf(),
             'csrf' => getCsrf(),

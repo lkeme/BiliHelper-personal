@@ -19,7 +19,8 @@ class Competition
     use TimeLock;
 
     /**
-     * @use 赛事入口 https://www.bilibili.com/v/game/match/competition
+     * @use run
+     * @doc 赛事入口 https://www.bilibili.com/v/game/match/competition
      */
     public static function run()
     {

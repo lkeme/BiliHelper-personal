@@ -25,6 +25,9 @@ class AwardRecord
     private static int $gift_lock = 0;
     private static array $gift_list = [];
 
+    /**
+     * @use run
+     */
     public static function run()
     {
         if (self::getLock() > time() || !getEnable('award_record')) {
