@@ -100,12 +100,13 @@ class BpConsumption
             'csrf' => getCsrf()
         ];
         $raw = Curl::post('pc', $url, $payload);
+        // {"code":0,"message":"0","ttl":1,"data":{"mid":12324,"up_mid":1234,"order_no":"PAY4567","bp_num":"5","exp":5,"status":4,"msg":""}}
         // {"code":0,"message":"0","ttl":1,"data":{"mid":12324,"up_mid":1234,"order_no":"ABCD","bp_num":2,"exp":2,"status":4,"msg":""}}
         $de_raw = json_decode($raw, true);
         if ($de_raw['code'] == 0) {
             // data.status 4 成功 -2：低于20电池下限 -4：B币不足
             if ($de_raw['data']['status'] == 4) {
-                Log::notice("给{$uid}B币充电成功 NUM -> {$de_raw['data']['elec_num']} ORDER -> {$de_raw['data']['order_no']}");
+                Log::notice("给{$uid}B币充电成功 NUM -> {$de_raw['data']['bp_num']} EXP -> {$de_raw['data']['exp']} ORDER -> {$de_raw['data']['order_no']}");
             } else {
                 Log::warning("给{$uid}B币充电失败 STATUS -> {$de_raw['data']['status']} MSG -> {$de_raw['data']['msg']}");
             }
