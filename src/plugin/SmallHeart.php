@@ -74,7 +74,7 @@ class SmallHeart
         $data = Live::fetchMedalList();
         foreach ($data as $vo) {
             // 过滤主站勋章
-            if (!isset($vo['roomid'])) continue;
+            if (!isset($vo['roomid']) || $vo['roomid'] == 0) continue;
             // 过滤自己勋章
             if ($vo['target_id'] == getUid()) continue;
             // 所有
