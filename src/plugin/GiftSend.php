@@ -149,7 +149,7 @@ class GiftSend
                 if ($vo['corner_mark'] == '永久') {
                     continue;
                 }
-                array_push($new_bag_list, $vo);
+                $new_bag_list[] = $vo;
             }
         }
         return $new_bag_list;
@@ -165,7 +165,7 @@ class GiftSend
         $expire_gift_list = [];
         foreach ($bag_list as $gift) {
             if ($gift['expire_at'] >= time() && $gift['expire_at'] <= time() + 3600) {
-                array_push($expire_gift_list, $gift);
+                $expire_gift_list[] = $gift;
             }
         }
         return $expire_gift_list;
@@ -180,7 +180,8 @@ class GiftSend
         $data = Live::fetchMedalList();
         $fans_medals = [];
         foreach ($data as $vo) {
-            if (!isset($vo['roomid'])) continue;
+            // 过滤主站勋章
+            if (!isset($vo['roomid']) || $vo['roomid'] == 0) continue;
             $fans_medals[(string)$vo['roomid']] = $vo;
         }
         // 基于配置

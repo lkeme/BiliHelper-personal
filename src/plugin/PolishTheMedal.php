@@ -46,7 +46,7 @@ class PolishTheMedal
                     self::$metal_lock = time() + 10 * 60 * 60;
                 }
             } else {
-                self::$metal_lock = time() + 1 * 60 * 60;
+                self::$metal_lock = time() + 60 * 60;
             }
         }
         // 点亮灰色勋章
@@ -88,7 +88,7 @@ class PolishTheMedal
         $data = Live::fetchMedalList();
         foreach ($data as $vo) {
             // 过滤主站勋章
-            if (!isset($vo['roomid'])) continue;
+            if (!isset($vo['roomid']) || $vo['roomid'] == 0) continue;
             // 过滤自己勋章
             if ($vo['target_id'] == getUid()) continue;
             // 所有

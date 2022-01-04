@@ -332,37 +332,48 @@ class Live
      * @param int $page_size
      * @return array
      */
-    public static function fetchMedalList(int $page_size = 10): array
+    public static function fetchMedalList(int $page_size = 50): array
     {
         $metal_list = [];
         for ($i = 1; $i <= 100; $i++) {
             // https://live.bilibili.com/p/html/live-app-fansmedal-manange/index.html
-            // $url = 'https://api.live.bilibili.com/fans_medal/v5/live_fans_medal/iApiMedal';
-            $url = 'https://api.live.bilibili.com/i/api/medal';
-            // TODO size变小 需要优化获取逻辑 可能会412
+            $url = 'https://api.live.bilibili.com/xlive/app-ucenter/v1/fansMedal/panel';
             $payload = [
                 'page' => $i,
-                'pageSize' => $page_size
+                'page_size' => $page_size
             ];
             $raw = Curl::get('app', $url, Sign::common($payload));
             $de_raw = json_decode($raw, true);
+            // {"code":0,"message":"0","ttl":1,"data":{"list":[],"special_list":[],"bottom_bar":null,"page_info":{"number":0,"current_page":1,"has_more":false,"next_page":2,"next_light_status":2},"total_number":0,"has_medal":0}}
             if (isset($data['code']) && $data['code']) {
                 Log::warning('获取勋章列表失败!', ['msg' => $data['message']]);
                 return $metal_list;
             }
-            if (empty($de_raw['data']['fansMedalList'])) {
-                return $metal_list;
-            }
-            if (isset($de_raw['data']['fansMedalList'])) {
-                foreach ($de_raw['data']['fansMedalList'] as $vo) {
-                    array_push($metal_list, $vo);
+            // list special_list
+            $keys = ['list', 'special_list'];
+            foreach ($keys as $key) {
+                if (isset($de_raw['data'][$key])) {
+                    foreach ($de_raw['data'][$key] as $vo) {
+                        // 部分主站勋章没有直播间
+                        if (isset($vo['room_info']['room_id'])) {
+                            $vo['medal']['roomid'] = $vo['room_info']['room_id'];
+                        } else {
+                            $vo['medal']['roomid'] = 0;
+                        }
+                        $metal_list[] = $vo['medal'];
+                    }
                 }
             }
-            if ($de_raw['data']['pageinfo']['totalpages'] == $de_raw['data']['pageinfo']['curPage']) {
-                return $metal_list;
+            // total_number || count == 0
+            if (count($metal_list) >= $de_raw['data']['total_number'] || empty($metal_list)) {
+                break;
             }
         }
-        Log::info('勋章列表获取成功!');
+        // count == 0
+        if (!empty($metal_list)) {
+            $num = count($metal_list);
+            Log::info("勋章列表获取成功, 共获取到 $num 个!");
+        }
         return $metal_list;
     }
 
