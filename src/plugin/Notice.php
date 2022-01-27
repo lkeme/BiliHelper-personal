@@ -167,6 +167,9 @@ class Notice
         if (getConf('corp_id', 'notify.we_com_app') && getConf('corp_secret', 'notify.we_com_app') && getConf('agent_id', 'notify.we_com_app')) {
             self::weComApp($info);
         }
+        if (getConf('token', 'notify.feishu')) {
+            self::feiShuSend($info);
+        }
     }
 
     /**
@@ -410,6 +413,34 @@ class Notice
         $de_raw = json_decode($raw, true);
         if ($de_raw['errcode'] == 0) {
             Log::notice("推送消息成功: {$de_raw['errmsg']}");
+        } else {
+            Log::warning("推送消息失败: $raw");
+        }
+    }
+
+
+    /**
+     * @use 飞书推送
+     * @doc https://developers.dingtalk.com/document/robots/custom-robot-access
+     * @param array $info
+     */
+    private static function feiShuSend(array $info)
+    {
+        Log::info('使用飞书webhook机器人推送消息');
+        $url = 'https://open.feishu.cn/open-apis/bot/v2/hook/' . getConf('token', 'notify.feishu');
+        $payload = [
+            'msg_type' => 'text',
+            'content' => [
+                'text' => $info['title'] . $info['content'],
+            ]
+        ];
+        $headers = [
+            'Content-Type' => 'application/json;charset=utf-8'
+        ];
+        $raw = Curl::put('other', $url, $payload, $headers);
+        $de_raw = json_decode($raw, true);
+        if ($de_raw['StatusCode'] == 0) {
+            Log::notice("推送消息成功: {$de_raw['StatusCode']}");
         } else {
             Log::warning("推送消息失败: $raw");
         }
