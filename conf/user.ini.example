@@ -211,7 +211,7 @@ target_qq =
 
 ; 飞书机器人|依赖USE_NOTIFY
 [notify.feishu]
-token = 15a2bc73-a1da-4152-a08d-0870e938f97f
+token =
 
 ; Debug|个人调试推送|url|token
 [notify.debug]
