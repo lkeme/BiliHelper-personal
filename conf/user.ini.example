@@ -209,6 +209,10 @@ url = ""
 token =
 target_qq =
 
+; 飞书机器人|依赖USE_NOTIFY
+[notify.feishu]
+token =
+
 ; Debug|个人调试推送|url|token
 [notify.debug]
 url = ""
