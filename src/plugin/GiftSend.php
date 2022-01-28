@@ -46,7 +46,8 @@ class GiftSend
         self::$tid = 0;
         // 如果在每日最后5分钟内 就50s执行一次 否则 第二天固定时间执行
         if (self::inTime('23:52:00', '23:59:59')) {
-            self::setLock(60);
+            // 减少0点左右请求损耗
+            self::setLock(100);
         } else {
             self::setLock(self::timing(23, 55));
         }
