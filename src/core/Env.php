@@ -28,7 +28,7 @@ class Env
     public function __construct()
     {
         set_time_limit(0);
-        header("Content-Type:text/html; charset=utf-8");
+        // header("Content-Type:text/html; charset=utf-8");
         // ini_set('date.timezone', 'Asia/Shanghai');
         date_default_timezone_set('Asia/Shanghai');
         ini_set('display_errors', 'on');
