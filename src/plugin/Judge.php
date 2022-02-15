@@ -13,7 +13,6 @@ namespace BiliHelper\Plugin;
 use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
 use BiliHelper\Util\TimeLock;
-use JetBrains\PhpStorm\ArrayShape;
 
 class Judge
 {
@@ -33,6 +32,11 @@ class Judge
 
 
     use TimeLock;
+
+    private static array $default_headers = [
+        'origin' => 'https://www.bilibili.com',
+        'referer' => 'https://www.bilibili.com/',
+    ];
 
     private static array $wait_case = [];
 
@@ -89,11 +93,11 @@ class Judge
         $vote = $vote_info['vote'];
         $vote_text = $vote_info['vote_text'];
         Log::info("案件 $case_id 的预测投票结果：$vote($vote_text)");
-        array_push(self::$wait_case, ["id" => $case_id, 'vote' => $vote]);
+        self::$wait_case[] = ["id" => $case_id, 'vote' => $vote];
         // 尝试修复25018 未测试
         self::vote($case_id, 0);
 
-        self::setLock(1 * 60 + 5);
+        self::setLock(60 + 5);
     }
 
     /**
@@ -111,11 +115,7 @@ class Judge
             "anonymous" => 0,
             "csrf" => getCsrf(),
         ];
-        $headers = [
-            'origin' => 'https://www.bilibili.com',
-            'referer' => 'https://www.bilibili.com/',
-        ];
-        $raw = Curl::post('pc', $url, $payload, $headers);
+        $raw = Curl::post('pc', $url, $payload, self::$default_headers);
         $de_raw = json_decode($raw, true);
         // {"code":0,"message":"0","ttl":1}
         // {"code":25018,"message":"不能进行此操作","ttl":1}
@@ -123,6 +123,25 @@ class Judge
             Log::warning("案件 $case_id 投票失败 $raw");
         } else {
             Log::notice("案件 $case_id 投票成功 $raw");
+        }
+    }
+
+    /**
+     * @use 申请连任
+     */
+    private static function juryApply()
+    {
+        $url = 'https://api.bilibili.com/x/credit/v2/jury/apply';
+        $payload = [
+            "csrf" => getCsrf(),
+        ];
+        $raw = Curl::post('pc', $url, $payload, self::$default_headers);
+        $de_raw = json_decode($raw, true);
+        // {"code":0,"message":"0","ttl":1}
+        if (isset($de_raw['code']) && $de_raw['code']) {
+            Log::warning("申请连任失败 $raw");
+        } else {
+            Log::notice("申请连任成功 $raw");
         }
     }
 
@@ -138,11 +157,8 @@ class Judge
             'pn' => $pn,
             'ps' => $ps
         ];
-        $headers = [
-            'origin' => 'https://www.bilibili.com',
-            'referer' => 'https://www.bilibili.com/',
-        ];
-        $raw = Curl::get('pc', $url, $payload, $headers);
+
+        $raw = Curl::get('pc', $url, $payload, self::$default_headers);
         $de_raw = json_decode($raw, true);
         // {"code":0,"message":"0","ttl":1,"data":{"total":438,"list":[]}}
         if (isset($de_raw['code']) && $de_raw['code']) {
@@ -164,11 +180,7 @@ class Judge
         $payload = [
             'case_id' => $case_id,
         ];
-        $headers = [
-            'origin' => 'https://www.bilibili.com',
-            'referer' => 'https://www.bilibili.com/',
-        ];
-        $raw = Curl::get('pc', $url, $payload, $headers);
+        $raw = Curl::get('pc', $url, $payload, self::$default_headers);
         $de_raw = json_decode($raw, true);
         // {"code":0,"message":"0","ttl":1,"data":{"case_id":"","case_type":1,"vote_items":[{"vote":1,"vote_text":"合适"},{"vote":2,"vote_text":"一般"},{"vote":3,"vote_text":"不合适"},{"vote":4,"vote_text":"无法判断"}],"default_vote":4,"status":0,"origin_start":0,"avid":,"cid":,"vote_cd":5,"case_info":{"comment":{"uname":"用户1","face":"xxxx"},"danmu_img":""}}}
         if (isset($de_raw['code']) && $de_raw['code']) {
@@ -186,20 +198,22 @@ class Judge
     {
         $url = 'https://api.bilibili.com/x/credit/v2/jury/case/next';
         $payload = [];
-        $headers = [
-            'origin' => 'https://www.bilibili.com',
-            'referer' => 'https://www.bilibili.com/',
-        ];
-        $raw = Curl::get('pc', $url, $payload, $headers);
+        $raw = Curl::get('pc', $url, $payload, self::$default_headers);
         $de_raw = json_decode($raw, true);
         // {"code":0,"message":"0","ttl":1,"data":{"case_id":"AC1xx411c7At"}}
         // {"code":25008,"message":"真给力 , 移交众裁的举报案件已经被处理完了","ttl":1}
         // {"code":25014,"message":"25014","ttl":1}
         // {"code":25005,"message":"请成为风纪委员后再试","ttl":1}
+        // {"code":25006,"message":"风纪委员资格已过期","ttl":1}
         if (isset($de_raw['code']) && $de_raw['code']) {
             switch ($de_raw['code']) {
                 case 25005:
                     Log::warning($de_raw['message']);
+                    self::setLock(self::timing(10));
+                    break;
+                case 25006:
+                    Log::warning($de_raw['message']);
+                    Notice::push('jury_leave_office', $de_raw['message']);
                     self::setLock(self::timing(10));
                     break;
                 case 25008:
@@ -229,17 +243,20 @@ class Judge
     {
         $url = 'https://api.bilibili.com/x/credit/v2/jury/jury';
         $payload = [];
-        $headers = [
-            'origin' => 'https://www.bilibili.com',
-            'referer' => 'https://www.bilibili.com/',
-        ];
-        $raw = Curl::get('pc', $url, $payload, $headers);
+        $raw = Curl::get('pc', $url, $payload, self::$default_headers);
         $de_raw = json_decode($raw, true);
         // {"code":25005,"message":"请成为风纪委员后再试","ttl":1}
         // {"code":0,"message":"0","ttl":1,"data":{"uname":"","face":"http://i2.hdslb.com/bfs/face/.jpg","case_total":,"term_end":,"status":1}}
         if (isset($de_raw['code']) && $de_raw['code']) {
             return false;
         }
+//        "status": 1  理论正常
+//        "status": 2,  没有资格
+//        "apply_status": -1 已经卸任但未连任
+//        "apply_status": 0 申请连任后
+//        "apply_status": 5 审核连任中
+//        "apply_status": 3 连任成功后
+
         // 理论上正常
         if ($de_raw['data']['status'] == 1) {
             Log::info('你可以参与社区众裁，共创良好环境哦~');
@@ -304,7 +321,7 @@ class Judge
     {
         $temp = [];
         foreach (range(1, $max) as $ignored) {
-            array_push($temp, mt_rand(0, 9));
+            $temp[] = mt_rand(0, 9);
         }
         return implode("", $temp);
     }
