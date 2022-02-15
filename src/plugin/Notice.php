@@ -121,6 +121,10 @@ class Notice
                 'title' => '主站九宫格抽奖活动',
                 'content' => "[$now_time] 用户: $uname 详情: $result"
             ],
+            'jury_leave_office' => [
+                'title' => '已卸任风纪委员',
+                'content' => "[$now_time] 用户: $uname 详情: $result ，请及时关注风纪委员连任状态哦~"
+            ],
             default => [
                 'title' => '推送消息异常记录',
                 'content' => "[$now_time] 用户: $uname 推送消息key错误: $type->$result"
