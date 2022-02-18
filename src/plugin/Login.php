@@ -518,7 +518,7 @@ class Login
         $cookies = [];
         foreach ($headers as $header) {
             preg_match_all('/^(.*);/iU', $header, $cookie);
-            array_push($cookies, $cookie[0][0]);
+            $cookies[] = $cookie[0][0];
         }
         return implode("", array_reverse($cookies));
     }

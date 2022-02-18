@@ -134,9 +134,10 @@ content =
 [manga]
 enable = false
 
-; 风纪委员投票|需要实名认证|慎用
+; 風機委員投票|需要实名认证|慎用
 [judgement]
 enable = false
+auto_apply = false
 
 ; 大会员权益|年度大会员专享
 [vip_privilege]

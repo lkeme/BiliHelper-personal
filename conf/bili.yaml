@@ -3,8 +3,8 @@ bili_version: 0.0.1
 # Android
 bili_a:
   package: "tv.danmaku.bili"
-  version: "6.59.0"
-  build: "6590300"
+  version: "6.60.0"
+  build: "6600300"
   channel: "bili"
   device: "phone"
   mobi_app: "android"

@@ -119,7 +119,7 @@ class MainSite
         // 库存数量
         $stock_num = self::getCoin();
         // 实际数量 处理硬币库存少于预计数量
-        $actual_num = intval($estimate_num > $stock_num ? $stock_num : $estimate_num) - self::coinLog();
+        $actual_num = intval(min($estimate_num, $stock_num)) - self::coinLog();
         Log::info("当前硬币库存 $stock_num 预计投币 $estimate_num 实际投币 $actual_num");
         // 上限
         if ($actual_num <= 0) {
@@ -186,7 +186,7 @@ class MainSite
             if ($index >= $num) {
                 break;
             }
-            array_push($aids, $card['desc']['rid']);
+            $aids[] = $card['desc']['rid'];
         }
         // 此处补全缺失
         if (count($aids) < $num) {
@@ -220,12 +220,12 @@ class MainSite
                 if (in_array($rand_num, $rand_nums)) {
                     continue;
                 } else {
-                    array_push($rand_nums, $rand_num);
+                    $rand_nums[] = $rand_num;
                     break;
                 }
             }
             $aid = $de_raw['data']['list'][$rand_nums[$i]]['aid'];
-            array_push($aids, $aid);
+            $aids[] = $aid;
         }
 
         return $aids;
@@ -256,7 +256,7 @@ class MainSite
                 $temps = array_rand($de_raw['data']['archives'], $num);
             }
             foreach ($temps as $temp) {
-                array_push($aids, $de_raw['data']['archives'][$temp]['aid']);
+                $aids[] = $de_raw['data']['archives'][$temp]['aid'];
             }
             return $aids;
         }

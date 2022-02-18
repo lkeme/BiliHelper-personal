@@ -268,7 +268,7 @@ class File
         if (is_file($filename) && is_writeable($filename)) {
             // 创建文件句柄, 以读写方式打开
             $handler = fopen($filename, 'rb+');
-            $length = $length < 0 ? 0 : $length;
+            $length = max($length, 0);
             ftruncate($handler, $length);
             fclose($handler);
         }

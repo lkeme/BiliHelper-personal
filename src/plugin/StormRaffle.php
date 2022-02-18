@@ -63,7 +63,7 @@ class StormRaffle extends BaseRaffle
             'wait' => time()
         ];
         Statistics::addPushList($data['raffle_name']);
-        array_push(self::$wait_list, $data);
+        self::$wait_list[] = $data;
         return true;
     }
 

@@ -53,6 +53,10 @@ class DataTreating
                 // 天选时刻
                 AnchorRaffle::pushToQueue($info);
                 break;
+            case 'red_pocket':
+                // 利是包
+                RedPocketRaffle::pushToQueue($info);
+                break;
             default:
                 break;
         }

@@ -89,7 +89,7 @@ class ZoneTcpClient
     {
         Log::debug("Reconnect Reason: {$area_data['area_id']} -> $reason");
         self::$client_maps["server" . $area_data['area_id']]['status'] = false;
-        array_push(self::$trigger_restart, $area_data);
+        self::$trigger_restart[] = $area_data;
     }
 
     /**
@@ -104,7 +104,7 @@ class ZoneTcpClient
                 break;
             }
             if (time() < $area_data['wait_time']) {
-                array_push(self::$trigger_restart, $area_data);
+                self::$trigger_restart[] = $area_data;
                 continue;
             }
             Log::notice("update_connections triggered, info: {$area_data['area_id']}");
@@ -193,6 +193,20 @@ class ZoneTcpClient
         $data = [];
         $update_room = false;
         switch ($de_raw['cmd']) {
+            case 'POPULARITY_RED_POCKET_WINNER_LIST':
+                // winner_info[] -> busers[] -> uid
+                Log::debug(json_encode($de_raw, true));
+                break;
+            case 'POPULARITY_RED_POCKET_START':
+                Log::debug(json_encode($de_raw, true));
+                $data = [
+                    'room_id' => self::$room_id,
+                    'raffle_id' => $de_raw['lot_id'],
+                    'raffle_title' => '利是包',
+                    'raffle_type' => 'red_pocket',
+                    'source' => $msg
+                ];
+                break;
             case 'TV_START':
                 // 小电视飞船(1)
                 $data = [
@@ -354,7 +368,7 @@ class ZoneTcpClient
                 self::$raffle_list[$data['raffle_type']] = [];
             }
             $data['area_id'] = self::$area_id;
-            array_push(self::$raffle_list[$data['raffle_type']], $data);
+            self::$raffle_list[$data['raffle_type']][] = $data;
             Log::info("监测到 @分区 {$data['area_id']} @房间 {$data['room_id']} @抽奖 {$data['raffle_title']}");
             // print_r($data);
         }
@@ -607,7 +621,7 @@ class ZoneTcpClient
             $length = $head['packlen'] ?? 16;
             $body = substr($data, $step + 16, $length - 16);
             $step += $length;
-            array_push($list, $body);
+            $list[] = $body;
         }
         return $list;
     }

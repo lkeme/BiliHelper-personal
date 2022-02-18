@@ -56,7 +56,7 @@ class GiftRaffle extends BaseRaffle
                 'wait' => $gift['time_wait'] + time(),
             ];
             Statistics::addPushList($data['raffle_name']);
-            array_push(self::$wait_list, $data);
+            self::$wait_list[] = $data;
         }
         return true;
     }
@@ -82,14 +82,14 @@ class GiftRaffle extends BaseRaffle
                 'csrf' => getCsrf(),
                 'visit_id' => ''
             ];
-            array_push($tasks, [
+            $tasks[] = [
                 'payload' => Sign::common($payload),
                 'source' => [
                     'room_id' => $raffle['room_id'],
                     'raffle_id' => $raffle['raffle_id'],
                     'raffle_name' => $raffle['raffle_name']
                 ]
-            ]);
+            ];
         }
         // print_r($results);
         return Curl::async('app', $url, $tasks);

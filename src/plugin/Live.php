@@ -36,7 +36,7 @@ class Live
             $areas = range(1, 6);
         } else {
             foreach ($de_raw['data'] as $area) {
-                array_push($areas, $area['id']);
+                $areas[] = $area['id'];
             }
         }
         return $areas;
@@ -405,7 +405,7 @@ class Live
                 // 去除永久礼物
                 if ($vo['corner_mark'] == '永久') continue;
                 if ($vo['gift_id'] == $gift_id && $vo['gift_name'] == $gift_name) {
-                    array_push($new_bag_list, $vo);
+                    $new_bag_list[] = $vo;
                 }
             }
         }
@@ -471,7 +471,7 @@ class Live
 
         if ($de_raw['code'] == 0) {
             foreach ($de_raw['data']['list'] as $room) {
-                array_push($room_ids, $room['roomid']);
+                $room_ids[] = $room['roomid'];
             }
         }
         return $room_ids;
@@ -508,6 +508,38 @@ class Live
         $raw = Curl::get('other', $url, $payload);
         return json_decode($raw, true);
     }
+
+    /**
+     * @use 直播间抽奖检查
+     * @param int $room_id
+     * @return array
+     */
+    public static function getLotteryCheck(int $room_id): array
+    {
+        $url = 'https://api.live.bilibili.com/xlive/lottery-interface/v1/lottery/Check';
+        $payload = [
+            'roomid' => $room_id,
+        ];
+        $raw = Curl::get('other', $url, $payload);
+        return json_decode($raw, true);
+    }
+
+
+    /**
+     * @use 获取直播间抽奖信息
+     * @param int $room_id
+     * @return array
+     */
+    public static function getLotteryInfoWeb(int $room_id): array
+    {
+        $url = 'https://api.live.bilibili.com/xlive/lottery-interface/v1/lottery/getLotteryInfoWeb';
+        $payload = [
+            'roomid' => $room_id,
+        ];
+        $raw = Curl::get('other', $url, $payload);
+        return json_decode($raw, true);
+    }
+
 
     /**
      * @use 获取用户关注数
