@@ -217,7 +217,7 @@ class Statistics
                     '参与' => self::getResults(self::$join_list, $key) . '/' . self::getResult(self::$join_list, $key),
                     '成功' => self::getResults(self::$success_list, $key) . '/' . self::getResult(self::$success_list, $key),
                 ];
-                array_push($tr_list_count, $td);
+                $tr_list_count[] = $td;
             }
         }
         // 收益数量
@@ -229,7 +229,7 @@ class Statistics
                     '奖品' => explode('-', $key)[1],
                     '更新时间' => self::timeTran(self::getResult(self::$profit_list, $key, 'updated_time')),
                 ];
-                array_push($tr_list_profit, $td);
+                $tr_list_profit[] = $td;
             }
         }
         return [self::unique_arr($tr_list_count), self::unique_arr($tr_list_profit)];
@@ -257,7 +257,7 @@ class Statistics
             $renderer = new ArrayToTextTable($data);
             foreach (explode("\n", $renderer->getTable()) as $value) {
                 if ($value) {
-                    array_push($th_list, $value);
+                    $th_list[] = $value;
                 }
             }
         }

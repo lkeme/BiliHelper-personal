@@ -65,14 +65,14 @@ abstract class BaseRaffle
                 break;
             }
             if ($raffle['wait'] > time()) {
-                array_push(static::$wait_list, $raffle);
+                static::$wait_list[] = $raffle;
                 break;
             }
             if (count($raffle_list) > 200) {
                 break;
             }
-            array_push($room_list, $raffle['room_id']);
-            array_push($raffle_list, $raffle);
+            $room_list[] = $raffle['room_id'];
+            $raffle_list[] = $raffle;
             // 有备注要单独处理
             if (isset($raffle['remarks'])) {
                 Statistics::addJoinList($raffle['remarks']);
@@ -171,7 +171,7 @@ abstract class BaseRaffle
             static::$all_list = array_values(array_splice(static::$all_list, 2000, 2000));
         }
         if ($filter) {
-            array_push(static::$all_list, $lid);
+            static::$all_list[] = $lid;
         }
         return false;
     }
@@ -202,7 +202,7 @@ abstract class BaseRaffle
         }
         $banned_status = Live::fishingDetection($current_rid);
         if ($banned_status) {
-            array_push(static::$banned_rids, $current_rid);
+            static::$banned_rids[] = $current_rid;
             return false;
         }
         // 实际检测

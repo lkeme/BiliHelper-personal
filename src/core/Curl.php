@@ -102,7 +102,7 @@ class Curl
             'tasks' => $tasks,
             'counter' => 1,
             'count' => count($tasks),
-            'concurrency' => count($tasks) < 10 ? count($tasks) : 10
+            'concurrency' => min(count($tasks), 10)
         ];
         Log::debug("ASYNC: $url");
         $headers = self::getHeaders($os, $headers);
@@ -120,10 +120,10 @@ class Curl
             'fulfilled' => function ($response, $index) {
                 $res = $response->getBody();
                 // Log::notice("启动多线程 {$index}");
-                array_push(self::$results, [
+                self::$results[] = [
                     'content' => $res,
                     'source' => self::$async_opt['tasks'][$index]['source']
-                ]);
+                ];
                 self::countedAndCheckEnded();
             },
             'rejected' => function ($reason, $index) {

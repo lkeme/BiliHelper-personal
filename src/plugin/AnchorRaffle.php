@@ -76,11 +76,11 @@ class AnchorRaffle extends BaseRaffle
             User::setUserFollow($need_follow_uid);
             User::tagAddUsers($need_follow_uid, self::$group_id);
             // 添加到检测中奖
-            array_push(self::$wait_un_follows, [
+            self::$wait_un_follows[] = [
                 'uid' => $need_follow_uid,
                 'anchor_id' => $anchor_id,
                 'time' => $time,
-            ]);
+            ];
         }
     }
 
@@ -96,7 +96,7 @@ class AnchorRaffle extends BaseRaffle
             if ($wait_un_follow['uid'] == $uid && $wait_un_follow['uid'] == $anchor_id) {
                 continue;
             }
-            array_push($new_list, $wait_un_follow);
+            $new_list[] = $wait_un_follow;
         }
         self::$wait_un_follows = $new_list;
     }
@@ -113,7 +113,7 @@ class AnchorRaffle extends BaseRaffle
         // 如果获取默认关注错误 或者 为空则补全一个
         self::$default_follows = User::fetchTagFollowings();
         if (empty(self::$default_follows)) {
-            array_push(self::$default_follows, 1);
+            self::$default_follows[] = 1;
         }
         return self::$default_follows;
     }
@@ -183,7 +183,7 @@ class AnchorRaffle extends BaseRaffle
         ];
 //        Statistics::addPushList($data['raffle_name']);
         Statistics::addPushList(self::ACTIVE_TITLE);
-        array_push(self::$wait_list, $data);
+        self::$wait_list[] = $data;
         return true;
     }
 
@@ -205,14 +205,14 @@ class AnchorRaffle extends BaseRaffle
                 'csrf' => getCsrf(),
                 'visit_id' => ''
             ];
-            array_push($tasks, [
+            $tasks[] = [
                 'payload' => Sign::common($payload),
                 'source' => [
                     'room_id' => $raffle['room_id'],
                     'raffle_id' => $raffle['raffle_id'],
                     'raffle_name' => $raffle['raffle_name']
                 ]
-            ]);
+            ];
         }
         // print_r($results);
         return Curl::async('app', $url, $tasks);

@@ -162,7 +162,7 @@ class Forward
             if ($flag) {
                 self::$del_dynamic[$did] = $msg;
                 if (isset($card['origin_user']['info']['uid'])) {
-                    array_push(self::$un_follows, $card['origin_user']['info']['uid']);
+                    self::$un_follows[] = $card['origin_user']['info']['uid'];
                 }
             }
         }
@@ -261,7 +261,7 @@ class Forward
         // 如果获取默认关注错误 或者 为空则补全一个
         self::$default_follows = User::fetchTagFollowings();
         if (empty(self::$default_follows)) {
-            array_push(self::$default_follows, 1);
+            self::$default_follows[] = 1;
         }
         return self::$default_follows;
     }
@@ -275,7 +275,7 @@ class Forward
         $data = json(self::$repository);
         // 给个默认值
         $data = $data->find("DynamicForward.default", []);
-        array_push($data, getConf('auto_reply_text', 'dynamic'));
+        $data[] = getConf('auto_reply_text', 'dynamic');
         return $data;
     }
 

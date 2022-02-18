@@ -46,7 +46,7 @@ class Schedule
         }
         self::isSleep();
         self::isSpecialPause();
-        self::setLock(1 * 60);
+        self::setLock(60);
     }
 
     /**

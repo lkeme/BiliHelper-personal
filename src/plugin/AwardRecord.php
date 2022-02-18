@@ -59,7 +59,7 @@ class AwardRecord
         // 防止异常
         if (!isset($de_raw['data']) || !isset($de_raw['data']['list'])) {
             Log::warning("获取天选时刻获奖记录错误: " . json_encode($de_raw, JSON_FORCE_OBJECT));
-            self::$anchor_lock = time() + 1 * 60 * 60;
+            self::$anchor_lock = time() + 60 * 60;
             return;
         }
         foreach ($de_raw['data']['list'] as $anchor) {
@@ -75,7 +75,7 @@ class AwardRecord
                 Log::notice("天选时刻于" . $anchor['end_time'] . "获奖: $info ,请留意查看...");
                 Notice::push('anchor', $info);
             }
-            array_push(self::$anchor_list, $anchor['id']);
+            self::$anchor_list[] = $anchor['id'];
         }
         // 处理取关操作
         foreach (AnchorRaffle::$wait_un_follows as $wait_un_follow) {
@@ -108,7 +108,7 @@ class AwardRecord
         // 防止异常
         if (!isset($de_raw['data']) || !isset($de_raw['data']['list']) || $de_raw['code']) {
             Log::warning("获取实物奖励获奖记录错误: " . $de_raw['msg']);
-            self::$raffle_lock = time() + 1 * 60 * 60;
+            self::$raffle_lock = time() + 60 * 60;
             return;
         }
         foreach ($de_raw['data']['list'] as $raffle) {
@@ -124,7 +124,7 @@ class AwardRecord
                 Log::notice("实物奖励于" . $raffle['create_time'] . "获奖: $info ,请留意查看...");
                 Notice::push('raffle', $info);
             }
-            array_push(self::$raffle_list, $raffle['id']);
+            self::$raffle_list[] = $raffle['id'];
         }
         self::$raffle_lock = time() + 6 * 60 * 60;
     }

@@ -10,7 +10,6 @@
 
 namespace BiliHelper\Core;
 
-use BiliHelper\Plugin\Live;
 use Throwable;
 use Amp\Loop;
 use BiliHelper\Script\BaseTask;

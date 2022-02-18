@@ -151,7 +151,7 @@ class Competition
                 foreach ($de_raw['data']['list'] as $question) {
                     // 判断是否有效 正2分钟
                     if (($question['contest']['stime'] - 600 - 120) > time()) {
-                        array_push($questions, $question);
+                        $questions[] = $question;
                     }
                 }
                 // 和页面的不匹配 跳出

@@ -12,7 +12,6 @@ namespace BiliHelper\Plugin;
 
 use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
-use BiliHelper\Util\TimeLock;
 use BiliHelper\Util\BaseRaffle;
 
 class PkRaffle extends BaseRaffle
@@ -58,7 +57,7 @@ class PkRaffle extends BaseRaffle
                 'wait' => time() + mt_rand(5, 25)
             ];
             Statistics::addPushList($data['raffle_name']);
-            array_push(self::$wait_list, $data);
+            self::$wait_list[] = $data;
         }
         return true;
     }
@@ -79,14 +78,14 @@ class PkRaffle extends BaseRaffle
                 'csrf_token' => getCsrf(),
                 "csrf" => getCsrf(),
             ];
-            array_push($tasks, [
+            $tasks[] = [
                 'payload' => Sign::common($payload),
                 'source' => [
                     'room_id' => $raffle['room_id'],
                     'raffle_id' => $raffle['raffle_id'],
                     'raffle_name' => $raffle['raffle_name']
                 ]
-            ]);
+            ];
         }
         // print_r($results);
         return Curl::async('app', $url, $tasks);
@@ -112,7 +111,7 @@ class PkRaffle extends BaseRaffle
             if (isset($de_raw['code']) && $de_raw['code'] == 0) {
                 Statistics::addSuccessList($data['raffle_name']);
                 $award_text = $de_raw['data']['award_text'];
-                Log::notice("房间 {$data['room_id']} 编号 {$data['raffle_id']} {$data['raffle_name']}: {$award_text}");
+                Log::notice("房间 {$data['room_id']} 编号 {$data['raffle_id']} {$data['raffle_name']}: $award_text");
                 // 收益
                 Statistics::addProfitList($data['raffle_name'] . '-' . explode('X', $award_text)[0], $de_raw['data']['award_num']);
             } elseif (isset($de_raw['msg']) && $de_raw['code'] == -403 && $de_raw['msg'] == '访问被拒绝') {

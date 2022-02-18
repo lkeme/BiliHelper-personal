@@ -135,7 +135,7 @@ class User
             $de_raw = json_decode($raw, true);
             if ($de_raw['code'] == 0 && isset($de_raw['data']['list'])) {
                 foreach ($de_raw['data']['list'] as $user) {
-                    array_push($followings, $user['mid']);
+                    $followings[] = $user['mid'];
                 }
                 if (count($followings) == $de_raw['data']['total']) {
                     break;
@@ -173,7 +173,7 @@ class User
             $de_raw = json_decode($raw, true);
             if ($de_raw['code'] == 0 && isset($de_raw['data'])) {
                 foreach ($de_raw['data'] as $user) {
-                    array_push($followings, $user['mid']);
+                    $followings[] = $user['mid'];
                 }
                 if (count($de_raw['data']) != $page_size || empty($de_raw['data'])) {
                     break;

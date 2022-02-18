@@ -121,13 +121,13 @@ class MaterialObject
             $last_round = end($rounds);
             // 最后抽奖轮次无效
             if ($last_round['join_end_time'] < time()) {
-                array_push(self::$invalid_aids, $probe_aid);
+                self::$invalid_aids[] = $probe_aid;
                 continue;
             }
             // 过滤敏感词
             $title = $response['data']['title'];
             if (self::filterTitleWords($title)) {
-                array_push(self::$invalid_aids, $probe_aid);
+                self::$invalid_aids[] = $probe_aid;
                 continue;
             }
             // 过滤抽奖轮次
@@ -135,10 +135,10 @@ class MaterialObject
             if ($round_num == 0) {
                 continue;
             }
-            array_push($lottery_list, [
+            $lottery_list[] = [
                 'aid' => $probe_aid,
                 'num' => $round_num,
-            ]);
+            ];
         }
         // 缓存结束 需要的数据的放进缓存
         setCache('invalid_aids', self::$invalid_aids);

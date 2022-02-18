@@ -139,9 +139,10 @@ class Judge
         $de_raw = json_decode($raw, true);
         // {"code":0,"message":"0","ttl":1}
         if (isset($de_raw['code']) && $de_raw['code']) {
-            Log::warning("申请连任失败 $raw");
+            Log::warning("提交連任申請失敗 $raw");
         } else {
-            Log::notice("申请连任成功 $raw");
+            Log::notice("提交連任申請成功 $raw");
+            Notice::push('jury_auto_apply', '提交連任申請成功');
         }
     }
 
@@ -203,8 +204,8 @@ class Judge
         // {"code":0,"message":"0","ttl":1,"data":{"case_id":"AC1xx411c7At"}}
         // {"code":25008,"message":"真给力 , 移交众裁的举报案件已经被处理完了","ttl":1}
         // {"code":25014,"message":"25014","ttl":1}
-        // {"code":25005,"message":"请成为风纪委员后再试","ttl":1}
-        // {"code":25006,"message":"风纪委员资格已过期","ttl":1}
+        // {"code":25005,"message":"请成为風機委員后再试","ttl":1}
+        // {"code":25006,"message":"風機委員资格已过期","ttl":1}
         if (isset($de_raw['code']) && $de_raw['code']) {
             switch ($de_raw['code']) {
                 case 25005:
@@ -245,7 +246,7 @@ class Judge
         $payload = [];
         $raw = Curl::get('pc', $url, $payload, self::$default_headers);
         $de_raw = json_decode($raw, true);
-        // {"code":25005,"message":"请成为风纪委员后再试","ttl":1}
+        // {"code":25005,"message":"请成为風機委員后再试","ttl":1}
         // {"code":0,"message":"0","ttl":1,"data":{"uname":"","face":"http://i2.hdslb.com/bfs/face/.jpg","case_total":,"term_end":,"status":1}}
         if (isset($de_raw['code']) && $de_raw['code']) {
             return false;
@@ -256,12 +257,17 @@ class Judge
 //        "apply_status": 0 申请连任后
 //        "apply_status": 5 审核连任中
 //        "apply_status": 3 连任成功后
-
+//        "apply_status": 4 申请连任失败(?)
         // 理论上正常
         if ($de_raw['data']['status'] == 1) {
-            Log::info('你可以参与社区众裁，共创良好环境哦~');
+            Log::info('你可以參與社區衆裁，共創良好環境哦~');
             return true;
         }
+        // 只是嘗試
+        if ($de_raw['data']['apply_status'] == -1 && getConf('auto_apply', 'judgement')) {
+            self::juryApply();
+        }
+
         return false;
 
     }

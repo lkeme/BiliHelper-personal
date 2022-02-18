@@ -24,8 +24,8 @@ class Faker
      */
     public static function numberBetween(int $int1 = 0, int $int2 = 2147483647): int
     {
-        $min = $int1 < $int2 ? $int1 : $int2;
-        $max = $int1 < $int2 ? $int2 : $int1;
+        $min = min($int1, $int2);
+        $max = max($int1, $int2);
         return mt_rand($min, $max);
     }
 
