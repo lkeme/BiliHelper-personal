@@ -192,7 +192,12 @@ $ docker run -itd --rm -v /path/to/your/confFileName.ini:/app/conf/user.ini lkem
 ```shell script
 $ -e MIRRORS=0 # 使用 github.com 
 $ -e MIRRORS=1 # 使用 ghproxy.com
-$ -e MIRRORS=2 # 使用 github.com.cnpmjs.org
+$ -e MIRRORS=2 # 使用 fastgit.org
+$ -e MIRRORS=3 # 使用 hub.gitfast.tk
+$ -e MIRRORS=4 # 使用 hub.gitslow.tk
+$ -e MIRRORS=5 # 使用 hub.verge.tk
+$ -e MIRRORS=6 # 使用 gh.api.99988866.xyz
+$ -e MIRRORS=custom -e CUSTOM_CLONE_URL=https://github.com/lkeme/BiliHelper-personal.git # 使用 自定义克隆地址
 ```
 
 - 相关参数
