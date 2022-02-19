@@ -3,17 +3,45 @@ set -e
 
 # 源切换
 case ${MIRRORS} in
+"custom")
+  # custom
+  echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-自定义克隆链接 ${Font} \n ======== \n"
+  git remote set-url origin ${CUSTOM_CLONE_URL}
+  ;;
 "0")
+  # https://github.com/
   echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-github.com ${Font} \n ======== \n"
   git remote set-url origin https://github.com/lkeme/BiliHelper-personal.git
   ;;
 "1")
+  # https://ghproxy.com/
   echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-ghproxy.com ${Font} \n ======== \n"
   git remote set-url origin https://ghproxy.com/https://github.com/lkeme/BiliHelper-personal.git
   ;;
 "2")
-  echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-github.com.cnpmjs.org ${Font} \n ======== \n"
-  git remote set-url origin https://github.com.cnpmjs.org/lkeme/BiliHelper-personal.git
+  # http://fastgit.org/
+  echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-hub.fastgit.xyz ${Font} \n ======== \n"
+  git remote set-url origin https://hub.fastgit.xyz/lkeme/BiliHelper-personal.git
+  ;;
+"3")
+  # https://hub.gitfast.tk/
+  echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-hub.gitfast.tk ${Font} \n ======== \n"
+  git remote set-url origin https://hub.gitfast.tk/lkeme/BiliHelper-personal.git
+  ;;
+"4")
+  # https://hub.gitslow.tk/
+  echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-hub.gitslow.tk ${Font} \n ======== \n"
+  git remote set-url origin https://hub.gitslow.tk/lkeme/BiliHelper-personal.git
+  ;;
+"5")
+  # https://hub.verge.tk/
+  echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-hub.verge.tk ${Font} \n ======== \n"
+  git remote set-url origin https://hub.verge.tk/lkeme/BiliHelper-personal.git
+  ;;
+"6")
+  # https://gh.api.99988866.xyz/
+  echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-gh.api.99988866.xyz ${Font} \n ======== \n"
+  git remote set-url origin https://gh.api.99988866.xyz/https://github.com/lkeme/BiliHelper-personal.git
   ;;
 *)
   echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-github.com ${Font} \n ======== \n"
