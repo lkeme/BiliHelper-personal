@@ -194,14 +194,17 @@ class ZoneTcpClient
         $update_room = false;
         switch ($de_raw['cmd']) {
             case 'POPULARITY_RED_POCKET_WINNER_LIST':
-                // winner_info[] -> busers[] -> uid
+                // data -> lot_id|winner_info[] ->uid|name|user_type|award_name
                 Log::debug(json_encode($de_raw, true));
                 break;
             case 'POPULARITY_RED_POCKET_START':
+                // data [0]?-> * sender_uid|sender_name|join_requirement|danmu|lot_status|lot_id|start_time|end_time|awards
+                // awards[] -> gift_id|num
                 Log::debug(json_encode($de_raw, true));
+                $temp = is_array($de_raw['data']) ? $de_raw['data'][0] : $de_raw['data'];
                 $data = [
                     'room_id' => self::$room_id,
-                    'raffle_id' => $de_raw['lot_id'],
+                    'raffle_id' => $temp['lot_id'],
                     'raffle_title' => '利是包',
                     'raffle_type' => 'red_pocket',
                     'source' => $msg
