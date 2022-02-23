@@ -201,7 +201,14 @@ class ZoneTcpClient
                 // data [0]?-> * sender_uid|sender_name|join_requirement|danmu|lot_status|lot_id|start_time|end_time|awards
                 // awards[] -> gift_id|num
                 Log::debug(json_encode($de_raw, true));
-                $temp = is_array($de_raw['data']) ? $de_raw['data'][0] : $de_raw['data'];
+                // 关联
+                if (count(array_filter(array_keys($de_raw['data']), 'is_string')) > 0) {
+                    // 关联数组
+                    $temp = $de_raw['data'];
+                } else {
+                    // 索引数组
+                    $temp = $de_raw['data'][0];
+                }
                 $data = [
                     'room_id' => self::$room_id,
                     'raffle_id' => $temp['lot_id'],
@@ -429,6 +436,7 @@ class ZoneTcpClient
      */
     private static function genHandshakePkg($room_id): string
     {
+        // {"uid":123,"roomid":123,"protover":3,"platform":"web","type":2,"key":""}
         return self::packMsg(json_encode([
             "uid" => 0,
             "roomid" => intval($room_id),
