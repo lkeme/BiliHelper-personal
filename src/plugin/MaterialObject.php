@@ -33,7 +33,7 @@ class MaterialObject
             return;
         }
         self::setPauseStatus();
-        self::calcAid(700, 900);
+        self::calcAid(880, 1080);
         $lottery_list = self::fetchLottery();
         self::drawLottery($lottery_list);
         self::setLock(mt_rand(6, 10) * 60);
