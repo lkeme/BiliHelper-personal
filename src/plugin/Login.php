@@ -21,8 +21,8 @@ class Login
     use TimeLock;
 
     // 账密
-    private static string $username;
-    private static string $password;
+    private static ?string $username = '';
+    private static ?string $password = '';
 
     /**
      * @use run
