@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2021 ~ 2022
+ *  Updated: 2022 ~ 2023
  *  Source: https://github.com/Deemon47/user-agent-generator/
  */
 

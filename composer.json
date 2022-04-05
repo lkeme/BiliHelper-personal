@@ -37,6 +37,7 @@
     "psr-4": {
       "BiliHelper\\Core\\": "src/core",
       "BiliHelper\\Plugin\\": "src/plugin",
+      "BiliHelper\\Plugins\\": "src/plugins",
       "BiliHelper\\Util\\": "src/util",
       "BiliHelper\\Tool\\": "src/tool",
       "BiliHelper\\Script\\": "src/script",

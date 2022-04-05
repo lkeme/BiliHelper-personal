@@ -1,7 +1,6 @@
 <?php
 
 /**
- * 
  *   _____   _   _       _   _   _   _____   _       _____   _____   _____
  *  |  _  \ | | | |     | | | | | | | ____| | |     |  _  \ | ____| |  _  \
  *  | |_| | | | | |     | | | |_| | | |__   | |     | |_| | | |__   | |_| |
@@ -21,13 +20,24 @@
  *   　じしf_, )ノ
  *
  */
-declare(strict_types=1);
 
-namespace BiliHelper\Exceptions;
+namespace BiliHelper\Plugins\Example;
 
-use Exception;
+use BiliHelper\Plugins\Plugins;
 
-class TaskException extends Exception
+class Example
 {
+
+    public function __construct()
+    {
+        $Manager = Plugins::getInstance();
+        $Manager->register('Example', $this, 'example');
+    }
+
+
+    public function example($example): string
+    {
+        return "插件" . $example;
+    }
 
 }
