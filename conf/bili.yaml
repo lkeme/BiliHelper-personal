@@ -3,14 +3,14 @@ bili_version: 0.0.1
 # Android
 bili_a:
   package: "tv.danmaku.bili"
-  version: "6.60.0"
-  build: "6600300"
+  version: "6.72.0"
+  build: "6720300"
   channel: "bili"
   device: "phone"
   mobi_app: "android"
   platform: "android"
-  s_locale: "zh-Hans_CN"
-  c_locale: "zh-Hans_CH"
+  s_locale: "zh_CN"
+  c_locale: "zh_CN"
   app_key: "MWQ4YjZlN2Q0NTIzMzQzNg=="
   secret_key: "NTYwYzUyY2NkMjg4ZmVkMDQ1ODU5ZWQxOGJmZmQ5NzM"
   app_key_n: "NzgzYmJiNzI2NDQ1MWQ4Mg=="

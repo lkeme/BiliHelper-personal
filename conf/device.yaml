@@ -9,6 +9,6 @@ device:
   other_headers:
     ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
   pc_headers:
-    ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36 Edg/95.0.1020.53Chrome/95.0.4638.69 Safari/537.36 Edg/95.0.1020.53"
+    ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.64 Safari/537.36 Edg/101.0.1210.47"
   app_headers:
     ua: "Mozilla/5.0 BiliDroid/${bili_a.version} (bbcallen@gmail.com) os/${device.os} model/${device.model} mobi_app/${bili_a.mobi_app} build/${bili_a.build} channel/${bili_a.channel} innerVer/${bili_a.build} osVer/${device.os_ver} network/${device.network}"
