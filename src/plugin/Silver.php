@@ -10,6 +10,7 @@
 
 namespace BiliHelper\Plugin;
 
+use BiliHelper\Core\Env;
 use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
 use BiliHelper\Util\TimeLock;
@@ -23,7 +24,7 @@ class Silver
     /**
      * @use run
      */
-    public static function run()
+    public static function run(): void
     {
         if (self::getLock() > time()) {
             return;
@@ -40,7 +41,7 @@ class Silver
     /**
      * @use 获取宝箱
      */
-    private static function getSilverBox()
+    private static function getSilverBox(): void
     {
         $url = 'https://api.live.bilibili.com/lottery/v1/SilverBox/getCurrentTask';
         $payload = [];
@@ -58,8 +59,7 @@ class Silver
         }
 
         if (isset($data['code']) && $data['code']) {
-            Log::error("check freeSilverCurrentTask failed! Error message: {$data['message']}");
-            die();
+            Env::failExit("check freeSilverCurrentTask failed! Error message: {$data['message']}");
         }
 
         Log::info("获得一个宝箱，内含 {$data['data']['silver']} 个瓜子");
@@ -76,7 +76,7 @@ class Silver
     /**
      * @use 开启宝箱
      */
-    private static function openSilverBox()
+    private static function openSilverBox(): void
     {
         $url = 'https://api.live.bilibili.com/mobile/freeSilverAward';
         $payload = [

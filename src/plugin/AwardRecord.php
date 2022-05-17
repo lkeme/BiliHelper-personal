@@ -28,7 +28,7 @@ class AwardRecord
     /**
      * @use run
      */
-    public static function run()
+    public static function run(): void
     {
         if (self::getLock() > time() || !getEnable('award_record')) {
             return;
@@ -48,7 +48,7 @@ class AwardRecord
     /**
      * @use 获取天选时刻中奖纪录
      */
-    private static function anchorAward()
+    private static function anchorAward(): void
     {
         $url = 'https://api.live.bilibili.com/xlive/lottery-interface/v1/Anchor/AwardRecord';
         $payload = [
@@ -95,7 +95,7 @@ class AwardRecord
     /**
      * @use 获取实物抽奖中奖纪录
      */
-    private static function raffleAward()
+    private static function raffleAward(): void
     {
         $url = 'https://api.live.bilibili.com/lottery/v1/award/award_list';
         $payload = [
@@ -132,7 +132,7 @@ class AwardRecord
     /**
      * @use 获取活动礼物中奖纪录
      */
-    private static function giftAward()
+    private static function giftAward(): void
     {
         // Web V3 Notice
         $url = 'https://api.live.bilibili.com/xlive/lottery-interface/v3/smalltv/Notice';

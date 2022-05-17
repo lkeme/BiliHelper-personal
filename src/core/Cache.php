@@ -30,7 +30,7 @@ class Cache
     /**
      * @use 加载一个缓存
      * @param string $classname
-     * @return \BiliHelper\Core\Cache
+     * @return Cache
      */
     private function load(string $classname): static
     {

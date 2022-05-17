@@ -33,7 +33,7 @@ abstract class BaseRaffle
     /**
      * @use run
      */
-    public static function run()
+    public static function run(): void
     {
         if (!getEnable(static::ACTIVE_SWITCH)) {
             return;

@@ -23,7 +23,7 @@ class BpConsumption
     /**
      * @use run
      */
-    public static function run()
+    public static function run(): void
     {
         if (self::getLock() > time() || !getEnable('bp_consumption')) {
             return;
@@ -88,7 +88,7 @@ class BpConsumption
      * @param int $uid
      * @param int $num
      */
-    private static function BP2charge(int $uid, int $num = 5)
+    private static function BP2charge(int $uid, int $num = 5): void
     {
         $url = 'https://api.bilibili.com/x/ugcpay/web/v2/trade/elec/pay/quick';
         $payload = [
@@ -119,7 +119,7 @@ class BpConsumption
      * B币充值金瓜子
      * @param int $num
      */
-    private static function BP2gold(int $num)
+    private static function BP2gold(int $num): void
     {
         $url = 'https://api.live.bilibili.com/xlive/revenue/v1/order/createOrder';
         $headers = [

@@ -27,7 +27,7 @@ class SmallHeart
     /**
      * @use run
      */
-    public static function run()
+    public static function run(): void
     {
         if (!getEnable('small_heart')) {
             return;
@@ -51,7 +51,7 @@ class SmallHeart
     /**
      * @use 心跳处理
      */
-    private static function heartBeat()
+    private static function heartBeat(): void
     {
         if (empty(self::$fans_medals)) {
             return;
@@ -69,7 +69,7 @@ class SmallHeart
     /**
      * @use 获取灰色勋章列表(过滤无勋章或已满)
      */
-    private static function fetchMedalList()
+    private static function fetchMedalList(): void
     {
         $data = Live::fetchMedalList();
         foreach ($data as $vo) {

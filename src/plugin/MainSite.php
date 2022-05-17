@@ -22,7 +22,7 @@ class MainSite
     /**
      * @use run
      */
-    public static function run()
+    public static function run(): void
     {
         if (self::getLock() > time() || !getEnable('main_site')) {
             return;

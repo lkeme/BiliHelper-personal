@@ -30,7 +30,7 @@ class Notice
      * @param string $type
      * @param string $result
      */
-    public static function push(string $type, string $result = '')
+    public static function push(string $type, string $result = ''): void
     {
         if (!getEnable('notify')) {
             return;
@@ -146,7 +146,7 @@ class Notice
      * @use 推送消息
      * @param array $info
      */
-    private static function sendLog(array $info)
+    private static function sendLog(array $info): void
     {
         if (getConf('sctkey', 'notify.sct')) {
             self::sctSend($info);
@@ -185,7 +185,7 @@ class Notice
      * @doc https://developers.dingtalk.com/document/robots/custom-robot-access
      * @param array $info
      */
-    private static function dingTalkSend(array $info)
+    private static function dingTalkSend(array $info): void
     {
         Log::info('使用DingTalk机器人推送消息');
         $url = 'https://oapi.dingtalk.com/robot/send?access_token=' . getConf('token', 'notify.dingtalk');
@@ -213,7 +213,7 @@ class Notice
      * @doc https://core.telegram.org/bots/api#sendmessage
      * @param array $info
      */
-    private static function teleSend(array $info)
+    private static function teleSend(array $info): void
     {
         Log::info('使用Tele机器人推送消息');
         $base_url = getConf('url', 'notify.telegram') ?: 'https://api.telegram.org/bot';
@@ -237,7 +237,7 @@ class Notice
      * @use https://sc.ftqq.com/
      * @param array $info
      */
-    private static function scSend(array $info)
+    private static function scSend(array $info): void
     {
         Log::info('使用ServerChan推送消息');
         $url = 'https://sc.ftqq.com/' . getConf('sckey', 'notify.sc') . '.send';
@@ -260,7 +260,7 @@ class Notice
      * @doc https://sct.ftqq.com/
      * @param array $info
      */
-    private static function sctSend(array $info)
+    private static function sctSend(array $info): void
     {
         Log::info('使用ServerChan(Turbo)推送消息');
         $url = 'https://sctapi.ftqq.com/' . getConf('sctkey', 'notify.sct') . '.send';
@@ -284,7 +284,7 @@ class Notice
      * @doc http://www.pushplus.plus/doc/
      * @param array $info
      */
-    private static function pushPlusSend(array $info)
+    private static function pushPlusSend(array $info): void
     {
         Log::info('使用PushPlus酱推送消息');
         $url = 'https://www.pushplus.plus/send';
@@ -308,7 +308,7 @@ class Notice
      * @doc https://docs.go-cqhttp.org/api/
      * @param array $info
      */
-    private static function goCqhttp(array $info)
+    private static function goCqhttp(array $info): void
     {
         Log::info('使用GoCqhttp推送消息');
         $url = getConf('url', 'notify.gocqhttp');
@@ -332,7 +332,7 @@ class Notice
      * @doc https://localhost:8921/doc
      * @param array $info
      */
-    private static function debug(array $info)
+    private static function debug(array $info): void
     {
         Log::info('使用Debug推送消息');
         $url = getConf('url', 'notify.debug');
@@ -345,7 +345,7 @@ class Notice
         $raw = Curl::post('other', $url, $payload);
         $de_raw = json_decode($raw, true);
         // {"success": true, "msg": null, "data": {"errcode": 0, "errmsg": "ok", "msgid": 1231, "token": "456"}}
-        if ($de_raw['success'] == true) {
+        if ($de_raw['success']) {
             Log::notice("推送消息成功: {$de_raw['data']['msgid']}");
         } else {
             Log::warning("推送消息失败: $raw");
@@ -357,7 +357,7 @@ class Notice
      * @doc https://open.work.weixin.qq.com/api/doc/90000/90136/91770
      * @param array $info
      */
-    private static function weCom(array $info)
+    private static function weCom(array $info): void
     {
         Log::info('使用weCom推送消息');
         $url = 'https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=' . getConf('token', 'notify.we_com');
@@ -383,7 +383,7 @@ class Notice
      * @doc https://open.work.weixin.qq.com/wwopen/devtool/interface?doc_id=10167
      * @param array $info
      */
-    private static function weComApp(array $info)
+    private static function weComApp(array $info): void
     {
         Log::info('使用weComApp推送消息');
         $corp_id = getConf('corp_id', 'notify.we_com_app');
@@ -432,7 +432,7 @@ class Notice
      * @doc https://developers.dingtalk.com/document/robots/custom-robot-access
      * @param array $info
      */
-    private static function feiShuSend(array $info)
+    private static function feiShuSend(array $info): void
     {
         Log::info('使用飞书webhook机器人推送消息');
         $url = 'https://open.feishu.cn/open-apis/bot/v2/hook/' . getConf('token', 'notify.feishu');

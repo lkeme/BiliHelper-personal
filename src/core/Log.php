@@ -32,7 +32,7 @@ class Log
     /**
      * @use 单例
      */
-    private static function configureInstance()
+    private static function configureInstance(): void
     {
         $logger = new Logger('BH');
         $handler = new StreamHandler('php://stdout', getConf('enable', 'debug') ? Logger::DEBUG : Logger::INFO);
@@ -59,7 +59,7 @@ class Log
      * @param $type
      * @param $message
      */
-    private static function writeLog($type, $message)
+    private static function writeLog($type, $message): void
     {
         if (getConf('enable', 'log')) {
             if ($type == 'DEBUG' && !getConf('enable', 'debug')) {
@@ -88,7 +88,7 @@ class Log
      * @param $message
      * @param array $context
      */
-    public static function debug($message, array $context = [])
+    public static function debug($message, array $context = []): void
     {
         self::writeLog('DEBUG', $message);
         self::getLogger()->addDebug($message, $context);
@@ -99,7 +99,7 @@ class Log
      * @param $message
      * @param array $context
      */
-    public static function info($message, array $context = [])
+    public static function info($message, array $context = []): void
     {
         $message = self::prefix() . self::backtrace() . $message;
         self::writeLog('INFO', $message);
@@ -112,7 +112,7 @@ class Log
      * @param $message
      * @param array $context
      */
-    public static function notice($message, array $context = [])
+    public static function notice($message, array $context = []): void
     {
         $message = self::prefix() . self::backtrace() . $message;
         self::writeLog('NOTICE', $message);
@@ -125,7 +125,7 @@ class Log
      * @param $message
      * @param array $context
      */
-    public static function warning($message, array $context = [])
+    public static function warning($message, array $context = []): void
     {
         $message = self::prefix() . self::backtrace() . $message;
         self::writeLog('WARNING', $message);
@@ -138,7 +138,7 @@ class Log
      * @param $message
      * @param array $context
      */
-    public static function error($message, array $context = [])
+    public static function error($message, array $context = []): void
     {
         $message = self::prefix() . self::backtrace() . $message;
         self::writeLog('ERROR', $message);
@@ -152,7 +152,7 @@ class Log
      * @param $level
      * @param $message
      */
-    public static function callback($levelId, $level, $message)
+    public static function callback($levelId, $level, $message): void
     {
         // $callback_level = Logger::ERROR ?? getConf('callback_level', 'log');
         $callback_level = getConf('callback_level', 'log') ?? Logger::ERROR;

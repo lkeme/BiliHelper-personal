@@ -88,7 +88,7 @@ class App
      * @param string $taskName
      * @param string $dir
      */
-    private function newTask(string $taskName, string $dir)
+    private function newTask(string $taskName, string $dir): void
     {
         asyncCall(function () use ($taskName, $dir) {
             while (true) {
@@ -111,7 +111,7 @@ class App
     /**
      * @use Script模式
      */
-    private function script_m()
+    private function script_m(): void
     {
         $scripts = [
             'UnFollow' => '批量取消关注(暂测试)',
@@ -125,7 +125,7 @@ class App
     /**
      * @use Loop模式
      */
-    private function loop_m()
+    private function loop_m(): void
     {
         $plugins = [
             'CheckUpdate',
@@ -174,7 +174,7 @@ class App
      * @use 选择模式
      * @param object $args
      */
-    private function selectMode(object $args)
+    private function selectMode(object $args): void
     {
         // 可能会有其他模式出现 暂定
         // 0 默认值 默认模式，1 脚本模式 ...
@@ -187,7 +187,7 @@ class App
      * @use 复位模式
      * @param object $args
      */
-    private function restoreMode(object $args)
+    private function restoreMode(object $args): void
     {
         // 复位 后期添加其他复位
         if ($args->restore) {
@@ -199,7 +199,7 @@ class App
     /**
      * @use 核心运行
      */
-    public function start()
+    public function start(): void
     {
         switch ($this->mode) {
             case 0:
@@ -213,8 +213,7 @@ class App
                 $this->script_m();
                 break;
             default:
-                Log::error("请检查，没有选定的执行模式");
-                exit();
+                Env::failExit('请检查，没有选定的执行模式');
         }
     }
 }

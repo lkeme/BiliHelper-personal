@@ -45,7 +45,7 @@ class Forward
     /**
      * @use run
      */
-    public static function run()
+    public static function run(): void
     {
 
         if (self::getLock() > time()) {
@@ -81,7 +81,7 @@ class Forward
     /**
      * 自动转发抽奖
      */
-    public static function autoRepost()
+    public static function autoRepost(): void
     {
         $article_list = Dynamic::getAwardTopic();
         foreach ($article_list as $did => $article) {
@@ -110,7 +110,7 @@ class Forward
     /**
      * 清理无效的动态
      */
-    private static function clearDynamic()
+    private static function clearDynamic(): void
     {
         $dynamicList = Dynamic::getMyDynamic();
 
@@ -186,7 +186,7 @@ class Forward
     /**
      * @use 取关
      */
-    private static function clearFollowGroup()
+    private static function clearFollowGroup(): void
     {
         $tags = User::fetchTags();
         foreach ($tags as $gid => $name) {
@@ -205,7 +205,7 @@ class Forward
     /**
      * @use 清理动态
      */
-    private static function clearAllDynamic()
+    private static function clearAllDynamic(): void
     {
         $dynamicList = Dynamic::getMyDynamic();
         $msg_list = self::getReplyMsgList();
@@ -231,7 +231,7 @@ class Forward
      * @param int $anchor_id
      * @param int $time
      */
-    private static function addToGroup(int $need_follow_uid, int $anchor_id = 0, int $time = 0)
+    private static function addToGroup(int $need_follow_uid, int $anchor_id = 0, int $time = 0): void
     {
         // 获取分组id
         if (is_null(self::$group_id)) {

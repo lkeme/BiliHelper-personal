@@ -31,7 +31,7 @@ class CapsuleLottery
     /**
      * @use run
      */
-    public static function run()
+    public static function run(): void
     {
         if (self::getLock() > time() || !getEnable('live_capsule')) {
             return;
@@ -167,7 +167,7 @@ class CapsuleLottery
      * @param int $act_id
      * @param string $referer
      */
-    private static function taskShare(int $act_id, string $referer)
+    private static function taskShare(int $act_id, string $referer): void
     {
         $url = 'https://api.live.bilibili.com/xlive/activity-interface/v1/task/UserShare';
         $headers = [
@@ -191,7 +191,7 @@ class CapsuleLottery
      * @param int $pool_id
      * @param string $referer
      */
-    private static function getPoolDetail(int $pool_id, string $referer)
+    private static function getPoolDetail(int $pool_id, string $referer): void
     {
         $url = 'https://api.live.bilibili.com/xlive/web-ucenter/v1/capsule/get_pool_detail';
         $headers = [
@@ -254,7 +254,7 @@ class CapsuleLottery
      * @param int $act_id
      * @param string $referer
      */
-    private static function userActTask(int $act_id, string $referer)
+    private static function userActTask(int $act_id, string $referer): void
     {
         $url = 'https://api.live.bilibili.com/xlive/activity-interface/v1/activitytask/user_acttask/info';
         $headers = [
@@ -277,7 +277,7 @@ class CapsuleLottery
      * @param int $cycle_id
      * @param string $referer
      */
-    private static function getTaskAward(int $act_id, int $task_id, int $level_id, int $cycle_id, string $referer)
+    private static function getTaskAward(int $act_id, int $task_id, int $level_id, int $cycle_id, string $referer): void
     {
         $url = 'https://api.live.bilibili.com/xlive/activity-interface/v1/activitytask/user_acttask/getaward';
         $headers = [

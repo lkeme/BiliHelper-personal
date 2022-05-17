@@ -25,7 +25,7 @@ class PolishTheMedal
     /**
      * @use run
      */
-    public static function run()
+    public static function run(): void
     {
         if (!getEnable('polish_the_medal')) {
             return;
@@ -60,7 +60,7 @@ class PolishTheMedal
     /**
      * @use 点亮勋章
      */
-    private static function polishTheMedal()
+    private static function polishTheMedal(): void
     {
         $medal = array_pop(self::$grey_fans_medals);
         // 为空
@@ -83,7 +83,7 @@ class PolishTheMedal
      * @use 获取灰色勋章列表(过滤无勋章或已满)
      * @param bool $all
      */
-    private static function fetchGreyMedalList(bool $all = false)
+    private static function fetchGreyMedalList(bool $all = false): void
     {
         $data = Live::fetchMedalList();
         foreach ($data as $vo) {

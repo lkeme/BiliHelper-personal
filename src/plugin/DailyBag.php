@@ -21,7 +21,7 @@ class DailyBag
     /**
      * @use run
      */
-    public static function run()
+    public static function run(): void
     {
         if (self::getLock() > time() || !getEnable('daily_bag')) {
             return;
@@ -34,7 +34,7 @@ class DailyBag
     /**
      * @use 领取每日包裹PC
      */
-    private static function dailyBagPC()
+    private static function dailyBagPC(): void
     {
         sleep(1);
         $url = 'https://api.live.bilibili.com/gift/v2/live/receive_daily_bag';
@@ -52,7 +52,7 @@ class DailyBag
     /**
      * @use 领取每日包裹APP
      */
-    private static function dailyBagAPP()
+    private static function dailyBagAPP(): void
     {
         sleep(1);
         $url = 'https://api.live.bilibili.com/AppBag/sendDaily';

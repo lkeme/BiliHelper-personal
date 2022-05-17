@@ -418,7 +418,7 @@ class Live
      * @param array $gift // 礼物信息
      * @param int $num // 数量
      */
-    public static function sendGift(array $guest, array $gift, int $num)
+    public static function sendGift(array $guest, array $gift, int $num): void
     {
         $url = 'https://api.live.bilibili.com/gift/v2/live/bag_send';
         $payload = [

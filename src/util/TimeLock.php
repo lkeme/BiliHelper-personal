@@ -24,7 +24,7 @@ trait TimeLock
      * @use 设置时间
      * @param int $lock
      */
-    public static function setLock(int $lock)
+    public static function setLock(int $lock): void
     {
         if (!static::getpauseStatus()) {
             Task::getInstance()->_setLock(static::getBaseClass(), time() + $lock);
@@ -100,7 +100,7 @@ trait TimeLock
     /**
      * @use 暂停
      */
-    public static function pauseLock()
+    public static function pauseLock(): void
     {
         // 备份几种获取方式 get_called_class()
         // basename(str_replace('\\', '/', $class));
@@ -113,7 +113,7 @@ trait TimeLock
     /**
      * @use 取消暂停
      */
-    public static function cancelPause()
+    public static function cancelPause(): void
     {
         static::$pause_status = false;
     }
@@ -131,7 +131,7 @@ trait TimeLock
      * @use 设置状态
      * @param bool $status
      */
-    public static function setPauseStatus(bool $status = false)
+    public static function setPauseStatus(bool $status = false): void
     {
         self::$pause_status = $status;
     }

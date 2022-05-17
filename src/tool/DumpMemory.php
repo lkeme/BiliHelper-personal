@@ -15,7 +15,7 @@ use BiliHelper\Core\Log;
 
 class DumpMemory
 {
-    public static function dd($title)
+    public static function dd($title): void
     {
         $unit = array('b', 'kb', 'mb', 'gb', 'tb', 'pb');
         $size = memory_get_usage(true);

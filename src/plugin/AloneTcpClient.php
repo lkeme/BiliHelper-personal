@@ -10,27 +10,29 @@
 
 namespace BiliHelper\Plugin;
 
+use BiliHelper\Core\Env;
 use BiliHelper\Core\Log;
 use BiliHelper\Util\TimeLock;
 
 use Exception;
 use Socket\Raw\Factory;
+use Socket\Raw\Socket;
 
 class AloneTcpClient
 {
     use TimeLock;
 
     private static int $heart_lock = 0;
-    private static $client = null;
-    private static $server_addr = null;
-    private static $server_key = null;
+    private static ?Socket $client = null;
+    private static string|null $server_addr = null;
+    private static string|null $server_key = null;
     private static int $socket_timeout = 0;
     private static int $max_errors_num = 0; // 最大连续错误5次
 
     /**
      * @use run
      */
-    public static function run()
+    public static function run(): void
     {
         if (self::getLock() > time() || !getEnable('alone_monitor')) {
             return;
@@ -44,10 +46,10 @@ class AloneTcpClient
     /**
      * @use 初始化
      */
-    private static function init()
+    private static function init(): void
     {
         if (empty(getConf('server_addr', 'alone_monitor')) || empty(getConf('server_key', 'alone_monitor'))) {
-            exit('推送服务器信息不完整, 请检查配置文件!');
+            Env::failExit('推送服务器信息不完整, 请检查配置文件!');
         }
         if (!self::$server_addr || !self::$server_key) {
             self::$server_addr = getConf('server_addr', 'alone_monitor');
@@ -75,7 +77,7 @@ class AloneTcpClient
      * @param $value
      * @param string $fmt
      * @return mixed
-     * @throws \Exception
+     * @throws Exception
      */
     private static function unPackMsg($value, string $fmt = "N"): mixed
     {
@@ -85,7 +87,7 @@ class AloneTcpClient
     /**
      * @use 连接认证
      */
-    private static function handShake()
+    private static function handShake(): void
     {
         self::writer(
             json_encode([
@@ -101,7 +103,7 @@ class AloneTcpClient
     /**
      * @use 心跳
      */
-    private static function heartBeat()
+    private static function heartBeat(): void
     {
         if (self::$heart_lock <= time()) {
             if (self::writer("")) {
@@ -157,7 +159,7 @@ class AloneTcpClient
     /**
      * @use 打开连接
      */
-    private static function openConnect()
+    private static function openConnect(): void
     {
         if (!self::$client) {
             try {
@@ -176,7 +178,7 @@ class AloneTcpClient
     /**
      * @use 重新连接
      */
-    private static function reConnect()
+    private static function reConnect(): void
     {
         Log::info('重新连接到推送服务器');
         self::closeConnect();
@@ -186,7 +188,7 @@ class AloneTcpClient
     /**
      * @use 断开连接
      */
-    private static function closeConnect()
+    private static function closeConnect(): void
     {
         Log::info('断开推送服务器');
         try {
@@ -201,7 +203,7 @@ class AloneTcpClient
     /**
      * @use 读取数据
      */
-    private static function receive()
+    private static function receive(): void
     {
         $len_body = self::reader(4);
         if (!$len_body) {
@@ -253,8 +255,7 @@ class AloneTcpClient
                 break;
             case 'exit':
                 // 服务器发布命令
-                Log::error("服务器发布退出命令 {$raw_data['data']['msg']}");
-                exit();
+                Env::failExit("服务器发布退出命令 {$raw_data['data']['msg']}");
             default:
                 // 未知信息
                 var_dump($raw_data);
@@ -269,7 +270,7 @@ class AloneTcpClient
      * @use 写入log
      * @param $message
      */
-    private static function writeLog($message)
+    private static function writeLog($message): void
     {
         $path = './danmu/';
         if (!file_exists($path)) {

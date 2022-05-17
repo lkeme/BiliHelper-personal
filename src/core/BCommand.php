@@ -27,7 +27,7 @@ class BCommand
         $this->argv = $argv;
     }
 
-    public function run()
+    public function run(): Command
     {
         $cli = new Command('BHP-S', 'BHP命令行工具.');
         $cli->version('0.0.1-dev')
@@ -36,8 +36,7 @@ class BCommand
         try {
             $args = $cli->parse($this->argv);
         } catch (Exception $e) {
-            Log::error($e->getMessage());
-            die('解析命令行参数错误');
+            Env::failExit('解析命令行参数错误', ['msg' => $e->getMessage()]);
         }
         return $args;
     }

@@ -9,6 +9,7 @@
 
 namespace BiliHelper\Script;
 
+use BiliHelper\Core\Env;
 use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
 
@@ -22,8 +23,7 @@ class User
     public static function login(): bool
     {
         if (getAccessToken() == '' || getCookie() == '' || getUid() == '' || getCsrf() == '') {
-            Log::error('用户信息不全，请默认模式登录后使用。');
-            die();
+            Env::failExit('用户信息不全，请默认模式登录后使用。');
         }
         $data = User::userInfo();
         if ($data['code'] == 0 && $data['data']['isLogin']) {
@@ -31,8 +31,7 @@ class User
             $level = $nav['level_info'];
             Log::notice("登录成功 Uname={$nav['uname']} Uid={$nav['mid']} Lv={$level['current_level']} ({$level['current_exp']}/{$level['current_min']})");
         } else {
-            Log::error("登录失败 CODE -> {$data['code']} MSG -> {$data['message']} ");
-            die();
+            Env::failExit("登录失败 CODE -> {$data['code']} MSG -> {$data['message']} ");
         }
         return true;
     }

@@ -27,7 +27,7 @@ class Statistics
      * @use run
      * @todo 统计开关 统计时间间隔  统计类型
      */
-    public static function run()
+    public static function run(): void
     {
         if (self::getLock() > time()) {
             return;
@@ -267,7 +267,7 @@ class Statistics
     /**
      * @use 打印表格
      */
-    private static function outputResult()
+    private static function outputResult(): void
     {
         $arr_tr_list = self::getTrList();
         foreach ($arr_tr_list as $tr_list) {

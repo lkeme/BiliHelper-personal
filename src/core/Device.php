@@ -37,7 +37,7 @@ class Device
     /**
      * @use 加载配置
      */
-    public function load(string $load_file)
+    public function load(string $load_file): void
     {
         // 提前处理 后缀
         $custom_file = str_replace(strrchr($load_file, "."), "", $load_file) . '_';

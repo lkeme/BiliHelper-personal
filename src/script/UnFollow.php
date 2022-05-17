@@ -9,8 +9,10 @@
 
 namespace BiliHelper\Script;
 
+use BiliHelper\Core\Env;
 use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
+use Exception;
 
 class UnFollow extends BaseTask
 {
@@ -18,7 +20,7 @@ class UnFollow extends BaseTask
 
     /**
      * @use run
-     * @throws \Exception
+     * @throws Exception
      */
     public static function run()
     {
@@ -37,7 +39,7 @@ class UnFollow extends BaseTask
      * @use 取消关注
      * @param $target_ups
      * @param $tag_id
-     * @throws \Exception
+     * @throws Exception
      */
     private static function relationModify($target_ups, $tag_id)
     {
@@ -76,7 +78,7 @@ class UnFollow extends BaseTask
      * @param int $max_pn
      * @param int $max_ps
      * @return array
-     * @throws \Exception
+     * @throws Exception
      */
     private static function relationTag($tag_id, int $max_pn = 60, int $max_ps = 20): array
     {
@@ -139,8 +141,7 @@ class UnFollow extends BaseTask
             Log::notice("已获取分组 $option - $options[$option]");
             return $option;
         } else {
-            Log::error("获取关注分组失败 CODE -> {$data['code']} MSG -> {$data['message']} ");
-            die();
+            Env::failExit("获取关注分组失败 CODE -> {$data['code']} MSG -> {$data['message']} ");
         }
     }
 

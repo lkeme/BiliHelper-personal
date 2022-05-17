@@ -15,7 +15,7 @@ class BaseTask
 {
     public static $interactor = null;
 
-    public static function init()
+    public static function init(): void
     {
         User::login();
     }
@@ -54,7 +54,7 @@ class BaseTask
     }
 
     /**
-     * @return \Ahc\Cli\IO\Interactor
+     * @return Interactor
      */
     public static function interactor(): Interactor
     {

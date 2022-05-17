@@ -39,7 +39,7 @@ class Schedule
     /**
      * @use run
      */
-    public static function run()
+    public static function run(): void
     {
         if (self::getLock() > time()) {
             return;
@@ -92,7 +92,7 @@ class Schedule
      * @param $action
      * @param string $classname
      */
-    private static function handleBan($action, string $classname = '')
+    private static function handleBan($action, string $classname = ''): void
     {
         switch ($action) {
             // 休眠
@@ -138,7 +138,7 @@ class Schedule
      * @param int $unlock_time
      * @param bool $force
      */
-    private static function stopProc(array $classname_list, int $unlock_time, bool $force = false)
+    private static function stopProc(array $classname_list, int $unlock_time, bool $force = false): void
     {
         foreach ($classname_list as $classname) {
             Log::info("插件 $classname 黑名单，锁定状态将于" . date("Y-m-d H:i", time() + $unlock_time) . "解除");
@@ -155,7 +155,7 @@ class Schedule
      * @use 触发封禁
      * @param string $classname
      */
-    public static function triggerRefused(string $classname)
+    public static function triggerRefused(string $classname): void
     {
         self::handleBan('pause', $classname);
     }

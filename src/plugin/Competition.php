@@ -22,7 +22,7 @@ class Competition
      * @use run
      * @doc 赛事入口 https://www.bilibili.com/v/game/match/competition
      */
-    public static function run()
+    public static function run(): void
     {
         if (self::getLock() > time() || !getEnable('match_forecast')) {
             return;
@@ -34,7 +34,7 @@ class Competition
     /**
      * @use 开始破产
      */
-    private static function startStake()
+    private static function startStake(): void
     {
         $questions = self::fetchQuestions();
         $max_guess = getConf('max_num', 'match_forecast');
@@ -51,7 +51,7 @@ class Competition
      * @use 添加竞猜
      * @param array $guess
      */
-    private static function addGuess(array $guess)
+    private static function addGuess(array $guess): void
     {
         Log::info($guess['title']);
         Log::info($guess['estimate']);

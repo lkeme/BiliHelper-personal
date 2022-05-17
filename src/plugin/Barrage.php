@@ -22,7 +22,7 @@ class Barrage
     /**
      * @use run
      */
-    public static function run()
+    public static function run(): void
     {
         if (self::getLock() > time() || !getEnable('barrage')) {
             return;
@@ -76,6 +76,7 @@ class Barrage
         } catch (Exception $e) {
             return $e->getMessage();
         }
+        return '哔哩哔哩🍻！';
     }
 
 

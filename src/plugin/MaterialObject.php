@@ -27,7 +27,7 @@ class MaterialObject
     /**
      * @use run
      */
-    public static function run()
+    public static function run(): void
     {
         if (self::getLock() > time() || !getEnable('live_box')) {
             return;

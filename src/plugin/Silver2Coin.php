@@ -21,7 +21,7 @@ class Silver2Coin
     /**
      * @use run
      */
-    public static function run()
+    public static function run(): void
     {
         if (self::getLock() > time() || !getEnable('silver2coin')) {
             return;

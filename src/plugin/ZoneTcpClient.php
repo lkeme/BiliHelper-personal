@@ -10,6 +10,7 @@
 
 namespace BiliHelper\Plugin;
 
+use BiliHelper\Core\Env;
 use BiliHelper\Core\Log;
 use BiliHelper\Util\TimeLock;
 
@@ -17,6 +18,7 @@ use Amp\Delayed;
 use Exception;
 use JetBrains\PhpStorm\Pure;
 use Socket\Raw\Factory;
+use Socket\Raw\Socket;
 use function get_class;
 
 class ZoneTcpClient
@@ -30,7 +32,7 @@ class ZoneTcpClient
 
     private static int|string $area_id;
     private static int|string $room_id;
-    private static $client;
+    private static ?Socket $client;
     private static array $client_maps = [];
     private static array $trigger_restart = [];
     private static int $socket_timeout = 0;
@@ -39,7 +41,7 @@ class ZoneTcpClient
     /**
      * @use run
      */
-    public static function run()
+    public static function run(): void
     {
         if (self::getLock() > time() || !getEnable('zone_monitor')) {
             return;
@@ -55,10 +57,10 @@ class ZoneTcpClient
     /**
      * @use 初始化
      */
-    private static function init()
+    private static function init(): void
     {
         if (empty(getConf('server_addr', 'zone_monitor'))) {
-            exit('推送服务器信息不完整, 请检查配置文件!');
+            Env::failExit('推送服务器信息不完整, 请检查配置文件!');
         }
         if (!self::$client) {
             self::initConnect();
@@ -68,7 +70,7 @@ class ZoneTcpClient
     /**
      * @use 初始化连接
      */
-    private static function initConnect()
+    private static function initConnect(): void
     {
         $areas = Live::fetchLiveAreas();
         foreach ($areas as $area_id) {
@@ -85,7 +87,7 @@ class ZoneTcpClient
      * @param array $area_data
      * @param string $reason
      */
-    private static function triggerReConnect(array $area_data, string $reason)
+    private static function triggerReConnect(array $area_data, string $reason): void
     {
         Log::debug("Reconnect Reason: {$area_data['area_id']} -> $reason");
         self::$client_maps["server" . $area_data['area_id']]['status'] = false;
@@ -95,7 +97,7 @@ class ZoneTcpClient
     /**
      * @use 更新连接
      */
-    private static function updateConnection()
+    private static function updateConnection(): void
     {
         $num = count(self::$trigger_restart);
         for ($i = 0; $i < $num; $i++) {
@@ -121,7 +123,7 @@ class ZoneTcpClient
      * @use 更新操作
      * @param array $area
      */
-    private static function update(array $area)
+    private static function update(array $area): void
     {
         self::$area_id = $area['area_id'];
         self::$room_id = $area['room_id'];
@@ -388,7 +390,7 @@ class ZoneTcpClient
     /**
      * @推送到上游处理
      */
-    private static function pushHandle()
+    private static function pushHandle(): void
     {
         foreach (self::$raffle_list as $type => $data) {
             $temp_room_id = 0;
@@ -406,7 +408,7 @@ class ZoneTcpClient
      * @use 响应关闭
      * @param $client
      */
-    private static function onClosed($client)
+    private static function onClosed($client): void
     {
     }
 
@@ -478,7 +480,7 @@ class ZoneTcpClient
     /**
      * @use 心跳
      */
-    private static function heartBeat()
+    private static function heartBeat(): void
     {
         foreach (self::$client_maps as $key => $client_info) {
             // 如果重连状态 跳过
@@ -574,7 +576,7 @@ class ZoneTcpClient
     /**
      * @use 读取数据
      */
-    private static function receive()
+    private static function receive(): void
     {
         foreach (self::$client_maps as $client_info) {
             // 如果重连状态 就跳过

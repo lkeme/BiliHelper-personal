@@ -27,7 +27,7 @@ class VipPrivilege
     /**
      * @use run
      */
-    public static function run()
+    public static function run(): void
     {
         if (self::getLock() > time() || !getEnable('vip_privilege')) {
             return;
@@ -52,7 +52,7 @@ class VipPrivilege
      * @use 领取我的大会员权益
      * @param int $type
      */
-    private static function myVipPrivilegeReceive(int $type)
+    private static function myVipPrivilegeReceive(int $type): void
     {
         $url = 'https://api.bilibili.com/x/vip/privilege/receive';
         $headers = [

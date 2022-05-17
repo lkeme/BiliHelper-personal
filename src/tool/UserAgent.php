@@ -193,7 +193,7 @@ class UserAgent
      * Get a random operating system
      * @param string|null $os
      * @return array|string|null *
-     * @throws \Exception
+     * @throws Exception
      */
     public function getOS(string $os = NULL): array|string|null
     {
@@ -226,7 +226,7 @@ class UserAgent
      * Get Mobile OS
      * @param string|null $os Can specifiy android, iphone, ipad, ipod, or null/blank for random
      * @return array|string|null *
-     * @throws \Exception
+     * @throws Exception
      */
     public function getMobileOS(string $os = NULL): array|string|null
     {
@@ -262,7 +262,7 @@ class UserAgent
      *  static::processRandomNumbers
      * @param $selected_os
      * @return null|string|string[] *
-     * @throws \Exception
+     * @throws Exception
      */
     public static function processRandomNumbers($selected_os): array|string|null
     {
@@ -317,7 +317,7 @@ class UserAgent
      *  static::chromeVersion
      * @param $version
      * @return string *
-     * @throws \Exception
+     * @throws Exception
      */
     public static function chromeVersion($version): string
     {
@@ -329,7 +329,7 @@ class UserAgent
      *  static::firefoxVersion
      * @param $version
      * @return string *
-     * @throws \Exception
+     * @throws Exception
      */
     public static function firefoxVersion($version): string
     {
@@ -340,7 +340,7 @@ class UserAgent
      *  static::windows
      * @param $version
      * @return string *
-     * @throws \Exception
+     * @throws Exception
      */
     public static function windows($version): string
     {
@@ -351,7 +351,7 @@ class UserAgent
      * generate
      * @param null $userAgent
      * @return string *
-     * @throws \Exception
+     * @throws Exception
      */
     public function generate($userAgent = NULL, $locale = null): string
     {

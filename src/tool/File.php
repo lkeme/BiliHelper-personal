@@ -135,7 +135,6 @@ class File
      * @param string $filename
      * @return array|bool
      */
-    #[Pure]
     public static function getInfo(string $filename): array|bool
     {
         // 如果不是文件 或者 不可读返回false

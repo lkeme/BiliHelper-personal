@@ -21,7 +21,7 @@ class LiveReservation
     /**
      * @use run
      */
-    public static function run()
+    public static function run(): void
     {
         if (self::getLock() > time() || !getEnable('live_reservation')) {
             return;
@@ -45,7 +45,7 @@ class LiveReservation
      * @use 尝试预约并抽奖
      * @param array $data
      */
-    private static function reserve(array $data)
+    private static function reserve(array $data): void
     {
         $url = 'https://api.bilibili.com/x/space/reserve';
         $headers = [

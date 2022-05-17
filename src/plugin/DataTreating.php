@@ -19,7 +19,7 @@ class DataTreating
      * @use 抽奖分发
      * @param array $data
      */
-    public static function distribute(array $data)
+    public static function distribute(array $data): void
     {
         // var_dump($data);
         // room_id raffle_id raffle_title raffle_type

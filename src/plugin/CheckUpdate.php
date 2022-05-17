@@ -26,7 +26,7 @@ class CheckUpdate
     /**
      * @use run
      */
-    public static function run()
+    public static function run(): void
     {
         if (self::getLock() > time()) {
             return;
@@ -38,7 +38,7 @@ class CheckUpdate
     /**
      * @use 检查
      */
-    private static function check()
+    private static function check(): void
     {
         Log::info('开始检查项目更新');
         self::loadJsonData();
@@ -73,7 +73,7 @@ class CheckUpdate
     /**
      * @use 拉取最新
      */
-    private static function fetchLatest()
+    private static function fetchLatest(): void
     {
         $url = self::$current_conf->get('raw_url');
         $payload = [];
@@ -84,7 +84,7 @@ class CheckUpdate
     /**
      * @use 加载本地JSON DATA
      */
-    private static function loadJsonData()
+    private static function loadJsonData(): void
     {
         self::$current_conf = json(self::$repository);
     }

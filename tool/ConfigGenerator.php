@@ -56,7 +56,7 @@ class ConfigGenerator
     /**
      * @use Generator
      */
-    public function generate()
+    public function generate(): void
     {
         $this->filename = $this->cliInput('请输入配置文件名: ');
         $this->template = file_get_contents($this->default_filename);

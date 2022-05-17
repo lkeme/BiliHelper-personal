@@ -11,6 +11,7 @@
 namespace BiliHelper\Core;
 
 use BiliHelper\Util\Singleton;
+use Jelix\IniFile\IniException;
 use Jelix\IniFile\IniModifier;
 
 class Config
@@ -27,11 +28,11 @@ class Config
      * @use 加载配置
      * @param string $load_file
      */
-    public function load(string $load_file)
+    public function load(string $load_file): void
     {
         $config_path = str_replace("\\", "/", APP_CONF_PATH . $load_file);
         if (!is_file($config_path)) {
-            die("配置文件 $load_file 加载错误，请参照文档添加配置文件！");
+            Env::failExit("配置文件 $load_file 加载错误，请参照文档添加配置文件！");
         }
         $this->load_file = $load_file;
         $this->config_path = $config_path;
@@ -47,9 +48,9 @@ class Config
      * @param $value
      * @param int|string $section
      * @param null $key
-     * @throws \Jelix\IniFile\IniException
+     * @throws IniException
      */
-    public function _set($name, $value, int|string $section = 0, $key = null)
+    public function _set($name, $value, int|string $section = 0, $key = null): void
     {
         $this->app_config->setValue($name, $value, $section, $key);
         $this->app_config->save();

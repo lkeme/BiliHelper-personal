@@ -11,6 +11,8 @@
 
 namespace BiliHelper\Tool;
 
+use Closure;
+
 class ArrayToTextTable
 {
     const AlignLeft = STR_PAD_RIGHT;
@@ -144,7 +146,7 @@ class ArrayToTextTable
         }
 
         //执行formatter
-        if ($this->formatter instanceof \Closure) {
+        if ($this->formatter instanceof Closure) {
             foreach ($data as &$row) {
                 array_walk($row, $this->formatter);
             }
@@ -162,7 +164,7 @@ class ArrayToTextTable
         return $data;
     }
 
-    private function setWidth($key, $value)
+    private function setWidth($key, $value): void
     {
         if (!isset($this->widths[$key])) {
             $this->widths[$key] = 0;

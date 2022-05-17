@@ -322,7 +322,7 @@ class User
     /**
      * @use 我的钱包
      */
-    public static function myWallet()
+    public static function myWallet(): void
     {
         $url = 'https://api.live.bilibili.com/pay/v2/Pay/myWallet';
         $headers = [

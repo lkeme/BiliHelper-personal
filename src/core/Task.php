@@ -22,7 +22,7 @@ class Task
     /**
      * @use 初始化
      */
-    protected function init()
+    protected function init(): void
     {
         // 赋值仓库地址
         if ($this->repository == '') {
@@ -89,7 +89,7 @@ class Task
     /**
      * @use 复位
      */
-    public function restore()
+    public function restore(): void
     {
         Log::info('复位任务排程文件。');
         File::del($this->repository);

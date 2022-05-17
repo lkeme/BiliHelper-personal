@@ -11,6 +11,7 @@
 use BiliHelper\Core\Cache;
 use BiliHelper\Core\Config;
 use BiliHelper\Core\Device;
+use Jelix\IniFile\IniException;
 
 /**
  * @use 配置读取
@@ -30,9 +31,9 @@ function getConf($name, int|string $section = 0, $key = null): mixed
  * @param $value
  * @param int|string $section
  * @param null $key
- * @throws \Jelix\IniFile\IniException
+ * @throws IniException
  */
-function setConf($name, $value, int|string $section = 0, $key = null)
+function setConf($name, $value, int|string $section = 0, $key = null): void
 {
     Config::getInstance()->_set($name, $value, $section, $key);
 }
@@ -121,7 +122,7 @@ function getCache(string $key, string $extra_name = ''): mixed
  * @param $data
  * @param string $extra_name
  */
-function setCache(string $key, $data, string $extra_name = '')
+function setCache(string $key, $data, string $extra_name = ''): void
 {
     Cache::getInstance()->_set($key, $data, $extra_name);
 }

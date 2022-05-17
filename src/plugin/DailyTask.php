@@ -21,7 +21,7 @@ class DailyTask
     /**
      * @use run
      */
-    public static function run()
+    public static function run(): void
     {
         if (self::getLock() > time() || !getEnable('daily_task')) {
             return;
@@ -58,7 +58,7 @@ class DailyTask
      * @use 每日签到
      * @param $info
      */
-    private static function sign_info($info)
+    private static function sign_info($info): void
     {
         Log::info('检查任务「每日签到」...');
 
@@ -92,7 +92,7 @@ class DailyTask
      * @use 双端任务
      * @param $info
      */
-    private static function double_watch_info($info)
+    private static function double_watch_info($info): void
     {
         Log::info('检查任务「双端观看直播」...');
 

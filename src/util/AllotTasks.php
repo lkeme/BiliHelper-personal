@@ -36,7 +36,7 @@ trait AllotTasks
     /**
      * @use 提交任务
      * @param string $operation
-     * @param \stdClass $act
+     * @param stdClass $act
      * @param bool $time
      * @return bool
      */

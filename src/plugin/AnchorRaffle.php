@@ -221,9 +221,9 @@ class AnchorRaffle extends BaseRaffle
     /**
      * @use 解析抽奖信息
      * @param array $results
-     * @return mixed
+     * @return string
      */
-    protected static function parseLottery(array $results): mixed
+    protected static function parseLottery(array $results): string
     {
         foreach ($results as $result) {
             $data = $result['source'];

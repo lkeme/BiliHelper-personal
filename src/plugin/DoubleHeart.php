@@ -21,7 +21,7 @@ class DoubleHeart
     /**
      * @use run
      */
-    public static function run()
+    public static function run(): void
     {
         if (self::getLock() > time() || !getEnable('double_heart')) {
             return;
@@ -35,7 +35,7 @@ class DoubleHeart
     /**
      * @use Web 心跳
      */
-    protected static function webHeart()
+    protected static function webHeart(): void
     {
         User::webGetUserInfo();
         $url = 'https://api.live.bilibili.com/User/userOnlineHeart';
@@ -61,7 +61,7 @@ class DoubleHeart
     /**
      * @use 手机端心跳
      */
-    protected static function appHeart()
+    protected static function appHeart(): void
     {
         User::appGetUserInfo();
         $url = 'https://api.live.bilibili.com/mobile/userOnlineHeart';

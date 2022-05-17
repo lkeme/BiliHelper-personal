@@ -43,7 +43,7 @@ class Judge
     /**
      * @use run
      */
-    public static function run()
+    public static function run(): void
     {
         // 基础判断
         if (self::getLock() > time() || !getEnable('judgement')) {
@@ -105,7 +105,7 @@ class Judge
      * @param string $case_id
      * @param int $vote
      */
-    private static function vote(string $case_id, int $vote)
+    private static function vote(string $case_id, int $vote): void
     {
         $url = 'https://api.bilibili.com/x/credit/v2/jury/vote';
         $payload = [
@@ -129,7 +129,7 @@ class Judge
     /**
      * @use 申请连任
      */
-    private static function juryApply()
+    private static function juryApply(): void
     {
         $url = 'https://api.bilibili.com/x/credit/v2/jury/apply';
         $payload = [

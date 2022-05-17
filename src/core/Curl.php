@@ -165,7 +165,7 @@ class Curl
     /**
      * @use 计数搭配并发使用
      */
-    private static function countedAndCheckEnded()
+    private static function countedAndCheckEnded(): void
     {
         if (self::$async_opt['counter'] < self::$async_opt['count']) {
             self::$async_opt['counter']++;
@@ -201,7 +201,7 @@ class Curl
             Log::warning("CURl -> RETRY: $retry ERROR: {$e->getMessage()} ERRNO: {$e->getCode()} STATUS:  Waiting for recovery!");
             sleep(15);
         }
-        exit('网络异常，超出最大尝试次数，退出程序~');
+        Env::failExit('网络异常，超出最大尝试次数，退出程序~');
     }
 
     /**

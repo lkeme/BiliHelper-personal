@@ -9,10 +9,12 @@
 
 namespace BiliHelper\Plugin;
 
+use BiliHelper\Core\Env;
 use BiliHelper\Core\Log;
 use BiliHelper\Core\Curl;
 use BiliHelper\Util\TimeLock;
 use BiliHelper\Tool\Common;
+use Jelix\IniFile\IniException;
 use JetBrains\PhpStorm\ArrayShape;
 use JetBrains\PhpStorm\NoReturn;
 
@@ -26,9 +28,9 @@ class Login
 
     /**
      * @use run
-     * @throws \Jelix\IniFile\IniException
+     * @throws IniException
      */
-    public static function run()
+    public static function run(): void
     {
         if (self::getLock()) {
             self::keepAuth();
@@ -53,9 +55,9 @@ class Login
 
     /**
      * @use 登录控制中心
-     * @throws \Jelix\IniFile\IniException
+     * @throws IniException
      */
-    private static function login()
+    private static function login(): void
     {
         self::checkLogin();
         switch (getConf('mode', 'login.mode')) {
@@ -70,25 +72,22 @@ class Login
             case 3:
                 // 行为验证码模式(暂未开放)
                 // self::captchaLogin();
-                Log::error('此登录模式暂未开放');
-                die();
+                Env::failExit('此登录模式暂未开放');
             default:
-                Log::error('登录模式配置错误');
-                die();
+                Env::failExit('登录模式配置错误');
         }
     }
 
     /**
      * @use 检查登录
-     * @throws \Jelix\IniFile\IniException
+     * @throws IniException
      */
-    private static function checkLogin()
+    private static function checkLogin(): void
     {
         $username = getConf('username', 'login.account');
         $password = getConf('password', 'login.account');
         if (empty($username) || empty($password)) {
-            Log::error('空白的帐号和口令');
-            die();
+            Env::failExit('空白的帐号和口令');
         }
         self::clearAccount();
         self::$username = $username;
@@ -98,7 +97,7 @@ class Login
     /**
      * @use 保持认证
      * @return bool
-     * @throws \Jelix\IniFile\IniException
+     * @throws IniException
      */
     private static function keepAuth(): bool
     {
@@ -141,7 +140,7 @@ class Login
 
     /**
      * @use 刷新Token
-     * @throws \Jelix\IniFile\IniException
+     * @throws IniException
      */
     private static function refreshToken(): bool
     {
@@ -175,8 +174,7 @@ class Login
         $data = Curl::get('app', $url, Sign::login($payload));
         $data = json_decode($data, true);
         if (isset($data['code']) && $data['code']) {
-            Log::error('公钥载入失败', ['msg' => $data['message']]);
-            die();
+            Env::failExit('公钥载入失败',['msg' => $data['message']]);
         } else {
             Log::info('公钥载入完毕');
         }
@@ -247,9 +245,9 @@ class Login
      * @param string $validate
      * @param string $challenge
      * @param string $mode
-     * @throws \Jelix\IniFile\IniException
+     * @throws IniException
      */
-    private static function accountLogin(string $validate = '', string $challenge = '', string $mode = '账密模式')
+    private static function accountLogin(string $validate = '', string $challenge = '', string $mode = '账密模式'): void
     {
         Log::info("尝试 $mode 登录");
         // $url = 'https://passport.bilibili.com/api/v3/oauth2/login';
@@ -278,9 +276,9 @@ class Login
     /**
      * @use 短信登录
      * @param string $mode
-     * @throws \Jelix\IniFile\IniException
+     * @throws IniException
      */
-    private static function smsLogin(string $mode = '短信模式')
+    private static function smsLogin(string $mode = '短信模式'): void
     {
         Log::info("尝试 $mode 登录");
         if (getConf('phone', 'login.check')) {
@@ -338,8 +336,7 @@ class Login
             $payload['captcha_key'] = $de_raw['data']['captcha_key'];
             return $payload;
         }
-        Log::error("短信验证码发送失败 $raw");
-        die();
+        Env::failExit("短信验证码发送失败 $raw");
     }
 
     /**
@@ -347,9 +344,9 @@ class Login
      * @param $mode
      * @param $code
      * @param $data
-     * @throws \Jelix\IniFile\IniException
+     * @throws IniException
      */
-    private static function loginAfter($mode, $code, $data)
+    private static function loginAfter($mode, $code, $data): void
     {
         switch ($code) {
             case 0:
@@ -396,9 +393,9 @@ class Login
      * @use 登录成功
      * @param $mode
      * @param $data
-     * @throws \Jelix\IniFile\IniException
+     * @throws IniException
      */
-    private static function loginSuccess($mode, $data)
+    private static function loginSuccess($mode, $data): void
     {
         Log::info("$mode 登录成功");
         self::successHandle($data);
@@ -408,9 +405,9 @@ class Login
     /**
      * @use 刷新成功
      * @param $data
-     * @throws \Jelix\IniFile\IniException
+     * @throws IniException
      */
-    private static function refreshSuccess($data)
+    private static function refreshSuccess($data): void
     {
         Log::info('重新令牌生成完毕');
         self::successHandle($data);
@@ -420,9 +417,9 @@ class Login
     /**
      * @use 成功处理
      * @param $data
-     * @throws \Jelix\IniFile\IniException
+     * @throws IniException
      */
-    private static function successHandle($data)
+    private static function successHandle($data): void
     {
         $access_token = $data['data']['token_info']['access_token'];
         $refresh_token = $data['data']['token_info']['refresh_token'];
@@ -440,22 +437,21 @@ class Login
      * @param $data
      */
     #[NoReturn]
-    private static function loginFail($mode, $data)
+    private static function loginFail($mode, $data): void
     {
-        Log::error("$mode 登录失败", ['msg' => $data]);
-        die();
+        Env::failExit("$mode 登录失败", ['msg' => $data]);
     }
+
 
     /**
      * @use 检查手机号格式
      * @param string $phone
      */
-    private static function checkPhone(string $phone)
+    private static function checkPhone(string $phone): void
     {
         //  /^1[3456789]{1}\d{9}$/
         if (!preg_match("/^1[3456789]\d{9}$/", $phone)) {
-            Log::error("当前用户名不是有效手机号格式");
-            die();
+            Env::failExit('当前用户名不是有效手机号格式');
         }
     }
 
@@ -466,9 +462,9 @@ class Login
      * @param string $section
      * @param bool $print
      * @param bool $hide
-     * @throws \Jelix\IniFile\IniException
+     * @throws IniException
      */
-    private static function saveConfig(string $key, string $value, string $section, bool $print = true, bool $hide = true)
+    private static function saveConfig(string $key, string $value, string $section, bool $print = true, bool $hide = true): void
     {
         setConf($key, $value, $section);
         if ($print) {
@@ -493,9 +489,9 @@ class Login
 
     /**
      * @use 清除已有
-     * @throws \Jelix\IniFile\IniException
+     * @throws IniException
      */
-    private static function clearAccount()
+    private static function clearAccount(): void
     {
         $variables = ['cookie', 'access_token', 'refresh_token'];
         foreach ($variables as $variable) {
@@ -526,14 +522,13 @@ class Login
     /**
      * @use 验证码登录
      * @param string $mode
-     * @throws \Jelix\IniFile\IniException
+     * @throws IniException
      */
-    private static function captchaLogin(string $mode = '验证码模式')
+    private static function captchaLogin(string $mode = '验证码模式'): void
     {
         $captcha_ori = self::getCaptcha();
         $captcha = self::ocrCaptcha($captcha_ori);
         self::accountLogin($captcha['validate'], $captcha['challenge'], $mode);
     }
-
 
 }
