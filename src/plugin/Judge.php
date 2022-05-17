@@ -109,11 +109,12 @@ class Judge
     {
         $url = 'https://api.bilibili.com/x/credit/v2/jury/vote';
         $payload = [
-            "case_id" => $case_id,
-            "vote" => $vote,
-            "content" => "",
-            "anonymous" => 0,
-            "csrf" => getCsrf(),
+            "case_id" => $case_id, # 案件id
+            "vote" => $vote, # 投票选项
+            "content" => "", # 内容
+            "anonymous" => 0,  # 是否匿名
+            "insiders" => array_rand([0, 1]),  # 是否观看
+            "csrf" => getCsrf(), # 验证
         ];
         $raw = Curl::post('pc', $url, $payload, self::$default_headers);
         $de_raw = json_decode($raw, true);
@@ -127,7 +128,7 @@ class Judge
     }
 
     /**
-     * @use 申请连任
+     * @use 申请连任资格
      */
     private static function juryApply(): void
     {
@@ -150,7 +151,7 @@ class Judge
     /**
      * @use 获取众议观点
      */
-    private static function caseOpinion(string $case_id, int $pn = 1, int $ps = 5)
+    private static function caseOpinion(string $case_id, int $pn = 1, int $ps = 20)
     {
         $url = 'https://api.bilibili.com/x/credit/v2/jury/case/opinion';
         $payload = [
