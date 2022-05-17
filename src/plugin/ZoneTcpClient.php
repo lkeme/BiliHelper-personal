@@ -32,7 +32,7 @@ class ZoneTcpClient
 
     private static int|string $area_id;
     private static int|string $room_id;
-    private static ?Socket $client;
+    private static ?Socket $client = null;
     private static array $client_maps = [];
     private static array $trigger_restart = [];
     private static int $socket_timeout = 0;

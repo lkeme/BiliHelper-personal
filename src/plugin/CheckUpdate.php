@@ -32,7 +32,7 @@ class CheckUpdate
             return;
         }
         self::check();
-        self::setLock(8 * 60 * 60);
+        self::setLock(24 * 60 * 60);
     }
 
     /**
