@@ -1,0 +1,118 @@
+<?php declare(strict_types=1);
+
+/**
+ *  Website: https://mudew.com/
+ *  Author: Lkeme
+ *  License: The MIT License
+ *  Email: Useri@live.cn
+ *  Updated: 2022 ~ 2023
+ *
+ *   _____   _   _       _   _   _   _____   _       _____   _____   _____
+ *  |  _  \ | | | |     | | | | | | | ____| | |     |  _  \ | ____| |  _  \ &   ／l、
+ *  | |_| | | | | |     | | | |_| | | |__   | |     | |_| | | |__   | |_| |   （ﾟ､ ｡ ７
+ *  |  _  { | | | |     | | |  _  | |  __|  | |     |  ___/ |  __|  |  _  /  　 \、ﾞ ~ヽ   *
+ *  | |_| | | | | |___  | | | | | | | |___  | |___  | |     | |___  | | \ \   　じしf_, )ノ
+ *  |_____/ |_| |_____| |_| |_| |_| |_____| |_____| |_|     |_____| |_|  \_\
+ */
+
+namespace Bhp\Api\Passport;
+
+use Bhp\Request\Request;
+use Bhp\Sign\Sign;
+
+class ApiOauth2
+{
+    /**
+     * 获取令牌信息
+     * @param string $token
+     * @return array
+     */
+    public static function tokenInfo(string $token): array
+    {
+        $url = 'https://passport.bilibili.com/api/v2/oauth2/info';
+        $payload = [
+            'access_token' => $token,
+        ];
+        // {"ts":1234,"code":0,"data":{"mid":1234,"access_token":"1234","expires_in":7759292}}
+        return Request::getJson(true, 'app', $url, Sign::common($payload));
+    }
+
+    /**
+     * @use 新令牌信息
+     * @param string $token
+     * @return array
+     */
+    public static function tokenInfoNew(string $token): array
+    {
+        $url = 'https://passport.bilibili.com/x/passport-login/oauth2/info';
+        $payload = [
+            'access_key' => $token,
+        ];
+        return Request::postJson(true, 'app', $url, Sign::common($payload));
+
+    }
+
+    /**
+     * @use 刷新令牌信息
+     * @param string $token
+     * @param string $r_token
+     * @return array
+     */
+    public static function tokenRefreshNew(string $token, string $r_token): array
+    {
+        $url = 'https://passport.bilibili.com/x/passport-login/oauth2/refresh_token';
+        $payload = [
+            'access_key' => $token,
+            'access_token' => $token,
+            'refresh_token' => $r_token,
+        ];
+        // {"message":"user not login","ts":1593111694,"code":-101}
+        return Request::postJson(true, 'app', $url, Sign::common($payload));
+    }
+
+    /**
+     * @use 刷新令牌信息
+     * @param string $token
+     * @param string $r_token
+     * @return array
+     */
+    public static function tokenRefresh(string $token, string $r_token): array
+    {
+        $url = 'https://passport.bilibili.com/api/v2/oauth2/refresh_token';
+        $payload = [
+            'access_token' => $token,
+            'refresh_token' => $r_token,
+        ];
+        // {"message":"user not login","ts":1593111694,"code":-101}
+        return Request::postJson(true, 'app', $url, Sign::common($payload));
+    }
+
+    /**
+     * @use 获取公钥
+     * @return array
+     */
+    public static function getKey(): array
+    {
+        // $url = 'https://passport.bilibili.com/api/oauth2/getKey';
+        $url = 'https://passport.bilibili.com/x/passport-login/web/key';
+        $payload = [];
+        return Request::getJson(true, 'app', $url, Sign::login($payload));
+    }
+
+    /**
+     * @use 刷新COOKIE
+     * @param string $token
+     * @return array
+     */
+    public static function token2Cookie(string $token): array
+    {
+        $url = 'https://passport.bilibili.com/api/login/sso';
+        $payload = [
+            'access_key' => $token,
+            'gourl' => 'https%3A%2F%2Faccount.bilibili.com%2Faccount%2Fhome'
+        ];
+        return Request::headers('app', $url, Sign::tv($payload));
+    }
+
+}
+ 
