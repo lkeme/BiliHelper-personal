@@ -1,0 +1,34 @@
+device_version: 0.0.1
+
+app:
+  bili_a: # Android
+    package: "tv.danmaku.bili"
+    version: "6.72.0"
+    build: "6720300"
+    channel: "bili"
+    device: "phone"
+    mobi_app: "android"
+    platform: "android"
+    s_locale: "zh-Hans_CN"
+    c_locale: "zh-Hans_CH"
+    app_key: "MWQ4YjZlN2Q0NTIzMzQzNg=="
+    secret_key: "NTYwYzUyY2NkMjg4ZmVkMDQ1ODU5ZWQxOGJmZmQ5NzM"
+    app_key_n: "NzgzYmJiNzI2NDQ1MWQ4Mg=="
+    secret_key_n: "MjY1MzU4M2M4ODczZGVhMjY4YWI5Mzg2OTE4YjFkNjU="
+  bili_i: # IOS
+    app_key: "MjdlYjUzZmM5MDU4ZjhjMw=="
+    secret_key: "YzJlZDUzYTc0ZWVlZmUzY2Y5OWZiZDAxZDhjOWMzNzU="
+  bili_t: # Tv
+    app_key: "NDQwOWUyY2U4ZmZkMTJiOA=="
+    secret_key: "NTliNDNlMDRhZDY5NjVmMzQzMTkwNjJiNDc4ZjgzZGQ="
+
+platform:
+  system:
+    os: "android"
+    os_ver: "7.1.2"
+    model: "MuMu"
+    network: "2" # 1 流量 2 WIFI
+  headers:
+    other_ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
+    pc_ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36 Edg/95.0.1020.53Chrome/95.0.4638.69 Safari/537.36 Edg/95.0.1020.53"
+    app_ua: "Mozilla/5.0 BiliDroid/${app.bili_a.version} (bbcallen@gmail.com) os/${platform.system.os} model/${device.model} mobi_app/${app.bili_a.mobi_app}build/${app.bili_a.build} channel/${app.bili_a.channel} innerVer/${app.bili_a.build}osVer/${platform.system.os_ver} network/${platform.system.network}"

@@ -5,41 +5,30 @@
 # IntelliJ project files
 .idea
 .idea/
-index1.php
-user/
-record/
 temp/
 tmp/
 *.iml
 out
 gen
-/vendor/
 composer.lock
-/configs/
-config
-/conf/user*.ini
-*.log
 Traits/
 README1.md
-conf/user.ini
-conf/user1.ini
-/conf/user.ini
-/conf/test.ini
-/conf/test1.ini
-/src/backup/
-script.php
 
-task/*
-cache/*
-log/*
+script.php
+test.php
+index1.php
 
 # ignore all files in lib/
-#task/*
-#cache/*
-#log/*
+
 # except for .gitkeep
 !.gitkeep
 # ignore TODO file in root directory,not subdir/TODO
+
 /TODO
 /Todo
+/backup
+/vendor
 
+# 保留忽略目录下的指定文件夹
+/profile/*
+!/profile/example

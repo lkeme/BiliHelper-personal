@@ -1,7 +1,46 @@
 {
-  "name": "lkeme/bilihelper",
+  "name": "lkeme/bilihelper-personal",
   "description": "B 站自动领瓜子、直播助手、直播挂机脚本、主站助手 - PHP 版（Personal）",
   "type": "project",
+  "version": "1.0.0-dev",
+  "minimum-stability": "stable",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Lkeme",
+      "email": "Useri@live.cn",
+      "homepage": "https://mudew.com",
+      "role": "Developer"
+    }
+  ],
+  "keywords": [],
+  "homepage": "https://github.com/lkeme/BiliHelper-personal",
+  "readme": "https://github.com/lkeme/BiliHelper-personal/blob/master/README.md",
+  "support": {
+    "issues": "https://github.com/lkeme/BiliHelper-personal/issues?state=open",
+    "wiki": "https://github.com/lkeme/BiliHelper-personal/wiki",
+    "source": "https://github.com/lkeme/BiliHelper-personal"
+  },
+  "repositories": [
+    {
+      "description": "阿里云(全量)/1Min",
+      "type": "composer",
+      "url": "https://mirrors.aliyun.com/composer/",
+      "canonical": false
+    },
+    {
+      "description": "华为云(全量)",
+      "type": "composer",
+      "url": "https://mirrors.huaweicloud.com/repository/php/",
+      "canonical": false
+    },
+    {
+      "description": "PhpComposer(全量)",
+      "type": "composer",
+      "url": "https://packagist.phpcomposer.com",
+      "canonical": false
+    }
+  ],
   "require": {
     "php": ">=8.0",
     "ext-curl": "*",
@@ -10,41 +49,26 @@
     "ext-json": "*",
     "ext-zlib": "*",
     "ext-mbstring": "*",
-    "monolog/monolog": "^1.26.0",
-    "bramus/monolog-colored-line-formatter": "^2.0.3",
-    "clue/socket-raw": "^1.5.0",
-    "amphp/amp": "^2.5.2",
-    "guzzlehttp/guzzle": "^7.4.0",
-    "overtrue/pinyin": "~4.0",
-    "adhocore/cli": "^0.9.0",
-    "lkeme/inifile": "^3.4",
-    "symfony/yaml": "^6.0",
-    "sven/file-config": "^3.1",
-    "fire015/flintstone": "^2.3",
-    "consolidation/config": "^2.0",
-    "lkeme/data": "dev-master",
-    "phppkg/config": "^1.1"
+    "monolog/monolog": "2.x-dev",
+    "bramus/monolog-colored-line-formatter": "dev-master",
+    "symfony/yaml": "6.1.x-dev",
+    "toolkit/stdlib": "*",
+    "adhocore/cli": "dev-main",
+    "lkeme/data": "4.x-dev",
+    "grasmash/expander": "dev-main",
+    "amphp/amp": "^2.6.2",
+    "fire015/flintstone": "dev-master",
+    "overtrue/pinyin": "dev-master",
+    "guzzlehttp/guzzle": "^7.4",
+    "toolkit/pflag": "^2.0",
+    "symfony/console": "^6.1"
   },
-  "license": "MIT",
-  "authors": [
-    {
-      "name": "Lkeme",
-      "email": "Useri@live.cn",
-      "homepage": "https://mudew.com"
-    }
-  ],
   "autoload": {
     "psr-4": {
-      "BiliHelper\\Core\\": "src/core",
-      "BiliHelper\\Plugin\\": "src/plugin",
-      "BiliHelper\\Plugins\\": "src/plugins",
-      "BiliHelper\\Util\\": "src/util",
-      "BiliHelper\\Tool\\": "src/tool",
-      "BiliHelper\\Script\\": "src/script",
-      "BiliHelper\\Exceptions\\": "src/exception"
+      "Bhp\\": "src"
     },
     "files": [
-      "src/core/Helpers.php"
+      "src/Helpers.php"
     ]
   }
 }
