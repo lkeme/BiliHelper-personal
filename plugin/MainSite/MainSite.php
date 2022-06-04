@@ -38,7 +38,7 @@ class MainSite extends BasePlugin
         'desc' => '主站任务(观看|分享|投币)', // 插件描述
         'author' => 'Lkeme',// 作者
         'priority' => 1100, // 插件优先级
-        'cycle' => '1(小时)', // 运行周期
+        'cycle' => '24(小时)', // 运行周期
     ];
 
     /**
