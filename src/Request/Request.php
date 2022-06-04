@@ -174,16 +174,15 @@ class Request extends SingleTon
      * @use 客户端配置
      * @param string $request_id
      * @param array $add_options
-     * @param array $headers
      * @param float $timeout
      * @return Request
      */
-    protected function withOptions(string $request_id, array $add_options, array $headers = [], float $timeout = 30.0): static
+    protected function withOptions(string $request_id, array $add_options, float $timeout = 30.0): static
     {
         $default_options = [
             // 'connect_timeout' => 10,
             // 'debug' => false,
-            'headers' => $headers,
+            'headers' => $this->getRequest($request_id, 'headers'),
             'timeout' => $timeout,
             'http_errors' => false,
             'verify' => getConf('network_ssl.verify', false, 'bool'),
@@ -254,7 +253,7 @@ class Request extends SingleTon
             ->withUrl($rid, $url)
             ->withMethod($rid, 'get')
             ->withHeaders($rid, $os, $headers)
-            ->withOptions($rid, $payload, $headers, $timeout)
+            ->withOptions($rid, $payload, $timeout)
             ->handle($rid);
         //
         self::getInstance()->stopRequest($rid);
@@ -311,7 +310,7 @@ class Request extends SingleTon
             ->withUrl($rid, $url)
             ->withMethod($rid, 'post')
             ->withHeaders($rid, $os, $headers)
-            ->withOptions($rid, $payload, $headers, $timeout)
+            ->withOptions($rid, $payload, $timeout)
             ->handle($rid);
         //
         self::getInstance()->stopRequest($rid);
@@ -368,7 +367,7 @@ class Request extends SingleTon
             ->withUrl($rid, $url)
             ->withMethod($rid, 'post')
             ->withHeaders($rid, $os, $headers)
-            ->withOptions($rid, $payload, $headers, $timeout)
+            ->withOptions($rid, $payload, $timeout)
             ->handle($rid);
         //
         self::getInstance()->stopRequest($rid);
@@ -525,7 +524,6 @@ class Request extends SingleTon
         unset($this->caches[$request_id]);
     }
 
-
     /**
      * @use GET请求
      * @param $os
@@ -550,7 +548,7 @@ class Request extends SingleTon
             ->withUrl($rid, $url)
             ->withMethod($rid, 'get')
             ->withHeaders($rid, $os, $headers)
-            ->withOptions($rid, $payload, $headers, $timeout)
+            ->withOptions($rid, $payload, $timeout)
             ->handle($rid);
         //
         self::getInstance()->stopRequest($rid);
@@ -559,7 +557,5 @@ class Request extends SingleTon
         //
         return $response->getHeaders();
     }
-
-
 
 }
