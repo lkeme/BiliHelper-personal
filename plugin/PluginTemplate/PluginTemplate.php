@@ -1,8 +1,5 @@
 <?php declare(strict_types=1);
 
-use Bhp\Plugin\Plugin;
-use Bhp\TimeLock\TimeLock;
-
 /**
  *  Website: https://mudew.com/
  *  Author: Lkeme
@@ -18,7 +15,11 @@ use Bhp\TimeLock\TimeLock;
  *  |_____/ |_| |_____| |_| |_| |_| |_____| |_____| |_|     |_____| |_|  \_\
  */
 
-class PluginTemplate
+use Bhp\Plugin\BasePlugin;
+use Bhp\Plugin\Plugin;
+use Bhp\TimeLock\TimeLock;
+
+class PluginTemplate extends BasePlugin
 {
     /**
      * 插件信息
@@ -59,7 +60,6 @@ class PluginTemplate
         //
 //        TimeLock::setTimes(24 * 60 * 60);
     }
-
 
 
 }
