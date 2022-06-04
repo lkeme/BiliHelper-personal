@@ -41,7 +41,7 @@ class Login extends BasePlugin
         'desc' => '登录模块', // 插件描述
         'author' => 'Lkeme',// 作者
         'priority' => 1001, // 插件优先级
-        'cycle' => '24(小时)', // 运行周期
+        'cycle' => '2(小时)', // 运行周期
     ];
 
     /**
