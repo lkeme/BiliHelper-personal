@@ -181,6 +181,7 @@ class Plugin extends SingleTon
             }
         }
         $this->sortPlugins();
+        $this->preloadPlugins();
     }
 
     /**

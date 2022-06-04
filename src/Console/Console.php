@@ -19,6 +19,7 @@ namespace Bhp\Console;
 
 use Ahc\Cli\Application;
 use Bhp\Console\Command\AppCommand;
+use Bhp\Console\Command\DebugCommand;
 use Bhp\Console\Command\RestoreCommand;
 use Bhp\Console\Command\ScriptCommand;
 use Bhp\Util\DesignPattern\SingleTon;
@@ -95,6 +96,7 @@ LOGO;
             ->add(new AppCommand(), 'm:a', true) // 模式1
             ->add(new ScriptCommand(), 'm:s') // 模式2
             ->add(new RestoreCommand(), 'm:r')  // 模式3
+            ->add(new DebugCommand(), 'm:d')  // 模式4
             ->logo($this->logo)
             ->handle($this->argv);
     }

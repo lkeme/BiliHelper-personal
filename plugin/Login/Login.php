@@ -507,7 +507,7 @@ class Login extends BasePlugin
         } else {
             Log::info('公钥载入完毕');
         }
-        // print_r($data);
+        //
         $public_key = $response['data']['key'];
         $hash = $response['data']['hash'];
         openssl_public_encrypt($hash . $plaintext, $crypt, $public_key);

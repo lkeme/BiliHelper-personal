@@ -23,27 +23,28 @@ use Bhp\Log\Log;
 use Bhp\Plugin\Plugin;
 use Bhp\Task\Task;
 
-class AppCommand extends Command
+final class DebugCommand extends Command
 {
     /**
      * @var string
      */
-    protected string $desc = '[主要模式] 默认功能';
+    protected string $desc = '[Debug模式] 开发测试使用';
 
     /**
      *
      */
     public function __construct()
     {
-        parent::__construct('mode:app', $this->desc);
+        parent::__construct('mode:debug', $this->desc);
         //
         $this
+            ->option('-p --plugin', '[默认会同时加载Login]测试插件')
+            ->option('-P --plugins', '[默认会同时加载Login]测试插件列表')
             ->usage(
-                '<bold>  $0</end> <comment>profile mode:app</end> ## 完整命令<eol/>' .
-                '<bold>  $0</end> <comment>profile m:a</end> ## 完整命令(缩写)<eol/>' .
-                '<bold>  $0</end> <comment>profile</end> ## 省略命令(保留profile命令)<eol/>' .
-                '<bold>  $0</end> <comment>mode:app</end> ## 省略命令(保留动作命令)<eol/>' .
-                '<bold>  $0</end> <comment>m:d</end> ## 省略命令(保留动作命令)(缩写)<eol/>'
+                '<bold>  $0</end> <comment>mode:debug --plugin TestPlugin</end> ## details 1<eol/>' .
+                '<bold>  $0</end> <comment>m:d -p TestPlugin</end> ## details 2<eol/>' .
+                '<bold>  $0</end> <comment>mode:debug --plugins TestPlugin|Test1Plugin</end> ## details 3<eol/>' .
+                '<bold>  $0</end> <comment>m:d -P TestPlugin,Test1Plugin</end> ## details 4<eol/>'
             );
     }
 
@@ -62,11 +63,27 @@ class AppCommand extends Command
     {
         Log::info("执行 $this->desc");
         //
+        $p = $this->values()['plugin'];
+        if (is_null($p)) {
+            $temp = $this->values()['plugins'];
+            $pp = explode(',', $temp);
+        } else {
+            $pp = [$p];
+        }
+        //
+        if (empty($pp)) failExit('没有插件输入');
+        array_unshift($pp, 'Login');
+        //
         $plugins = Plugin::getPlugins();
         foreach ($plugins as $plugin) {
+            if(!in_array($plugin['hook'],$pp)){
+                continue;
+            }
             Task::addTask($plugin['hook'], null);
         }
         //
         Task::execTasks();
     }
+
+
 }

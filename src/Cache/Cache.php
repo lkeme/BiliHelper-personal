@@ -69,7 +69,6 @@ class Cache extends SingleTon
             self::getInstance()->caches[$class_name] = new Flintstone($database, $options);
             // ->set('bob', ['email' => 'bob@site.com', 'password' => '123456']);
         }
-        print_r(array_keys(self::getInstance()->caches));
 
     }
 

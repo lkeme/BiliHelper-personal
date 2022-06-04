@@ -47,7 +47,6 @@ class TimeLock extends SingleTon
         if (!array_key_exists($class_name, self::getInstance()->locks)) {
             self::getInstance()->locks[$class_name] = ['times' => $times, 'pause' => $status];
         }
-        print_r(self::getInstance()->locks);
     }
 
     /**
