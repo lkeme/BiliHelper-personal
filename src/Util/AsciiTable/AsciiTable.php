@@ -349,9 +349,10 @@ class AsciiTable
      * @use 数组转表格(外置)
      * @param array $data
      * @param string|null $title
+     * @param bool $print
      * @return array
      */
-    public static function array2table(array $data, ?string $title = null): array
+    public static function array2table(array $data, ?string $title = null, bool $print = false): array
     {
         $th_list = [];
         //
@@ -365,6 +366,7 @@ class AsciiTable
         foreach (explode("\r\n", $builder->renderTable()) as $value) {
             if ($value) {
                 $th_list[] = $value;
+                if ($print) echo $value . PHP_EOL;
             }
         }
         return $th_list;

@@ -373,7 +373,7 @@ class Login extends BasePlugin
     {
         // {"code":0,"message":"0","ttl":1,"data":{"mid":123,"access_token":"xxx","refresh_token":"xxx","expires_in":2592000}}
         $response = ApiQrcode::poll($auth_code);
-        echo json_encode($response, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        // echo json_encode($response, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         switch ($response['code']) {
             case 0:
                 // 登录成功
