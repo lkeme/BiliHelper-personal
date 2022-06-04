@@ -364,7 +364,6 @@ class AsciiTable
         //
         foreach (explode("\r\n", $builder->renderTable()) as $value) {
             if ($value) {
-                echo $value.PHP_EOL;
                 $th_list[] = $value;
             }
         }

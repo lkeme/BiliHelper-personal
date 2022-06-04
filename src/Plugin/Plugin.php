@@ -17,6 +17,8 @@
 
 namespace Bhp\Plugin;
 
+use Bhp\Log\Log;
+use Bhp\Util\AsciiTable\AsciiTable;
 use Bhp\Util\DesignPattern\SingleTon;
 
 class Plugin extends SingleTon
@@ -125,7 +127,7 @@ class Plugin extends SingleTon
      */
     protected function addPluginInfo(string $hook, array $info): void
     {
-        $this->validatePlugins($hook, $info);
+        $info = $this->validatePlugins($hook, $info);
         //
         $this->_plugins[$hook] = $info;
         $this->_priority[] = $info['priority'];
@@ -134,9 +136,9 @@ class Plugin extends SingleTon
     /**
      * @param string $hook
      * @param array $info
-     * @return void
+     * @return array
      */
-    protected function validatePlugins(string $hook, array $info): void
+    protected function validatePlugins(string $hook, array $info): array
     {
         // 插件信息缺失
         $fillable = ['hook', 'name', 'version', 'desc', 'priority', 'cycle'];
@@ -157,6 +159,10 @@ class Plugin extends SingleTon
         if ($info['priority'] < 1000) {
             failExit("加载 $hook 插件错误，插件优先级定义错误，请检查修正.");
         }
+        //
+        $info['status'] = '√';
+        //
+        return $info;
     }
 
     /**
@@ -220,6 +226,19 @@ class Plugin extends SingleTon
     {
         $arr = array_column($this->_plugins, $column_key);
         array_multisort($arr, $sort_order, $this->_plugins);
+    }
+
+
+    /**
+     * @return void
+     */
+    protected function preloadPlugins(): void
+    {
+        $th_list = AsciiTable::array2table($this->_plugins, '预加载插件列表');
+        foreach ($th_list as $item) {
+            // Log::info($item);
+            echo $item . PHP_EOL;
+        }
     }
 
 }
