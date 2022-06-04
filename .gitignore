@@ -32,3 +32,5 @@ index1.php
 # 保留忽略目录下的指定文件夹
 /profile/*
 !/profile/example
+
+.phpunit.*

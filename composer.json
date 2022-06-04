@@ -61,11 +61,12 @@
     "overtrue/pinyin": "dev-master",
     "guzzlehttp/guzzle": "^7.4",
     "toolkit/pflag": "^2.0",
-    "symfony/console": "^6.1"
+    "symfony/console": "^6.1",
+    "malios/php-to-ascii-table": "^3.0"
   },
   "autoload": {
     "psr-4": {
-      "Bhp\\": "src"
+      "Bhp\\": "src/"
     },
     "files": [
       "src/Helpers.php"
