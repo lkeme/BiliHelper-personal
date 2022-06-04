@@ -62,8 +62,6 @@ class Login extends BasePlugin
         TimeLock::initTimeLock();
         //
         Cache::initCache();
-        //
-        Log::info('加载Login插件');
         // $this::class
         $plugin->register($this, 'execute');
     }

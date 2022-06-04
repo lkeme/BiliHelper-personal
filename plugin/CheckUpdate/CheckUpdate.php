@@ -49,8 +49,6 @@ class CheckUpdate extends BasePluginRW
         TimeLock::initTimeLock();
         //
         Cache::initCache();
-        //
-        Log::info('加载CheckUpdate插件');
         // $this::class
         $plugin->register($this, 'execute');
     }
