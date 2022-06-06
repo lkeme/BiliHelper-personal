@@ -17,6 +17,9 @@
 
 namespace Bhp\User;
 
+use Bhp\Api\Vip\ApiUser;
+use Bhp\Log\Log;
+use Bhp\Util\Common\Common;
 use Bhp\Util\DesignPattern\SingleTon;
 use JetBrains\PhpStorm\ArrayShape;
 
@@ -48,5 +51,27 @@ class User extends SingleTon
         ];
     }
 
+    /**
+     * @use 是否为有效年度大会员
+     * @param string $title
+     * @return bool
+     */
+    public static function isYearVip(string $title = '用户信息'): bool
+    {
+        $response = ApiUser::userInfo();
+        //
+        if ($response['code']) {
+            Log::warning("$title: 获取大会员信息失败 {$response['code']} -> {$response['message']}");
+            return false;
+        }
+        //
+        if ($response['data']['vip_type'] == 2 && $response['data']['vip_due_date'] > Common::getUnixTimestamp()) {
+            Log::info("$title: 获取大会员信息成功 是有效的年度大会员");
+            return true;
+        }
+        //
+        Log::warning("$title: 获取大会员信息成功 不是年度大会员或已过期");
+        return false;
+    }
 
 }
