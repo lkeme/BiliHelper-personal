@@ -143,9 +143,16 @@ class GameForecast extends BasePlugin
      */
     protected function startStake(): void
     {
-        $questions = $this->fetchCollectionQuestions();
         //
         $max_guess = getConf('game_forecast.max_num', 0, 'int');
+        $max_coin = getConf('game_forecast.max_coin', 0, 'int');
+        if ($max_guess <= 0 || $max_coin <= 0) {
+            Log::warning('赛事预测: 每日竞猜次数或者硬币数量不能小于1');
+            return;
+        }
+        //
+        $questions = $this->fetchCollectionQuestions();
+
         foreach ($questions as $index => $question) {
             if ($index >= $max_guess) {
                 break;
