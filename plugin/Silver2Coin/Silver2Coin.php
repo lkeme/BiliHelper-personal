@@ -56,12 +56,48 @@ class Silver2Coin extends BasePlugin
     {
         if (TimeLock::getTimes() > time() || !getEnable('silver2coin')) return;
         //
-        if ($this->exchangeTask()) {
-            // 定时10点 + 1-60分钟随机
-            TimeLock::setTimes(TimeLock::timing(10, 0, 0, true));
-        } else {
-            TimeLock::setTimes(3600);
+        if ($this->before()) {
+            if (!$this->exchangeTask()) {
+                TimeLock::setTimes(3600);
+                return;
+            }
+            //
+            $this->after();
         }
+        // 定时10点 + 1-60分钟随机
+        TimeLock::setTimes(TimeLock::timing(10, 0, 0, true));
+    }
+
+    /**
+     * @return void
+     */
+    protected function after(): void
+    {
+        ApiRevenueWallet::myWallet();
+    }
+
+    /**
+     * @return bool
+     */
+    protected function before(): bool
+    {
+        $response = ApiRevenueWallet::getStatus();
+        //
+        if ($response['code']) {
+            Log::warning("银瓜子兑换硬币: 获取钱包状态失败 {$response['code']} -> {$response['message']}");
+            return true;
+        }
+        //
+        if ($response['data']['silver_2_coin_left'] == 0) {
+            Log::notice("银瓜子兑换硬币: 今日已兑换过一次了哦~");
+            return false;
+        }
+        //
+        if ($response['data']['silver'] < 700) {
+            Log::notice("银瓜子兑换硬币: 瓜子余额不足以兑换哦~~");
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -104,7 +140,6 @@ class Silver2Coin extends BasePlugin
         }
         return false;
     }
-
 
 }
  
