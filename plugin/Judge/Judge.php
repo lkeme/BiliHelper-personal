@@ -34,7 +34,7 @@ class Judge extends BasePlugin
         'version' => '0.0.1', // 插件版本
         'desc' => '風機委員', // 插件描述
         'author' => 'Lkeme',// 作者
-        'priority' => 1126, // 插件优先级
+        'priority' => 1106, // 插件优先级
         'cycle' => '15-30(分钟)', // 运行周期
     ];
 
