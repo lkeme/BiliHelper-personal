@@ -15,10 +15,8 @@
  *  |_____/ |_| |_____| |_| |_| |_| |_____| |_____| |_|     |_____| |_|  \_\
  */
 
-
 require 'vendor/autoload.php';
 
-
-$app = Bhp\Bootstrap\Bootstrap::getInstance(__DIR__,$argv);
+$app = Bhp\Bootstrap\Bootstrap::getInstance(__DIR__, $argv);
 $app->run();
 

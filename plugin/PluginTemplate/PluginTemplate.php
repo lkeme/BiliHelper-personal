@@ -40,11 +40,11 @@ class PluginTemplate extends BasePlugin
      */
     public function __construct(Plugin &$plugin)
     {
-//        // 需要时间锁
+//         // 时间锁
 //        TimeLock::initTimeLock();
-//        // 需要缓存
+        // 缓存
 //        Cache::initCache();
-//        // $this::class
+        // $this::class
 //        $plugin->register($this, 'execute');
     }
 
