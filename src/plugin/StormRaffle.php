@@ -86,7 +86,8 @@ class StormRaffle extends BaseRaffle
      */
     protected static function createLottery(array $raffles): array
     {
-        $url = 'https://api.live.bilibili.com/lottery/v1/Storm/join';
+        // $url = 'https://api.live.bilibili.com/lottery/v1/Storm/join';
+        $url = 'https://api.live.bilibili.com/xlive/lottery-interface/v1/storm/Join';
         foreach ($raffles as $raffle) {
             self::$attempt = empty($attempt = getConf('attempt', 'live_storm')) ? [5, 10] : explode(',', $attempt);
             $num = mt_rand((int)self::$attempt[0], (int)self::$attempt[1]);
@@ -101,7 +102,7 @@ class StormRaffle extends BaseRaffle
                 "visit_id" => ""
             ];
             for ($i = 1; $i < $num; $i++) {
-                $raw = Curl::post('app', $url, Sign::common($payload));
+                $raw = Curl::post('pc', $url, $payload);
                 if (str_contains((string)$raw, 'html')) {
                     Log::notice(self::formatInfo($raffle['raffle_id'], $num, '触发哔哩哔哩安全风控策略(412)'));
                     break;

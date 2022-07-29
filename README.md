@@ -61,7 +61,7 @@
 
 ## 💬交流反馈
 
-Group: [163955623](https://jq.qq.com/?_wv=1027&k=1QMFTUEO) | **请不要来问如何使用， 文档齐全， 仅用于BUG提交反馈**
+Group: [602815575](https://jq.qq.com/?_wv=1027&k=UaalVexM) | **请不要来问如何使用， 文档齐全， 仅用于BUG提交反馈**
 
 ## 🧑‍🏭功能组件
 
@@ -97,7 +97,6 @@ Group: [163955623](https://jq.qq.com/?_wv=1027&k=1QMFTUEO) | **请不要来问�
 | PkRaffle        | true   | 22.05.17 | 待整理   | 直播大乱斗抽奖                 |
 | GuardRaffle     | true   | 22.05.17 | 待整理   | 直播大航海抽奖                 |
 | AnchorRaffle    | true   | 22.05.17 | 待整理   | 直播天选时刻抽奖                |
-| GiftRaffle      | true   | 22.05.17 | 待整理   | 直播礼物抽奖                  |
 | AwardRecord     | true   | 22.05.17 | 待整理   | 最新的中奖纪录通知               |
 | Forward         | true   | 22.05.17 | 待整理   | 主站动态抽奖转发                |
 | CapsuleLottery  | true   | 22.05.17 | 待整理   | 直播扭蛋活动抽奖                |
