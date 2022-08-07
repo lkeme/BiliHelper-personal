@@ -27,7 +27,7 @@ use JetBrains\PhpStorm\NoReturn;
 // --------------------------------------------------------------------------------------------------------------------
 
 /**
- * @use 用户配置读取
+ * 用户配置读取
  * @param string $key
  * @param mixed|null $default
  * @param string $type
@@ -39,7 +39,7 @@ function getConf(string $key, mixed $default = null, string $type = 'default'): 
 }
 
 /**用户
- * @use 配置写入
+ * 配置写入
  * @param string $key
  * @param mixed $value
  * @return void
@@ -50,7 +50,7 @@ function setConf(string $key, mixed $value): void
 }
 
 /**
- * @use 配置开关获取(大量调用独立抽取)
+ * 配置开关获取(大量调用独立抽取)
  * @param string $key
  * @param bool $default
  * @return bool
@@ -61,7 +61,7 @@ function getEnable(string $key, bool $default = false): bool
 }
 
 /**
- * @use 获取用户相关信息(Login)
+ * 获取用户相关信息(Login)
  * @param string $key
  * @return mixed
  */
@@ -76,7 +76,7 @@ function getU(string $key): mixed
 }
 
 /**
- * @use 设置用户相关信息(Login)
+ * 设置用户相关信息(Login)
  * @param string $key
  * @param mixed $value
  * @return void
@@ -94,7 +94,7 @@ function setU(string $key, mixed $value): void
 // --------------------------------------------------------------------------------------------------------------------
 
 /**
- * @use 获取APP名称
+ * 获取APP名称
  * @return string
  */
 function getAppName(): string
@@ -103,7 +103,7 @@ function getAppName(): string
 }
 
 /**
- * @use 获取APP版本
+ * 获取APP版本
  * @return string
  */
 function getAppVersion(): string
@@ -112,7 +112,7 @@ function getAppVersion(): string
 }
 
 /**
- * @use 获取APP主页
+ * 获取APP主页
  * @return string
  */
 function getAppHomePage(): string
@@ -125,7 +125,7 @@ function getAppHomePage(): string
 // --------------------------------------------------------------------------------------------------------------------
 
 /**
- * @use 错误退出
+ * 错误退出
  * @param $message
  * @param array $context
  * @param int $delay
@@ -147,7 +147,7 @@ function getAppHomePage(): string
 // --------------------------------------------------------------------------------------------------------------------
 
 /**
- * @use 获取设备信息
+ * 获取设备信息
  * @param string $key
  * @param mixed|null $default
  * @param string $type
@@ -159,7 +159,7 @@ function getDevice(string $key, mixed $default = null, string $type = 'default')
 }
 
 ///**
-// * @use 缓存读取
+// * 缓存读取
 // * @param string $key
 // * @param string $extra_name
 // * @return mixed
@@ -170,7 +170,7 @@ function getDevice(string $key, mixed $default = null, string $type = 'default')
 //}
 //
 ///**
-// * @use 缓存写入
+// * 缓存写入
 // * @param string $key
 // * @param $data
 // * @param string $extra_name

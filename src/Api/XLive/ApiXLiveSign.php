@@ -22,7 +22,7 @@ use Bhp\Request\Request;
 class ApiXLiveSign
 {
     /**
-     * @use 签到信息
+     * 签到信息
      * @return array
      */
     public static function webGetSignInfo(): array
@@ -38,7 +38,7 @@ class ApiXLiveSign
     }
 
     /**
-     * @use 签到
+     * 签到
      * @return array
      */
     public static function doSign(): array

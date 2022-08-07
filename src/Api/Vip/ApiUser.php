@@ -22,7 +22,7 @@ use Bhp\Request\Request;
 class ApiUser
 {
     /**
-     * @use 用户信息
+     * 用户信息
      * @return array
      */
     public static function userInfo(): array

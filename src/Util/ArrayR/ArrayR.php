@@ -20,7 +20,7 @@ namespace Bhp\Util\ArrayR;
 class ArrayR
 {
     /**
-     * @use 关联数组转字符串
+     * 关联数组转字符串
      * @param array $arr
      * @param string $sep1
      * @param string $sep2

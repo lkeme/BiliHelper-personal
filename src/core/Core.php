@@ -49,7 +49,7 @@ class Core extends SingleTon
     }
 
     /**
-     * @use 初始化全局常量
+     * 初始化全局常量
      * @return void
      */
     protected function initSystemConstant(): void
@@ -71,7 +71,7 @@ class Core extends SingleTon
     }
 
     /**
-     * @use 补充目录
+     * 补充目录
      * @param string $path
      * @return string
      */
@@ -82,7 +82,7 @@ class Core extends SingleTon
     }
 
     /**
-     * @use 初始化系统目录(创建、设置权限)
+     * 初始化系统目录(创建、设置权限)
      * @return void
      */
     protected function initSystemPath(): void

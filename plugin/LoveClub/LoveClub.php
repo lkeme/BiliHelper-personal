@@ -49,7 +49,7 @@ class LoveClub extends BasePlugin
     }
 
     /**
-     * @use 执行
+     * 执行
      * @return void
      */
     public function execute(): void
@@ -66,7 +66,7 @@ class LoveClub extends BasePlugin
     }
 
     /**
-     * @use 获取友爱社列表
+     * 获取友爱社列表
      * @return array
      */
     protected function getGroupList(): array
@@ -87,7 +87,7 @@ class LoveClub extends BasePlugin
     }
 
     /**
-     * @use 签到
+     * 签到
      * @param array $groupInfo
      * @return bool
      */

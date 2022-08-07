@@ -66,7 +66,7 @@ class Qrcode
     }
 
     /**
-     * @use determine the console is windows or linux.
+     * determine the console is windows or linux.
      * @return bool
      */
     protected static function isWin(): bool
@@ -75,7 +75,7 @@ class Qrcode
     }
 
     /**
-     * @use init qrCode style.
+     * init qrCode style.
      * @param OutputInterface $output
      */
     protected static function initQrcodeStyle(OutputInterface $output): void

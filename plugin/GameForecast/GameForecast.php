@@ -49,7 +49,7 @@ class GameForecast extends BasePlugin
     }
 
     /**
-     * @use 执行
+     * 执行
      * @return void
      */
     public function execute(): void
@@ -62,7 +62,7 @@ class GameForecast extends BasePlugin
     }
 
     /**
-     * @use 获取预测赛事列表
+     * 获取预测赛事列表
      * @param int $pm
      * @return array
      */
@@ -97,7 +97,7 @@ class GameForecast extends BasePlugin
     }
 
     /**
-     * @use 预计猜测结果
+     * 预计猜测结果
      * @param array $question
      * @return array
      */
@@ -139,7 +139,7 @@ class GameForecast extends BasePlugin
     }
 
     /**
-     * @use 开始破产
+     * 开始破产
      */
     protected function startStake(): void
     {
@@ -163,7 +163,7 @@ class GameForecast extends BasePlugin
     }
 
     /**
-     * @use 添加竞猜
+     * 添加竞猜
      * @param array $guess
      */
     protected function addGuess(array $guess): void

@@ -24,7 +24,7 @@ class ApiQrcode
 {
 
     /**
-     * @use 获取authCode
+     * 获取authCode
      * @return array
      */
     public static function authCode(): array
@@ -35,11 +35,11 @@ class ApiQrcode
             'content-type' => 'application/x-www-form-urlencoded',
         ];
         // {"code":0,"message":"0","ttl":1,"data":{"url":"https://passport.bilibili.com/x/passport-tv-login/h5/qrcode/auth?auth_code=xxxx","auth_code":"xxxx"}}
-        return Request::postJson(true, 'app', $url, Sign::tv($payload), $headers);
+        return Request::postJson(true, 'app', $url, Sign::login($payload), $headers);
     }
 
     /**
-     * @use 验证登录
+     * 验证登录
      * @param string $auth_code
      * @return mixed
      */
@@ -53,7 +53,7 @@ class ApiQrcode
             'content-type' => 'application/x-www-form-urlencoded',
         ];
         // {"code":0,"message":"0","ttl":1,"data":{"mid":123,"access_token":"xxx","refresh_token":"xxx","expires_in":2592000}}
-        return Request::postJson(true, 'app', $url, Sign::tv($payload), $headers);
+        return Request::postJson(true, 'app', $url, Sign::login($payload), $headers);
 
     }
 

@@ -66,7 +66,7 @@ class Env extends BaseResource
     }
 
     /**
-     * @use 检查是否开启
+     * 检查是否开启
      * @return $this
      */
     protected function inspectExtension(): Env
@@ -84,7 +84,7 @@ class Env extends BaseResource
     }
 
     /**
-     * @use 检查php环境
+     * 检查php环境
      * @return $this
      */
     protected function inspectConfigure(): Env
@@ -102,7 +102,7 @@ class Env extends BaseResource
     }
 
     /**
-     * @use 重写获取路径
+     * 重写获取路径
      * @param string $filename
      * @return string
      */
@@ -112,7 +112,7 @@ class Env extends BaseResource
     }
 
     /**
-     * @use Check: running in docker?
+     * Check: running in docker?
      * @return bool
      */
     public static function isDocker(): bool

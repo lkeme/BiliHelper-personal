@@ -71,7 +71,7 @@ class Judge extends BasePlugin
     }
 
     /**
-     * @use 执行
+     * 执行
      * @return void
      */
     public function execute(): void
@@ -91,7 +91,7 @@ class Judge extends BasePlugin
     }
 
     /**
-     * @use 審判任務
+     * 審判任務
      * @return void
      */
     protected function judgementTask(): void
@@ -108,7 +108,7 @@ class Judge extends BasePlugin
     }
 
     /**
-     * @use 案件核查
+     * 案件核查
      * @param string $case_id
      * @return bool
      */
@@ -138,7 +138,7 @@ class Judge extends BasePlugin
     }
 
     /**
-     * @use 投票
+     * 投票
      * @param string $case_id
      * @param int $vote
      */
@@ -156,7 +156,7 @@ class Judge extends BasePlugin
     }
 
     /**
-     * @use 隨機整數
+     * 隨機整數
      * @param int $max
      * @return string
      */
@@ -170,7 +170,7 @@ class Judge extends BasePlugin
     }
 
     /**
-     * @use 概率
+     * 概率
      * @return int
      */
     protected function probability(): int
@@ -191,7 +191,7 @@ class Judge extends BasePlugin
     }
 
     /**
-     * @use 获取衆議觀點
+     * 获取衆議觀點
      * @param string $case_id
      * @return array
      */
@@ -208,7 +208,7 @@ class Judge extends BasePlugin
     }
 
     /**
-     * @use 获取案例详情
+     * 获取案例详情
      * @param string $case_id
      * @return mixed
      */
@@ -225,7 +225,7 @@ class Judge extends BasePlugin
     }
 
     /**
-     * @use 获取案件任务
+     * 获取案件任务
      * @return string
      */
     protected function caseObtain(): string
@@ -267,7 +267,7 @@ class Judge extends BasePlugin
 
 
     /**
-     * @use 陪審團信息
+     * 陪審團信息
      * @return bool
      */
     protected function juryInfo(): bool
@@ -300,7 +300,7 @@ class Judge extends BasePlugin
     }
 
     /**
-     * @use 申請連任資格
+     * 申請連任資格
      * @return void
      */
     protected function juryApply(): void
@@ -316,7 +316,7 @@ class Judge extends BasePlugin
     }
 
     /**
-     * @use 获取案例數據
+     * 获取案例數據
      * @return bool
      */
     private static function judgementIndex(): bool

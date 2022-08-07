@@ -38,7 +38,7 @@ class ApiVideo
     }
 
     /**
-     * @use 获取分区动态/首页推荐
+     * 获取分区动态/首页推荐
      * @param int $ps
      * @return array
      */
@@ -56,7 +56,7 @@ class ApiVideo
     }
 
     /**
-     * @use 获取榜单稿件
+     * 获取榜单稿件
      * @return array
      */
     public static function ranking(): array

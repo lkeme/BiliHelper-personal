@@ -49,7 +49,7 @@ class LiveReservation extends BasePlugin
     }
 
     /**
-     * @use 执行
+     * 执行
      * @return void
      */
     public function execute(): void
@@ -78,7 +78,7 @@ class LiveReservation extends BasePlugin
     }
 
     /**
-     * @use 获取预约列表
+     * 获取预约列表
      * @param string $vmid
      * @return array
      */
@@ -107,7 +107,7 @@ class LiveReservation extends BasePlugin
     }
 
     /**
-     * @use 检测有效抽奖
+     * 检测有效抽奖
      * @param array $data
      * @return bool|array
      */
@@ -135,7 +135,7 @@ class LiveReservation extends BasePlugin
     }
 
     /**
-     * @use 尝试预约并抽奖
+     * 尝试预约并抽奖
      * @param array $data
      */
     protected function reserve(array $data): void

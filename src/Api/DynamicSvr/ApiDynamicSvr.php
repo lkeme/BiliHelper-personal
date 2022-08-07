@@ -23,7 +23,7 @@ use Bhp\User\User;
 class ApiDynamicSvr
 {
     /**
-     * @use 获取关注Up动态
+     * 获取关注Up动态
      * @return mixed
      */
     public static function followUpDynamic(): array

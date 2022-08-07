@@ -23,7 +23,7 @@ use Bhp\User\User;
 class ApiCoin
 {
     /**
-     * @use 投币
+     * 投币
      * @param string $aid
      * @param int $multiply
      * @param int $select_like
@@ -55,7 +55,7 @@ class ApiCoin
     }
 
     /**
-     * @use 获取硬币
+     * 获取硬币
      * @return array
      */
     public static function getCoin(): array
@@ -70,7 +70,7 @@ class ApiCoin
     }
 
     /**
-     * @use 投币日志
+     * 投币日志
      * @return array
      */
     public static function addLog(): array

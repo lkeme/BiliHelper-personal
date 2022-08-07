@@ -20,7 +20,7 @@ namespace Bhp\Util\Fake;
 class Fake
 {
     /**
-     * @use 生成UUID
+     * 生成UUID
      * @return string
      */
     public static function uuid(): string
@@ -43,7 +43,7 @@ class Fake
     }
 
     /**
-     * @use 生成uuid4
+     * 生成uuid4
      * @return string
      */
     public static function uuid4(): string
@@ -64,7 +64,7 @@ class Fake
     }
 
     /**
-     * @use 生成hash
+     * 生成hash
      * @return string
      */
     public static function hash(): string
@@ -76,7 +76,7 @@ class Fake
     }
 
     /**
-     * @use 生成BUVID
+     * 生成BUVID
      * @return string
      */
     public static function buvid(): string
@@ -93,7 +93,7 @@ class Fake
     }
 
     /**
-     * @use 获取颜文字信息
+     * 获取颜文字信息
      * @return string
      */
     public static function emoji(): string

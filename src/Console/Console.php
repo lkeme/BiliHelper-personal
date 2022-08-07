@@ -61,7 +61,7 @@ LOGO;
     }
 
     /**
-     * @use 解析参数
+     * 解析参数
      * @param array $argv
      * @param string $default
      * @return string

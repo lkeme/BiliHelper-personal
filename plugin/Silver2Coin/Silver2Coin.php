@@ -49,7 +49,7 @@ class Silver2Coin extends BasePlugin
     }
 
     /**
-     * @use 执行
+     * 执行
      * @return void
      */
     public function execute(): void
@@ -101,7 +101,7 @@ class Silver2Coin extends BasePlugin
     }
 
     /**
-     * @use 兑换任务
+     * 兑换任务
      * @return bool
      */
     protected function exchangeTask(): bool
@@ -117,7 +117,7 @@ class Silver2Coin extends BasePlugin
     }
 
     /**
-     * @use 处理结果
+     * 处理结果
      * @param string $type
      * @param array $data
      * @return bool

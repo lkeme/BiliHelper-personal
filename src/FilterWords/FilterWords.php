@@ -31,7 +31,7 @@ class FilterWords extends BaseResource
     }
 
     /**
-     * @use 重写真实路径
+     * 重写真实路径
      * @param string $filename
      * @return string
      */

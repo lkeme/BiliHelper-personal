@@ -23,7 +23,7 @@ use Bhp\Sign\Sign;
 class ApiLoveClub
 {
     /**
-     * @use 获取我的友爱社列表
+     * 获取我的友爱社列表
      * @return array
      */
     public static function myGroups(): array

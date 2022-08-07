@@ -31,7 +31,7 @@ class Config extends BaseResource
     }
 
     /**
-     * @use 重写获取路径
+     * 重写获取路径
      * @param string $filename
      * @return string
      */

@@ -53,7 +53,7 @@ class MainSite extends BasePlugin
     }
 
     /**
-     * @use 执行
+     * 执行
      * @return void
      */
     public function execute(): void
@@ -68,7 +68,7 @@ class MainSite extends BasePlugin
     }
 
     /**
-     * @use 投币任务
+     * 投币任务
      * @return bool
      */
     protected function coinTask(): bool
@@ -106,7 +106,7 @@ class MainSite extends BasePlugin
     }
 
     /**
-     * @use 投币
+     * 投币
      * @param string $aid
      * @return void
      */
@@ -122,7 +122,7 @@ class MainSite extends BasePlugin
     }
 
     /**
-     * @use 首页推荐
+     * 首页推荐
      * @param int $num
      * @param int $ps
      * @return array
@@ -149,7 +149,7 @@ class MainSite extends BasePlugin
     }
 
     /**
-     * @use 获取榜单稿件列表
+     * 获取榜单稿件列表
      * @param int $num
      * @return array
      */
@@ -178,7 +178,7 @@ class MainSite extends BasePlugin
     }
 
     /**
-     * @use 获取关注UP稿件列表
+     * 获取关注UP稿件列表
      * @param int $num
      * @return array
      */
@@ -207,7 +207,7 @@ class MainSite extends BasePlugin
     }
 
     /**
-     * @use 已投币数量
+     * 已投币数量
      * @return int
      */
     protected function getCoinAlready(): int
@@ -246,24 +246,25 @@ class MainSite extends BasePlugin
     }
 
     /**
-     * @use 获取硬币库存
+     * 获取硬币库存
      * @return int
      */
     protected function getCoinStock(): int
     {
         // {"code":0,"status":true,"data":{"money":1707.9}}
+        // {"code":0,"status":true,"data":{"money":null}
         $response = ApiCoin::getCoin();
         //
         if ($response['code'] || !isset($response['data']['money'])) {
-            Log::warning("主站任务: 获取硬币库存失败 " . json_encode($response, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+            Log::warning("主站任务: 获取硬币库存失败或者硬币为null " . json_encode($response, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
             return 0;
         }
         //
-        return intval($response['data']['money']);
+        return (int)$response['data']['money'];
     }
 
     /**
-     * @use 分享任务
+     * 分享任务
      * @return bool
      */
     protected function shareTask(): bool
@@ -284,7 +285,7 @@ class MainSite extends BasePlugin
     }
 
     /**
-     * @use 观看任务
+     * 观看任务
      * @return bool
      */
     protected function watchTask(): bool
@@ -308,7 +309,7 @@ class MainSite extends BasePlugin
             Log::warning("主站任务: $aid 观看失败 {$response['code']} -> {$response['message']}");
             return false;
         }
-         sleep(5);
+        sleep(5);
         //
         $data = [];
         $data['played_time'] = $duration - 1;
@@ -326,7 +327,7 @@ class MainSite extends BasePlugin
     }
 
     /**
-     * @use 获取随机
+     * 获取随机
      * @return array
      */
     protected function fetchRandomAvInfos(): array

@@ -17,27 +17,26 @@
 
 namespace Bhp\Plugin;
 
-use Bhp\Log\Log;
 use Bhp\Util\AsciiTable\AsciiTable;
 use Bhp\Util\DesignPattern\SingleTon;
 
 class Plugin extends SingleTon
 {
     /**
-     * @use 监听插件的启用/关闭|UUID下标
+     * 监听插件的启用/关闭|UUID下标
      * @access private
      * @var array
      */
     protected array $_staff = [];
 
     /**
-     * @use 保存所有插件信息
+     * 保存所有插件信息
      * @var array
      */
     protected array $_plugins = [];
 
     /**
-     * @use 保存插件优先级信息
+     * 保存插件优先级信息
      * @var array
      */
     protected array $_priority = [];
@@ -75,7 +74,7 @@ class Plugin extends SingleTon
     }
 
     /**
-     * @use 这个是全局使用的触发钩子动作方法
+     * 这个是全局使用的触发钩子动作方法
      * @param string $hook
      * @param string $data
      * @return string
@@ -104,7 +103,7 @@ class Plugin extends SingleTon
     }
 
     /**
-     * @use 这里是在插件中使用的方法 用来注册插件
+     * 这里是在插件中使用的方法 用来注册插件
      * @param object $class_obj
      * @param string $method
      * @return void
@@ -166,7 +165,7 @@ class Plugin extends SingleTon
     }
 
     /**
-     * @use 初始化插件(all)
+     * 初始化插件(all)
      * @return void
      */
     protected function detector(): void
@@ -191,10 +190,10 @@ class Plugin extends SingleTon
     }
 
     /**
-     * @use 获取插件信息(all)
-     * @use 假定了插件在根目录的/plugin
-     * @use 假定插件的入口和插件文件夹的名字是一样的
-     * @use 注意:这个执行文件我放在了根目录 以下路径请根据实际情况获取
+     * 获取插件信息(all)
+     * 假定了插件在根目录的/plugin
+     * 假定插件的入口和插件文件夹的名字是一样的
+     * 注意:这个执行文件我放在了根目录 以下路径请根据实际情况获取
      * @return array
      */
     protected function getActivePlugins(): array
@@ -217,7 +216,7 @@ class Plugin extends SingleTon
     }
 
     /**
-     * @use 插件排序
+     * 插件排序
      * @param string $column_key
      * @param int $sort_order
      * @return void

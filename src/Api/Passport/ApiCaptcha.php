@@ -23,7 +23,7 @@ use Bhp\Sign\Sign;
 class ApiCaptcha
 {
     /**
-     * @use 获取验证码
+     * 获取验证码
      * @param int $plat
      * @return mixed
      */
@@ -39,7 +39,7 @@ class ApiCaptcha
     }
 
     /**
-     * @use 识别验证码
+     * 识别验证码
      * @param array $captcha
      * @return array
      */

@@ -54,22 +54,24 @@ class CheckUpdate extends BasePluginRW
     }
 
     /**
-     * @use 执行
+     * 执行
      * @return void
      */
     public function execute(): void
     {
         if (TimeLock::getTimes() > time()) return;
         //
-        $this->_checkUpdate();
-        //
-        TimeLock::setTimes(24 * 60 * 60);
+        if ($this->_checkUpdate()) {
+            TimeLock::setTimes(24 * 60 * 60);
+        } else {
+            TimeLock::setTimes(1 * 60 * 60);
+        }
     }
 
     /**
-     * @return void
+     * @return bool
      */
-    protected function _checkUpdate(): void
+    protected function _checkUpdate(): bool
     {
         //
         Log::info('开始检查项目更新');
@@ -79,6 +81,11 @@ class CheckUpdate extends BasePluginRW
         Log::info('拉取线上最新配置');
         // object
         $online = $this->fetchOnlineVersion();
+        // 网络错误
+        if ($online->code != 200) {
+            Log::warning('检查更新: 拉取线上失败，网络错误！');
+            return false;
+        }
         // 比较版本
         if ($this->compareVersion($offline->get('version'), $online->version)) {
             // TODO 完善消息 支持markdown
@@ -91,11 +98,12 @@ class CheckUpdate extends BasePluginRW
         } else {
             Log::info('程序已是最新版本');
         }
+        return true;
     }
 
     /**
-     * @use 拉取本地版本
-     * @return void
+     * 拉取本地版本
+     * @return Resource
      */
     protected function fetchOfflineVersion(): Resource
     {
@@ -104,7 +112,7 @@ class CheckUpdate extends BasePluginRW
     }
 
     /**
-     * @use 拉取线上版本
+     * 拉取线上版本
      * @return object
      */
     protected function fetchOnlineVersion(): object
@@ -115,7 +123,7 @@ class CheckUpdate extends BasePluginRW
     }
 
     /**
-     * @use 比较版本号
+     * 比较版本号
      * @param string $off
      * @param string $on
      * @return bool
@@ -127,7 +135,7 @@ class CheckUpdate extends BasePluginRW
     }
 
     /**
-     * @use 重写系统路径
+     * 重写系统路径
      * @param string $filename
      * @return string
      */

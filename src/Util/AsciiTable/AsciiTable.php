@@ -346,7 +346,7 @@ class AsciiTable
 
 
     /**
-     * @use 数组转表格(外置)
+     * 数组转表格(外置)
      * @param array $data
      * @param string|null $title
      * @param bool $print

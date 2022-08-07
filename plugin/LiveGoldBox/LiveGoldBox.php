@@ -68,7 +68,7 @@ class LiveGoldBox extends BasePlugin
     }
 
     /**
-     * @use 执行
+     * 执行
      * @return void
      */
     public function execute(): void
@@ -85,7 +85,7 @@ class LiveGoldBox extends BasePlugin
     }
 
     /**
-     * @use 过滤轮次
+     * 过滤轮次
      * @param array $rounds
      * @return int
      */
@@ -108,7 +108,7 @@ class LiveGoldBox extends BasePlugin
     }
 
     /**
-     * @use 过滤抽奖Title
+     * 过滤抽奖Title
      * @param string $title
      * @return bool
      */
@@ -125,7 +125,7 @@ class LiveGoldBox extends BasePlugin
     }
 
     /**
-     * @use 抽奖
+     * 抽奖
      * @param array $lottery_list
      * @return bool
      */
@@ -143,7 +143,7 @@ class LiveGoldBox extends BasePlugin
     }
 
     /**
-     * @use 获取抽奖
+     * 获取抽奖
      * @return array
      */
     protected function fetchLotteryList(): array
@@ -200,7 +200,7 @@ class LiveGoldBox extends BasePlugin
     }
 
     /**
-     * @use 抽奖盒子信息
+     * 抽奖盒子信息
      * @param int $aid
      * @return array
      */
@@ -223,7 +223,7 @@ class LiveGoldBox extends BasePlugin
     }
 
     /**
-     * @use 计算范围
+     * 计算范围
      * @param int $min
      * @param int $max
      * @return void

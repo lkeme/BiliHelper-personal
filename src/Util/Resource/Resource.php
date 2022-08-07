@@ -50,7 +50,7 @@ class Resource extends Collection
     protected string $parser;
 
     /**
-     * @use 加载资源文件
+     * 加载资源文件
      * @param string|array $file_path
      * @param string $parser
      * @return Resource
@@ -70,7 +70,7 @@ class Resource extends Collection
     }
 
     /**
-     * @use 切换解析器
+     * 切换解析器
      * @param string $filepath
      * @param string $format
      * @return Data
@@ -87,7 +87,7 @@ class Resource extends Collection
     }
 
     /**
-     * @use 清空并重载数据
+     * 清空并重载数据
      * @return Resource
      */
     protected function reload(): Resource

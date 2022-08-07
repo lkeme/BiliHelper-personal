@@ -20,7 +20,7 @@ namespace Bhp\Util\Os;
 class Path
 {
     /**
-     * @use Folder Permissions
+     * Folder Permissions
      * @param string $path
      * @param int $permissions
      * @return void
@@ -38,7 +38,7 @@ class Path
     }
 
     /**
-     * @use Create Folder
+     * Create Folder
      * @param string $path
      * @param int $permissions
      * @return void

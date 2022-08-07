@@ -16,6 +16,7 @@
  */
 
 use Bhp\Api\Passport\ApiCaptcha;
+use Bhp\Api\Passport\ApiLogin;
 use Bhp\Api\Passport\ApiOauth2;
 use Bhp\Api\PassportTv\ApiQrcode;
 use Bhp\Cache\Cache;
@@ -38,8 +39,8 @@ class Login extends BasePlugin
         'hook' => __CLASS__, // hook
         'name' => 'Login', // 插件名称
         'version' => '0.0.1', // 插件版本
-        'desc' => '登录模块', // 插件描述
-        'author' => 'Lkeme',// 作者
+        'desc' => '登录', // 插件描述
+        'author' => 'Lkeme', // 作者
         'priority' => 1001, // 插件优先级
         'cycle' => '2(小时)', // 运行周期
     ];
@@ -84,7 +85,7 @@ class Login extends BasePlugin
     }
 
     /**
-     * @use 初始化登录
+     * 初始化登录
      * @return void
      */
     protected function initLogin(): void
@@ -99,26 +100,18 @@ class Login extends BasePlugin
             $this->login();
         }
         // Token存在\校验有效性\否则调用登录
-        Log::info('检查登录令牌有效性');
-        if (!$this->validateToken($token)) {
-            Log::warning('登录令牌失效或即将过期');
-            Log::info('申请更换登录令牌中');
-            if (!$this->refreshToken($token, $r_token)) {
-                Log::warning('无效的登录令牌，尝试重新申请');
-                $this->login();
-            }
-        }
+        $this->keepAlive($token, $r_token);
     }
 
     /**
-     * @use 登录控制中心
+     * 登录控制中心
      * @return void
      */
     protected function login(): void
     {
         $this->checkLogin();
         //
-        switch (getConf('login_mode.mode')) {
+        switch ((int)getConf('login_mode.mode')) {
             case 1:
                 // 账密模式
                 $this->accountLogin();
@@ -141,54 +134,69 @@ class Login extends BasePlugin
     }
 
     /**
-     * @use 保持认证
-     * @return bool
+     * 保持认证
      */
-    protected function keepLogin(): bool
+    protected function keepLogin(): void
     {
         //
         $token = getU('access_token');
         $r_token = getU('refresh_token');
-        //
-        if ($this->validateToken($token)) {
-            return true;
-        }
-        Log::warning('令牌即将过期');
-        Log::info('申请更换令牌中...');
-        if (!$this->refreshToken($token, $r_token)) {
-            Log::warning('无效令牌，正在重新申请...');
-            self::accountLogin();
-        }
-        return false;
+        // Token存在\校验有效性\否则调用登录
+        $this->keepAlive($token, $r_token);
     }
 
     /**
-     * @use 校验令牌信息
+     * 保活处理
+     * @param string $token
+     * @param string $r_token
+     * @return bool
+     */
+    protected function keepAlive(string $token, string $r_token): bool
+    {
+        Log::info('检查登录令牌有效性');
+        if (!$this->validateToken($token)) {
+            Log::warning('登录令牌失效过期或需要保活');
+            Log::info('申请更换登录令牌中...');
+            if (!$this->refreshToken($token, $r_token)) {
+                Log::warning('无效的登录令牌，尝试重新申请...');
+                $this->login();
+            }
+        }
+        //
+        $token = getU('access_token');
+        $this->myInfo($token);
+
+        return true;
+    }
+
+    /**
+     * 校验令牌信息
      * @param string $token
      * @return bool
      */
     protected function validateToken(string $token): bool
     {
-        // {"ts":1234,"code":0,"data":{"mid":1234,"access_token":"1234","expires_in":7759292}}
-        $response = ApiOauth2::tokenInfo($token);
+        // {"code":0,"message":"0","ttl":1,"data":{"mid":"<user mid>","access_token":"<current token>","expires_in":9787360,"refresh":true}}
+        $response = ApiOauth2::tokenInfoNew($token);
         //
         if (isset($response['code']) && $response['code']) {
             Log::error('检查令牌失败', ['msg' => $response['message']]);
             return false;
         }
-        Log::notice('令牌有效期: ' . date('Y-m-d H:i:s', $response['ts'] + $response['data']['expires_in']));
-        return $response['data']['expires_in'] > 14400;
+        Log::notice('令牌有效期: ' . date('Y-m-d H:i:s', time() + $response['data']['expires_in']));
+        // 保活
+        return !$response['data']['refresh'] && $response['data']['expires_in'] > 14400;
     }
 
     /**
-     * @use 刷新token
+     * 刷新token
      * @param string $token
      * @param string $r_token
      * @return bool
      */
     protected function refreshToken(string $token, string $r_token): bool
     {
-        $response = ApiOauth2::tokenRefresh($token, $r_token);
+        $response = ApiOauth2::tokenRefreshNew($token, $r_token);
         // {"message":"user not login","ts":1593111694,"code":-101}
         if (isset($response['code']) && $response['code']) {
             Log::error('重新生成令牌失败', ['msg' => $response['message']]);
@@ -201,7 +209,23 @@ class Login extends BasePlugin
     }
 
     /**
-     * @use 更新登录信息
+     * 登录信息
+     * @param string $token
+     * @return bool
+     */
+    protected function myInfo(string $token): bool
+    {
+        $response = ApiOauth2::myInfo($token);
+        if (isset($response['code']) && $response['code']) {
+            Log::error('获取登录信息失败', ['msg' => $response['message']]);
+            return false;
+        }
+        Log::info('获取登录信息成功');
+        return true;
+    }
+
+    /**
+     * 更新登录信息
      * @param array $data
      */
     protected function updateLoginInfo(array $data): void
@@ -226,7 +250,7 @@ class Login extends BasePlugin
     }
 
     /**
-     * @use 更新Tv登录信息
+     * 更新Tv登录信息
      * @param array $data
      */
     protected function updateTvLoginInfo(array $data): void
@@ -252,7 +276,7 @@ class Login extends BasePlugin
     }
 
     /**
-     * @use 更新信息
+     * 更新信息
      * @param string $key
      * @param mixed $value
      * @param bool $print
@@ -268,7 +292,7 @@ class Login extends BasePlugin
     }
 
     /**
-     * @use 格式化Cookie
+     * 格式化Cookie
      * @param array $cookies
      * @return string
      */
@@ -282,7 +306,7 @@ class Login extends BasePlugin
     }
 
     /**
-     * @use 账密登录
+     * 账密登录
      * @param string $validate
      * @param string $challenge
      * @param string $mode
@@ -296,13 +320,13 @@ class Login extends BasePlugin
         // {"ts":1593082432,"code":0,"data":{"status":0,"token_info":{"mid":123456,"access_token":"123123","refresh_token":"123123","expires_in":2592000},"cookie_info":{"cookies":[{"name":"bili_jct","value":"123123","http_only":0,"expires":1595674432},{"name":"DedeUserID","value":"123456","http_only":0,"expires":1595674432},{"name":"DedeUserID__ckMd5","value":"123123","http_only":0,"expires":1595674432},{"name":"sid","value":"bd6aagp7","http_only":0,"expires":1595674432},{"name":"SESSDATA","value":"6d74d850%123%2Cf0e36b61","http_only":1,"expires":1595674432}],"domains":[".bilibili.com",".biligame.com",".bigfunapp.cn"]},"sso":["https://passport.bilibili.com/api/v2/sso","https://passport.biligame.com/api/v2/sso","https://passport.bigfunapp.cn/api/v2/sso"]}}
         // {"ts":1610254019,"code":0,"data":{"status":2,"url":"https://passport.bilibili.com/account/mobile/security/managephone/phone/verify?tmp_token=2bc5dd260df7158xx860565fxx0d5311&requestId=dffcfxx052fe11xxa9c8e2667739c15c&source=risk","message":"您的账号存在高危异常行为，为了您的账号安全，请验证手机号后登录帐号"}}
         // https://passport.bilibili.com/mobile/verifytel_h5.html
-        $response = ApiQrcode::passwordLogin($this->username, $this->password, $validate, $challenge);
+        $response = ApiLogin::passwordLogin($this->username, $this->password, $validate, $challenge);
         //
         $this->loginAfter($mode, $response['code'], $response);
     }
 
     /**
-     * @use 短信登录
+     * 短信登录
      * @param string $mode
      * @return void
      */
@@ -318,13 +342,13 @@ class Login extends BasePlugin
         //
         $captcha = $this->sendSms($this->username, getConf('login_country.code'));
         $code = $this->cliInput('请输入收到的短信验证码: ');
-        $response = ApiQrcode::smsLogin($captcha, $code);
+        $response = ApiLogin::smsLogin($captcha, $code);
         //
         $this->loginAfter($mode, $response['code'], $response);
     }
 
     /**
-     * @use 扫码登录
+     * 扫码登录
      * @param string $mode
      * @return void
      */
@@ -349,7 +373,7 @@ class Login extends BasePlugin
     }
 
     /**
-     * @use 获取AuthCode
+     * 获取AuthCode
      * @return array
      */
     protected function fetchQrAuthCode(): array
@@ -365,7 +389,7 @@ class Login extends BasePlugin
     }
 
     /**
-     * @use 验证AuthCode
+     * 验证AuthCode
      * @param string $auth_code
      * @return bool
      */
@@ -402,7 +426,7 @@ class Login extends BasePlugin
     }
 
     /**
-     * @use 登录后处理
+     * 登录后处理
      * @param string $mode
      * @param int $code
      * @param array $data
@@ -451,7 +475,7 @@ class Login extends BasePlugin
     }
 
     /**
-     * @use 登录成功处理
+     * 登录成功处理
      * @param string $mode
      * @param array $data
      * @return void
@@ -464,7 +488,7 @@ class Login extends BasePlugin
     }
 
     /**
-     * @use 登录失败处理
+     * 登录失败处理
      * @param string $mode
      * @param string $data
      * @return void
@@ -476,7 +500,7 @@ class Login extends BasePlugin
     }
 
     /**
-     * @use 检查登录
+     * 检查登录
      */
     protected function checkLogin(): void
     {
@@ -490,7 +514,7 @@ class Login extends BasePlugin
     }
 
     /**
-     * @use 公钥加密
+     * 公钥加密
      * @param string $plaintext
      * @return string
      */
@@ -513,7 +537,7 @@ class Login extends BasePlugin
     }
 
     /**
-     * @use 发送短信验证码
+     * 发送短信验证码
      * @param string $phone
      * @param string $cid
      * @return array
@@ -522,7 +546,7 @@ class Login extends BasePlugin
     {
         // {"code":0,"message":"0","ttl":1,"data":{"is_new":false,"captcha_key":"4e292933816755442c1568e2043b8e41","recaptcha_url":""}}
         // {"code":0,"message":"0","ttl":1,"data":{"is_new":false,"captcha_key":"","recaptcha_url":"https://www.bilibili.com/h5/project-msg-auth/verify?ct=geetest\u0026recaptcha_token=ad520c3a4a3c46e29b1974d85efd2c4b\u0026gee_gt=1c0ea7c7d47d8126dda19ee3431a5f38\u0026gee_challenge=c772673050dce482b9f63ff45b681ceb\u0026hash=ea2850a43cc6b4f1f7b925d601098e5e"}}
-        $raw = ApiQrcode::sendSms($phone, $cid);
+        $raw = ApiLogin::sendSms($phone, $cid);
         $response = json_decode($raw, true);
         //
         if ($response['code'] == 0 && isset($response['data']['captcha_key']) && $response['data']['recaptcha_url'] == '') {
@@ -534,7 +558,7 @@ class Login extends BasePlugin
     }
 
     /**
-     * @use 输入短信验证码
+     * 输入短信验证码
      * @param string $msg
      * @param int $max_char
      * @return string
@@ -549,7 +573,7 @@ class Login extends BasePlugin
     }
 
     /**
-     * @use 获取验证码
+     * 获取验证码
      * @return array
      */
     protected function getCaptcha(): array
@@ -571,7 +595,7 @@ class Login extends BasePlugin
     }
 
     /**
-     * @use 验证码模式
+     * 验证码模式
      * @param string $mode
      * @return void
      */
@@ -583,7 +607,7 @@ class Login extends BasePlugin
     }
 
     /**
-     * @use 转换Cookie
+     * 转换Cookie
      * @param string $token
      * @return string
      */

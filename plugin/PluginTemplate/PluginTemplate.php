@@ -49,7 +49,7 @@ class PluginTemplate extends BasePlugin
     }
 
     /**
-     * @use 执行
+     * 执行
      * @return void
      */
     public function execute(): void

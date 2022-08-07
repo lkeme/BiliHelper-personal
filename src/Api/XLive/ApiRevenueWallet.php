@@ -24,7 +24,7 @@ use Bhp\User\User;
 class ApiRevenueWallet
 {
     /**
-     * @use app银瓜子兑换硬币
+     * app银瓜子兑换硬币
      * @return array
      */
     public static function appSilver2coin(): array
@@ -36,7 +36,7 @@ class ApiRevenueWallet
     }
 
     /**
-     * @use pc银瓜子兑换硬币
+     * pc银瓜子兑换硬币
      * @return array
      */
     public static function pcSilver2coin(): array
@@ -55,7 +55,7 @@ class ApiRevenueWallet
     }
 
     /**
-     * @use 钱包状态
+     * 钱包状态
      * @return array
      */
     public static function getStatus(): array
@@ -67,7 +67,7 @@ class ApiRevenueWallet
     }
 
     /**
-     * @use 我的钱包
+     * 我的钱包
      * @return array
      */
     public static function myWallet(): array

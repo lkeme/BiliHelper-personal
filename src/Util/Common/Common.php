@@ -21,7 +21,7 @@ class Common
 {
 
     /**
-     * @use 获取十三位时间戳
+     * 获取十三位时间戳
      * @return int
      */
     public static function getUnixTimestamp(): int
@@ -32,7 +32,7 @@ class Common
     }
 
     /**
-     * @use 获取当月第一天及最后一天
+     * 获取当月第一天及最后一天
      * $day[0] 第一天
      * $day[1] 最后一天
      * @return array
@@ -47,7 +47,7 @@ class Common
 
 
     /**
-     * @use 替换字符串
+     * 替换字符串
      * @param $str
      * @param $start
      * @param int $end
@@ -79,7 +79,7 @@ class Common
     }
 
     /**
-     * @use 检查手机号格式
+     * 检查手机号格式
      * @param string $phone
      * @return bool
      */
@@ -91,4 +91,39 @@ class Common
         }
         return true;
     }
+
+    /**
+     * 自定义UUID
+     * @param string $data
+     * @return string
+     */
+    public static function customCreateUUID(string $data): string
+    {
+        //strrev
+        $chars = md5($data);
+        return substr($chars, 0, 8) . '-'
+            . substr($chars, 8, 4) . '-'
+            . substr($chars, 12, 4) . '-'
+            . substr($chars, 16, 4) . '-'
+            . substr($chars, 20, 12);
+    }
+
+    /**
+     * @param int $length
+     * @return string
+     */
+    public static function randString(int $length):string
+    {
+//        $output='';
+//        for ($a = 0; $a<$length; $a++) {
+//            $output .= chr(mt_rand(33, 126));    //生成php随机数
+//        }
+//        return $output;
+        $pattern = '1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLOMNOPQRSTUVWXYZ';
+        for ($i = 0; $i < $length; $i++) {
+            $key .= $pattern[mt_rand(0, 35)];    //生成php随机数
+        }
+        return $key;
+    }
+
 }

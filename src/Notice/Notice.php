@@ -41,7 +41,7 @@ class Notice extends SingleTon
 
 
     /**
-     * @use 推送消息
+     * 推送消息
      * @param string $type
      * @param string $msg
      * @return void
@@ -58,7 +58,7 @@ class Notice extends SingleTon
 
 
     /**
-     * @use 发送消息
+     * 发送消息
      * @param string $type
      * @param string $msg
      * @return void
@@ -100,7 +100,7 @@ class Notice extends SingleTon
     }
 
     /**
-     * @use 过滤信息
+     * 过滤信息
      * @param string $msg
      * @return bool
      */
@@ -119,7 +119,7 @@ class Notice extends SingleTon
     }
 
     /**
-     * @use 填充消息
+     * 填充消息
      * @param string $type
      * @param string $msg
      * @return array
@@ -198,7 +198,7 @@ class Notice extends SingleTon
     }
 
     /**
-     * @use DingTalkbot推送
+     * DingTalkbot推送
      * @doc https://developers.dingtalk.com/document/robots/custom-robot-access
      * @param array $info
      */
@@ -226,7 +226,7 @@ class Notice extends SingleTon
     }
 
     /**
-     * @use TeleBot推送
+     * TeleBot推送
      * @doc https://core.telegram.org/bots/api#sendmessage
      * @param array $info
      */
@@ -250,8 +250,8 @@ class Notice extends SingleTon
     }
 
     /**
-     * @use ServerChan推送
-     * @use https://sc.ftqq.com/
+     * ServerChan推送
+     * https://sc.ftqq.com/
      * @param array $info
      */
     protected function scSend(array $info): void
@@ -273,7 +273,7 @@ class Notice extends SingleTon
     }
 
     /**
-     * @use ServerChan(Turbo)推送
+     * ServerChan(Turbo)推送
      * @doc https://sct.ftqq.com/
      * @param array $info
      */
@@ -297,7 +297,7 @@ class Notice extends SingleTon
     }
 
     /**
-     * @use PushPlus酱推送
+     * PushPlus酱推送
      * @doc http://www.pushplus.plus/doc/
      * @param array $info
      */
@@ -321,7 +321,7 @@ class Notice extends SingleTon
     }
 
     /**
-     * @use GO-CQHTTP推送
+     * GO-CQHTTP推送
      * @doc https://docs.go-cqhttp.org/api/
      * @param array $info
      */
@@ -345,7 +345,7 @@ class Notice extends SingleTon
     }
 
     /**
-     * @use 个人调试使用
+     * 个人调试使用
      * @doc https://localhost:8921/doc
      * @param array $info
      */
@@ -370,7 +370,7 @@ class Notice extends SingleTon
     }
 
     /**
-     * @use 企业微信群机器人
+     * 企业微信群机器人
      * @doc https://open.work.weixin.qq.com/api/doc/90000/90136/91770
      * @param array $info
      */
@@ -396,7 +396,7 @@ class Notice extends SingleTon
     }
 
     /**
-     * @use 企业微信应用消息
+     * 企业微信应用消息
      * @doc https://open.work.weixin.qq.com/wwopen/devtool/interface?doc_id=10167
      * @param array $info
      */
@@ -445,7 +445,7 @@ class Notice extends SingleTon
 
 
     /**
-     * @use 飞书推送
+     * 飞书推送
      * @doc https://developers.dingtalk.com/document/robots/custom-robot-access
      * @param array $info
      */

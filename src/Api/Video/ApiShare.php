@@ -23,7 +23,7 @@ use Bhp\User\User;
 class ApiShare
 {
     /**
-     * @use 分享视频
+     * 分享视频
      * @param string $aid
      * @param string $cid
      * @return array

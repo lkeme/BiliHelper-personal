@@ -30,11 +30,11 @@ class Sign extends SingleTon
     }
 
     /**
-     * @use 登录签名
+     * 安卓
      * @param array $payload
      * @return array
      */
-    public static function login(array $payload): array
+    public static function android(array $payload): array
     {
         # Android 新
         $app_key = base64_decode(getDevice('app.bili_a.app_key_n'));
@@ -54,12 +54,25 @@ class Sign extends SingleTon
         //
         $payload = array_merge($payload, $default);
         return self::getInstance()->encryption($payload, $app_secret);
-
     }
 
 
     /**
-     * @use 登录签名
+     * 登录签名
+     * @param array $payload
+     * @return array
+     */
+    public static function login(array $payload): array
+    {
+        return match ((int)getConf('login_mode.mode')) {
+            2, 1 => self::android($payload),
+            3 => self::tv($payload),
+            default => self::common($payload),
+        };
+    }
+
+    /**
+     * 登录签名
      * @param array $payload
      * @return array
      */
@@ -81,7 +94,7 @@ class Sign extends SingleTon
     }
 
     /**
-     * @use 通用签名
+     * 通用签名
      * @param array $payload
      * @return array
      */
@@ -106,7 +119,7 @@ class Sign extends SingleTon
     }
 
     /**
-     * @use 加密
+     * 加密
      * @param array $payload
      * @param string $app_secret
      * @return array

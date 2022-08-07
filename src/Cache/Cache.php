@@ -31,7 +31,7 @@ class Cache extends SingleTon
     /**
      * @var array|null
      */
-    protected array $caches = [];
+    protected ?array $caches = [];
 
     /**
      * @var Flintstone
@@ -73,7 +73,7 @@ class Cache extends SingleTon
     }
 
     /**
-     * @use 写入值
+     * 写入值
      * @param string $key
      * @param mixed $value
      * @param string|null $classname
@@ -87,7 +87,7 @@ class Cache extends SingleTon
     }
 
     /**
-     * @use 获取值
+     * 获取值
      * @param string $key
      * @param string|null $classname
      * @return false|mixed
@@ -101,7 +101,7 @@ class Cache extends SingleTon
     }
 
     /**
-     * @use 强转一下类型
+     * 强转一下类型
      * @param string|null $classname
      * @return Flintstone
      */
@@ -115,7 +115,7 @@ class Cache extends SingleTon
     }
 
     /**
-     * @use 获取调用者类名
+     * 获取调用者类名
      * @return string
      */
     protected function getCallClassName(): string
@@ -132,7 +132,7 @@ class Cache extends SingleTon
     }
 
     /**
-     * @use 去除特殊符号
+     * 去除特殊符号
      * @param string $str
      * @return string
      */
@@ -146,7 +146,7 @@ class Cache extends SingleTon
     }
 
     /**
-     * @use 获取调用链类
+     * 获取调用链类
      * @return mixed
      */
     protected function backtraceClass(): mixed

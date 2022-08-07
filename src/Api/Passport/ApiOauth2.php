@@ -34,11 +34,11 @@ class ApiOauth2
             'access_token' => $token,
         ];
         // {"ts":1234,"code":0,"data":{"mid":1234,"access_token":"1234","expires_in":7759292}}
-        return Request::getJson(true, 'app', $url, Sign::common($payload));
+        return Request::getJson(true, 'app', $url, Sign::login($payload));
     }
 
     /**
-     * @use 新令牌信息
+     * 新令牌信息
      * @param string $token
      * @return array
      */
@@ -48,12 +48,12 @@ class ApiOauth2
         $payload = [
             'access_key' => $token,
         ];
-        return Request::postJson(true, 'app', $url, Sign::common($payload));
-
+        // {"code":0,"message":"0","ttl":1,"data":{"mid":"<user mid>","access_token":"<current token>","expires_in":9787360,"refresh":true}}
+        return Request::getJson(true, 'app', $url, Sign::login($payload));
     }
 
     /**
-     * @use 刷新令牌信息
+     * 刷新令牌信息
      * @param string $token
      * @param string $r_token
      * @return array
@@ -63,15 +63,14 @@ class ApiOauth2
         $url = 'https://passport.bilibili.com/x/passport-login/oauth2/refresh_token';
         $payload = [
             'access_key' => $token,
-            'access_token' => $token,
             'refresh_token' => $r_token,
         ];
         // {"message":"user not login","ts":1593111694,"code":-101}
-        return Request::postJson(true, 'app', $url, Sign::common($payload));
+        return Request::postJson(true, 'app', $url, Sign::login($payload));
     }
 
     /**
-     * @use 刷新令牌信息
+     * 刷新令牌信息
      * @param string $token
      * @param string $r_token
      * @return array
@@ -80,15 +79,29 @@ class ApiOauth2
     {
         $url = 'https://passport.bilibili.com/api/v2/oauth2/refresh_token';
         $payload = [
-            'access_token' => $token,
+            'access_key' => $token,
             'refresh_token' => $r_token,
         ];
         // {"message":"user not login","ts":1593111694,"code":-101}
-        return Request::postJson(true, 'app', $url, Sign::common($payload));
+        return Request::postJson(true, 'app', $url, Sign::login($payload));
     }
 
     /**
-     * @use 获取公钥
+     * 登录用户信息
+     * @param string $token
+     * @return array
+     */
+    public static function myInfo(string $token): array
+    {
+        $url = 'https://app.bilibili.com/x/v2/account/myinfo';
+        $payload = [
+            'access_key' => $token,
+        ];
+        return Request::getJson(true, 'app', $url, Sign::login($payload));
+    }
+
+    /**
+     * 获取公钥
      * @return array
      */
     public static function getKey(): array
@@ -100,7 +113,7 @@ class ApiOauth2
     }
 
     /**
-     * @use 刷新COOKIE
+     * 刷新COOKIE
      * @param string $token
      * @return array
      */
@@ -111,7 +124,7 @@ class ApiOauth2
             'access_key' => $token,
             'gourl' => 'https%3A%2F%2Faccount.bilibili.com%2Faccount%2Fhome'
         ];
-        return Request::headers('app', $url, Sign::tv($payload));
+        return Request::headers('app', $url, Sign::login($payload));
     }
 
 }
