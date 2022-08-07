@@ -51,7 +51,7 @@ class BpConsumption extends BasePlugin
     }
 
     /**
-     * @use 执行
+     * 执行
      * @return void
      */
     public function execute(): void
@@ -64,7 +64,7 @@ class BpConsumption extends BasePlugin
     }
 
     /**
-     * @use 消费
+     * 消费
      * @return void
      */
     protected function consumptionTask(): void
@@ -108,7 +108,7 @@ class BpConsumption extends BasePlugin
     }
 
     /**
-     * @use B币充电
+     * B币充电
      * @param int $uid
      * @param int $num
      */
@@ -131,7 +131,7 @@ class BpConsumption extends BasePlugin
     }
 
     /**
-     * @use 获取钱包B币券余额
+     * 获取钱包B币券余额
      * @return int
      */
     protected function getUserWallet(): int

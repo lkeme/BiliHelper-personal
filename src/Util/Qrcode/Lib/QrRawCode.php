@@ -21,15 +21,15 @@ use Exception;
 
 class QrRawCode
 {
-    public $version;
-    public $datacode = [];
-    public $ecccode = [];
-    public $blocks;
-    public $rsblocks = []; //of RSblock
-    public $count;
-    public $dataLength;
-    public $eccLength;
-    public $b1;
+    public int $version;
+    public ?array $datacode = [];
+    public array $ecccode = [];
+    public mixed $blocks;
+    public array $rsblocks = []; //of RSblock
+    public int $count;
+    public int|float $dataLength;
+    public int|float $eccLength;
+    public mixed $b1;
 
     //----------------------------------------------------------------------
     public function __construct(QrInput $input)
@@ -103,7 +103,7 @@ class QrRawCode
     }
 
     //----------------------------------------------------------------------
-    public function getCode()
+    public function getCode(): int
     {
         $ret = null;
 
@@ -113,11 +113,11 @@ class QrRawCode
             if ($col >= $this->rsblocks[0]->dataLength) {
                 $row += $this->b1;
             }
-            $ret = (int) $this->rsblocks[$row]->data[$col];
+            $ret = (int)$this->rsblocks[(int)$row]->data[(int)$col];
         } else if ($this->count < $this->dataLength + $this->eccLength) {
             $row = ($this->count - $this->dataLength) % $this->blocks;
             $col = ($this->count - $this->dataLength) / $this->blocks;
-            $ret = $this->rsblocks[$row]->ecc[$col];
+            $ret = (int)$this->rsblocks[(int)$row]->ecc[(int)$col];
         } else {
             return 0;
         }

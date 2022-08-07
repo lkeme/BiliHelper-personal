@@ -39,7 +39,7 @@ trait BasePluginInfo
     protected ?array $info;
 
     /**
-     * @use 设置Hook
+     * 设置Hook
      * @param string $value
      * @param string $key
      * @return $this
@@ -51,7 +51,7 @@ trait BasePluginInfo
     }
 
     /**
-     * @use 设置名称
+     * 设置名称
      * @param string $value
      * @param string $key
      * @return $this
@@ -63,7 +63,7 @@ trait BasePluginInfo
     }
 
     /**
-     * @use 设置版本
+     * 设置版本
      * @param string $value
      * @param string $key
      * @return $this
@@ -75,7 +75,7 @@ trait BasePluginInfo
     }
 
     /**
-     * @use 设置描述
+     * 设置描述
      * @param string $value
      * @param string $key
      * @return $this
@@ -87,7 +87,7 @@ trait BasePluginInfo
     }
 
     /**
-     * @use 设置优先级
+     * 设置优先级
      * @param int $value
      * @param string $key
      * @return $this
@@ -99,7 +99,7 @@ trait BasePluginInfo
     }
 
     /**
-     * @use 设置运行周期
+     * 设置运行周期
      * @param string $value
      * @param string $key
      * @return $this
@@ -111,7 +111,7 @@ trait BasePluginInfo
     }
 
     /**
-     * @use 返回插件信息
+     * 返回插件信息
      * @return array|string[]
      */
     public function getPluginInfo(): array

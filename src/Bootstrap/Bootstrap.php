@@ -17,7 +17,6 @@
 
 namespace Bhp\Bootstrap;
 
-use Bhp\BiliInfo\BiliInfo;
 use Bhp\Cache\Cache;
 use Bhp\Console\Console;
 use Bhp\Core\Core;
@@ -27,6 +26,7 @@ use Bhp\Log\Log;
 use Bhp\Notice\Notice;
 use Bhp\Plugin\Plugin;
 use Bhp\Request\Request;
+use Bhp\Schedule\Schedule;
 use Bhp\Sign\Sign;
 use Bhp\Task\Task;
 use Bhp\TimeLock\TimeLock;
@@ -63,6 +63,10 @@ class Bootstrap extends SingleTon
     {
         // 核心
         Core::getInstance($this->global_path, $this->profile_name);
+        // 排程
+        Schedule::getInstance();
+        // 插件中心
+        Plugin::getInstance();
         // 配置
         Config::getInstance();
         // 缓存中心
@@ -87,8 +91,6 @@ class Bootstrap extends SingleTon
         Notice::getInstance();
         // 任务中心
         Task::getInstance();
-        // 插件中心
-        Plugin::getInstance();
         // 控制台
         Console::getInstance();
     }

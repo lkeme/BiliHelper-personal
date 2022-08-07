@@ -24,7 +24,7 @@ class ApiManga
 {
 
     /**
-     * @use 签到
+     * 签到
      * @return array
      */
     public static function ClockIn(): array
@@ -38,7 +38,7 @@ class ApiManga
 
 
     /**
-     * @use 分享
+     * 分享
      * @return array
      */
     public static function ShareComic(): array
@@ -52,7 +52,7 @@ class ApiManga
     }
 
     /**
-     * @use 签到信息
+     * 签到信息
      * @return array
      */
     public static function GetClockInInfo(): array

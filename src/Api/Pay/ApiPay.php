@@ -25,7 +25,7 @@ class ApiPay
 {
 
     /**
-     * @use 金瓜子
+     * 金瓜子
      * @param int $num
      * @return array
      */
@@ -55,7 +55,7 @@ class ApiPay
     }
 
     /**
-     * @use 电池
+     * 电池
      * @param int $up_mid
      * @param int $num
      * @return array

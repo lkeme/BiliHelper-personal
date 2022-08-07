@@ -23,7 +23,7 @@ use Bhp\User\User;
 class ApiReservation
 {
     /**
-     * @use 获取预约列表
+     * 获取预约列表
      * @param string $vmid
      * @return array
      */
@@ -42,7 +42,7 @@ class ApiReservation
     }
 
     /**
-     * @use 预约
+     * 预约
      * @param int $sid
      * @param int $vmid
      * @return array

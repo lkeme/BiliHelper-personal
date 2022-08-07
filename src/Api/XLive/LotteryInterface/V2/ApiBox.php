@@ -22,7 +22,7 @@ use Bhp\Request\Request;
 class ApiBox
 {
     /**
-     * @use 抽奖
+     * 抽奖
      * @param int $aid
      * @param int $round
      * @return array
@@ -40,7 +40,7 @@ class ApiBox
 
 
     /**
-     * @use 获取状态
+     * 获取状态
      * @param int $aid
      * @return array
      */

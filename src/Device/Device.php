@@ -17,14 +17,12 @@
 
 namespace Bhp\Device;
 
-use Bhp\Log\Log;
 use Bhp\Util\Resource\BaseResource;
 
 class Device extends BaseResource
 {
     /**
      * @param string $filename
-     * @param string $default_filename
      * @return void
      */
     public function init(string $filename = 'device.yaml'): void
@@ -33,7 +31,7 @@ class Device extends BaseResource
     }
 
     /**
-     * @use 重写真实路径获取
+     * 重写真实路径获取
      * @param string $filename
      * @return string
      */
@@ -43,7 +41,7 @@ class Device extends BaseResource
     }
 
     /**
-     * @use 重写真实路径
+     * 重写真实路径
      * @param string $filename
      * @param string $default_filename
      * @return string

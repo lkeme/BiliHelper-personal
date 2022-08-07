@@ -20,7 +20,7 @@ namespace Bhp\Util\Qrcode\Lib;
 class QrTools
 {
     /**
-     * @use 二值化
+     * 二值化
      * @param array $frame
      * @return array
      */

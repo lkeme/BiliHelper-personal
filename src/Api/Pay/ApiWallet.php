@@ -23,7 +23,7 @@ use Bhp\Util\Common\Common;
 class ApiWallet
 {
     /**
-     * @use 获取用户钱包
+     * 获取用户钱包
      * @return array
      */
     public static function getUserWallet(): array

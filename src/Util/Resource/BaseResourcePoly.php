@@ -22,37 +22,37 @@ use Bhp\Util\Resource\Resource as EResource;
 abstract class BaseResourcePoly
 {
     /**
-     * @use 配置对象变量
+     * 配置对象变量
      * @var EResource
      */
     protected ?Resource $resource = null;
 
     /**
-     * @use 配置文件名
+     * 配置文件名
      * @var string
      */
     protected string $filename = '';
 
     /**
-     * @use 配置文件路径
+     * 配置文件路径
      * @var string
      */
     protected string $filepath = '';
 
     /**
-     * @use 最后访问文件时间
+     * 最后访问文件时间
      * @var int
      */
     protected int $last_access = 0;
 
     /**
-     * @use 解析器
+     * 解析器
      * @var string
      */
     protected string $parser = '';
 
     /**
-     * @use 设置值
+     * 设置值
      * @param string $key
      * @param mixed $value
      * @return void
@@ -64,7 +64,7 @@ abstract class BaseResourcePoly
     }
 
     /**
-     * @use 根据类型获取值
+     * 根据类型获取值
      * @param string $key
      * @param mixed|null $default
      * @param string $type
@@ -87,7 +87,7 @@ abstract class BaseResourcePoly
     }
 
     /**
-     * @use 加载资源文件
+     * 加载资源文件
      * @param string $filename
      * @param string $parser
      * @return void
@@ -105,7 +105,7 @@ abstract class BaseResourcePoly
     }
 
     /**
-     * @use 检查文件是否存在
+     * 检查文件是否存在
      * @param string $filepath
      * @param string $filename
      * @return void
@@ -135,7 +135,7 @@ abstract class BaseResourcePoly
     }
 
     /**
-     * @use 更新最新修改时间
+     * 更新最新修改时间
      * @return void
      */
     protected function updateLastAccess(): void
@@ -144,7 +144,7 @@ abstract class BaseResourcePoly
     }
 
     /**
-     * @use 获取文件真实路径
+     * 获取文件真实路径
      * @param string $filename
      * @return string
      */

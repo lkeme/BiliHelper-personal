@@ -24,7 +24,7 @@ class ApiJury
 {
 
     /**
-     * @use 风纪委员状态
+     * 风纪委员状态
      * @return array
      */
     public static function jury(): array
@@ -41,7 +41,7 @@ class ApiJury
     }
 
     /**
-     * @use 申請連任
+     * 申請連任
      * @return array
      */
     public static function juryApply(): array
@@ -61,7 +61,7 @@ class ApiJury
     }
 
     /**
-     * @use 獲取案件任務
+     * 獲取案件任務
      * @return array
      */
     public static function caseNext(): array
@@ -81,7 +81,7 @@ class ApiJury
     }
 
     /**
-     * @use 案件信息
+     * 案件信息
      * @param string $case_id
      * @return array
      */
@@ -100,7 +100,7 @@ class ApiJury
     }
 
     /**
-     * @use 衆議觀點
+     * 衆議觀點
      * @param string $case_id
      * @param int $pn
      * @param int $ps
@@ -123,7 +123,7 @@ class ApiJury
     }
 
     /**
-     * @use 投票
+     * 投票
      * @param string $case_id
      * @param int $vote
      * @param string $content
@@ -154,7 +154,7 @@ class ApiJury
     }
 
     /**
-     * @use 案件列表
+     * 案件列表
      * @param int $pn
      * @param int $ps
      * @return array

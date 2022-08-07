@@ -117,7 +117,7 @@ class Faker
     }
 
     /**
-     * @use 转Ascii
+     * 转Ascii
      * @param $string
      * @return array|string
      */

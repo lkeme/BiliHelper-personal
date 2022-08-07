@@ -81,6 +81,15 @@ class Request extends SingleTon
     }
 
     /**
+     * @return string
+     */
+    public static function getBuvid(): string
+    {
+        return self::getInstance()->buvid;
+    }
+
+
+    /**
      * 初始化客户端
      * @param string $request_id
      * @param array $config
@@ -97,7 +106,7 @@ class Request extends SingleTon
     }
 
     /**
-     * @use 请求地址
+     * 请求地址
      * @param string $request_id
      * @param string $url
      * @return $this
@@ -109,7 +118,7 @@ class Request extends SingleTon
     }
 
     /**
-     * @use 请求方式
+     * 请求方式
      * @param string $request_id
      * @param string $method
      * @return $this
@@ -121,7 +130,7 @@ class Request extends SingleTon
     }
 
     /**
-     * @use 请求头
+     * 请求头
      * @param string $request_id
      * @param string $os
      * @param array $headers
@@ -171,7 +180,7 @@ class Request extends SingleTon
     }
 
     /**
-     * @use 客户端配置
+     * 客户端配置
      * @param string $request_id
      * @param array $add_options
      * @param float $timeout
@@ -197,7 +206,7 @@ class Request extends SingleTon
     }
 
     /**
-     * @use 处理请求
+     * 处理请求
      * @param string $request_id
      * @return ResponseInterface
      */
@@ -231,7 +240,7 @@ class Request extends SingleTon
     }
 
     /**
-     * @use Method GetResponse
+     * Method GetResponse
      * @param string $os
      * @param string $url
      * @param array $params
@@ -264,7 +273,7 @@ class Request extends SingleTon
     }
 
     /**
-     * @use Method Get
+     * Method Get
      * @param mixed ...$params
      * @return string
      */
@@ -275,7 +284,7 @@ class Request extends SingleTon
     }
 
     /**
-     * @use Method GetJson
+     * Method GetJson
      * @param bool|null $associative
      * @param mixed ...$params
      * @return mixed
@@ -288,7 +297,7 @@ class Request extends SingleTon
     }
 
     /**
-     * @use Method PostResponse
+     * Method PostResponse
      * @param $os
      * @param $url
      * @param array $params
@@ -321,7 +330,7 @@ class Request extends SingleTon
     }
 
     /**
-     * @use Method Post
+     * Method Post
      * @param mixed ...$params
      * @return string
      */
@@ -332,7 +341,7 @@ class Request extends SingleTon
     }
 
     /**
-     * @use Method PostJson
+     * Method PostJson
      * @param bool|null $associative
      * @param mixed ...$params
      * @return mixed
@@ -345,7 +354,7 @@ class Request extends SingleTon
     }
 
     /**
-     * @use Method PutResponse
+     * Method PutResponse
      * @param $os
      * @param $url
      * @param array $params
@@ -378,7 +387,7 @@ class Request extends SingleTon
     }
 
     /**
-     * @use Method Put
+     * Method Put
      * @param mixed ...$params
      * @return string
      */
@@ -389,7 +398,7 @@ class Request extends SingleTon
     }
 
     /**
-     * @use Method PutJson
+     * Method PutJson
      * @param bool|null $associative
      * @param mixed ...$params
      * @return mixed
@@ -403,7 +412,7 @@ class Request extends SingleTon
 
 
     /**
-     * @use 下载文件
+     * 下载文件
      * @param $os
      * @param $url
      * @param string $filepath
@@ -421,7 +430,7 @@ class Request extends SingleTon
     }
 
     /**
-     * @use 单次请求
+     * 单次请求
      * @param string $method
      * @param string $url
      * @param array $payload
@@ -483,7 +492,7 @@ class Request extends SingleTon
     }
 
     /**
-     * @use 开始请求
+     * 开始请求
      * @return string
      */
     protected function startRequest(): string
@@ -515,7 +524,7 @@ class Request extends SingleTon
     }
 
     /**
-     * @use 结束请求
+     * 结束请求
      * @param string $request_id
      * @return void
      */
@@ -525,7 +534,7 @@ class Request extends SingleTon
     }
 
     /**
-     * @use GET请求
+     * GET请求
      * @param $os
      * @param $url
      * @param array $params

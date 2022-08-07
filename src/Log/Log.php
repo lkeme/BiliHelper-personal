@@ -39,7 +39,7 @@ class Log extends SingleTon
     }
 
     /**
-     * @use 初始化日志服务
+     * 初始化日志服务
      * @return Logger
      */
     protected function getLogger(): Logger
@@ -56,7 +56,7 @@ class Log extends SingleTon
     }
 
     /**
-     * @use 通用
+     * 通用
      * @param string $level
      * @param string $msg
      * @param array $context
@@ -102,7 +102,7 @@ class Log extends SingleTon
     }
 
     /**
-     * @use 错误
+     * 错误
      * @param mixed $message
      * @param array $context
      * @return void
@@ -113,7 +113,7 @@ class Log extends SingleTon
     }
 
     /**
-     * @use 警告
+     * 警告
      * @param mixed $message
      * @param array $context
      * @return void
@@ -124,7 +124,7 @@ class Log extends SingleTon
     }
 
     /**
-     * @use 提醒
+     * 提醒
      * @param mixed $message
      * @param array $context
      * @return void
@@ -135,7 +135,7 @@ class Log extends SingleTon
     }
 
     /**
-     * @use 信息
+     * 信息
      * @param mixed $message
      * @param array $context
      * @return void
@@ -146,7 +146,7 @@ class Log extends SingleTon
     }
 
     /**
-     * @use 调试
+     * 调试
      * @param mixed $message
      * @param array $context
      * @return void
@@ -157,7 +157,7 @@ class Log extends SingleTon
     }
 
     /**
-     * @use 堆栈
+     * 堆栈
      * @return string
      */
     protected function backtrace(): string
@@ -167,7 +167,7 @@ class Log extends SingleTon
     }
 
     /**
-     * @use 前缀
+     * 前缀
      * @return string
      */
     protected function prefix(): string
@@ -180,7 +180,7 @@ class Log extends SingleTon
     }
 
     /**
-     * @use 写日志
+     * 写日志
      * @param string $type
      * @param string $message
      */
@@ -198,7 +198,7 @@ class Log extends SingleTon
     }
 
     /**
-     * @use 回调
+     * 回调
      * @param int $levelId
      * @param string $level
      * @param mixed $message

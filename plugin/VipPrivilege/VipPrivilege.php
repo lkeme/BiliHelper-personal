@@ -59,7 +59,7 @@ class VipPrivilege extends BasePlugin
     }
 
     /**
-     * @use 执行
+     * 执行
      * @return void
      */
     public function execute(): void
@@ -73,7 +73,7 @@ class VipPrivilege extends BasePlugin
     }
 
     /**
-     * @use 领取
+     * 领取
      * @return void
      */
     protected function receiveTask(): void
@@ -94,7 +94,7 @@ class VipPrivilege extends BasePlugin
     }
 
     /**
-     * @use 获取我的大会员权益列表
+     * 获取我的大会员权益列表
      * @return array
      */
     protected function myVipPrivilege(): array
@@ -112,7 +112,7 @@ class VipPrivilege extends BasePlugin
     }
 
     /**
-     * @use 领取我的大会员权益
+     * 领取我的大会员权益
      * @param int $type
      */
     protected function myVipPrivilegeReceive(int $type): void

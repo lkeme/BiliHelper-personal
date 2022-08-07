@@ -23,7 +23,7 @@ use Bhp\User\User;
 class ApiPrivilege
 {
     /**
-     * @use 获取我的大会员权益列表
+     * 获取我的大会员权益列表
      * @return array
      */
     public static function my(): array
@@ -39,7 +39,7 @@ class ApiPrivilege
     }
 
     /**
-     * @use 领取权益
+     * 领取权益
      * @param int $type
      * @return array
      */

@@ -23,7 +23,7 @@ use Bhp\User\User;
 class ApiGuess
 {
     /**
-     * @use 获取赛事竞猜
+     * 获取赛事竞猜
      * @param int $pn
      * @param int $ps
      * @return array
@@ -45,7 +45,7 @@ class ApiGuess
     }
 
     /**
-     * @use 竞猜
+     * 竞猜
      * @param int $oid
      * @param int $main_id
      * @param int $detail_id

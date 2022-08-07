@@ -21,20 +21,20 @@ class SingleTon
 {
 
     /**
-     * @use 创建静态私有的变量保存该类对象
+     * 创建静态私有的变量保存该类对象
      * @var array|null
      */
     private static ?array $_instances = [];
 
     /**
-     * @use SingleTon constructor. 私有的构造方法|防止使用new直接创建对象
+     * SingleTon constructor. 私有的构造方法|防止使用new直接创建对象
      */
     private function __construct()
     {
     }
 
     /**
-     * @use 创建__clone方法防止对象被复制克隆
+     * 创建__clone方法防止对象被复制克隆
      * @return void
      */
     private function __clone(): void
@@ -42,7 +42,7 @@ class SingleTon
     }
 
     /**
-     * @use 放置反序列化
+     * 放置反序列化
      * @return void
      */
     public function __wakeup(): void

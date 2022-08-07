@@ -34,7 +34,7 @@ class User extends SingleTon
     }
 
     /**
-     * @use 转换信息
+     * 转换信息
      * @return array
      */
     #[ArrayShape(['csrf' => "mixed|string", 'uid' => "mixed|string", 'sid' => "mixed|string"])]
@@ -52,7 +52,7 @@ class User extends SingleTon
     }
 
     /**
-     * @use 是否为有效年度大会员
+     * 是否为有效年度大会员
      * @param string $title
      * @return bool
      */

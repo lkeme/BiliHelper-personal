@@ -23,7 +23,7 @@ use Bhp\User\User;
 class ApiWatch
 {
     /**
-     * @use 观看视频
+     * 观看视频
      * @param string $aid
      * @param string $cid
      * @return array
@@ -56,7 +56,7 @@ class ApiWatch
     }
 
     /**
-     * @use 发送心跳
+     * 发送心跳
      * @param string $aid
      * @param string $cid
      * @param int $duration

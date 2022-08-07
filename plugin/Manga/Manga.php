@@ -49,7 +49,7 @@ class Manga extends BasePlugin
     }
 
     /**
-     * @use 执行
+     * 执行
      * @return void
      */
     public function execute(): void
@@ -64,7 +64,7 @@ class Manga extends BasePlugin
     }
 
     /**
-     * @use 签到任务
+     * 签到任务
      * @return bool
      */
     protected function signInTask(): bool
@@ -89,7 +89,7 @@ class Manga extends BasePlugin
     }
 
     /**
-     * @use 分享任务
+     * 分享任务
      * @return bool
      */
     protected function shareTask(): bool
@@ -121,7 +121,7 @@ class Manga extends BasePlugin
     }
 
     /**
-     * @use 签到信息
+     * 签到信息
      * @return void
      */
     protected function signInInfo(): void

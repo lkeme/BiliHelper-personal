@@ -18,6 +18,7 @@
 namespace Bhp\TimeLock;
 
 use Amp\Delayed;
+use Bhp\Schedule\Schedule;
 use Bhp\Util\DesignPattern\SingleTon;
 
 class TimeLock extends SingleTon
@@ -36,9 +37,9 @@ class TimeLock extends SingleTon
     }
 
     /**
-     * @use 初始化时间锁
+     * 初始化时间锁
      * @param int $times
-     * @param bool $pause
+     * @param bool $status
      * @return void
      */
     public static function initTimeLock(int $times = 0, bool $status = false): void
@@ -50,7 +51,7 @@ class TimeLock extends SingleTon
     }
 
     /**
-     * @use 设置暂停状态
+     * 设置暂停状态
      * @param bool $status
      * @return void
      */
@@ -61,7 +62,7 @@ class TimeLock extends SingleTon
     }
 
     /**
-     * @use 获取暂停状态
+     * 获取暂停状态
      * @return bool
      */
     public static function getPause(): bool
@@ -70,7 +71,7 @@ class TimeLock extends SingleTon
     }
 
     /**
-     * @use 设置计时器
+     * 设置计时器
      * @param int $times
      * @return void
      */
@@ -78,15 +79,19 @@ class TimeLock extends SingleTon
     {
         $class_name = self::getInstance()->getCallClassName();
         self::getInstance()->locks[$class_name]['times'] = time() + $times;
+        //
+        Schedule::set($class_name,self::getInstance()->locks[$class_name]['times']);
     }
 
     /**
-     * @use 获取计时器
-     * @return bool
+     * 获取计时器
+     * @return int
      */
     public static function getTimes(): int
     {
-        return self::getInstance()->getLock()['times'];
+        $class_name = self::getInstance()->getCallClassName();
+        return Schedule::get($class_name);
+        // return self::getInstance()->getLock()['times'];
     }
 
     /**
@@ -102,7 +107,7 @@ class TimeLock extends SingleTon
     }
 
     /**
-     * @use used in Amp loop Delayed
+     * used in Amp loop Delayed
      * @param int $times
      * @return Delayed
      */
@@ -112,7 +117,7 @@ class TimeLock extends SingleTon
     }
 
     /**
-     * @use 定时
+     * 定时
      * @param int $hour 时
      * @param int $minute 分
      * @param int $seconds 秒
@@ -131,7 +136,7 @@ class TimeLock extends SingleTon
     }
 
     /**
-     * @use 判断是否在时间内
+     * 判断是否在时间内
      * @param string $first_time
      * @param string $second_time
      * @return bool
@@ -150,8 +155,7 @@ class TimeLock extends SingleTon
     }
 
     /**
-     * @use 获取调用者类名
-     * @param int $index
+     * 获取调用者类名
      * @return string
      */
     protected function getCallClassName(): string
@@ -168,7 +172,7 @@ class TimeLock extends SingleTon
     }
 
     /**
-     * @use 获取基础CLASS NAME
+     * 获取基础CLASS NAME
      * @return string
      */
     protected function getBaseClass(): string
@@ -177,7 +181,7 @@ class TimeLock extends SingleTon
     }
 
 //    /**
-//     * @use 暂停
+//     * 暂停
 //     */
 //    public static function pauseLock(): void
 //    {
