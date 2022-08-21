@@ -63,6 +63,8 @@ class Bootstrap extends SingleTon
     {
         // 核心
         Core::getInstance($this->global_path, $this->profile_name);
+        // 环境
+        Env::getInstance();
         // 排程
         Schedule::getInstance();
         // 插件中心
@@ -73,8 +75,6 @@ class Bootstrap extends SingleTon
         Cache::getInstance();
         // 日志
         Log::getInstance();
-        // 环境
-        Env::getInstance();
         // 设备/取前缀
         Device::getInstance();
         // 请求中心

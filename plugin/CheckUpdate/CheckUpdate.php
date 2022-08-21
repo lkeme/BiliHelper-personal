@@ -117,7 +117,8 @@ class CheckUpdate extends BasePluginRW
      */
     protected function fetchOnlineVersion(): object
     {
-        $url = $this->resource->get('raw_url');
+        $branch = getConf('app.branch');
+        $url = $this->resource->get($branch . '_raw_url');
         $payload = [];
         return Request::getJson(false, 'other', $url, $payload);
     }

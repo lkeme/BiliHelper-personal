@@ -2,7 +2,7 @@
   "name": "lkeme/bilihelper-personal",
   "description": "B 站自动领瓜子、直播助手、直播挂机脚本、主站助手 - PHP 版（Personal）",
   "type": "project",
-  "version": "1.0.0-dev",
+  "version": "2.*.*-dev",
   "minimum-stability": "stable",
   "license": "MIT",
   "authors": [
@@ -62,7 +62,8 @@
     "guzzlehttp/guzzle": "^7.4",
     "toolkit/pflag": "^2.0",
     "symfony/console": "^6.1",
-    "malios/php-to-ascii-table": "^3.0"
+    "malios/php-to-ascii-table": "^3.0",
+    "clue/socket-raw": "1.6"
   },
   "autoload": {
     "psr-4": {
