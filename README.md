@@ -48,7 +48,7 @@
 
 有疑问一定要先看看文档或Issue里是否存在相同的问题，再考虑其他渠道咨询。
 
-* [使用文档 / DOC.md](./dosc/DOC.md)
+* [使用文档 / DOC.md](./docs/DOC.md)
 * [推送文档 / NOTIFY.md](./docs/NOTIFY.md)
 * [更新日志 / CHANGELOG.md](./docs/CHANGELOG.md)
 * [配置文档 / WIKI.md](https://github.com/lkeme/BiliHelper-personal/wiki/%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E8%AF%A6%E8%A7%A3)
