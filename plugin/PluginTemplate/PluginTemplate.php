@@ -63,4 +63,3 @@ class PluginTemplate extends BasePlugin
 
 
 }
- 

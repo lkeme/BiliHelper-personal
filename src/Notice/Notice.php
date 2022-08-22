@@ -187,8 +187,8 @@ class Notice extends SingleTon
                 'content' => "[$now_time] 用户: $uname 详情: $msg ，请及时关注風機委員连任状态哦~"
             ],
             default => [
-                'title' => '推送消息异常记录',
-                'content' => "[$now_time] 用户: $uname 推送消息key错误: $type->$msg"
+                'title' => $type,
+                'content' => "[$now_time] 用户: $uname 详情: $msg"
             ],
         };
         // 添加前缀
@@ -404,7 +404,7 @@ class Notice extends SingleTon
     {
         Log::info('使用weComApp推送消息');
         $corp_id = getConf('notify_we_com_app.corp_id');
-        $corp_secret = getConf('notify_we_com_app.corp_secret' );
+        $corp_secret = getConf('notify_we_com_app.corp_secret');
         $agent_id = getConf('notify_we_com_app.agent_id');
         $to_user = getConf('notify_we_com_app.to_user') ?? '@all';
 
@@ -474,4 +474,3 @@ class Notice extends SingleTon
 
 }
 
- 
