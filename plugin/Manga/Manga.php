@@ -20,6 +20,7 @@ use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
 use Bhp\Plugin\Plugin;
 use Bhp\TimeLock\TimeLock;
+use Bhp\Util\Exceptions\NoLoginException;
 
 class Manga extends BasePlugin
 {
@@ -51,6 +52,7 @@ class Manga extends BasePlugin
     /**
      * 执行
      * @return void
+     * @throws NoLoginException
      */
     public function execute(): void
     {
@@ -91,6 +93,7 @@ class Manga extends BasePlugin
     /**
      * 分享任务
      * @return bool
+     * @throws NoLoginException
      */
     protected function shareTask(): bool
     {
@@ -106,16 +109,11 @@ class Manga extends BasePlugin
                     Log::notice("漫画: 分享成功，经验值+{$response['data']['point']}");
                 }
                 break;
+            case 'unauthenticated':
+                throw new NoLoginException($response['message']);
             default:
                 Log::warning("漫画: 分享失败 {$response['code']} -> {$response['msg']}");
                 return false;
-        }
-        return true;
-
-
-        if ($response['code']) {
-            Log::warning("漫画: 分享失败或者重复分享 {$response['code']} -> {$response['msg']}");
-        } else {
         }
         return true;
     }
@@ -136,4 +134,3 @@ class Manga extends BasePlugin
 
 
 }
- 

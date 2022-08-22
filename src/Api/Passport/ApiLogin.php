@@ -50,19 +50,18 @@ class ApiLogin
 
     /**
      * 发送短信验证码
-     * @param string $phone
-     * @param string $cid
+     * @param array $payload
      * @return string
      */
-    public static function sendSms(string $phone, string $cid): string
+    public static function sendSms(array $payload): string
     {
         $url = 'https://passport.bilibili.com//x/passport-login/sms/send';
         // TODO 动态版本参数
-        $payload = [
-            'cid' => $cid,
-            'tel' => $phone,
-            'statistics' => '{"appId":1,"platform":3,"version":"6.86.0","abtest":""}',
-        ];
+//        $payload = [
+//            'cid' => $cid,
+//            'tel' => $phone,
+//            'statistics' => '{"appId":1,"platform":3,"version":"6.86.0","abtest":""}',
+//        ];
         // {"code":0,"message":"0","ttl":1,"data":{"is_new":false,"captcha_key":"4e292933816755442c1568e2043b8e41","recaptcha_url":""}}
         // {"code":0,"message":"0","ttl":1,"data":{"is_new":false,"captcha_key":"","recaptcha_url":"https://www.bilibili.com/h5/project-msg-auth/verify?ct=geetest\u0026recaptcha_token=ad520c3a4a3c46e29b1974d85efd2c4b\u0026gee_gt=1c0ea7c7d47d8126dda19ee3431a5f38\u0026gee_challenge=c772673050dce482b9f63ff45b681ceb\u0026hash=ea2850a43cc6b4f1f7b925d601098e5e"}}
         return Request::post('app', $url, Sign::login($payload));

@@ -24,6 +24,7 @@ use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
 use Bhp\Plugin\Plugin;
 use Bhp\TimeLock\TimeLock;
+use Bhp\Util\Exceptions\NoLoginException;
 
 class MainSite extends BasePlugin
 {
@@ -55,6 +56,7 @@ class MainSite extends BasePlugin
     /**
      * 执行
      * @return void
+     * @throws NoLoginException
      */
     public function execute(): void
     {
@@ -266,6 +268,7 @@ class MainSite extends BasePlugin
     /**
      * 分享任务
      * @return bool
+     * @throws NoLoginException
      */
     protected function shareTask(): bool
     {
@@ -276,12 +279,16 @@ class MainSite extends BasePlugin
         $aid = (string)$info['aid'];
         //
         $response = ApiShare::share($aid);
-        if ($response['code']) {
-            Log::warning("主站任务: $aid 分享失败 {$response['code']} -> {$response['message']}");
-            return false;
+        switch ($response['code']) {
+            case 137004:
+                throw new NoLoginException($response['message']);
+            case 0:
+                Log::notice("主站任务: $aid 分享成功");
+                return true;
+            default:
+                Log::warning("主站任务: $aid 分享失败 {$response['code']} -> {$response['message']}");
+                return false;
         }
-        Log::notice("主站任务: $aid 分享成功");
-        return true;
     }
 
     /**
@@ -343,4 +350,3 @@ class MainSite extends BasePlugin
     }
 
 }
- 

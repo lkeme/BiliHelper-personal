@@ -34,11 +34,11 @@ class ApiLoveClub
     }
 
     /**
-     * @param string $group_id 应援团id
-     * @param string $owner_id 爱豆ID
+     * @param int $group_id 应援团id
+     * @param int $owner_id 爱豆ID
      * @return array
      */
-    public static function signIn(string $group_id, string $owner_id): array
+    public static function signIn(int $group_id, int $owner_id): array
     {
         $url = 'https://api.vc.bilibili.com/link_setting/v1/link_setting/sign_in';
         $payload = [
@@ -47,6 +47,5 @@ class ApiLoveClub
         ];
         return Request::getJson(true, 'app', $url, Sign::common($payload));
     }
-
 
 }

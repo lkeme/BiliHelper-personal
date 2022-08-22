@@ -20,7 +20,7 @@ namespace Bhp\Util\Exceptions;
 use Exception;
 use Throwable;
 
-class TaskException extends Exception
+class NoLoginException extends Exception
 {
     /**
      * @param string $message

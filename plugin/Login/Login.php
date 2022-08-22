@@ -546,7 +546,14 @@ class Login extends BasePlugin
     {
         // {"code":0,"message":"0","ttl":1,"data":{"is_new":false,"captcha_key":"4e292933816755442c1568e2043b8e41","recaptcha_url":""}}
         // {"code":0,"message":"0","ttl":1,"data":{"is_new":false,"captcha_key":"","recaptcha_url":"https://www.bilibili.com/h5/project-msg-auth/verify?ct=geetest\u0026recaptcha_token=ad520c3a4a3c46e29b1974d85efd2c4b\u0026gee_gt=1c0ea7c7d47d8126dda19ee3431a5f38\u0026gee_challenge=c772673050dce482b9f63ff45b681ceb\u0026hash=ea2850a43cc6b4f1f7b925d601098e5e"}}
-        $raw = ApiLogin::sendSms($phone, $cid);
+        // TODO 参数位置调整
+        $payload = [
+            'cid' => $cid,
+            'tel' => $phone,
+            'statistics' => '{"appId":1,"platform":3,"version":"6.86.0","abtest":""}',
+        ];
+
+        $raw = ApiLogin::sendSms($payload);
         $response = json_decode($raw, true);
         //
         if ($response['code'] == 0 && isset($response['data']['captcha_key']) && $response['data']['recaptcha_url'] == '') {

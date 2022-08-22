@@ -20,6 +20,7 @@ use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
 use Bhp\Plugin\Plugin;
 use Bhp\TimeLock\TimeLock;
+use Bhp\Util\Exceptions\NoLoginException;
 
 class LiveSignIn extends BasePlugin
 {
@@ -51,6 +52,7 @@ class LiveSignIn extends BasePlugin
     /**
      * 执行
      * @return void
+     * @throws NoLoginException
      */
     public function execute(): void
     {
@@ -65,21 +67,28 @@ class LiveSignIn extends BasePlugin
 
     /**
      * @return bool
+     * @throws NoLoginException
      */
     protected function signInTask(): bool
     {
         // {"code":0,"message":"0","ttl":1,"data":{"text":"","specialText":"","status":0,"allDays":30,"curMonth":6,"curYear":2022,"curDay":4,"curDate":"2022-6-4","hadSignDays":0,"newTask":0,"signDaysList":[],"signBonusDaysList":[]}}
         $response = ApiXLiveSign::webGetSignInfo();
         //
-        if ($response['code']) {
-            Log::warning("直播签到: 获取签到信息失败 {$response['code']} -> {$response['message']}");
-            return false;
+        switch ($response['code']) {
+            case -101:
+                throw new NoLoginException($response['message']);
+            case 0:
+                //
+                if ($response['data']['status'] == 1) {
+                    Log::notice("直播签到: 今日已经签到过了哦~ 已连续签到 {$response['data']['hadSignDays']} 天");
+                    return true;
+                }
+                break;
+            default:
+                Log::warning("直播签到: 获取签到信息失败 {$response['code']} -> {$response['message']}");
+                return false;
         }
-        //
-        if ($response['data']['status'] == 1) {
-            Log::notice("直播签到: 今日已经签到过了哦~ 已连续签到 {$response['data']['hadSignDays']} 天");
-            return true;
-        }
+
         // 您被封禁了,无法进行操作
         // {"code":1011040,"message":"今日已签到过,无法重复签到","ttl":1,"data":null}
         // {"code":0,"message":"0","ttl":1,"data":{"text":"3000点用户经验,2根辣条","specialText":"再签到3天可以获得666银瓜子","allDays":31,"hadSignDays":2,"isBonusDay":0}}
@@ -95,4 +104,3 @@ class LiveSignIn extends BasePlugin
     }
 
 }
- 

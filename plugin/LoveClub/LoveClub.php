@@ -20,6 +20,7 @@ use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
 use Bhp\Plugin\Plugin;
 use Bhp\TimeLock\TimeLock;
+use Bhp\Util\Exceptions\NoLoginException;
 
 class LoveClub extends BasePlugin
 {
@@ -51,6 +52,7 @@ class LoveClub extends BasePlugin
     /**
      * 执行
      * @return void
+     * @throws NoLoginException
      */
     public function execute(): void
     {
@@ -68,27 +70,33 @@ class LoveClub extends BasePlugin
     /**
      * 获取友爱社列表
      * @return array
+     * @throws NoLoginException
      */
     protected function getGroupList(): array
     {
         $response = ApiLoveClub::myGroups();
         //
-        if ($response['code']) {
-            Log::warning("友爱社: 获取应援团失败 {$response['code']} -> {$response['message']}");
-            return [];
+
+        switch ($response['code']) {
+            case -101:
+                throw new NoLoginException($response['message']);
+            case 0:
+                //
+                if (empty($response['data']['list'])) {
+                    Log::notice('友爱社: 没有需要签到的应援团哦~');
+                    return [];
+                }
+                //
+                return $response['data']['list'];
+            default:
+                Log::warning("友爱社: 获取应援团失败 {$response['code']} -> {$response['message']}");
+                return [];
         }
-        //
-        if (empty($response['data']['list'])) {
-            Log::notice('友爱社: 没有需要签到的应援团哦~');
-            return [];
-        }
-        //
-        return $response['data']['list'];
     }
 
     /**
      * 签到
-     * @param array $groupInfo
+     * @param array $group
      * @return bool
      */
     protected function signInGroup(array $group): bool
@@ -114,4 +122,3 @@ class LoveClub extends BasePlugin
     }
 
 }
- 
