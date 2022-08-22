@@ -194,8 +194,8 @@ $ docker run -itd --rm -v /path/to/your/confFilePath:/app/profile/user lkeme/bil
 - 版本兼容
 
 ```shell script
-$ -e VERSION=1 # 使用 版本 V1.x.x
-$ -e MIRRORS=2 # 使用 版本 V2.x.x(默认)
+$ -e VERSION=1 # 使用 版本 V1.x.x(兼容处理)
+$ -e VERSION=2 # 使用 版本 V2.x.x(默认选项)
 ```
 
 - 使用github镜像加速
