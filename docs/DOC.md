@@ -26,6 +26,15 @@
 |php_zlib            |
 |php_mbstring        |
 
+## 用户文件夹含义
+
++ user
+    - cache (包含登录状态、以及其他插件缓存)
+    - config (个人的配置、以及其他插件的设置)
+    - device (设备参数文件)
+    - log (日志文件)
+    - task (排程文件)
+
 ## Composer
 
 + [Composer 安装与使用](https://www.runoob.com/w3cnote/composer-install-and-usage.html)
@@ -108,7 +117,7 @@
 
 ```shell script
 $ git clone https://github.com/lkeme/BiliHelper-personal.git
-$ cp profile/example profile/user
+$ cp -r profile/example profile/user
 ```
 
 2. 使用 [composer](https://getcomposer.org/download/) 工具进行安装

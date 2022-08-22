@@ -403,7 +403,7 @@ class Request extends SingleTon
      * @param mixed ...$params
      * @return mixed
      */
-    protected static function __putJson(?bool $associative = null, mixed...$params): mixed
+    protected static function _putJson(?bool $associative = null, mixed...$params): mixed
     {
         $response = self::put(...$params);
         // JSON_UNESCAPED_UNICODE
