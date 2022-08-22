@@ -17,7 +17,7 @@
 
 namespace Bhp\Util\Qrcode;
 
-use Bhp\Util\Qrcode\Lib\Qrcode as QrConsole;
+use Bhp\Util\Qrcode\Lib\QrCode as QrConsole;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\OutputInterface;
