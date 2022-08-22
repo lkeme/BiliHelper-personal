@@ -191,6 +191,13 @@ $ docker run -itd --rm -e USER_NAME=你的B站登录账号 -e USER_PASSWORD=你�
 $ docker run -itd --rm -v /path/to/your/confFilePath:/app/profile/user lkeme/bilihelper-personal
 ```
 
+- 版本兼容
+
+```shell script
+$ -e VERSION=1 # 使用 版本 V1.x.x
+$ -e MIRRORS=2 # 使用 版本 V2.x.x(默认)
+```
+
 - 使用github镜像加速
 
 ```shell script
