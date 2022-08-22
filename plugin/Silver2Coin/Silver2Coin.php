@@ -20,6 +20,7 @@ use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
 use Bhp\Plugin\Plugin;
 use Bhp\TimeLock\TimeLock;
+use Bhp\Util\Exceptions\NoLoginException;
 
 class Silver2Coin extends BasePlugin
 {
@@ -51,6 +52,7 @@ class Silver2Coin extends BasePlugin
     /**
      * 执行
      * @return void
+     * @throws NoLoginException
      */
     public function execute(): void
     {
@@ -78,26 +80,31 @@ class Silver2Coin extends BasePlugin
 
     /**
      * @return bool
+     * @throws NoLoginException
      */
     protected function before(): bool
     {
         $response = ApiRevenueWallet::getStatus();
         //
-        if ($response['code']) {
-            Log::warning("银瓜子兑换硬币: 获取钱包状态失败 {$response['code']} -> {$response['message']}");
-            return true;
+        switch ($response['code']) {
+            case -101:
+                throw new NoLoginException($response['message']);
+            case 0:
+                //
+                if ($response['data']['silver_2_coin_left'] == 0) {
+                    Log::notice("银瓜子兑换硬币: 今日已兑换过一次了哦~");
+                    return false;
+                }
+                //
+                if ($response['data']['silver'] < 700) {
+                    Log::notice("银瓜子兑换硬币: 瓜子余额不足以兑换哦~~");
+                    return false;
+                }
+                return true;
+            default:
+                Log::warning("银瓜子兑换硬币: 获取钱包状态失败 {$response['code']} -> {$response['message']}");
+                return false;
         }
-        //
-        if ($response['data']['silver_2_coin_left'] == 0) {
-            Log::notice("银瓜子兑换硬币: 今日已兑换过一次了哦~");
-            return false;
-        }
-        //
-        if ($response['data']['silver'] < 700) {
-            Log::notice("银瓜子兑换硬币: 瓜子余额不足以兑换哦~~");
-            return false;
-        }
-        return true;
     }
 
     /**
@@ -142,4 +149,3 @@ class Silver2Coin extends BasePlugin
     }
 
 }
- 
