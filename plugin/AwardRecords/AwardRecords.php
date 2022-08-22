@@ -16,6 +16,7 @@
  */
 
 use Bhp\Api\Lottery\V1\ApiAward;
+use Bhp\Api\XLive\GeneralInterface\V1\ApiGuardBenefit;
 use Bhp\Api\XLive\LotteryInterface\V1\ApiAnchor;
 use Bhp\Api\XLive\Revenue\V1\ApiWallet;
 use Bhp\Cache\Cache;
@@ -213,7 +214,7 @@ class AwardRecords extends BasePlugin
      */
     protected function bonus(string $title = '航海回馈'): bool
     {
-        $response = ApiAnchor::awardRecord();
+        $response = ApiGuardBenefit::winListByUser();
         //
         if ($response['code']) {
             Log::warning("获奖记录: 获取{$title}失败 {$response['code']} -> {$response['message']}");
