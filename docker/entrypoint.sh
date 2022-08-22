@@ -81,7 +81,7 @@ case ${VERSION} in
         echo -e "\n ======== \n ${GreenBG} 正在使用外部配置文件 ${Font} \n ======== \n"
     else
         echo -e "${OK} ${GreenBG} 正在使用传入的环境变量进行用户配置。\n 如果需要配置更多选择项，请通过挂载配置文件来传入。具体参考项目中的README。\n https://github.com/lkeme/BiliHelper-personal.git ${Font} \n ======== \n "
-        cp /app/profile/example /app/profile/user
+        cp -r /app/profile/example /app/profile/user
         sed -i ''"$(cat /app/profile/user/config/user.ini -n | grep "username = \"\"" | awk '{print $1}')"'c '"$(echo "username = \"${USER_NAME}\"")"'' ${V2_CONIFG_PATH}
         sed -i ''"$(cat /app/profile/user/config/user.ini -n | grep "password = \"\"" | awk '{print $1}')"'c '"$(echo "password = \"${USER_PASSWORD}\"")"'' ${V2_CONIFG_PATH}
     fi
