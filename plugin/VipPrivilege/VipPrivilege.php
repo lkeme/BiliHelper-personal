@@ -128,4 +128,3 @@ class VipPrivilege extends BasePlugin
     }
 
 }
- 
