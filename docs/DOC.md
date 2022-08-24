@@ -192,8 +192,11 @@ $ docker run -itd --rm -e USER_NAME=你的B站登录账号 -e USER_PASSWORD=你�
 
 - 通过配置文件进行传入(能保留登录状态，自定义配置)
 
-1. 下载[配置文件](https://raw.githubusercontent.com/lkeme/BiliHelper-personal/master/conf/user.ini.example)
-2. 修改
+[//]: # (1. 下载[配置文件]&#40;https://raw.githubusercontent.com/lkeme/BiliHelper-personal/master/conf/user.ini.example&#41;)
+
+[//]: # (2. 修改)
+1. 下载[配置文件夹](https://github.com/lkeme/BiliHelper-personal/tree/master/profile) `注意是文件夹,可以完整下载后提出来`
+2. 重命名 `profile/example -> profile/user` , 修改 `profile/user/config/user.ini`
 3. 通过下面的命令进行挂载并运行
 
 ```shell script
