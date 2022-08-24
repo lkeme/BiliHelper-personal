@@ -204,6 +204,10 @@ class Judge extends BasePlugin
             Log::warning("風機委員: 獲取案件{$case_id}衆議觀點失敗 {$response['code']} -> {$response['message']}");
             return [];
         }
+        // 防止为空 null
+        if (is_null($response['data']['list']) || $response['data']['total'] == 0) {
+            return [];
+        }
         return $response['data']['list'];
     }
 
@@ -349,4 +353,3 @@ class Judge extends BasePlugin
         return true;
     }
 }
- 

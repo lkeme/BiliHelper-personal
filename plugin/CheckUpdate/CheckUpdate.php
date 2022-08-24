@@ -120,6 +120,11 @@ class CheckUpdate extends BasePluginRW
         $branch = getConf('app.branch');
         $url = $this->resource->get($branch . '_raw_url');
         $payload = [];
+        // 防止错误拉取
+        if (is_null($url)) {
+            return json_decode('{"code":404}', false);
+        }
+        //
         return Request::getJson(false, 'other', $url, $payload);
     }
 
