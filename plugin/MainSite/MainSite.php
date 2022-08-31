@@ -111,15 +111,20 @@ class MainSite extends BasePlugin
      * 投币
      * @param string $aid
      * @return void
+     * @throws NoLoginException
      */
     protected function reward(string $aid): void
     {
         $response = ApiCoin::coin($aid);
         //
-        if ($response['code']) {
-            Log::warning("主站任务: $aid 投币失败 {$response['code']} -> {$response['message']}");
-        } else {
-            Log::notice("主站任务: $aid 投币成功");
+        switch ($response['code']) {
+            case -101:
+                throw new NoLoginException($response['message']);
+            case 0:
+                Log::notice("主站任务: $aid 投币成功");
+                break;
+            default:
+                Log::warning("主站任务: $aid 投币失败 {$response['code']} -> {$response['message']}");
         }
     }
 
@@ -280,7 +285,7 @@ class MainSite extends BasePlugin
         //
         $response = ApiShare::share($aid);
         switch ($response['code']) {
-            case 137004:
+            case -101:
                 throw new NoLoginException($response['message']);
             case 0:
                 Log::notice("主站任务: $aid 分享成功");
