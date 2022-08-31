@@ -25,7 +25,6 @@ class ApiShare
     /**
      * 分享视频
      * @param string $aid
-     * @param string $cid
      * @return array
      */
     public static function share(string $aid): array
@@ -37,7 +36,6 @@ class ApiShare
         //
         $payload = [
             'aid' => $aid,
-            'jsonp' => "jsonp",
             'csrf' => $user['csrf'],
         ];
         $headers = [
