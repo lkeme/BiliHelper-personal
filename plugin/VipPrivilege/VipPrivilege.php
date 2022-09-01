@@ -21,6 +21,7 @@ use Bhp\Plugin\BasePlugin;
 use Bhp\Plugin\Plugin;
 use Bhp\TimeLock\TimeLock;
 use Bhp\User\User;
+use Bhp\Util\Exceptions\NoLoginException;
 
 class VipPrivilege extends BasePlugin
 {
@@ -43,8 +44,11 @@ class VipPrivilege extends BasePlugin
      */
     protected array $privilege = [
         0 => '未知奖励',
-        1 => 'B币劵',
-        2 => '会员购优惠券'
+        1 => '年度专享B币赠送',
+        2 => '年度专享会员购优惠券',
+        3 => '年度专享漫画礼包',
+        4 => '大会员专享会员购包邮券',
+        5 => '年度专享漫画礼包',
     ];
 
     /**
@@ -61,6 +65,7 @@ class VipPrivilege extends BasePlugin
     /**
      * 执行
      * @return void
+     * @throws NoLoginException
      */
     public function execute(): void
     {
@@ -75,6 +80,7 @@ class VipPrivilege extends BasePlugin
     /**
      * 领取
      * @return void
+     * @throws NoLoginException
      */
     protected function receiveTask(): void
     {
@@ -114,16 +120,23 @@ class VipPrivilege extends BasePlugin
     /**
      * 领取我的大会员权益
      * @param int $type
+     * @throws NoLoginException
      */
     protected function myVipPrivilegeReceive(int $type): void
     {
         // {"code":0,"message":"0","ttl":1}
+        // {-101: "账号未登录", -111: "csrf 校验失败", -400: "请求错误", 69800: "网络繁忙 请稍后重试", 69801: "你已领取过该权益"}
         $response = ApiPrivilege::receive($type);
         //
-        if ($response['code']) {
-            Log::warning("大会员权益: 领取权益 {$this->privilege[$type]} 失败  {$response['code']} -> {$response['message']}");
-        } else {
-            Log::warning("大会员权益: 领取权益 {$this->privilege[$type]} 成功");
+        switch ($response['code']) {
+            case -101:
+                throw new NoLoginException($response['message']);
+            case 0:
+                Log::warning("大会员权益: 领取权益 {$this->privilege[$type]} 成功");
+                break;
+            default:
+                Log::warning("大会员权益: 领取权益 {$this->privilege[$type]} 失败  {$response['code']} -> {$response['message']}");
+                break;
         }
     }
 
