@@ -72,6 +72,7 @@ class MainSite extends BasePlugin
     /**
      * 投币任务
      * @return bool
+     * @throws NoLoginException
      */
     protected function coinTask(): bool
     {

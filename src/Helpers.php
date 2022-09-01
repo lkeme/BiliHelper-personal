@@ -138,6 +138,9 @@ function getAppHomePage(): string
     if (Env::isDocker()) {
         // 暂停两分钟后自动退出
         sleep($delay);
+    } else {
+        // 其他环境暂停
+        sleep($delay / 4);
     }
     die();
 }
