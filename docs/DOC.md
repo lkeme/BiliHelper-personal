@@ -16,15 +16,15 @@
 
 通常使用 `composer` 工具会自动检测以下依赖问题。
 
-|Requirement         |
-|--------------------|
-|PHP >=8.0           |
-|php_curl            |
-|php_sockets         |
-|php_openssl         |
-|php_json            |
-|php_zlib            |
-|php_mbstring        |
+| Requirement  |
+|--------------|
+| PHP >=8.1    |
+| php_curl     |
+| php_sockets  |
+| php_openssl  |
+| php_json     |
+| php_zlib     |
+| php_mbstring |
 
 ## 用户文件夹含义
 
@@ -173,6 +173,14 @@ $ php app.php
 
 8. 请保证配置文件存在，否则默认加载`user`配置文件夹
 
+9. 单个或者多个插件测试
+
+```shell
+$ php app.php test m:d -p plugin
+$ php app.php test m:d -P plugin,plugin1
+$ php app.php test m:d -p VipPoint
+```
+
 <p align="center"><img width="680px" src="https://user-images.githubusercontent.com/19500576/118621472-f8455d80-b7f8-11eb-9fec-500148a566b4.png"></p>
 
 [comment]: <> (<p align="center"><img width="680px" src="https://i.loli.net/2018/04/21/5adb497dc3ece.png"></p>)
@@ -195,7 +203,11 @@ $ docker run -itd --rm -e USER_NAME=你的B站登录账号 -e USER_PASSWORD=你�
 [//]: # (1. 下载[配置文件]&#40;https://raw.githubusercontent.com/lkeme/BiliHelper-personal/master/conf/user.ini.example&#41;)
 
 [//]: # (2. 修改)
-1. 下载[配置文件夹](https://github.com/lkeme/BiliHelper-personal/tree/master/profile) `注意是文件夹,可以完整下载后提出来`
+
+1.
+
+下载[配置文件夹](https://github.com/lkeme/BiliHelper-personal/tree/master/profile) `注意是文件夹,可以完整下载后提出来`
+
 2. 重命名 `profile/example -> profile/user` , 修改 `profile/user/config/user.ini`
 3. 通过下面的命令进行挂载并运行
 

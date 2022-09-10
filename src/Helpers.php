@@ -182,3 +182,25 @@ function getDevice(string $key, mixed $default = null, string $type = 'default')
 //{
 //    Cache::getInstance()->_set($key, $data, $extra_name);
 //}
+
+/**
+ * @param string $dir
+ * @param array $exclude
+ * @return void
+ */
+function requireDir(string $dir, array $exclude = []): void
+{
+    $handle = opendir($dir);//打开文件夹
+    while (false !== ($file = readdir($handle))) {//读取文件
+        if ($file != '.' && $file != '..') {
+            if (in_array($file, $exclude)) continue;
+            //
+            $filepath = $dir . '/' . $file;//文件路径
+            if (filetype($filepath) == 'dir') {//如果是文件夹
+                requireDir($filepath);//继续读
+            } else {
+                include_once($filepath);//引入文件
+            }
+        }
+    }
+}
