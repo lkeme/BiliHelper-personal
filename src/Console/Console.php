@@ -87,6 +87,18 @@ LOGO;
     }
 
     /**
+     * @param array $argv
+     * @return array
+     */
+    protected function transArgv(array $argv): array
+    {
+        if (!str_contains($argv[1], ':')) {
+            unset($argv[1]);
+        }
+        return array_values($argv);
+    }
+
+    /**
      * @return void
      */
     public function register(): void
@@ -98,7 +110,7 @@ LOGO;
             ->add(new RestoreCommand(), 'm:r')  // 模式3
             ->add(new DebugCommand(), 'm:d')  // 模式4
             ->logo($this->logo)
-            ->handle($this->argv);
+            ->handle($this->transArgv($this->argv));
     }
 
 }
