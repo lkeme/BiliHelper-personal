@@ -63,6 +63,10 @@ final class DebugCommand extends Command
     {
         Log::info("执行 $this->desc");
         //
+        if (is_null($this->values()['plugin']) || $this->values()['plugins']) {
+            failExit('发生错误，未加载插件');
+        }
+        //
         $p = $this->values()['plugin'];
         if (is_null($p)) {
             $temp = $this->values()['plugins'];
@@ -76,7 +80,7 @@ final class DebugCommand extends Command
         //
         $plugins = Plugin::getPlugins();
         foreach ($plugins as $plugin) {
-            if(!in_array($plugin['hook'],$pp)){
+            if (!in_array($plugin['hook'], $pp)) {
                 continue;
             }
             Task::addTask($plugin['hook'], null);
@@ -84,6 +88,5 @@ final class DebugCommand extends Command
         //
         Task::execTasks();
     }
-
 
 }

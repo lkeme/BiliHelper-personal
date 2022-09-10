@@ -112,7 +112,7 @@ class Common
      * @param int $length
      * @return string
      */
-    public static function randString(int $length):string
+    public static function randString(int $length): string
     {
 //        $output='';
 //        for ($a = 0; $a<$length; $a++) {
