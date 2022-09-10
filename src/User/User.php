@@ -51,12 +51,15 @@ class User extends SingleTon
         ];
     }
 
+
     /**
-     * 是否为有效年度大会员
+     * 是否是有效大会员
      * @param string $title
+     * @param array $scope
+     * @param string $info
      * @return bool
      */
-    public static function isYearVip(string $title = '用户信息'): bool
+    public static function isVip(string $title = '用户信息', array $scope = [1, 2], string $info = '大会员'): bool
     {
         $response = ApiUser::userInfo();
         //
@@ -65,13 +68,25 @@ class User extends SingleTon
             return false;
         }
         //
-        if ($response['data']['vip_type'] == 2 && $response['data']['vip_due_date'] > Common::getUnixTimestamp()) {
-            Log::info("$title: 获取大会员信息成功 是有效的年度大会员");
+        if (in_array($response['data']['vip_type'], $scope) && $response['data']['vip_due_date'] > Common::getUnixTimestamp()) {
+            Log::info("$title: 获取大会员信息成功 是有效的$info ");
             return true;
         }
         //
-        Log::warning("$title: 获取大会员信息成功 不是年度大会员或已过期");
+        Log::warning("$title: 获取大会员信息成功 不是{$info}或已过期");
         return false;
+    }
+
+    /**
+     * 是否为有效年度大会员  0:无会员 1:月会员 2:年会员
+     * @param string $title
+     * @param array $scope
+     * @param string $info
+     * @return bool
+     */
+    public static function isYearVip(string $title = '用户信息', array $scope = [2], string $info = '年度大会员'): bool
+    {
+        return self::isVip($title, $scope, $info);
     }
 
 }
