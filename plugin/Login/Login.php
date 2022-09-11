@@ -100,7 +100,7 @@ class Login extends BasePlugin
             $this->login();
         }
         // Token存在\校验有效性\否则调用登录
-        $this->keepAlive($token, $r_token);
+        $this->keepLogin();
     }
 
     /**
