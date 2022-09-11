@@ -92,7 +92,7 @@ LOGO;
      */
     protected function transArgv(array $argv): array
     {
-        if (!str_contains($argv[1], ':')) {
+        if (isset($argv[1]) && !str_contains($argv[1], ':')) {
             unset($argv[1]);
         }
         return array_values($argv);

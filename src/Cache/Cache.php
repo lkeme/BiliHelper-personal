@@ -83,6 +83,7 @@ class Cache extends SingleTon
     {
         // Set a key
         // $users->set('bob', ['email' => 'bob@site.com', 'password' => '123456']);
+        // echo "Set|{$classname}|Key|{$key}|Value|{$value}" . PHP_EOL;
         self::getInstance()->getCache($classname)->set($key, $value);
     }
 
@@ -97,6 +98,8 @@ class Cache extends SingleTon
         // Get a key
         // $user = $users->get('bob');
         // echo 'Bob, your email is ' . $user['email'];
+        // $value = self::getInstance()->getCache($classname)->get($key);
+        // echo "Get|{$classname}|Key|{$key}|Value|{$value}" . PHP_EOL;
         return self::getInstance()->getCache($classname)->get($key);
     }
 
