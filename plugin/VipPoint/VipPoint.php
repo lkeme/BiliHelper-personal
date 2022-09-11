@@ -35,6 +35,10 @@ class VipPoint extends BasePlugin
     use ViewFilmChannel;
     use ViewVipMall;
     use ViewVideo;
+    use BuyVipVideo;
+    use BuyVipProduct;
+    use BuyVipMall;
+    use PointInfo;
 
     /**
      * 插件信息
@@ -66,15 +70,16 @@ class VipPoint extends BasePlugin
      */
     protected array $target_tasks = [
         'signIn' => '签到任务',
-//        'bonus' => '福利任务',
-//        'privilege' => '体验任务',
+        'bonus' => '福利任务',
+        'privilege' => '体验任务',
         'viewAnimate' => '浏览追番频道页10秒',
         'viewFilmChannel' => '浏览影视频道页10秒',
-//        'viewVipMall' => '浏览会员购页面10秒',
-//        'viewVideo' => '观看任意正片内容',
-//        'buyVipVideo' => '购买单点付费影片',
-//        'buyVipProduct' => '购买指定会员产品',
-//        'buyVipMall' => '购买指定会员购商品',
+        'viewVipMall' => '浏览会员购页面10秒',
+        'viewVideo' => '观看任意正片内容',
+        'buyVipVideo' => '购买单点付费影片',
+        'buyVipProduct' => '购买指定大会员产品',
+        'buyVipMall' => '购买指定会员购商品',
+        'pointInfo' => '已有积分'
     ];
 
     /**
@@ -146,7 +151,7 @@ class VipPoint extends BasePlugin
             failExit("VipPoint 不存在{$target}方法 请暂时关闭任务检查代码或通知开发者");
         }
         //
-        $this->setTask('signIn', $this->$target($response, $name));
+        $this->setTask($target, $this->$target($response, $name));
     }
 
     /**

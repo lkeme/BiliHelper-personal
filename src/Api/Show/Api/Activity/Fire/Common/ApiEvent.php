@@ -46,18 +46,19 @@ class ApiEvent
         //
         $user = User::parseCookie();
         //
-        $url = 'https://show.bilibili.com/api/activity/fire/common/event/dispatch';
-        $payload = array_merge([
-            'msource' => 'member_integral_browse',
-            'action' => 'browse_all',
-            'eventId' => 'hevent_oy4b7h3epeb',
-            'eventTime' => '10',
+        $params = array_merge([
             'csrf' => $user['csrf'],
         ], self::$payload);
+        $url = 'https://show.bilibili.com/api/activity/fire/common/event/dispatch?' . http_build_query(Sign::common($params));
+        //
+        $payload = [
+            'eventId' => 'hevent_oy4b7h3epeb',
+        ];
         $headers = array_merge([
-            'content-type'=> 'application/json; charset=utf-8',
+            'content-type' => 'application/json; charset=utf-8',
         ], self::$headers);
-        return Request::postJson(true, 'app', $url, Sign::common($payload), $headers);
+        //
+        return Request::putJson(true, 'app', $url, $payload, $headers);
     }
 
 }
