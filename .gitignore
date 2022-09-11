@@ -11,7 +11,7 @@ tmp/
 out
 gen
 composer.lock
-Traits/
+#Traits/
 README1.md
 
 script.php
