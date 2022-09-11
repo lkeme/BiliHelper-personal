@@ -71,7 +71,7 @@ class ApiTask
             'csrf' => $user['csrf'],
         ], self::$payload);
         $headers = array_merge([], self::$headers);
-        return Request::postJson(true, 'app', $url, Sign::common($payload), $headers);
+        return Request::putJson(true, 'app', $url, Sign::common($payload), $headers);
     }
 
     /**
@@ -93,7 +93,7 @@ class ApiTask
         $headers = array_merge([
             'Content-Type' => 'application/json'
         ], self::$headers);
-        return Request::postJson(true, 'app', $url, Sign::common($payload), $headers);
+        return Request::putJson(true, 'app', $url, Sign::common($payload), $headers);
     }
 
 
