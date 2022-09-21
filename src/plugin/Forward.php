@@ -63,7 +63,7 @@ class Forward
     public static function start(): bool
     {
         // 取关未中奖
-        if (getConf('clear_group_follow', 'dynamic')) {
+        if (getConf('clear_dynamic', 'dynamic')) {
             self::clearDynamic();
         }
         // 自动转发关注评论
