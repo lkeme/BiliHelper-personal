@@ -208,6 +208,9 @@ class Log extends SingleTon
     {
         $callback_level = getConf('log.callback_level') ?? Logger::ERROR;
         if ($levelId >= $callback_level) {
+            // Startup failed, given null value
+            if (is_null(getConf('log.callback'))) return;
+            //
             $url = str_replace('{account}', $this->prefix(), getConf('log.callback'));
             $url = str_replace('{level}', $level, $url);
             $url = str_replace('{message}', urlencode($message), $url);
@@ -218,5 +221,4 @@ class Log extends SingleTon
 
 }
 
- 
- 
+
