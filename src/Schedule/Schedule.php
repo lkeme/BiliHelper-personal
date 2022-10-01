@@ -66,7 +66,6 @@ class Schedule extends SingleTon
         return file_put_contents($this->repository, json_encode($data));
     }
 
-
     /**
      * 写入
      * @param string $class

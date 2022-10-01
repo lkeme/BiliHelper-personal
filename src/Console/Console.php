@@ -64,9 +64,10 @@ LOGO;
      * 解析参数
      * @param array $argv
      * @param string $default
+     * @param array $reserved
      * @return string
      */
-    public static function parse(array $argv, string $default = 'user'): string
+    public static function parse(array $argv, string $default = 'user', array $reserved = ['example']): string
     {
         try {
             // backup
@@ -83,6 +84,11 @@ LOGO;
         } catch (Exception $e) {
             failExit('解析命令行参数错误', ['msg' => $e->getMessage()]);
         }
+        // 保留关键字
+        if (in_array($filename, $reserved)) {
+            failExit("不能使用程序保留关键字 {$filename}");
+        }
+
         return $filename;
     }
 
