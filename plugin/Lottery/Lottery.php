@@ -75,8 +75,8 @@ class Lottery extends BasePlugin
         if (!getEnable('lottery')) return;
         if (TimeLock::getTimes() > time() && $this->last_task_finish) return;
         $this->lotteryTask();
-        // 2-6小时
-        TimeLock::setTimes($this->last_task_finish ? (mt_rand(2, 6) * 60 * 60) : 1);
+        // 2-6小时 未完成6-10秒
+        TimeLock::setTimes($this->last_task_finish ? (mt_rand(2, 6) * 60 * 60) : mt_rand(6, 10));
     }
 
     /**
@@ -87,10 +87,10 @@ class Lottery extends BasePlugin
     {
         $last_lottery_id = ($tmp = Cache::get('last_lottery_id')) ? $tmp : $this->calcLastLotteryId();
         $times = 0;
-        // 参加抽奖抽奖
+        // 参加抽奖
         while (true) {
             if(LotteryInfo::isExist($last_lottery_id)) continue;
-            if($times > 12) {
+            if($times > 9) {
                 $this->last_task_finish = false;
                 break;
             }
@@ -111,7 +111,7 @@ class Lottery extends BasePlugin
         // 删除动态
         $infos = LotteryInfo::getHasLotteryList();
         foreach ($infos as $info) {
-            if($times > 12) {
+            if($times > 9) {
                 $this->last_task_finish = false;
                 break;
             }
