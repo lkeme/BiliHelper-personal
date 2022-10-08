@@ -293,9 +293,17 @@ class Judge extends BasePlugin
             Log::info('風機委員: 當前可以參與社區衆裁，共創良好環境哦~');
             return true;
         }
+        $data = $response['data'];
         // 只是嘗試 TODO 更換位置
-        if ($response['data']['apply_status'] == -1 && getConf('judge.auto_apply', false, 'bool')) {
-            $this->juryApply();
+        if (getConf('judge.auto_apply', false, 'bool') && $data['allow_apply']) {
+            // 情況壹
+            if ($data['apply_status'] == -1) {
+                $this->juryApply();
+            }
+            // 情況貳 一種特殊情況
+            if ($data['apply_status'] == 3 && $data['status'] == 2 && $data['err_msg'] == base64_decode('5bey5Y245Lu76aOO57qq5aeU5ZGY')) {
+                $this->juryApply();
+            }
         }
         //
         Log::warning('風機委員: 當前沒有審判資格哦~');
