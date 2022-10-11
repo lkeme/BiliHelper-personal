@@ -53,7 +53,7 @@ class Schedule extends SingleTon
     protected function reader(): array
     {
         $data = file_get_contents($this->repository);
-        return json_decode($data, true);
+        return json_decode($data, true) ?? [];
     }
 
     /**
