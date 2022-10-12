@@ -21,7 +21,8 @@ ENV USER_NAME='' \
     Font_color_suffix="\\033[0m" \
     Info="${Green}[信息]${Font}" \
     OK="${Green}[OK]${Font}" \
-    Error="${Red}[错误]${Font}"
+    Error="${Red}[错误]${Font}" \
+    COMPOSER_ALLOW_SUPERUSER=1
 
 WORKDIR /app
 
