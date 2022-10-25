@@ -68,7 +68,7 @@ function getEnable(string $key, bool $default = false): bool
 function getU(string $key): mixed
 {
     $value = '';
-    $fillable = ['username', 'password', 'uid', 'csrf', 'cookie', 'access_token', 'refresh_token', 'sid'];
+    $fillable = ['username', 'password', 'uid', 'csrf', 'cookie', 'access_token', 'refresh_token', 'sid', 'pc_cookie'];
     if (in_array($key, $fillable)) {
         $value = Cache::get('auth_' . $key, 'Login');
     }
@@ -83,7 +83,7 @@ function getU(string $key): mixed
  */
 function setU(string $key, mixed $value): void
 {
-    $fillable = ['username', 'password', 'uid', 'csrf', 'cookie', 'access_token', 'refresh_token', 'sid'];
+    $fillable = ['username', 'password', 'uid', 'csrf', 'cookie', 'access_token', 'refresh_token', 'sid', 'pc_cookie'];
     if (in_array($key, $fillable)) {
         Cache::set('auth_' . $key, $value, 'Login');
     }
