@@ -19,6 +19,7 @@ use Bhp\Api\Passport\ApiCaptcha;
 use Bhp\Api\Passport\ApiLogin;
 use Bhp\Api\Passport\ApiOauth2;
 use Bhp\Api\PassportTv\ApiQrcode;
+use Bhp\Api\WWW\ApiMain;
 use Bhp\Cache\Cache;
 use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
@@ -225,6 +226,22 @@ class Login extends BasePlugin
     }
 
     /**
+     * cookie补丁
+     * @return string
+     */
+    public function patchCookie(): string
+    {
+        $response = ApiMain::home();
+        $headers = $response['Set-Cookie'];
+        $cookies = [];
+        foreach ($headers as $header) {
+            preg_match_all('/^(.*);/iU', $header, $cookie);
+            $cookies[] = $cookie[0][0];
+        }
+        return implode("", array_reverse($cookies));
+    }
+
+    /**
      * 更新登录信息
      * @param array $data
      */
@@ -239,6 +256,8 @@ class Login extends BasePlugin
         //
         $cookie = $this->formatCookie($data['data']['cookie_info']['cookies']);
         $this->updateInfo('cookie', $cookie);
+        // patch cookie
+        $this->updateInfo('pc_cookie', $cookie . $this->patchCookie());
         //
         $user = User::parseCookie();
         $this->updateInfo('uid', $user['uid'], false);
