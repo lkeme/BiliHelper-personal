@@ -172,7 +172,12 @@ class Request extends SingleTon
         ];
         $default_headers = ${$os . "_headers"} ?? $other_headers;
         if (in_array($os, ['app', 'pc']) && getU('cookie') != "") {
-            $default_headers['Cookie'] = getU('cookie');
+            // patch cookie
+            if ($os == 'pc' && getU('pc_cookie') != "") {
+                $default_headers['Cookie'] = getU('pc_cookie');
+            } else {
+                $default_headers['Cookie'] = getU('cookie');
+            }
         }
         //
         $this->setRequest($request_id, 'headers', array_merge($default_headers, $headers));
