@@ -34,7 +34,7 @@ class ApiTask
      * @var array|string[]
      */
     protected static array $payload = [
-        'statistics' => '{"appId":1,"platform":3,"version":"6.86.0","abtest":""}',
+        'statistics' => '{"appId":1,"platform":3,"version":"7.3.0","abtest":""}',
     ];
 
     /**
