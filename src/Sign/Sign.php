@@ -49,6 +49,9 @@ class Sign extends SingleTon
             'device' => getDevice('app.bili_a.device'),
             'mobi_app' => getDevice('app.bili_a.mobi_app'),
             'platform' => getDevice('app.bili_a.platform'),
+            'c_locale' => 'zh_CN', //  zh-Hans_CH
+            's_locale' => 'zh_CN', // zh-Hans_CH
+            'disable_rcmd' => '0', //
             'ts' => time(),
         ];
         //
@@ -112,6 +115,9 @@ class Sign extends SingleTon
             'device' => getDevice('app.bili_a.device'),
             'mobi_app' => getDevice('app.bili_a.mobi_app'),
             'platform' => getDevice('app.bili_a.platform'),
+            'c_locale' => 'zh_CN', //  zh-Hans_CH
+            's_locale' => 'zh_CN', // zh-Hans_CH
+            'disable_rcmd' => '0', //
             'ts' => time(),
         ];
         $payload = array_merge($payload, $default);

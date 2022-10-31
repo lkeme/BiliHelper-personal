@@ -569,7 +569,7 @@ class Login extends BasePlugin
         $payload = [
             'cid' => $cid,
             'tel' => $phone,
-            'statistics' => '{"appId":1,"platform":3,"version":"6.86.0","abtest":""}',
+            'statistics' => getDevice('app.bili_a.statistics'),
         ];
 
         $raw = ApiLogin::sendSms($payload);
