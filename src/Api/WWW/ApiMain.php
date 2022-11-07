@@ -30,4 +30,16 @@ class ApiMain
         $url = 'https://www.bilibili.com/';
         return Request::headers('pc', $url);
     }
+
+    /**
+     * video主页
+     * @return array|mixed
+     */
+    public static function video(string $bvid): mixed
+    {
+        $url = "https://www.bilibili.com/video/$bvid/";
+        return Request::headers('pc', $url);
+    }
+
+
 }
