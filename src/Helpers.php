@@ -126,12 +126,12 @@ function getAppHomePage(): string
 
 /**
  * 错误退出
- * @param $message
+ * @param mixed $message
  * @param array $context
  * @param int $delay
  * @return void
  */
-#[NoReturn] function failExit($message, array $context = [], int $delay = 60 * 2): void
+#[NoReturn] function failExit(mixed $message = 'exit', array $context = [], int $delay = 60 * 2): void
 {
     Log::error($message, $context);
     // 如果在docker环境中，延迟退出，方便查看错误

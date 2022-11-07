@@ -132,7 +132,7 @@ class VipPrivilege extends BasePlugin
             case -101:
                 throw new NoLoginException($response['message']);
             case 0:
-                Log::warning("大会员权益: 领取权益 {$this->privilege[$type]} 成功");
+                Log::notice("大会员权益: 领取权益 {$this->privilege[$type]} 成功");
                 break;
             default:
                 Log::warning("大会员权益: 领取权益 {$this->privilege[$type]} 失败  {$response['code']} -> {$response['message']}");

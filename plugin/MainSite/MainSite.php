@@ -104,6 +104,8 @@ class MainSite extends BasePlugin
         // 投币
         foreach ($aids as $aid) {
             $this->reward((string)$aid);
+            //
+            sleep(1);
         }
         return true;
     }

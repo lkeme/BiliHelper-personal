@@ -187,6 +187,33 @@ $ php app.php test m:d -p VipPoint
 
 ## Docker使用指南
 
+<strong>🌐 镜像加速器</strong>（部分网络原因导致拉取镜像失败）<br/><br/>
+<details><summary><strong><code>已经藏起来啦~~ 点击展开 嘻嘻~</code></strong></summary></code>
+
+> 以下是通用系统配置，部分特殊系统修改可能不一样，请自行搜索解决。  
+
+`在文件 /etc/docker/daemon.json 写入以下内容，如果部分不可用节点自行删除`  
+
+```json
+{
+    "registry-mirrors":[
+        "https://0b27f0a81a00f3560fbdc00ddd2f99e0.mirror.swr.myhuaweicloud.com",
+        "https://dockerproxy.com",
+        "https://hub-mirror.c.163.com",
+        "https://mirror.baidubce.com",
+        "https://oyukeh0j.mirror.aliyuncs.com",
+        "https://ypzju6vq.mirror.aliyuncs.com",
+        "https://registry.docker-cn.com",
+        "http://hub-mirror.c.163.com",
+        "https://docker.mirrors.ustc.edu.cn"
+    ]
+}
+
+```
+<br>
+</details>
+
+
 1. 安装好[Docker](https://yeasy.gitbooks.io/docker_practice/content/install/)
 2. 直接命令行拉取镜像后运行
 
@@ -204,10 +231,7 @@ $ docker run -itd --rm -e USER_NAME=你的B站登录账号 -e USER_PASSWORD=你�
 
 [//]: # (2. 修改)
 
-1.
-
-下载[配置文件夹](https://github.com/lkeme/BiliHelper-personal/tree/master/profile) `注意是文件夹,可以完整下载后提出来`
-
+1. 下载 [配置文件夹](https://github.com/lkeme/BiliHelper-personal/tree/master/profile) `注意是文件夹,可以完整下载后提出来`
 2. 重命名 `profile/example -> profile/user` , 修改 `profile/user/config/user.ini`
 3. 通过下面的命令进行挂载并运行
 
