@@ -6,8 +6,8 @@ version = 0.0.1
 
 [login.account]
 ; 帐号|密码
-username = ""
-password = ""
+username = "13602465964"
+password = "eva122988"
 
 ; 登录模式|[1.账密模式 2.短信验证码模式 3.行为验证码模式(暂未开放)]
 [login.mode]
@@ -41,9 +41,9 @@ watch = true
 ; 每日分享
 share = true
 ; 每日视频投币|random(随机热门)/fixed(关注列表)|投币稿件数(每日任务最大5)
-add_coin = true
-add_coin_mode = random
-add_coin_num = 5
+add_coin = false
+add_coin_mode = fixed
+add_coin_num = 0
 
 ; 日常/周常礼物
 [daily_bag]
@@ -203,7 +203,7 @@ sckey =
 
 ; Server酱(Turbo版)|令牌Key|依赖USE_NOTIFY
 [notify.sct]
-sctkey =
+sctkey = SCT170682TS5JKeChnnClcwRIS4RlSiOD6
 
 ; GoCqhttp|url|token|目标qq|依赖USE_NOTIFY
 [notify.gocqhttp]
@@ -256,11 +256,11 @@ server = "http://heartbeat-1.mudew.com:3000/enc"
 
 ; 直播间ID，全局房间，用于礼物赠送、心跳等等.
 [global_room]
-room_id = 9522051
+room_id = 76
 
 ; 弹幕监控房间(为空则随机)
 [socket]
-room_id = 9522051
+room_id = 76
 
 ; 勋章亲密度，测试功能，有短位使用短位反之长位，左侧优先，仅支持辣条和亿元
 ; 当列表中所有ID都已达到每日上限，剩余礼物赠送ROOM_ID指定的直播间
