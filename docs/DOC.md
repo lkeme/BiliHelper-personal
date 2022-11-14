@@ -326,7 +326,7 @@ Documentation=https://github.com/lkeme/BiliHelper-personal
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/php /path/to/your/BiliHelper-personal/index.php
+ExecStart=/usr/bin/php /path/to/your/BiliHelper-personal/app.php m:a
 Restart=always
 
 [Install]
@@ -338,7 +338,7 @@ WantedBy=multi-user.target
 ```
 [program:bilibili]
 process_name=%(program_name)s
-command=php /path/to/your/BiliHelper-personal/index.php
+command=php /path/to/your/BiliHelper-personal/app.php m:a
 autostart=true
 autorestart=true
 redirect_stderr=true
