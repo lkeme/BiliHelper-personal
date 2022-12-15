@@ -141,6 +141,8 @@ $ composer install
 
 ```shell script
 $ php app.php
+# 默认配置user
+$ php app.php m:a 
 ```
 
 > 以下是`多账户多开方案`，单个账户可以无视
@@ -148,9 +150,7 @@ $ php app.php
 5. 复制一份profile/example配置文件夹，修改账号密码即可
 
  ```shell script
- # 默认配置user
- $ php app.php m:a 
- # 默认配置 darling
+ # 默认配置 darling {darling}是配置文件名，可任意
  $ php app.php darling m:a 
  # 如果写了用户参数 不带m:a 与上同等效果 
  $ php app.php darling
