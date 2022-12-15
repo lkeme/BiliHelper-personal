@@ -38,8 +38,8 @@
 
 ## 🌟 临时通知
 
-- [【master分支 版本2.x.x】](https://github.com/lkeme/BiliHelper-personal/tree/master) 功能缺失但不断开发中(提供基础功能)
-- [【1.x.x分支 版本1.x.x】](https://github.com/lkeme/BiliHelper-personal/tree/1.x.x) 功能完整但不后续维护(当前推荐)
+- [【master分支 版本2.x.x】](https://github.com/lkeme/BiliHelper-personal/tree/master) 功能陆续开发(当前推荐)
+- [【1.x.x分支 版本1.x.x】](https://github.com/lkeme/BiliHelper-personal/tree/1.x.x) 功能完整(后续不再维护)
 
 ## 📌 公告通知
 
