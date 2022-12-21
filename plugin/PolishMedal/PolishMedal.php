@@ -60,13 +60,13 @@ class PolishMedal extends BasePlugin
      */
     public function execute(): void
     {
-        if (TimeLock::getTimes() > time() || !getEnable('polishMedal')) return;
+        if (TimeLock::getTimes() > time() || !getEnable('polish_medal')) return;
 
         if (self::$metal_lock < time()) {
             // 如果勋章过多导致未处理完，就1小时一次，否则10小时一次。
             if (empty(self::$grey_fans_medals)) {
                 // 处理每日
-                if (getConf('polishMedal.everyday', false, 'bool')) {
+                if (getConf('polish_medal.everyday', false, 'bool')) {
                     // 如果是 直接定时到第二天7点
                     self::fetchGreyMedalList(true);
                     self::$metal_lock = time() + TimeLock::timing(7, 0, 0, true);
