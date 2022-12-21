@@ -85,7 +85,6 @@ class PolishMedal extends BasePlugin
             self::polishTheMedal();
             TimeLock::setTimes(mt_rand(4, 10) * 60);
         }
-        TimeLock::setTimes(10 * 60 * 60);
     }
 
     /**
