@@ -67,7 +67,7 @@ class ApiMsg
             'csrf' => $user['csrf'],
             'csrf_token' => $user['csrf'],
         ];
-        return Request::postJson(true, 'other', $url, $payload);
+        return Request::postJson(true, 'app', $url, Sign::common($payload));
     }
 }
 

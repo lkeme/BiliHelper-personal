@@ -36,7 +36,7 @@ class PolishMedal extends BasePlugin
         'version' => '0.0.1', // 插件版本
         'desc' => '点亮徽章', // 插件描述
         'author' => 'Lkeme',// 作者
-        'priority' => 9999, // 插件优先级
+        'priority' => 1115, // 插件优先级
         'cycle' => '1(小时)', // 运行周期
     ];
 
@@ -51,8 +51,6 @@ class PolishMedal extends BasePlugin
         // 时间锁
         TimeLock::initTimeLock();
         // 缓存
-        // Cache::initCache();
-        // $this::class
         $plugin->register($this, 'execute');
     }
 
@@ -62,23 +60,23 @@ class PolishMedal extends BasePlugin
      */
     public function execute(): void
     {
-        if (TimeLock::getTimes() > time()) return;
+        if (TimeLock::getTimes() > time() || !getEnable('polishMedal')) return;
 
         if (self::$metal_lock < time()) {
             // 如果勋章过多导致未处理完，就1小时一次，否则10小时一次。
             if (empty(self::$grey_fans_medals)) {
                 // 处理每日
-                if (getConf('everyday', 'polish_the_medal')) {
+                if (getConf('polishMedal.everyday', false, 'bool')) {
                     // 如果是 直接定时到第二天7点
                     self::fetchGreyMedalList(true);
                     self::$metal_lock = time() + TimeLock::timing(7, 0, 0, true);
                 } else {
                     // 否则按正常逻辑
                     self::fetchGreyMedalList();
-                    self::$metal_lock = time() + 10 * 60 * 60;
+                    self::$metal_lock = time() + 10 * 60 * 60; // 10小时
                 }
             } else {
-                self::$metal_lock = time() + 60 * 60;
+                self::$metal_lock = time() + 60 * 60; // 1小时一次
             }
         }
         // 点亮灰色勋章
@@ -176,11 +174,6 @@ class PolishMedal extends BasePlugin
 
         Log::info("开始点亮直播间@{$medal['roomid']}的勋章");
         // 擦亮
-//        $room_id = self::getRealRoomID($room_id);
-//        if (!$room_id) {
-//            return ['code' => 404, 'message' => '直播间数据异常'];
-//        }
-
         $res = ApiMsg::sendBarrageAPP($medal['roomid'], Fake::emoji());
         if (isset($res['code']) && $res['code'] == 0) {
             Log::notice("在直播间@{$medal['roomid']}发送点亮弹幕成功");
