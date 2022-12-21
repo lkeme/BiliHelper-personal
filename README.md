@@ -8,15 +8,28 @@
 ![](https://img.shields.io/badge/dynamic/json?label=GitHub%20Followers&query=%24.data.totalSubs&url=https%3A%2F%2Fapi.spencerwoo.com%2Fsubstats%2F%3Fsource%3Dgithub%26queryKey%3Dlkeme&labelColor=282c34&color=181717&logo=github&longCache=true "关注数量")
 ![](https://img.shields.io/github/stars/lkeme/BiliHelper-personal.svg?style=plastic&logo=appveyor "Star数量")
 ![](https://img.shields.io/github/forks/lkeme/BiliHelper-personal.svg?style=plastic&logo=stackshare "Fork数量")
+![](https://img.shields.io/github/issues/lkeme/BiliHelper-personal.svg?style=plastic&logo=stackshare "Issues数量")
 ![](https://img.shields.io/github/contributors/lkeme/BiliHelper-personal "贡献者")
 ![](https://img.shields.io/github/repo-size/lkeme/BiliHelper-personal?style=flat-square&label=files&color=cf8ef4&labelColor=373e4dl "文件大小")
+![](https://img.shields.io/github/languages/code-size/lkeme/BiliHelper-personal?color=blueviolet&style=flat-square "代码大小")
 [![Docker Pulls](https://img.shields.io/docker/pulls/lkeme/bilihelper-personal?style=flat-square)](https://hub.docker.com/r/lkeme/bilihelper-personal)
 
+[//]: # (<br>)
+
+[//]: # (<img alt="GitHub Workflow Status" src="https://img.shields.io/github/workflow/status/lkeme/BiliHelper-personal/cron%20update?style=flat-square">)
+
+[//]: # (<img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/lkeme/BiliHelper-personal/main?style=flat-square">)
+
+[//]: # (<img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/w/lkeme/BiliHelper-personal/main?style=flat-square">  )
+
+[//]: # (<img alt="GitHub commit activity" src="https://data.jsdelivr.com/v1/package/gh/lkeme/BiliHelper-personal/badge?style=rounded&style=flat-square">  )
+
+[//]: # (<br>)
 </div>
 
 <p align="center">
 
-<img src="https://img.shields.io/badge/Version-2.0.2.221025-orange.svg?longCache=true&style=for-the-badge">
+<img src="https://img.shields.io/badge/Version-2.0.3.221031-orange.svg?longCache=true&style=for-the-badge">
 <img src="https://img.shields.io/badge/PHP-8.1+-green.svg?longCache=true&style=for-the-badge">
 <img src="https://img.shields.io/badge/Composer-latest-blueviolet.svg?longCache=true&style=for-the-badge">
 <img src="https://img.shields.io/badge/License-mit-blue.svg?longCache=true&style=for-the-badge">
@@ -25,8 +38,8 @@
 
 ## 🌟 临时通知
 
-- [【master分支 版本2.x.x】](https://github.com/lkeme/BiliHelper-personal/tree/master) 功能缺失但不断开发中(提供基础功能)
-- [【1.x.x分支 版本1.x.x】](https://github.com/lkeme/BiliHelper-personal/tree/1.x.x) 功能完整但不后续维护(当前推荐)
+- [【master分支 版本2.x.x】](https://github.com/lkeme/BiliHelper-personal/tree/master) 功能陆续开发(当前推荐)
+- [【1.x.x分支 版本1.x.x】](https://github.com/lkeme/BiliHelper-personal/tree/1.x.x) 功能完整(后续不再维护)
 
 ## 📌 公告通知
 
@@ -42,6 +55,10 @@
 
 <p align="center"> 
    <img alingn="center" src="https://profile-counter.glitch.me/BiliHelper-personal/count.svg" />
+
+[//]: # (    <br>)
+
+[//]: # (    <img src="https://count.getloli.com/get/@:BiliHelper-personal" alt=":BiliHelper-personal" />)
  </p>
 
 ## 🖨️ 相关文档
@@ -73,34 +90,38 @@ Group: [602815575](https://jq.qq.com/?_wv=1027&k=UaalVexM) | **请不要来问�
 
 以下任务都是按设定周期自动执行，`true`为正常使用，`false`为暂停使用或抛弃。
 
-<details open>
-<summary>点击展开</summary>
+[//]: # (<details open><summary>点击展开</summary>)
+<details><summary><strong><code>已经藏起来啦~~ 点击展开 嘻嘻~</code></strong></summary></code>
 
-| plugin          | version | description    | author | pid  | cycle     | status |
-|-----------------|---------|----------------|--------|------|-----------|--------|
-| CheckUpdate     | 0.0.1   | 检查版本更新         | Lkeme  | 1000 | 24(小时)    | √      |
-| Login           | 0.0.1   | 账号登录、刷新、保活     | Lkeme  | 1001 | 2(小时)     | √      |
-| MainSite        | 0.0.1   | 主站任务(观看\分享\投币) | Lkeme  | 1100 | 24(小时)    | √      |
-| Manga           | 0.0.1   | 漫画签到/分享        | Lkeme  | 1101 | 24(小时)    | √      |
-| LoveClub        | 0.0.1   | 友爱社签到          | Lkeme  | 1102 | 24(小时)    | √      |
-| LiveSignIn      | 0.0.1   | 直播签到           | Lkeme  | 1103 | 24(小时)    | √      |
-| GameForecast    | 0.0.1   | 游戏赛事预测(破产机)    | Lkeme  | 1104 | 24(小时)    | √      |
-| Silver2Coin     | 0.0.1   | 银瓜子兑换硬币        | Lkeme  | 1105 | 24(小时)    | √      |
-| Judge           | 0.0.1   | 風機委員投票         | Lkeme  | 1106 | 15-30(分钟) | √      |
-| VipPrivilege    | 0.0.1   | 领取大会员权益        | Lkeme  | 1107 | 24(小时)    | √      |
-| BpConsumption   | 0.0.1   | 大会员B币券消费       | Lkeme  | 1108 | 24(小时)    | √      |
-| LiveReservation | 0.0.1   | 预约直播有奖         | Lkeme  | 1109 | 1-3(小时)   | √      |
-| LiveGoldBox     | 0.0.1   | 直播金色宝箱(实物抽奖)   | Lkeme  | 1110 | 6-10(分钟)  | √      |
-| AwardRecords    | 0.0.1   | 获奖记录           | Lkeme  | 1111 | 5(分钟)     | √      |
-| VipPoint        | 0.0.1   | 大会员积分          | Lkeme  | 1112 | 5(分钟)     | √      |
+<br>  
+
+| plugin          | version | description    | author  | pid  | cycle     | status |
+|-----------------|---------|----------------|---------|------|-----------|--------|
+| CheckUpdate     | 0.0.1   | 检查版本更新         | Lkeme   | 1000 | 24(小时)    | √      |
+| Login           | 0.0.1   | 账号登录、刷新、保活     | Lkeme   | 1001 | 2(小时)     | √      |
+| MainSite        | 0.0.1   | 主站任务(观看\分享\投币) | Lkeme   | 1100 | 24(小时)    | √      |
+| Manga           | 0.0.1   | 漫画签到/分享        | Lkeme   | 1101 | 24(小时)    | √      |
+| LoveClub        | 0.0.1   | 友爱社签到          | Lkeme   | 1102 | 24(小时)    | √      |
+| LiveSignIn      | 0.0.1   | 直播签到           | Lkeme   | 1103 | 24(小时)    | √      |
+| GameForecast    | 0.0.1   | 游戏赛事预测(破产机)    | Lkeme   | 1104 | 24(小时)    | √      |
+| Silver2Coin     | 0.0.1   | 银瓜子兑换硬币        | Lkeme   | 1105 | 24(小时)    | √      |
+| Judge           | 0.0.1   | 風機委員投票         | Lkeme   | 1106 | 15-30(分钟) | √      |
+| VipPrivilege    | 0.0.1   | 领取大会员权益        | Lkeme   | 1107 | 24(小时)    | √      |
+| BpConsumption   | 0.0.1   | 大会员B币券消费       | Lkeme   | 1108 | 24(小时)    | √      |
+| LiveReservation | 0.0.1   | 预约直播有奖         | Lkeme   | 1109 | 1-3(小时)   | √      |
+| LiveGoldBox     | 0.0.1   | 直播金色宝箱(实物抽奖)   | Lkeme   | 1110 | 6-10(分钟)  | √      |
+| AwardRecords    | 0.0.1   | 获奖记录           | Lkeme   | 1111 | 5(分钟)     | √      |
+| VipPoint        | 0.0.1   | 大会员积分          | Lkeme   | 1112 | 5(分钟)     | √      |
+| Lotty           | 0.0.1   | 抽奖             | MoeHero | 1113 | 5(分钟)     | √      |
+| DailyGold       | 0.0.1   | 每日电池(APP)      | Lkeme   | 1114 | 24(小时)    | √      |
 
 </details>
 
 ## 🖥️星图
 
+[//]: # ([![Star History Chart]&#40;https://api.star-history.com/svg?repos=lkeme/BiliHelper-personal&type=Timeline&#41;]&#40;https://star-history.com/#lkeme/BiliHelper-personal&Timeline&#41;)
 [![Stargazers over time](https://starchart.cc/lkeme/BiliHelper-personal.svg)](https://starchart.cc/lkeme/BiliHelper-personal)
 [![Stargazers over time](https://starchart.cc/lkeme/BiliHelper.svg)](https://starchart.cc/lkeme/BiliHelper)
-
 
 ## 🤭 运行效果
 
@@ -110,7 +131,7 @@ Group: [602815575](https://jq.qq.com/?_wv=1027&k=UaalVexM) | **请不要来问�
 
 [comment]: <> (![Image]&#40;https://i.loli.net/2019/07/13/5d296961a4bae41364.png&#41;)
 
-##  🪣 项目相关
+## 🪣 项目相关
 
 * [BilibiliHelper](https://github.com/metowolf/BilibiliHelper)
 * [BiliHelper](https://github.com/lkeme/BiliHelper)
@@ -124,13 +145,14 @@ Group: [602815575](https://jq.qq.com/?_wv=1027&k=UaalVexM) | **请不要来问�
 <img src="https://tva1.sinaimg.cn/large/008eGmZEly1gov9g3tzrnj30u00wj0tn.jpg" width="150"/>
 </a>
 
-## 🪪 License 
+## 🪪 License
 
 BiliHelper is under the MIT license.
 
 本项目基于 MIT 协议发布，并增加了 SATA 协议。
 
-当你使用了使用 SATA 的开源软件或文档的时候，在遵守基础许可证的前提下，你必须马不停蹄地给你所使用的开源项目 “点赞” ，比如在 GitHub 上
+当你使用了使用 SATA 的开源软件或文档的时候，在遵守基础许可证的前提下，你必须马不停蹄地给你所使用的开源项目 “点赞” ，比如在
+GitHub 上
 star，然后你必须感谢这个帮助了你的开源项目的作者，作者信息可以在许可证头部的版权声明部分找到。
 
 本项目的所有代码文件、配置项，除另有说明外，均基于上述介绍的协议发布，具体请看分支下的 LICENSE。
