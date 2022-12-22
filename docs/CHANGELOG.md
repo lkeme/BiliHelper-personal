@@ -8,6 +8,24 @@
 
 [comment]: <> (</details>)
 
+## v2.0.4.221222 alpha (2022-12-22)
+
+### Added
+
+- 添加点亮勋章
+
+### Changed
+
+-
+
+### Fixed
+
+-
+
+### Remarks
+
+-
+
 ## v2.0.3.221031 alpha (2022-10-31)
 
 ### Added

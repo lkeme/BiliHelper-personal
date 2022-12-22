@@ -29,7 +29,7 @@
 
 <p align="center">
 
-<img src="https://img.shields.io/badge/Version-2.0.3.221031-orange.svg?longCache=true&style=for-the-badge">
+<img src="https://img.shields.io/badge/Version-2.0.4.221222-orange.svg?longCache=true&style=for-the-badge">
 <img src="https://img.shields.io/badge/PHP-8.1+-green.svg?longCache=true&style=for-the-badge">
 <img src="https://img.shields.io/badge/Composer-latest-blueviolet.svg?longCache=true&style=for-the-badge">
 <img src="https://img.shields.io/badge/License-mit-blue.svg?longCache=true&style=for-the-badge">
@@ -95,25 +95,27 @@ Group: [602815575](https://jq.qq.com/?_wv=1027&k=UaalVexM) | **请不要来问�
 
 <br>  
 
-| plugin          | version | description    | author  | pid  | cycle     | status |
-|-----------------|---------|----------------|---------|------|-----------|--------|
-| CheckUpdate     | 0.0.1   | 检查版本更新         | Lkeme   | 1000 | 24(小时)    | √      |
-| Login           | 0.0.1   | 账号登录、刷新、保活     | Lkeme   | 1001 | 2(小时)     | √      |
-| MainSite        | 0.0.1   | 主站任务(观看\分享\投币) | Lkeme   | 1100 | 24(小时)    | √      |
-| Manga           | 0.0.1   | 漫画签到/分享        | Lkeme   | 1101 | 24(小时)    | √      |
-| LoveClub        | 0.0.1   | 友爱社签到          | Lkeme   | 1102 | 24(小时)    | √      |
-| LiveSignIn      | 0.0.1   | 直播签到           | Lkeme   | 1103 | 24(小时)    | √      |
-| GameForecast    | 0.0.1   | 游戏赛事预测(破产机)    | Lkeme   | 1104 | 24(小时)    | √      |
-| Silver2Coin     | 0.0.1   | 银瓜子兑换硬币        | Lkeme   | 1105 | 24(小时)    | √      |
-| Judge           | 0.0.1   | 風機委員投票         | Lkeme   | 1106 | 15-30(分钟) | √      |
-| VipPrivilege    | 0.0.1   | 领取大会员权益        | Lkeme   | 1107 | 24(小时)    | √      |
-| BpConsumption   | 0.0.1   | 大会员B币券消费       | Lkeme   | 1108 | 24(小时)    | √      |
-| LiveReservation | 0.0.1   | 预约直播有奖         | Lkeme   | 1109 | 1-3(小时)   | √      |
-| LiveGoldBox     | 0.0.1   | 直播金色宝箱(实物抽奖)   | Lkeme   | 1110 | 6-10(分钟)  | √      |
-| AwardRecords    | 0.0.1   | 获奖记录           | Lkeme   | 1111 | 5(分钟)     | √      |
-| VipPoint        | 0.0.1   | 大会员积分          | Lkeme   | 1112 | 5(分钟)     | √      |
-| Lotty           | 0.0.1   | 抽奖             | MoeHero | 1113 | 5(分钟)     | √      |
-| DailyGold       | 0.0.1   | 每日电池(APP)      | Lkeme   | 1114 | 24(小时)    | √      |
+| plugin          | version | description    | author            | pid  | cycle     | status |
+|-----------------|---------|----------------|-------------------|------|-----------|--------|
+| CheckUpdate     | 0.0.1   | 检查版本更新         | Lkeme             | 1000 | 24(小时)    | √      |
+| Login           | 0.0.1   | 账号登录、刷新、保活     | Lkeme             | 1001 | 2(小时)     | √      |
+| MainSite        | 0.0.1   | 主站任务(观看\分享\投币) | Lkeme             | 1100 | 24(小时)    | √      |
+| Manga           | 0.0.1   | 漫画签到/分享        | Lkeme             | 1101 | 24(小时)    | √      |
+| LoveClub        | 0.0.1   | 友爱社签到          | Lkeme             | 1102 | 24(小时)    | √      |
+| LiveSignIn      | 0.0.1   | 直播签到           | Lkeme             | 1103 | 24(小时)    | √      |
+| GameForecast    | 0.0.1   | 游戏赛事预测(破产机)    | Lkeme             | 1104 | 24(小时)    | √      |
+| Silver2Coin     | 0.0.1   | 银瓜子兑换硬币        | Lkeme             | 1105 | 24(小时)    | √      |
+| Judge           | 0.0.1   | 風機委員投票         | Lkeme             | 1106 | 15-30(分钟) | √      |
+| VipPrivilege    | 0.0.1   | 领取大会员权益        | Lkeme             | 1107 | 24(小时)    | √      |
+| BpConsumption   | 0.0.1   | 大会员B币券消费       | Lkeme             | 1108 | 24(小时)    | √      |
+| LiveReservation | 0.0.1   | 预约直播有奖         | Lkeme             | 1109 | 1-3(小时)   | √      |
+| LiveGoldBox     | 0.0.1   | 直播金色宝箱(实物抽奖)   | Lkeme             | 1110 | 6-10(分钟)  | √      |
+| AwardRecords    | 0.0.1   | 获奖记录           | Lkeme             | 1111 | 5(分钟)     | √      |
+| VipPoint        | 0.0.1   | 大会员积分          | Lkeme             | 1112 | 5(分钟)     | √      |
+| Lotty           | 0.0.1   | 抽奖             | MoeHero           | 1113 | 5(分钟)     | √      |
+| DailyGold       | 0.0.1   | 每日电池(APP)      | Lkeme             | 1114 | 24(小时)    | √      |
+| PolishMedal     | 0.0.1   | 点亮灰色勋章         | possible318/Lkeme | 1115 | 1(小时)     | √      |
+
 
 </details>
 

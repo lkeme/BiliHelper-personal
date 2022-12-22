@@ -35,7 +35,7 @@ class PolishMedal extends BasePlugin
         'name' => 'PolishMedal', // 插件名称
         'version' => '0.0.1', // 插件版本
         'desc' => '点亮徽章', // 插件描述
-        'author' => 'Lkeme',// 作者
+        'author' => 'possible318/Lkeme',// 作者
         'priority' => 1115, // 插件优先级
         'cycle' => '1(小时)', // 运行周期
     ];
