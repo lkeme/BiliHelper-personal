@@ -110,9 +110,10 @@ class Login extends BasePlugin
      */
     protected function login(): void
     {
-        $this->checkLogin();
+        $mode_id = (int)getConf('login_mode.mode');
+        $this->checkLogin($mode_id);
         //
-        switch ((int)getConf('login_mode.mode')) {
+        switch ($mode_id) {
             case 1:
                 // 账密模式
                 $this->accountLogin();
@@ -523,13 +524,28 @@ class Login extends BasePlugin
     /**
      * 检查登录
      */
-    protected function checkLogin(): void
+    protected function checkLogin(int $mode_id): void
     {
         $username = getConf('login_account.username');
         $password = getConf('login_account.password');
-        if (empty($username) || empty($password)) {
-            failExit('空白的帐号和口令');
+
+        // TODO 冗余
+        switch ($mode_id){
+            case 1:
+                if (empty($username) || empty($password)) {
+                    failExit('空白的帐号和口令');
+                }
+                break;
+            case 2:
+                if (empty($username) ) {
+                    failExit('空白的帐号');
+                }
+                break;
+            default:
+                // 3 4
+                break;
         }
+
         $this->username = $username;
         $this->password = $this->publicKeyEnc($password);
     }
