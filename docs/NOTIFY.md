@@ -125,6 +125,28 @@ agent_id = ****
 to_user = UserId1|UserId2|UserId3
 ```
 
+**飞书**
+
+> 文档: https://developers.dingtalk.com/document/robots/custom-robot-access  
+> 说明: 推送的AccessToken
+
+```ini
+; 飞书机器人/依赖USE_NOTIFY
+[notify_feishu]
+token =
+```
+
+**飞书**
+
+> 文档: https://github.com/Finb/Bark  
+> 说明: 推送的AccessToken
+
+```ini
+; Bark/Token
+[notify_bark]
+token =
+```
+
 ### 调试
 
 https://github.com/lkeme/BiliHelper-personal/blob/eb06f55fa0fa6cb07bbeffc7e85c6ac0bfaa67b3/data/latest_version.json#L8

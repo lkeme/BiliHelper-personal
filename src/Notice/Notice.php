@@ -97,6 +97,9 @@ class Notice extends SingleTon
         if (getConf('notify_feishu.token')) {
             $this->feiShuSend($info);
         }
+        if (getConf('notify_bark.token')) {
+            $this->bark($info);
+        }
     }
 
     /**
@@ -471,6 +474,30 @@ class Notice extends SingleTon
         }
     }
 
+    /**
+     * Bark Public 推送
+     * @doc https://github.com/Finb/Bark
+     * @param array $info
+     */
+    protected function bark(array $info): void
+    {
+        Log::info('使用bark推送消息');
+        $url = 'https://api.day.app/' . getConf('notify_bark.token');
+
+        $payload = [
+            'msgtype' => 'markdown',
+            'markdown' => [
+                'content' => "{$info['title']} \n\n{$info['content']}"
+            ]
+        ];
+        $raw = Request::put('other', $url, $payload, $this->headers);
+        $de_raw = json_decode($raw, true);
+        if ($de_raw['message'] == 'success') {
+            Log::notice("推送消息成功: {$de_raw['errmsg']}");
+        } else {
+            Log::warning("推送消息失败: $raw");
+        }
+    }
 
 }
 
