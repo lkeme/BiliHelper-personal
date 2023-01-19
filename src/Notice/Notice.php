@@ -268,8 +268,8 @@ class Notice extends SingleTon
         $raw = Request::post('other', $url, $payload);
         $de_raw = json_decode($raw, true);
 
-        if ($de_raw['errno'] == 0) {
-            Log::notice("推送消息成功: {$de_raw['errmsg']}");
+        if (isset($de_raw['data']['errno']) && $de_raw['data']['errno'] == 0) {
+            Log::notice("推送消息成功: {$de_raw['data']['errmsg']}");
         } else {
             Log::warning("推送消息失败: $raw");
         }
