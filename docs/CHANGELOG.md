@@ -8,6 +8,26 @@
 
 [comment]: <> (</details>)
 
+## v2.0.6.230127 alpha (2023-01-27)
+
+### Added
+
+- pushDeer推送
+-
+
+### Changed
+
+- 更新主站任务逻辑(alpha)
+-
+
+### Fixed
+
+- Docker Build Eroor
+
+### Remarks
+
+- 请注意配置文件有所变动，注意更新。
+
 ## v2.0.4.221222 alpha (2022-12-22)
 
 ### Added

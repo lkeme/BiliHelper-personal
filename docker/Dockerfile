@@ -47,6 +47,7 @@ RUN set -x; \
 #ENV PATH=/root/.composer/vendor/bin:$PATH
 
 RUN apk add --no-cache git && \
+    # https://github.com/php/php-src/issues/8681
     apk add --no-cache linux-headers && \
     git clone ${REPO_URL}/lkeme/BiliHelper-personal.git --depth=1 /app && \
     cp -f /app/docker/entrypoint.sh /usr/local/bin/entrypoint.sh && \

@@ -15,6 +15,7 @@
  *  |_____/ |_| |_____| |_| |_| |_| |_____| |_____| |_|     |_____| |_|  \_\
  */
 
+use Bhp\Api\Api\X\Player\ApiPlayer;
 use Bhp\Api\DynamicSvr\ApiDynamicSvr;
 use Bhp\Api\Video\ApiCoin;
 use Bhp\Api\Video\ApiShare;
@@ -70,6 +71,23 @@ class MainSite extends BasePlugin
     }
 
     /**
+     * 获取稿件列表
+     * @param int $num
+     * @return array
+     */
+    protected function fetchCustomAids(int $num = 30): array
+    {
+        if (getConf('main_site.fetch_aids_mode') == 'random') {
+            // 随机热门稿件榜单
+            return $this->getTopArchives($num);
+        } else {
+            // 固定获取关注UP稿件榜单, 不足会随机补全
+            return $this->getFollowUpAids($num);
+        }
+    }
+
+
+    /**
      * 投币任务
      * @return bool
      * @throws NoLoginException
@@ -92,13 +110,7 @@ class MainSite extends BasePlugin
             return true;
         }
         // 稿件列表
-        if (getConf('main_site.add_coin_mode') == 'random') {
-            // 随机热门稿件榜单
-            $aids = self::getTopAids($actual_num);
-        } else {
-            // 固定获取关注UP稿件榜单, 不足会随机补全
-            $aids = self::getFollowUpAids($actual_num);
-        }
+        $aids = $this->fetchCustomAids($actual_num);
         //
         Log::info("主站任务: 预投币稿件 " . implode(" ", $aids));
         // 投币
@@ -137,25 +149,20 @@ class MainSite extends BasePlugin
      * @param int $ps
      * @return array
      */
-    protected function getTopAids(int $num, int $ps = 30): array
+    protected function getTopArchives(int $num, int $ps = 30): array
     {
-        $aids = [];
         $response = ApiVideo::dynamicRegion($ps);
         //
         if ($response['code']) {
             Log::warning("主站任务: 获取首页推荐失败 {$response['code']} -> {$response['message']}");
-            return self::getDayRankingAids($num);
+            return $this->getDayRankingArchives($num);
         }
         //
         if ($num == 1) {
-            $temps = [array_rand($response['data']['archives'], $num)];
+            return [array_rand($response['data']['archives'], $num)];
         } else {
-            $temps = array_rand($response['data']['archives'], $num);
+            return array_rand($response['data']['archives'], $num);
         }
-        foreach ($temps as $temp) {
-            $aids[] = $response['data']['archives'][$temp]['aid'];
-        }
-        return $aids;
     }
 
     /**
@@ -163,9 +170,9 @@ class MainSite extends BasePlugin
      * @param int $num
      * @return array
      */
-    protected function getDayRankingAids(int $num): array
+    protected function getDayRankingArchives(int $num): array
     {
-        $aids = [];
+        $archives = [];
         $rand_nums = [];
         //
         $response = ApiVideo::ranking();
@@ -180,11 +187,10 @@ class MainSite extends BasePlugin
                     break;
                 }
             }
-            $aid = $response['data']['list'][$rand_nums[$i]]['aid'];
-            $aids[] = $aid;
+            $archives[] = $response['data']['list'][$rand_nums[$i]];
         }
         //
-        return $aids;
+        return $archives;
     }
 
     /**
@@ -211,7 +217,7 @@ class MainSite extends BasePlugin
         }
         // 此处补全缺失
         if (count($aids) < $num) {
-            $aids = array_merge($aids, $this->getTopAids($num - count($aids)));
+            $aids = array_merge($aids, $this->getTopArchives($num - count($aids)));
         }
         return $aids;
     }
@@ -281,10 +287,11 @@ class MainSite extends BasePlugin
     protected function shareTask(): bool
     {
         if (!getConf('main_site.share', false, 'bool')) return true;
-        // video*10
-        $infos = $this->fetchRandomAvInfos();
-        $info = array_pop($infos);
-        $aid = (string)$info['aid'];
+
+        $archives = $this->fetchCustomAids(10);
+        $archive = array_pop($archives);
+        $aid = (string)$archive['aid'];
+
         //
         $response = ApiShare::share($aid);
         switch ($response['code']) {
@@ -306,9 +313,11 @@ class MainSite extends BasePlugin
     protected function watchTask(): bool
     {
         if (!getConf('main_site.watch', false, 'bool')) return true;
-        // video*10
-        $infos = $this->fetchRandomAvInfos();
-        $info = array_pop($infos);
+
+        $archives = $this->fetchCustomAids(10);
+        $archive = array_pop($archives);
+        // 额外处理信息
+        $info = $this->getArchiveInfo((string)$archive['aid']);
         $aid = (string)$info['aid'];
         $cid = (string)$info['cid'];
         $duration = (int)$info['duration'];
@@ -340,6 +349,19 @@ class MainSite extends BasePlugin
         Log::notice("主站任务: $aid 观看成功");
         return true;
     }
+
+    /**
+     * 获取稿件详情/暂时不额外处理错误
+     * @param string $aid
+     * @return array
+     */
+    protected function getArchiveInfo(string $aid): array
+    {
+        $response = ApiPlayer::pageList($aid);
+        return $response['data'];
+
+    }
+
 
     /**
      * 获取随机
