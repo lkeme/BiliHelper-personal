@@ -100,6 +100,9 @@ class Notice extends SingleTon
         if (getConf('notify_bark.token')) {
             $this->bark($info);
         }
+        if (getConf('notify_push_deer.token')) {
+            $this->pushDeer($info);
+        }
     }
 
     /**
@@ -494,6 +497,32 @@ class Notice extends SingleTon
         $de_raw = json_decode($raw, true);
         if ($de_raw['message'] == 'success') {
             Log::notice("推送消息成功: {$de_raw['errmsg']}");
+        } else {
+            Log::warning("推送消息失败: $raw");
+        }
+    }
+
+    protected function pushDeer(array $info)
+    {
+        Log::info('使用 PushDeer 推送消息');
+        $token = getConf('notify_push_deer.token');
+        $url = getConf('notify_push_deer.url');
+        if (!str_contains($url, "http")){
+            $url = "https://api2.pushdeer.com/message/push";
+        }
+
+        $payload = [
+            "text" => $info['title'],
+            "desp" => $info['content'],
+            "pushkey" => $token
+        ];
+
+        $raw = Request::post('other', $url, $payload, [
+            'Content-Type' => 'application/x-www-form-urlencoded'
+        ]);
+        $de_raw = json_decode($raw, true);
+        if ($de_raw['code'] == 0){
+            Log::notice("推送消息成功: {$de_raw['content']['result'][0]}");
         } else {
             Log::warning("推送消息失败: $raw");
         }
