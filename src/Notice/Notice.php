@@ -502,12 +502,18 @@ class Notice extends SingleTon
         }
     }
 
+    /**
+     * PushDeer 推送
+     * @doc http://pushdeer.com/
+     * @param array $info
+     * @return void
+     */
     protected function pushDeer(array $info)
     {
         Log::info('使用 PushDeer 推送消息');
         $token = getConf('notify_push_deer.token');
         $url = getConf('notify_push_deer.url');
-        if (!str_contains($url, "http")){
+        if (!str_contains($url, "http")) {
             $url = "https://api2.pushdeer.com/message/push";
         }
 
@@ -521,7 +527,7 @@ class Notice extends SingleTon
             'Content-Type' => 'application/x-www-form-urlencoded'
         ]);
         $de_raw = json_decode($raw, true);
-        if ($de_raw['code'] == 0){
+        if ($de_raw['code'] == 0) {
             Log::notice("推送消息成功: {$de_raw['content']['result'][0]}");
         } else {
             Log::warning("推送消息失败: $raw");

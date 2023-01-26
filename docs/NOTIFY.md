@@ -147,6 +147,18 @@ token =
 token =
 ```
 
+**PushDeer**
+
+> 文档: http://pushdeer.com/
+> 说明: 服务器地址,Token
+
+```ini
+; PushDeer/服务器地址/token
+[notify_push_deer]
+url =
+token =
+```
+
 ### 调试
 
 https://github.com/lkeme/BiliHelper-personal/blob/eb06f55fa0fa6cb07bbeffc7e85c6ac0bfaa67b3/data/latest_version.json#L8
