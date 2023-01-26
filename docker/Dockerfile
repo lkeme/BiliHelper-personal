@@ -47,6 +47,7 @@ RUN set -x; \
 #ENV PATH=/root/.composer/vendor/bin:$PATH
 
 RUN apk add --no-cache git && \
+    apk add --no-cache linux-headers && \
     git clone ${REPO_URL}/lkeme/BiliHelper-personal.git --depth=1 /app && \
     cp -f /app/docker/entrypoint.sh /usr/local/bin/entrypoint.sh && \
     chmod 777 /usr/local/bin/entrypoint.sh && \
