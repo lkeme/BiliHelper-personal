@@ -26,8 +26,14 @@ ENV USER_NAME='' \
 
 WORKDIR /app
 
+
+
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories
 #RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories
+
+# https://github.com/php/php-src/issues/8681
+RUN apk add --no-cache linux-headers
+
 RUN docker-php-ext-install sockets
 
 #RUN if [ "${CN}" = true ]; then export REPO_URL="https://github.com.cnpmjs.org"; fi
@@ -47,8 +53,6 @@ RUN set -x; \
 #ENV PATH=/root/.composer/vendor/bin:$PATH
 
 RUN apk add --no-cache git && \
-    # https://github.com/php/php-src/issues/8681
-    apk add --no-cache linux-headers && \
     git clone ${REPO_URL}/lkeme/BiliHelper-personal.git --depth=1 /app && \
     cp -f /app/docker/entrypoint.sh /usr/local/bin/entrypoint.sh && \
     chmod 777 /usr/local/bin/entrypoint.sh && \
