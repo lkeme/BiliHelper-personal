@@ -72,5 +72,18 @@ class ApiVideo
         return Request::getJson(true, 'other', $url, $payload);
     }
 
+    /**
+     * 首页填充物 max=30
+     * @param int $ps
+     * @return array
+     */
+    public static function topFeedRCMD(int $ps = 30): array
+    {
+        $url = 'https://api.bilibili.com/x/web-interface/wbi/index/top/feed/rcmd';
+        $payload = [
+            'ps' => $ps,
+        ];
+        return Request::getJson(true, 'other', $url, $payload);
+    }
 
 }

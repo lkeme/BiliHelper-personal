@@ -25,6 +25,7 @@ use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
 use Bhp\Plugin\Plugin;
 use Bhp\TimeLock\TimeLock;
+use Bhp\Util\ArrayR\ArrayR;
 use Bhp\Util\Exceptions\NoLoginException;
 
 class MainSite extends BasePlugin
@@ -75,14 +76,14 @@ class MainSite extends BasePlugin
      * @param int $num
      * @return array
      */
-    protected function fetchCustomAids(int $num = 30): array
+    protected function fetchCustomArchives(int $num = 30): array
     {
         if (getConf('main_site.fetch_aids_mode') == 'random') {
             // 随机热门稿件榜单
             return $this->getTopArchives($num);
         } else {
             // 固定获取关注UP稿件榜单, 不足会随机补全
-            return $this->getFollowUpAids($num);
+            return $this->getFollowUpArchives($num);
         }
     }
 
@@ -110,7 +111,7 @@ class MainSite extends BasePlugin
             return true;
         }
         // 稿件列表
-        $aids = $this->fetchCustomAids($actual_num);
+        $aids = $this->fetchCustomArchives($actual_num);
         //
         Log::info("主站任务: 预投币稿件 " . implode(" ", $aids));
         // 投币
@@ -155,14 +156,9 @@ class MainSite extends BasePlugin
         //
         if ($response['code']) {
             Log::warning("主站任务: 获取首页推荐失败 {$response['code']} -> {$response['message']}");
-            return $this->getDayRankingArchives($num);
+            return $this->getTopFeedRCMDArchives($num);
         }
-        //
-        if ($num == 1) {
-            return [array_rand($response['data']['archives'], $num)];
-        } else {
-            return array_rand($response['data']['archives'], $num);
-        }
+        return ArrayR::toSlice($response['data']['archives'], $num);
     }
 
     /**
@@ -170,27 +166,19 @@ class MainSite extends BasePlugin
      * @param int $num
      * @return array
      */
-    protected function getDayRankingArchives(int $num): array
+    protected function getTopFeedRCMDArchives(int $num): array
     {
-        $archives = [];
-        $rand_nums = [];
+        $new_archives = [];
         //
-        $response = ApiVideo::ranking();
+        $response = ApiVideo::topFeedRCMD();
+        $archives = ArrayR::toSlice($response['data']['item'], $num);
         //
-        for ($i = 0; $i < $num; $i++) {
-            while (true) {
-                $rand_num = mt_rand(1, 99);
-                if (in_array($rand_num, $rand_nums)) {
-                    continue;
-                } else {
-                    $rand_nums[] = $rand_num;
-                    break;
-                }
-            }
-            $archives[] = $response['data']['list'][$rand_nums[$i]];
+        foreach ($archives as $archive) {
+            $archive['aid'] = $archive['id'];
+            unset($archive['id']);
+            $new_archives[] = $archive;
         }
-        //
-        return $archives;
+        return $new_archives;
     }
 
     /**
@@ -198,28 +186,29 @@ class MainSite extends BasePlugin
      * @param int $num
      * @return array
      */
-    protected function getFollowUpAids(int $num): array
+    protected function getFollowUpArchives(int $num): array
     {
-        $aids = [];
+        $archives = [];
         //
         $response = ApiDynamicSvr::followUpDynamic();
         //
         if ($response['code']) {
             Log::warning("主站任务: 获取UP稿件失败 {$response['code']} -> {$response['message']}");
-            return $aids;
-        }
-        //
-        foreach ($response['data']['cards'] as $index => $card) {
-            if ($index >= $num) {
-                break;
+        } else {
+            foreach ($response['data']['cards'] as $i => $card) {
+                // if ($i >= $num) break;
+                // JSON_ERROR_CTRL_CHAR
+                $temp = preg_replace('/[\x00-\x1F]/', '', $card['card']);
+                $archives[] = json_decode($temp, true);
             }
-            $aids[] = $card['desc']['rid'];
+            $archives = ArrayR::toSlice($archives, $num, false);
         }
         // 此处补全缺失
-        if (count($aids) < $num) {
-            $aids = array_merge($aids, $this->getTopArchives($num - count($aids)));
+        if (($t_num = count($archives)) < $num) {
+            Log::warning("主站任务: 获取UP稿件数量不足，将自动补全随机稿件。");
+            $archives = array_merge($archives, $this->getTopArchives($num - $t_num));
         }
-        return $aids;
+        return $archives;
     }
 
     /**
@@ -288,7 +277,7 @@ class MainSite extends BasePlugin
     {
         if (!getConf('main_site.share', false, 'bool')) return true;
 
-        $archives = $this->fetchCustomAids(10);
+        $archives = $this->fetchCustomArchives(10);
         $archive = array_pop($archives);
         $aid = (string)$archive['aid'];
 
@@ -314,10 +303,16 @@ class MainSite extends BasePlugin
     {
         if (!getConf('main_site.watch', false, 'bool')) return true;
 
-        $archives = $this->fetchCustomAids(10);
+        $archives = $this->fetchCustomArchives(10);
         $archive = array_pop($archives);
-        // 额外处理信息
-        $info = $this->getArchiveInfo((string)$archive['aid']);
+        //
+        if (isset($archive['duration']) && is_int($archive['duration'])) {
+            $info = $archive;
+        } else {
+            // 额外处理信息
+            $info = $this->getArchiveInfo((string)$archive['aid']);
+        }
+        //
         $aid = (string)$info['aid'];
         $cid = (string)$info['cid'];
         $duration = (int)$info['duration'];
@@ -358,8 +353,10 @@ class MainSite extends BasePlugin
     protected function getArchiveInfo(string $aid): array
     {
         $response = ApiPlayer::pageList($aid);
-        return $response['data'];
-
+        //
+        $archive_info = $response['data'][0];
+        $archive_info['aid'] = $aid;
+        return $archive_info;
     }
 
 

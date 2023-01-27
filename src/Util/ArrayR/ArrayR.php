@@ -36,7 +36,21 @@ class ArrayR
 
     }
 
-
+    /**
+     * 随机部分切片
+     * @param array $arr
+     * @param int $num
+     * @param bool $random
+     * @return array
+     */
+    public static function toSlice(array $arr, int $num, bool $random = true): array
+    {
+        if ($random) {
+            //shuffle 将数组顺序随即打乱
+            shuffle($arr);
+        }
+        //array_slice 取该数组中的某一段
+        return array_slice($arr, 0, $num);
+    }
 }
- 
- 
+
