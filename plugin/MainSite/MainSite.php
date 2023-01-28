@@ -27,9 +27,15 @@ use Bhp\Plugin\Plugin;
 use Bhp\TimeLock\TimeLock;
 use Bhp\Util\ArrayR\ArrayR;
 use Bhp\Util\Exceptions\NoLoginException;
+use Bhp\Cache\Cache;
 
 class MainSite extends BasePlugin
 {
+    /**
+     * @var array|array[]
+     */
+    protected array $records = [];
+
     /**
      * 插件信息
      * @var array|string[]
@@ -51,6 +57,8 @@ class MainSite extends BasePlugin
     {
         //
         TimeLock::initTimeLock();
+        //
+        Cache::initCache();
         // $this::class
         $plugin->register($this, 'execute');
     }
@@ -63,13 +71,31 @@ class MainSite extends BasePlugin
     public function execute(): void
     {
         if (TimeLock::getTimes() > time() || !getEnable('main_site')) return;
+        // 缓存开始
+        $this->records = ($tmp = Cache::get('records')) ? $tmp : $this->initRecords();
         //
         if ($this->watchTask() && $this->shareTask() && $this->coinTask()) {
             TimeLock::setTimes(TimeLock::timing(10));
         } else {
             TimeLock::setTimes(3600);
         }
+        // 缓存结束
+        Cache::set('records', $this->records);
     }
+
+    /**
+     * 初始化
+     * @return array[]
+     */
+    protected function initRecords(): array
+    {
+        return [
+            'watch' => [],
+            'share' => [],
+            'coin' => [],
+        ];
+    }
+
 
     /**
      * 获取稿件列表
@@ -90,12 +116,15 @@ class MainSite extends BasePlugin
 
     /**
      * 投币任务
+     * @param string $key
      * @return bool
      * @throws NoLoginException
      */
-    protected function coinTask(): bool
+    protected function coinTask(string $key = 'coin'): bool
     {
         if (!getConf('main_site.add_coin', false, 'bool')) return true;
+        //
+        if (in_array($this->getKey(), $this->records[$key])) return true;
         // 预计数量 失败默认0  避免损失
         $estimate_num = getConf('main_site.add_coin_num', 0, 'int');
         // 库存数量
@@ -108,6 +137,8 @@ class MainSite extends BasePlugin
         // 上限
         if ($actual_num <= 0) {
             Log::notice('主站任务: 今日投币上限已满');
+            // 插入
+            $this->records[$key][] = $this->getKey();
             return true;
         }
         // 稿件列表
@@ -120,6 +151,8 @@ class MainSite extends BasePlugin
             //
             sleep(1);
         }
+        // 插入
+        $this->records[$key][] = $this->getKey();
         return true;
     }
 
@@ -270,13 +303,16 @@ class MainSite extends BasePlugin
 
     /**
      * 分享任务
+     * @param string $key
      * @return bool
      * @throws NoLoginException
      */
-    protected function shareTask(): bool
+    protected function shareTask(string $key = 'share'): bool
     {
         if (!getConf('main_site.share', false, 'bool')) return true;
-
+        //
+        if (in_array($this->getKey(), $this->records[$key])) return true;
+        //
         $archives = $this->fetchCustomArchives(10);
         $archive = array_pop($archives);
         $aid = (string)$archive['aid'];
@@ -288,6 +324,8 @@ class MainSite extends BasePlugin
                 throw new NoLoginException($response['message']);
             case 0:
                 Log::notice("主站任务: $aid 分享成功");
+                // 插入
+                $this->records[$key][] = $this->getKey();
                 return true;
             default:
                 Log::warning("主站任务: $aid 分享失败 {$response['code']} -> {$response['message']}");
@@ -297,12 +335,15 @@ class MainSite extends BasePlugin
 
     /**
      * 观看任务
+     * @param string $key
      * @return bool
      */
-    protected function watchTask(): bool
+    protected function watchTask(string $key = 'watch'): bool
     {
         if (!getConf('main_site.watch', false, 'bool')) return true;
-
+        //
+        if (in_array($this->getKey(), $this->records[$key])) return true;
+        //
         $archives = $this->fetchCustomArchives(10);
         $archive = array_pop($archives);
         //
@@ -311,6 +352,7 @@ class MainSite extends BasePlugin
         } else {
             // 额外处理信息
             $info = $this->getArchiveInfo((string)$archive['aid']);
+            if (empty($info)) return false;
         }
         //
         $aid = (string)$info['aid'];
@@ -342,6 +384,8 @@ class MainSite extends BasePlugin
         }
         //
         Log::notice("主站任务: $aid 观看成功");
+        // 插入
+        $this->records[$key][] = $this->getKey();
         return true;
     }
 
@@ -354,6 +398,10 @@ class MainSite extends BasePlugin
     {
         $response = ApiPlayer::pageList($aid);
         //
+        if ($response['code'] == -404 || !isset($response['data'])) {
+            Log::warning("主站任务: $aid 获取稿件信息失败 {$response['code']} -> {$response['message']}");
+            return [];
+        }
         $archive_info = $response['data'][0];
         $archive_info['aid'] = $aid;
         return $archive_info;
@@ -374,6 +422,15 @@ class MainSite extends BasePlugin
         shuffle($info);
         //
         return $info;
+    }
+
+
+    /**
+     * @return string
+     */
+    protected function getKey(): string
+    {
+        return substr(md5(md5(date("Y-m-d", time()))), 8, 8);
     }
 
 }

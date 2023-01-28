@@ -23,11 +23,12 @@ class ApiPlayer
 {
     public static function pageList(string $aid): array
     {
-        // day: 日榜1 三榜3 周榜7 月榜30
         $url = 'https://api.bilibili.com/x/player/pagelist';
         $payload = [
             'aid' => $aid,
         ];
+        // {"code":-404,"message":"啥都木有","ttl":1}
+        // {"code":0,"message":"0","ttl":1,"data":[{"cid":123,"page":1,"from":"vupload","part":"","duration":2055,"vid":"","weblink":"","dimension":{"width":480,"height":360,"rotate":0}}]}
         return Request::getJson(true, 'other', $url, $payload);
     }
 
