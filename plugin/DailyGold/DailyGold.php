@@ -74,7 +74,13 @@ class DailyGold extends BasePlugin
                 break;
             case 0:
                 // 领取ing
-                $this->userTaskReceiveRewards($up_uid);
+                if (!$this->userTaskReceiveRewards($up_uid)) {
+                    // 领取失败 TODO
+                    // [code] => 27000002
+                    // [message] => 领取失败，请重试
+                    // [data][num] => 0
+                    TimeLock::setTimes(10 * 60);
+                }
                 break;
             default:
                 // 默认一次弹幕进度

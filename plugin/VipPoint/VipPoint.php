@@ -106,7 +106,10 @@ class VipPoint extends BasePlugin
         $this->initTask();
         //
         $this->receiveTask();
-
+        // 全部完成
+        if (TimeLock::getTimes() <= time()) {
+            TimeLock::setTimes(TimeLock::timing(9));
+        }
     }
 
     /**
@@ -132,9 +135,6 @@ class VipPoint extends BasePlugin
             // 每次执行一个任务
             return;
         }
-        // 全部完成
-        TimeLock::setTimes(TimeLock::timing(9));
-        return;
     }
 
     /**

@@ -31,13 +31,6 @@ class ApiTask
     ];
 
     /**
-     * @var array|string[]
-     */
-    protected static array $payload = [
-        'statistics' => '{"appId":1,"platform":3,"version":"7.14.1","abtest":""}',
-    ];
-
-    /**
      * 大会员签到
      * @return array
      */
@@ -47,10 +40,13 @@ class ApiTask
         $user = User::parseCookie();
         //
         $url = 'https://api.bilibili.com/pgc/activity/score/task/sign';
-        $payload = array_merge([
+        //
+        $payload = [
             'disable_rcmd' => '0',
             'csrf' => $user['csrf'],
-        ], self::$payload);
+            'statistics' => getDevice('app.bili_a.statistics'),
+        ];
+        //
         $headers = array_merge([], self::$headers);
         return Request::postJson(true, 'app', $url, Sign::common($payload), $headers);
     }

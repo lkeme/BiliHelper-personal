@@ -32,13 +32,6 @@ class ApiEvent
     ];
 
     /**
-     * @var array|string[]
-     */
-    protected static array $payload = [
-        'statistics' => '{"appId":1,"platform":3,"version":"7.14.1","abtest":""}',
-    ];
-
-    /**
      * @return array
      */
     public static function dispatch(): array
@@ -46,14 +39,16 @@ class ApiEvent
         //
         $user = User::parseCookie();
         //
-        $params = array_merge([
+        $params = [
             'csrf' => $user['csrf'],
-        ], self::$payload);
+            'statistics' => getDevice('app.bili_a.statistics'),
+        ];
         $url = 'https://show.bilibili.com/api/activity/fire/common/event/dispatch?' . http_build_query(Sign::common($params));
         //
         $payload = [
             'eventId' => 'hevent_oy4b7h3epeb',
         ];
+        //
         $headers = array_merge([
             'content-type' => 'application/json; charset=utf-8',
         ], self::$headers);

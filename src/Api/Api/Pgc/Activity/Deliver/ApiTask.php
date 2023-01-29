@@ -31,13 +31,6 @@ class ApiTask
     ];
 
     /**
-     * @var array|string[]
-     */
-    protected static array $payload = [
-        'statistics' => '{"appId":1,"platform":3,"version":"7.14.1","abtest":""}',
-    ];
-
-    /**
      * 完成任务  jp：追番页浏览  tv: 影视页浏览
      * @param string $position
      * @return array
@@ -48,11 +41,14 @@ class ApiTask
         $user = User::parseCookie();
         //
         $url = 'https://api.bilibili.com/pgc/activity/deliver/task/complete';
-        $payload = array_merge([
+        //
+        $payload = [
             'disable_rcmd' => '0',
             'position' => $position,
             'csrf' => $user['csrf'],
-        ], self::$payload);
+            'statistics' => getDevice('app.bili_a.statistics'),
+        ];
+        //
         $headers = array_merge([], self::$headers);
         return Request::postJson(true, 'app', $url, Sign::common($payload), $headers);
     }
