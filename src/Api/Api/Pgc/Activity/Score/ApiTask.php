@@ -62,10 +62,11 @@ class ApiTask
         $user = User::parseCookie();
         //
         $url = 'https://api.bilibili.com/pgc/activity/score/task/receive';
-        $payload = array_merge([
+        $payload = [
             'taskCode' => $task_code,
             'csrf' => $user['csrf'],
-        ], self::$payload);
+            'statistics' => getDevice('app.bili_a.statistics'),
+        ];
         $headers = array_merge([], self::$headers);
         return Request::putJson(true, 'app', $url, Sign::common($payload), $headers);
     }
@@ -81,11 +82,12 @@ class ApiTask
         $user = User::parseCookie();
         //
         $url = 'https://api.bilibili.com/pgc/activity/score/task/complete';
-        $payload = array_merge([
+        $payload = [
             'taskCode' => $task_code,
             'csrf' => $user['csrf'],
             'ts' => time(),
-        ], self::$payload);
+            'statistics' => getDevice('app.bili_a.statistics'),
+        ];
         $headers = array_merge([
             'Content-Type' => 'application/json'
         ], self::$headers);
