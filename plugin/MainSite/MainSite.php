@@ -143,6 +143,9 @@ class MainSite extends BasePlugin
         }
         // 稿件列表
         $aids = $this->fetchCustomArchives($actual_num);
+        // 从二维数组里取出aid
+        $aids = array_column($aids, 'aid');
+        var_dump($aids);
         //
         Log::info("主站任务: 预投币稿件 " . implode(" ", $aids));
         // 投币

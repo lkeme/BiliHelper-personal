@@ -23,18 +23,6 @@
   },
   "repositories": [
     {
-      "description": "阿里云(全量)/1Min",
-      "type": "composer",
-      "url": "https://mirrors.aliyun.com/composer/",
-      "canonical": false
-    },
-    {
-      "description": "华为云(全量)",
-      "type": "composer",
-      "url": "https://mirrors.huaweicloud.com/repository/php/",
-      "canonical": false
-    },
-    {
       "description": "PhpComposer(全量)",
       "type": "composer",
       "url": "https://packagist.phpcomposer.com",
