@@ -17,7 +17,7 @@
 
 namespace Bhp\User;
 
-use Bhp\Api\Vip\ApiOcr;
+use Bhp\Api\Vip\ApiUser;
 use Bhp\Log\Log;
 use Bhp\Util\Common\Common;
 use Bhp\Util\DesignPattern\SingleTon;
@@ -61,7 +61,7 @@ class User extends SingleTon
      */
     public static function isVip(string $title = '用户信息', array $scope = [1, 2], string $info = '大会员'): bool
     {
-        $response = ApiOcr::userInfo();
+        $response = ApiUser::userInfo();
         //
         if ($response['code']) {
             Log::warning("$title: 获取大会员信息失败 {$response['code']} -> {$response['message']}");
