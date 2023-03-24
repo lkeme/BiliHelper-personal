@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2022 ~ 2023
+ *  Updated: 2023 ~ 2024
  *
  *   _____   _   _       _   _   _   _____   _       _____   _____   _____
  *  |  _  \ | | | |     | | | | | | | ____| | |     |  _  \ | ____| |  _  \ &   ／l、
@@ -32,5 +32,4 @@ class MethodNotFoundException extends Exception
         parent::__construct($message, $code, $previous);
     }
 }
- 
- 
+

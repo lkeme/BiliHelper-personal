@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2022 ~ 2023
+ *  Updated: 2023 ~ 2024
  *
  *   _____   _   _       _   _   _   _____   _       _____   _____   _____
  *  |  _  \ | | | |     | | | | | | | ____| | |     |  _  \ | ____| |  _  \ &   ／l、
@@ -17,7 +17,7 @@
 
 namespace Bhp\User;
 
-use Bhp\Api\Vip\ApiUser;
+use Bhp\Api\Vip\ApiOcr;
 use Bhp\Log\Log;
 use Bhp\Util\Common\Common;
 use Bhp\Util\DesignPattern\SingleTon;
@@ -61,7 +61,7 @@ class User extends SingleTon
      */
     public static function isVip(string $title = '用户信息', array $scope = [1, 2], string $info = '大会员'): bool
     {
-        $response = ApiUser::userInfo();
+        $response = ApiOcr::userInfo();
         //
         if ($response['code']) {
             Log::warning("$title: 获取大会员信息失败 {$response['code']} -> {$response['message']}");

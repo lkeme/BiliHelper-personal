@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2022 ~ 2023
+ *  Updated: 2023 ~ 2024
  *
  *   _____   _   _       _   _   _   _____   _       _____   _____   _____
  *  |  _  \ | | | |     | | | | | | | ____| | |     |  _  \ | ____| |  _  \ &   ／l、
@@ -126,10 +126,6 @@ class Login extends BasePlugin
                 // 二维码模式
                 $this->qrcodeLogin();
                 break;
-            case 4:
-                // 行为验证码模式(暂未开放)
-                // self::captchaLogin();
-                failExit('此登录模式暂未开放');
             default:
                 failExit('登录模式配置错误');
         }
@@ -447,6 +443,22 @@ class Login extends BasePlugin
 
     }
 
+
+    /**
+     * 验证码登录
+     * @param string $target_url
+     * @return void
+     */
+    protected function captchaLogin(string $target_url): void
+    {
+//        $captcha_ori = $this->getCaptcha();
+//        $captcha = $this->ocrCaptcha($captcha_ori);
+        $captcha_info = $this->matchCaptcha($target_url);
+        // 暂时不做额外处理
+        $captcha = $this->ocrCaptcha($captcha_info['gt'], $captcha_info['challenge']);
+        $this->accountLogin($captcha['validate'], $captcha['challenge'], $mode = '账密模式(行为验证码)');
+    }
+
     /**
      * 登录后处理
      * @param string $mode
@@ -483,7 +495,10 @@ class Login extends BasePlugin
                 break;
             case -105:
                 // 需要验证码
-                $this->loginFail($mode, '此次登录需要验证码或' . $data['message']);
+                Log::warning("此次请求需要行为验证码");
+                $this->captchaLogin($data['data']['url']);
+                break;
+//                $this->loginFail($mode, '此次登录需要验证码或' . $data['message']);
             case -629:
                 // 密码错误
                 $this->loginFail($mode, $data['message']);
@@ -530,14 +545,14 @@ class Login extends BasePlugin
         $password = getConf('login_account.password');
 
         // TODO 冗余
-        switch ($mode_id){
+        switch ($mode_id) {
             case 1:
                 if (empty($username) || empty($password)) {
                     failExit('空白的帐号和口令');
                 }
                 break;
             case 2:
-                if (empty($username) ) {
+                if (empty($username)) {
                     failExit('空白的帐号');
                 }
                 break;
@@ -577,10 +592,13 @@ class Login extends BasePlugin
      * 发送短信验证码
      * @param string $phone
      * @param string $cid
+     * @param string $validate
+     * @param string $challenge
      * @return array
      */
-    protected function sendSms(string $phone, string $cid): array
+    protected function sendSms(string $phone, string $cid, string $validate = '', string $challenge = '', string $recaptcha_token = ''): array
     {
+        // {"code":0,"message":"0","ttl":1,"data":{"is_new":false,"captcha_key":"","recaptcha_url":"https://www.bilibili.com/h5/project-msg-auth/verify?ct=geetest\u0026recaptcha_token=f968b6432dde47a9aa274adfc60b2d1a\u0026gee_gt=1c0ea7c7d47d8126dda19ee3431a5f38\u0026gee_challenge=dec6522102ce0aa5cbdab370930123f8\u0026hash=ef1e5849a6746ad680a1dfa8924da497"}}
         // {"code":0,"message":"0","ttl":1,"data":{"is_new":false,"captcha_key":"4e292933816755442c1568e2043b8e41","recaptcha_url":""}}
         // {"code":0,"message":"0","ttl":1,"data":{"is_new":false,"captcha_key":"","recaptcha_url":"https://www.bilibili.com/h5/project-msg-auth/verify?ct=geetest\u0026recaptcha_token=ad520c3a4a3c46e29b1974d85efd2c4b\u0026gee_gt=1c0ea7c7d47d8126dda19ee3431a5f38\u0026gee_challenge=c772673050dce482b9f63ff45b681ceb\u0026hash=ea2850a43cc6b4f1f7b925d601098e5e"}}
         // TODO 参数位置调整
@@ -589,7 +607,12 @@ class Login extends BasePlugin
             'tel' => $phone,
             'statistics' => getDevice('app.bili_a.statistics'),
         ];
-
+        if ($validate != '' && $challenge != '') {
+            $payload['recaptcha_token'] = $recaptcha_token;
+            $payload['gee_validate'] = $validate;
+            $payload['gee_challenge'] = $challenge;
+            $payload['gee_seccode'] = "$validate|jordan";
+        }
         $raw = ApiLogin::sendSms($payload);
         $response = json_decode($raw, true);
         //
@@ -598,7 +621,37 @@ class Login extends BasePlugin
             $payload['captcha_key'] = $response['data']['captcha_key'];
             return $payload;
         }
+        if ($response['code'] == 0 && isset($response['data']['recaptcha_url']) && $response['data']['recaptcha_url'] != '') {
+            Log::warning("此次请求需要行为验证码");
+            $target_url = $response['data']['recaptcha_url'];
+            // 单独处理
+            preg_match('/recaptcha_token=([a-f0-9]+)/', $target_url, $matches);
+            $recaptcha_token = $matches[1];
+
+            $captcha_info = $this->matchCaptcha($target_url);
+            // 暂时不做额外处理
+            $captcha = $this->ocrCaptcha($captcha_info['gt'], $captcha_info['challenge']);
+            $this->sendSms($phone, $cid, $captcha['validate'], $captcha['challenge'], $recaptcha_token);
+        }
+
+
         failExit("短信验证码发送失败 $raw");
+    }
+
+    /**
+     * @param string $target_url
+     * @return array
+     */
+    protected function matchCaptcha(string $target_url): array
+    {
+        preg_match('/gt=([a-f0-9]+)/', $target_url, $matches);
+        $gt = $matches[1];
+        preg_match('/challenge=([a-f0-9]+)/', $target_url, $matches);
+        $challenge = $matches[1];
+        if (empty($gt) || empty($challenge)) {
+            failExit('提取验证码失败');
+        }
+        return ['gt' => $gt, 'challenge' => $challenge];
     }
 
     /**
@@ -638,17 +691,40 @@ class Login extends BasePlugin
         ];
     }
 
+
     /**
-     * 验证码模式
-     * @param string $mode
-     * @return void
+     * @param string $gt
+     * @param string $challenge
+     * @return array
      */
-    protected function captchaLogin(string $mode = '验证码模式'): void
+    protected function ocrCaptcha(string $gt, string $challenge): array
     {
-//        $captcha_ori = $this->getCaptcha();
-//        $captcha = $this->ocrCaptcha($captcha_ori);
-//        $this->accountLogin($captcha['validate'], $captcha['challenge'], $mode);
+        if (getConf('login_captcha.url') && getEnable('login_captcha')) {
+            Log::info('请在浏览器中打开以下链接，完成验证码识别');
+            Log::info(getConf('login_captcha.url') . '/geetest?gt=' . $gt . '&challenge=' . $challenge);
+            Log::info('请在2分钟内完成识别操作');
+            // 设置请求时间和时间间隔
+            $maxTime = 120; // 最大请求时间（秒）
+            $interval = 2; // 请求间隔（秒）
+
+            // 循环请求
+            $startTime = time();
+            while (time() - $startTime < $maxTime) {
+                $response = ApiCaptcha::fetch($challenge);
+                if ($response['code'] == 10000) {
+                    Log::notice($response['message']);
+                    return $response['data'];
+                } else {
+                    Log::info($response['message']);
+                }
+                sleep($interval);
+            }
+            failExit('验证码识别超时');
+        } else {
+            failExit('验证码识别并未开启');
+        }
     }
+
 
     /**
      * 转换Cookie

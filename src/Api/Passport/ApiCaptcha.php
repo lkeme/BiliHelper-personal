@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2022 ~ 2023
+ *  Updated: 2023 ~ 2024
  *
  *   _____   _   _       _   _   _   _____   _       _____   _____   _____
  *  |  _  \ | | | |     | | | | | | | ____| | |     |  _  \ | ____| |  _  \ &   ／l、
@@ -56,5 +56,17 @@ class ApiCaptcha
         ];
         return Request::postJson(true,'other', $url, $payload, $headers);
     }
+
+    /**
+     * @param string $challenge
+     * @return array
+     */
+    public static function fetch(string $challenge): array
+    {
+        $url = getConf('login_captcha.url') . '/fetch';
+        $payload = [
+            'challenge' => $challenge,
+        ];
+        return Request::getJson(true, 'other', $url, $payload);
+    }
 }
- 

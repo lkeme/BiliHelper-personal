@@ -29,7 +29,7 @@
 
 <p align="center">
 
-<img src="https://img.shields.io/badge/Version-2.0.7.230311-orange.svg?longCache=true&style=for-the-badge">
+<img src="https://img.shields.io/badge/Version-2.0.7.230324-orange.svg?longCache=true&style=for-the-badge">
 <img src="https://img.shields.io/badge/PHP-8.1+-green.svg?longCache=true&style=for-the-badge">
 <img src="https://img.shields.io/badge/Composer-latest-blueviolet.svg?longCache=true&style=for-the-badge">
 <img src="https://img.shields.io/badge/License-mit-blue.svg?longCache=true&style=for-the-badge">
@@ -66,6 +66,7 @@
 有疑问一定要先看看文档或Issue里是否存在相同的问题，再考虑其他渠道咨询。
 
 * [使用文档 / DOC.md](./docs/DOC.md)
+* [验证码文档 / CAPTCHA.md](./docs/CAPTCHA.md)
 * [推送文档 / NOTIFY.md](./docs/NOTIFY.md)
 * [更新日志 / CHANGELOG.md](./docs/CHANGELOG.md)
 * [配置文档 / WIKI.md](https://github.com/lkeme/BiliHelper-personal/wiki/%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E8%AF%A6%E8%A7%A3)

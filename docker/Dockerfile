@@ -5,6 +5,9 @@ LABEL AUTHOR = "Lkeme <Useri@live.cn>"
 
 ENV USER_NAME='' \
     USER_PASSWORD='' \
+    CAPTCHA='0' \
+    CAPTCHA_HOST='0.0.0.0' \
+    CAPTCHA_PORT='50001' \
     REPO_URL='https://github.com/' \
     CUSTOM_CLONE_URL='https://speed.example.com/example/example.git' \
     MIRRORS="0" \

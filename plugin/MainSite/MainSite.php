@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2022 ~ 2023
+ *  Updated: 2023 ~ 2024
  *
  *   _____   _   _       _   _   _   _____   _       _____   _____   _____
  *  |  _  \ | | | |     | | | | | | | ____| | |     |  _  \ | ____| |  _  \ &   ／l、
@@ -145,7 +145,6 @@ class MainSite extends BasePlugin
         $aids = $this->fetchCustomArchives($actual_num);
         // 从二维数组里取出aid
         $aids = array_column($aids, 'aid');
-        var_dump($aids);
         //
         Log::info("主站任务: 预投币稿件 " . implode(" ", $aids));
         // 投币

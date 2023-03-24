@@ -34,3 +34,4 @@ index1.php
 !/profile/example
 
 .phpunit.*
+captcha/data.json
