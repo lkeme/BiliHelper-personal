@@ -17,7 +17,6 @@
 
 namespace Bhp\TimeLock;
 
-use Amp\Delayed;
 use Bhp\Schedule\Schedule;
 use Bhp\Util\DesignPattern\SingleTon;
 
@@ -106,15 +105,15 @@ class TimeLock extends SingleTon
         return $this->locks[$class_name];
     }
 
-    /**
-     * used in Amp loop Delayed
-     * @param int $times
-     * @return Delayed
-     */
-    public static function Delayed(int $times=1000): Delayed
-    {
-        return new Delayed($times);
-    }
+//    /**
+//     * used in Amp loop Delayed
+//     * @param int $times
+//     * @return Delayed
+//     */
+//    public static function Delayed(int $times=1000): Delayed
+//    {
+//        return new Delayed($times);
+//    }
 
     /**
      * 定时

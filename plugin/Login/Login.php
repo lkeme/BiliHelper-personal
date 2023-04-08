@@ -594,6 +594,7 @@ class Login extends BasePlugin
      * @param string $cid
      * @param string $validate
      * @param string $challenge
+     * @param string $recaptcha_token
      * @return array
      */
     protected function sendSms(string $phone, string $cid, string $validate = '', string $challenge = '', string $recaptcha_token = ''): array

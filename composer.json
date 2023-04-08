@@ -37,21 +37,20 @@
     "ext-json": "*",
     "ext-zlib": "*",
     "ext-mbstring": "*",
-    "monolog/monolog": "2.x-dev",
+    "monolog/monolog": "dev-main",
     "bramus/monolog-colored-line-formatter": "dev-master",
-    "symfony/yaml": "6.1.x-dev",
+    "symfony/yaml": "^6.0",
     "toolkit/stdlib": "*",
     "adhocore/cli": "dev-main",
     "lkeme/data": "4.x-dev",
     "grasmash/expander": "dev-main",
-    "amphp/amp": "^2.6.2",
+    "amphp/amp": "3.x-dev",
     "fire015/flintstone": "dev-master",
     "overtrue/pinyin": "dev-master",
-    "guzzlehttp/guzzle": "^7.4",
-    "toolkit/pflag": "^2.0",
-    "symfony/console": "^6.1",
-    "malios/php-to-ascii-table": "^3.0",
-    "clue/socket-raw": "1.6"
+    "guzzlehttp/guzzle": "dev-master",
+    "toolkit/pflag": "dev-main",
+    "symfony/console": "^6.0",
+    "malios/php-to-ascii-table": "dev-master"
   },
   "autoload": {
     "psr-4": {

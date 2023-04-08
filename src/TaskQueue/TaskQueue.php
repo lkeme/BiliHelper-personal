@@ -17,7 +17,6 @@
 
 namespace Bhp\TaskQueue;
 
-use Amp\Delayed;
 use Bhp\Util\DesignPattern\SingleTon;
 
 class TaskQueue extends SingleTon
@@ -92,7 +91,6 @@ class TaskQueue extends SingleTon
 
     /**
      * 获取调用者类名
-     * @param int $index
      * @return string
      */
     protected function getCallClassName(): string

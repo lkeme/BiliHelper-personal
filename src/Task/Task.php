@@ -17,24 +17,26 @@
 
 namespace Bhp\Task;
 
-use Amp\Loop;
+use Amp\Future;
 use Bhp\Log\Log;
 use Bhp\Plugin\Plugin;
 use Bhp\Schedule\Schedule;
-use Bhp\TimeLock\TimeLock;
 use Bhp\Util\DesignPattern\SingleTon;
 use Bhp\Util\Exceptions\NoLoginException;
 use Throwable;
-use function Amp\asyncCall;
+use function Amp\async;
+use function Amp\delay;
+
 
 class Task extends SingleTon
 {
+    private static array $promises;
+
     /**
      * @return void
      */
     public function init(): void
     {
-
     }
 
     /**
@@ -44,7 +46,7 @@ class Task extends SingleTon
      */
     public static function addTask(string $hook, mixed ...$data): void
     {
-        asyncCall(function () use ($hook, $data) {
+        self::$promises[] = async(function () use ($hook, $data) {
             while (true) {
                 try {
                     Plugin::getInstance()->trigger($hook, ...$data);
@@ -59,7 +61,7 @@ class Task extends SingleTon
                     Log::error($error_msg);
                     // Notice::push('error', $error_msg);
                 }
-                yield TimeLock::Delayed();
+                delay(1);
             }
         });
     }
@@ -69,7 +71,7 @@ class Task extends SingleTon
      */
     public static function execTasks(): void
     {
-        Loop::run();
+         Future\awaitAll(self::$promises);
     }
 }
 
