@@ -265,6 +265,9 @@ class Login extends BasePlugin
         //
         // $this->updateInfo('username',$this->username);
         // $this->updateInfo('password',$this->password);
+        // 转换
+        $access_token = $this->tvConvert();
+        $this->updateInfo('access_token', $access_token);
     }
 
     /**
@@ -742,6 +745,37 @@ class Login extends BasePlugin
             $cookies[] = $cookie[0][0];
         }
         return implode("", array_reverse($cookies));
+    }
+
+
+    /**
+     * @return string
+     */
+    protected function tvConvert(): string
+    {
+        # Android 旧
+        $app_key = base64_decode(getDevice('app.bili_a.app_key'));
+        $app_secret = base64_decode(getDevice('app.bili_a.secret_key'));
+
+        $response = ApiQrcode::getConfrimUrl($app_key, $app_secret);
+        if ($response['code'] == 0 && isset($response['data']['has_login']) && $response['data']['has_login'] == 1) {
+            Log::info('获取tv转换确认链接成功');
+        } else {
+            failExit('获取转换确认链接失败');
+        }
+        //
+        $next_url = $response['data']['confirm_uri'];
+        $response = ApiQrcode::goConfrimUrl($next_url);
+        $location = $response['Location'][0];
+//        var_dump($location);
+        preg_match('/access_key=([a-f0-9]+)/', $location, $matches);
+        $access_key = $matches[1];
+//        var_dump($matches);
+        if (empty($access_key)) {
+            failExit('获取转换access_key失败');
+        }
+        Log::info('获取tv转换access_key成功');
+        return $access_key;
     }
 
 }

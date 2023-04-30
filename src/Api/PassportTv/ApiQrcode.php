@@ -57,4 +57,45 @@ class ApiQrcode
 
     }
 
+    /**
+     * 获取确认Url
+     * @param string $app_key
+     * @param string $app_secret
+     * @return array
+     */
+    public static function getConfrimUrl(string $app_key, string $app_secret): array
+    {
+        $sign = md5('api=http://link.acg.tv/forum.php' . $app_secret);
+        //
+        $url = 'https://passport.bilibili.com/login/app/third';
+        $payload = [
+            'appkey' => $app_key,
+            'api' => 'http://link.acg.tv/forum.php',
+            'sign' => $sign
+        ];
+        $headers = [
+            "origin" => 'https://passport.bilibili.com',
+            "referer" => 'https://passport.bilibili.com',
+        ];
+        return Request::getJson(true, 'pc', $url, $payload, $headers);
+    }
+
+    /**
+     * 跳转确认Url
+     * @param string $url
+     * @return array
+     */
+    public static function goConfrimUrl(string $url): array
+    {
+        // 取出url的主体部分
+        $query =  parse_url($url)['query'];
+        // 取出url参数部分转为数组
+        parse_str($query, $payload);
+        $headers = [
+            "origin" => 'https://passport.bilibili.com',
+            "referer" => 'https://passport.bilibili.com',
+        ];
+        return Request::headers('pc', $url, $payload, $headers);
+    }
+
 }
