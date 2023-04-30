@@ -632,7 +632,7 @@ class Login extends BasePlugin
             $captcha_info = $this->matchCaptcha($target_url);
             // 暂时不做额外处理
             $captcha = $this->ocrCaptcha($captcha_info['gt'], $captcha_info['challenge']);
-            $this->sendSms($phone, $cid, $captcha['validate'], $captcha['challenge'], $recaptcha_token);
+            return $this->sendSms($phone, $cid, $captcha['validate'], $captcha['challenge'], $recaptcha_token);
         }
 
 

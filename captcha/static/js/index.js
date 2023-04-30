@@ -8,6 +8,7 @@ window.onload = function () {
 
     const gtInput = document.querySelector("#gt")
     const challengeInput = document.querySelector("#challenge")
+    const newChallengeInput = document.querySelector("#new-challenge")
     const validateInput = document.querySelector("#validate")
     const seccodeInput = document.querySelector("#seccode")
 
@@ -43,7 +44,8 @@ window.onload = function () {
                         show(successBtn);
                     }
                     const result = captchaObj.getValidate();
-
+                    console.log(result)
+                    newChallengeInput.value = result.geetest_challenge;
                     validateInput.value = result.geetest_validate;
                     seccodeInput.value = result.geetest_seccode;
 
@@ -141,6 +143,7 @@ window.onload = function () {
             dataType: 'json',
             data: {
                 challenge: challengeInput.value,
+                new_challenge : newChallengeInput.value,
                 validate: validateInput.value,
                 seccode: seccodeInput.value
             },

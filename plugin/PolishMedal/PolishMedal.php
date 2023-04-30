@@ -97,7 +97,7 @@ class PolishMedal extends BasePlugin
         for ($i = 1; $i <= 100; $i++) {
             $de_raw = ApiFansMedal::panel($i, 50);
             if (isset($de_raw['code']) && $de_raw['code']) {
-                Log::warning("获取徽章列表失败 => {$de_raw['message']}");
+                Log::warning("获取徽章列表失败 => {$de_raw['message']} => {$de_raw['code']}");
             }
             $keys = ['list', 'special_list'];
             foreach ($keys as $key) {

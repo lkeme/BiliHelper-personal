@@ -255,7 +255,7 @@ class MainSite extends BasePlugin
         $response = ApiCoin::addLog();
         //
         if ($response['code'] || !isset($response['data']['list'])) {
-            Log::warning("主站任务: 获取已硬币失败 {$response['code']} -> {$response['message']}");
+            Log::warning("主站任务: 获取已投硬币失败 {$response['code']} -> {$response['message']}");
             return 0;
         }
         //

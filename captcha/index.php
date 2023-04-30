@@ -100,10 +100,11 @@ class HttpServer
             // 获取参数，从json里的读取
             $data = $this->json->read();
             $challenge = $_POST['challenge'];
+            $new_challenge = $_POST['new_challenge'];
             $validate = $_POST['validate'];
             $seccode = $_POST['seccode'];
             $data[$challenge] = [
-                'challenge' => $challenge,
+                'challenge' => $new_challenge,
                 'validate' => $validate,
                 'seccode' => $seccode,
             ];
