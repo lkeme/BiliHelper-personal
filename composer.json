@@ -47,7 +47,7 @@
     "amphp/amp": "3.x-dev",
     "fire015/flintstone": "dev-master",
     "overtrue/pinyin": "dev-master",
-    "guzzlehttp/guzzle": "dev-master",
+    "guzzlehttp/guzzle": "^7.0",
     "toolkit/pflag": "dev-main",
     "symfony/console": "^6.0",
     "malios/php-to-ascii-table": "dev-master"

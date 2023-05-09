@@ -183,7 +183,7 @@ class Lottery extends BasePlugin
         $response = Request::getJson(true, 'pc', $url, $payload);
 
         // 抽奖不存在
-        if ($response['code'] === -9999) {
+        if ($response['code'] === -9999 || $response['code'] === 4000014) {
             return [
                 'status' => -9999,
             ];

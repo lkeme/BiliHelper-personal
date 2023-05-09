@@ -485,20 +485,16 @@ class Notice extends SingleTon
     protected function bark(array $info): void
     {
         Log::info('使用bark推送消息');
-        $url = 'https://api.day.app/' . getConf('notify_bark.token');
-
-        $payload = [
-            'msgtype' => 'markdown',
-            'markdown' => [
-                'content' => "{$info['title']} \n\n{$info['content']}"
-            ]
-        ];
-        $raw = Request::put('other', $url, $payload, $this->headers);
-        $de_raw = json_decode($raw, true);
-        if ($de_raw['message'] == 'success') {
-            Log::notice("推送消息成功: {$de_raw['errmsg']}");
+        // 转url编码
+        $info['title'] = urlencode($info['title']);
+        $info['content'] = urlencode($info['content']);
+        //
+        $url = 'https://api.day.app/' . getConf('notify_bark.token') . "/{$info['title']}/{$info['content']}";
+        $de_raw = Request::getJson(true, 'other', $url, [], []);
+        if ($de_raw['code'] === 200) {
+            Log::notice("推送消息成功: {$de_raw['message']}");
         } else {
-            Log::warning("推送消息失败: $raw");
+            Log::warning('推送消息失败: ' . json_encode($de_raw));
         }
     }
 
