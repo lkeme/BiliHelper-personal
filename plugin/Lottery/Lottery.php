@@ -22,6 +22,8 @@ use Bhp\Plugin\Plugin;
 use Bhp\TimeLock\TimeLock;
 use Bhp\Request\Request;
 use Bhp\User\User;
+use function Amp\delay;
+
 
 class Lottery extends BasePlugin
 {
@@ -174,6 +176,7 @@ class Lottery extends BasePlugin
      */
     protected function getLotteryInfo(int $lottery_id): array
     {
+        delay(3);
         $user = User::parseCookie();
         $url = 'https://api.vc.bilibili.com/lottery_svr/v1/lottery_svr/detail_by_lid';
         $payload = [
@@ -183,7 +186,10 @@ class Lottery extends BasePlugin
         $response = Request::getJson(true, 'pc', $url, $payload);
 
         // 抽奖不存在
-        if ($response['code'] === -9999 || $response['code'] === 4000014) {
+        if ($response['code'] === -9999 || $response['code'] === 4000014 || $response['code'] === -412) {
+//            if ($response['code'] === -412) {
+//                Log::warning("抽奖：请求被拦截，暂定无效请求");
+//            }
             return [
                 'status' => -9999,
             ];
