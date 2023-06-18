@@ -10,41 +10,61 @@ case ${MIRRORS} in
     ;;
 "0")
     # https://github.com/
-    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-github.com ${Font} \n ======== \n"
+    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-github.com(RAW|源站) ${Font} \n ======== \n"
     git remote set-url origin https://github.com/lkeme/BiliHelper-personal.git
     ;;
 "1")
     # https://ghproxy.com/
-    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-ghproxy.com ${Font} \n ======== \n"
+    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-ghproxy.com(KR|韩国) ${Font} \n ======== \n"
     git remote set-url origin https://ghproxy.com/https://github.com/lkeme/BiliHelper-personal.git
     ;;
 "2")
-    # http://fastgit.org/
-    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-hub.fastgit.xyz ${Font} \n ======== \n"
-    git remote set-url origin https://hub.fastgit.xyz/lkeme/BiliHelper-personal.git
+    # http://gitclone.com/
+    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-gitclone.com(CN|中国) ${Font} \n ======== \n"
+    git remote set-url origin https://gitclone.com/github.com/lkeme/BiliHelper-personal.git
     ;;
 "3")
     # https://hub.gitfast.tk/
-    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-hub.gitfast.tk ${Font} \n ======== \n"
+    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-hub.gitfast.tk(US|美国) ${Font} \n ======== \n"
     git remote set-url origin https://hub.gitfast.tk/lkeme/BiliHelper-personal.git
     ;;
 "4")
     # https://hub.gitslow.tk/
-    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-hub.gitslow.tk ${Font} \n ======== \n"
+    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-hub.gitslow.tk(US|美国) ${Font} \n ======== \n"
     git remote set-url origin https://hub.gitslow.tk/lkeme/BiliHelper-personal.git
     ;;
 "5")
     # https://hub.verge.tk/
-    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-hub.verge.tk ${Font} \n ======== \n"
+    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-hub.verge.tk(US|美国) ${Font} \n ======== \n"
     git remote set-url origin https://hub.verge.tk/lkeme/BiliHelper-personal.git
     ;;
 "6")
     # https://gh.api.99988866.xyz/
-    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-gh.api.99988866.xyz ${Font} \n ======== \n"
+    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-gh.api.99988866.xyz(US|美国) ${Font} \n ======== \n"
     git remote set-url origin https://gh.api.99988866.xyz/https://github.com/lkeme/BiliHelper-personal.git
     ;;
+"7")
+    # https://kgithub.com/
+    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-kgithub.com(SG|新加坡) ${Font} \n ======== \n"
+    git remote set-url origin https://kgithub.com/lkeme/BiliHelper-personal.git
+    ;;
+"8")
+    # https://github.moeyy.xyz/
+    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-github.moeyy.xyz(SG|新加坡) ${Font} \n ======== \n"
+    git remote set-url origin https://github.moeyy.xyz/https://github.com/lkeme/BiliHelper-personal.git
+    ;;
+"9")
+    # https://hub.fgit.ml/
+    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-hub.fgit.ml(HK|香港) ${Font} \n ======== \n"
+    git remote set-url origin https://hub.fgit.ml/lkeme/BiliHelper-personal.git
+    ;;
+"10")
+    # https://hub.fgit.gq/
+    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-hub.fgit.gq(HK|香港) ${Font} \n ======== \n"
+    git remote set-url origin https://hub.fgit.gq/lkeme/BiliHelper-personal.git
+    ;;
 *)
-    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-github.com ${Font} \n ======== \n"
+    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-github.com(RAW|源站) ${Font} \n ======== \n"
     git remote set-url origin https://github.com/lkeme/BiliHelper-personal.git
     ;;
 esac

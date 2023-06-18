@@ -248,14 +248,20 @@ $ -e VERSION=2 # 使用 版本 V2.x.x(默认选项)
 
 - 使用github镜像加速
 
+> 以下加速镜像均为网络收集，感谢公益提供者，如有问题请联系删除
+
 ```shell script
-$ -e MIRRORS=0 # 使用 github.com 
-$ -e MIRRORS=1 # 使用 ghproxy.com
-$ -e MIRRORS=2 # 使用 fastgit.org
-$ -e MIRRORS=3 # 使用 hub.gitfast.tk
-$ -e MIRRORS=4 # 使用 hub.gitslow.tk
-$ -e MIRRORS=5 # 使用 hub.verge.tk
-$ -e MIRRORS=6 # 使用 gh.api.99988866.xyz
+$ -e MIRRORS=0 # 使用 github.com(RAW|CDN 
+$ -e MIRRORS=1 # 使用 ghproxy.com(KR|韩国)
+$ -e MIRRORS=2 # 使用 gitclone.com(CN|中国)
+$ -e MIRRORS=3 # 使用 hub.gitfast.tk(US|美国)
+$ -e MIRRORS=4 # 使用 hub.gitslow.tk(US|美国)
+$ -e MIRRORS=5 # 使用 hub.verge.tk(US|美国)
+$ -e MIRRORS=6 # 使用 gh.api.99988866.xyz(US|美国)
+$ -e MIRRORS=7 # 使用 kgithub.com(SG|新加坡)
+$ -e MIRRORS=8 # 使用 github.moeyy.xyz(SG|新加坡)
+$ -e MIRRORS=9 # 使用 hub.fgit.ml(HK|香港)
+$ -e MIRRORS=10 # 使用 hub.fgit.gq(HK|香港)
 $ -e MIRRORS=custom -e CUSTOM_CLONE_URL=https://github.com/lkeme/BiliHelper-personal.git # 使用 自定义克隆地址
 ```
 
