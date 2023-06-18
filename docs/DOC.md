@@ -251,7 +251,7 @@ $ -e VERSION=2 # 使用 版本 V2.x.x(默认选项)
 > 以下加速镜像均为网络收集，感谢公益提供者，如有问题请联系删除
 
 ```shell script
-$ -e MIRRORS=0 # 使用 github.com(RAW|CDN 
+$ -e MIRRORS=0 # 使用 github.com(RAW|源站|默认)
 $ -e MIRRORS=1 # 使用 ghproxy.com(KR|韩国)
 $ -e MIRRORS=2 # 使用 gitclone.com(CN|中国)
 $ -e MIRRORS=3 # 使用 hub.gitfast.tk(US|美国)

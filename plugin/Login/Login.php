@@ -369,6 +369,33 @@ class Login extends BasePlugin
     }
 
     /**
+     * @param string $qr
+     * @return void
+     */
+    protected function qrcodeLoginShow(string $qr): void
+    {
+        Log::info("1.终端直接显示(输入:1)");
+        Log::info("2.浏览器链接访问(输入:2)");
+        $option = $this->cliInput("请输入二维码显示方式: ");
+        switch ($option) {
+            case '1':
+                //
+                $this->cliInput("请尝试放大窗口，以确保二维码完整显示，回车继续");
+                Qrcode::show($qr);
+                break;
+            case '2':
+                Log::info("请使用浏览器访问下面的链接，以确保二维码完整显示");
+//                $url = 'https://cli.im/api/qrcode/code?text=' . urlencode($qr) . '&mhid=';
+                $url = 'https://cli.im/api/qrcode/code?text=' . urlencode($qr);
+                Log::info($url);
+                break;
+            default:
+                failExit('无效的选项');
+        }
+    }
+
+
+    /**
      * 扫码登录
      * @param string $mode
      * @return void
@@ -377,12 +404,10 @@ class Login extends BasePlugin
     {
         Log::info("尝试 $mode 登录");
         //
-        $this->cliInput("请尝试放大窗口，以确保二维码完整显示，回车继续");
-        //
         $response = $this->fetchQrAuthCode();
         $auth_code = $response['auth_code'];
         //
-        Qrcode::show($response['url']);
+        $this->qrcodeLoginShow($response['url']);
         // max 180 step 3
         foreach (range(0, 180, 3) as $_) {
             sleep(3);

@@ -1,63 +1,81 @@
 {
-  "name": "lkeme/bilihelper-personal",
-  "description": "B 站自动领瓜子、直播助手、直播挂机脚本、主站助手 - PHP 版（Personal）",
-  "type": "project",
-  "version": "2.*.*-dev",
-  "minimum-stability": "stable",
-  "license": "MIT",
-  "authors": [
-    {
-      "name": "Lkeme",
-      "email": "Useri@live.cn",
-      "homepage": "https://mudew.com",
-      "role": "Developer"
-    }
-  ],
-  "keywords": [],
-  "homepage": "https://github.com/lkeme/BiliHelper-personal",
-  "readme": "https://github.com/lkeme/BiliHelper-personal/blob/master/README.md",
-  "support": {
-    "issues": "https://github.com/lkeme/BiliHelper-personal/issues?state=open",
-    "wiki": "https://github.com/lkeme/BiliHelper-personal/wiki",
-    "source": "https://github.com/lkeme/BiliHelper-personal"
-  },
-  "repositories": [
-    {
-      "description": "PhpComposer(全量)",
-      "type": "composer",
-      "url": "https://packagist.phpcomposer.com",
-      "canonical": false
-    }
-  ],
-  "require": {
-    "php": ">=8.1",
-    "ext-curl": "*",
-    "ext-openssl": "*",
-    "ext-sockets": "*",
-    "ext-json": "*",
-    "ext-zlib": "*",
-    "ext-mbstring": "*",
-    "monolog/monolog": "dev-main",
-    "bramus/monolog-colored-line-formatter": "dev-master",
-    "symfony/yaml": "^6.0",
-    "toolkit/stdlib": "*",
-    "adhocore/cli": "dev-main",
-    "lkeme/data": "4.x-dev",
-    "grasmash/expander": "dev-main",
-    "amphp/amp": "3.x-dev",
-    "fire015/flintstone": "dev-master",
-    "overtrue/pinyin": "dev-master",
-    "guzzlehttp/guzzle": "^7.0",
-    "toolkit/pflag": "dev-main",
-    "symfony/console": "^6.0",
-    "malios/php-to-ascii-table": "dev-master"
-  },
-  "autoload": {
-    "psr-4": {
-      "Bhp\\": "src/"
+    "name": "lkeme/bilihelper-personal",
+    "description": "B 站自动领瓜子、直播助手、直播挂机脚本、主站助手 - PHP 版（Personal）",
+    "type": "project",
+    "version": "2.*.*-dev",
+    "minimum-stability": "stable",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Lkeme",
+            "email": "Useri@live.cn",
+            "homepage": "https://mudew.com",
+            "role": "Developer"
+        }
+    ],
+    "keywords": [],
+    "homepage": "https://github.com/lkeme/BiliHelper-personal",
+    "readme": "https://github.com/lkeme/BiliHelper-personal/blob/master/README.md",
+    "support": {
+        "issues": "https://github.com/lkeme/BiliHelper-personal/issues?state=open",
+        "wiki": "https://github.com/lkeme/BiliHelper-personal/wiki",
+        "source": "https://github.com/lkeme/BiliHelper-personal"
     },
-    "files": [
-      "src/Helpers.php"
-    ]
-  }
+    "repositories": [
+        {
+            "description": "PhpComposer",
+            "type": "composer",
+            "url": "https://packagist.phpcomposer.com",
+            "canonical": false
+        },
+        {
+            "description": "TencentCloud",
+            "type": "composer",
+            "url": "https://mirrors.tencent.com/composer/",
+            "canonical": false
+        },
+        {
+            "description": "packagist.kr",
+            "type": "composer",
+            "url": "https://packagist.kr",
+            "canonical": false
+        },
+        {
+            "description": "AliCloud",
+            "type": "composer",
+            "url": "https://mirrors.aliyun.com/composer/",
+            "canonical": false
+        }
+    ],
+    "require": {
+        "php": ">=8.1",
+        "ext-curl": "*",
+        "ext-openssl": "*",
+        "ext-sockets": "*",
+        "ext-json": "*",
+        "ext-zlib": "*",
+        "ext-mbstring": "*",
+        "monolog/monolog": "dev-main",
+        "bramus/monolog-colored-line-formatter": "dev-master",
+        "symfony/yaml": "^6.0",
+        "toolkit/stdlib": "*",
+        "adhocore/cli": "dev-main",
+        "lkeme/data": "4.x-dev",
+        "grasmash/expander": "dev-main",
+        "amphp/amp": "3.x-dev",
+        "fire015/flintstone": "dev-master",
+        "overtrue/pinyin": "dev-master",
+        "guzzlehttp/guzzle": "^7.0",
+        "toolkit/pflag": "dev-main",
+        "symfony/console": "^6.0",
+        "malios/php-to-ascii-table": "dev-master"
+    },
+    "autoload": {
+        "psr-4": {
+            "Bhp\\": "src/"
+        },
+        "files": [
+            "src/Helpers.php"
+        ]
+    }
 }
