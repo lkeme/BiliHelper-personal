@@ -80,6 +80,10 @@ class DailyGold extends BasePlugin
                     // [message] => 领取失败，请重试
                     // [data][num] => 0
                     TimeLock::setTimes(10 * 60);
+                }else{
+                    // TODO 因活动变动，每个人的任务详情不一致，暂时解决方案，可能会影响电池的获取
+                    // 领取完成
+                    TimeLock::setTimes(TimeLock::timing(7, 0, 0, true));
                 }
                 break;
             default:
