@@ -25,6 +25,7 @@ use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
 use Bhp\Plugin\Plugin;
 use Bhp\TimeLock\TimeLock;
+use Bhp\User\User;
 use Bhp\Util\ArrayR\ArrayR;
 use Bhp\Util\Exceptions\NoLoginException;
 use Bhp\Cache\Cache;
@@ -123,6 +124,14 @@ class MainSite extends BasePlugin
     protected function coinTask(string $key = 'coin'): bool
     {
         if (!getConf('main_site.add_coin', false, 'bool')) return true;
+        // 已满6级
+        if (!getConf('main_site.when_lv6_stop_coin', false, 'bool')) {
+            $userInfo = User::userNavInfo();
+            if ($userInfo->level_info->current_level >= 6) {
+                Log::notice('主站任务: 已满6级, 停止投币');
+                return true;
+            }
+        };
         //
         if (in_array($this->getKey(), $this->records[$key])) return true;
         // 预计数量 失败默认0  避免损失
@@ -259,7 +268,7 @@ class MainSite extends BasePlugin
             return 0;
         }
         //
-        $logs = $response['data']['list'] ?? [];
+        $logs = $response['data']['list'] ;
         $coins = 0;
         //
         foreach ($logs as $log) {

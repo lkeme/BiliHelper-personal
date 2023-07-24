@@ -61,7 +61,7 @@ class User extends SingleTon
      */
     public static function isVip(string $title = '用户信息', array $scope = [1, 2], string $info = '大会员'): bool
     {
-        $response = ApiUser::userInfo();
+        $response = ApiUser::userVipInfo();
         //
         if ($response['code']) {
             Log::warning("$title: 获取大会员信息失败 {$response['code']} -> {$response['message']}");
@@ -87,6 +87,23 @@ class User extends SingleTon
     public static function isYearVip(string $title = '用户信息', array $scope = [2], string $info = '年度大会员'): bool
     {
         return self::isVip($title, $scope, $info);
+    }
+
+    /**
+     * 用户信息对象
+     * @return object
+     */
+    public static function userNavInfo(): object
+    {
+        $response = ApiUser::userNavInfo();
+        //
+        if ($response['code']) {
+            Log::warning("用户信息: 获取用户信息失败 {$response['code']} -> {$response['message']}");
+            return new \stdClass();
+        } else {
+            Log::info("用户信息: 获取用户信息成功");
+            return json_decode(json_encode($response['data']), false);
+        }
     }
 
 }
