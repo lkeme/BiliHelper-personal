@@ -131,7 +131,7 @@ class PolishMedal extends BasePlugin
      * 获取熄灭徽章
      * @param bool $all
      */
-    private static function fetchGreyMedalList(bool $all = false)
+    private static function fetchGreyMedalList(bool $all = false): void
     {
         $data = self::fetchMedalList();
         foreach ($data as $vo) {

@@ -76,7 +76,7 @@ class Plugin extends SingleTon
     /**
      * 这个是全局使用的触发钩子动作方法
      * @param string $hook
-     * @param string $data
+     * @param mixed ...$params
      * @return string
      */
     public function trigger(string $hook, mixed...$params): string

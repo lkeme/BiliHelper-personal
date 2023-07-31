@@ -79,7 +79,7 @@ class TimeLock extends SingleTon
         $class_name = self::getInstance()->getCallClassName();
         self::getInstance()->locks[$class_name]['times'] = time() + $times;
         //
-        Schedule::set($class_name,self::getInstance()->locks[$class_name]['times']);
+        Schedule::set($class_name, self::getInstance()->locks[$class_name]['times']);
     }
 
     /**
@@ -154,6 +154,23 @@ class TimeLock extends SingleTon
     }
 
     /**
+     * 判断是否在时间内
+     * @param string $start
+     * @param string $end
+     * @return bool
+     */
+    public static function isWithinTimeRange(string $start, string $end):bool
+    {
+        // date_default_timezone_set('Asia/Shanghai');
+        $startTime = strtotime(date($start));
+        $endTime = strtotime(date($end));
+        $nowTime = time();
+        //
+        return $nowTime >= $startTime && $nowTime <= $endTime;
+    }
+
+
+    /**
      * 获取调用者类名
      * @return string
      */
@@ -163,9 +180,9 @@ class TimeLock extends SingleTon
         $backtraces = debug_backtrace();
         $temp = pathinfo(basename($backtraces[1]['file']))['filename'];
         //
-        if ($temp == basename(str_replace('\\', '/', __CLASS__))){
+        if ($temp == basename(str_replace('\\', '/', __CLASS__))) {
             return pathinfo(basename($backtraces[2]['file']))['filename'];
-        }else{
+        } else {
             return $temp;
         }
     }

@@ -24,12 +24,14 @@ class ApiUserTask
 {
     /**
      * 获取任务进度
+     * @param int $up_id
      * @return array
      */
-    public static function getUserTaskProgress(): array
+    public static function getUserTaskProgress(int $up_id): array
     {
         $url = 'https://api.live.bilibili.com/xlive/app-ucenter/v1/userTask/GetUserTaskProgress';
         $payload = [
+            'target_id' => $up_id,
             'statistics' => getDevice('app.bili_a.statistics'),
         ];
 

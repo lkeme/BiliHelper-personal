@@ -62,6 +62,7 @@ class ApiReservation
             'origin' => 'https://space.bilibili.com',
             'referer' => "https://space.bilibili.com/$vmid/"
         ];
+        // {"code":75077,"message":"重复参加活动!","ttl":1}
         // {"code":0,"message":"0","ttl":1}
         return Request::postJson(true, 'pc', $url, $payload, $headers);
     }

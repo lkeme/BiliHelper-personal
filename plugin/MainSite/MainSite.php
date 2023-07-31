@@ -125,7 +125,7 @@ class MainSite extends BasePlugin
     {
         if (!getConf('main_site.add_coin', false, 'bool')) return true;
         // 已满6级
-        if (!getConf('main_site.when_lv6_stop_coin', false, 'bool')) {
+        if (getConf('main_site.when_lv6_stop_coin', false, 'bool')) {
             $userInfo = User::userNavInfo();
             if ($userInfo->level_info->current_level >= 6) {
                 Log::notice('主站任务: 已满6级, 停止投币');

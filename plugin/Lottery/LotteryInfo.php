@@ -64,6 +64,8 @@ class LotteryInfo extends SingleTon
      * @param int $lottery_id
      * @param string $dynamic_id
      * @param int $lottery_time
+     * @param int $uid
+     * @param int $group_id
      * @return void
      */
     public static function add(int $lottery_id, string $dynamic_id, int $lottery_time, int $uid, int $group_id): void

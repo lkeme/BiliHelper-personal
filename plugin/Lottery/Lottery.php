@@ -62,7 +62,7 @@ class Lottery extends BasePlugin
      */
     public function __construct(Plugin &$plugin)
     {
-        include_once 'LotteryInfo.php';
+//        include_once 'LotteryInfo.php';
         TimeLock::initTimeLock();
         Cache::initCache();
         $plugin->register($this, 'execute');
@@ -74,9 +74,14 @@ class Lottery extends BasePlugin
      */
     public function execute(): void
     {
+        echo "ghahahahha";
         if (!getEnable('lottery')) return;
         if (TimeLock::getTimes() > time() && $this->last_task_finish) return;
+        echo "ghahahahha";
+
         $this->lotteryTask();
+        echo "ghahahahha";
+
         // 2-6小时 未完成6-10秒
         TimeLock::setTimes($this->last_task_finish ? (mt_rand(2, 6) * 60 * 60) : mt_rand(6, 10));
     }
@@ -87,12 +92,13 @@ class Lottery extends BasePlugin
      */
     protected function lotteryTask(): void
     {
-        $last_lottery_id = ($tmp = Cache::get('last_lottery_id')) ? $tmp : $this->calcLastLotteryId();
+//        $last_lottery_id = ($tmp = Cache::get('last_lottery_id')) ? $tmp : $this->calcLastLotteryId();
+        $last_lottery_id = 3015989;
         $times = 0;
         // 参加抽奖
         while (true) {
-            if(LotteryInfo::isExist($last_lottery_id)) continue;
-            if($times > 9) {
+//            if (LotteryInfo::isExist($last_lottery_id)) continue;
+            if ($times > 9) {
                 $this->last_task_finish = false;
                 break;
             }
@@ -100,7 +106,7 @@ class Lottery extends BasePlugin
             if ($info['status'] === -9999) { // 当前抽奖不存在
                 $this->last_task_finish = true;
                 break;
-            } else if($info['status'] === -1 || $info['status'] === 2) { // 当前抽奖无效/当前抽奖已开奖
+            } else if ($info['status'] === 2) { // 当前抽奖已开奖
                 $last_lottery_id++;
                 continue;
             }
@@ -111,16 +117,16 @@ class Lottery extends BasePlugin
         }
         $times = 0;
         // 删除动态
-        $infos = LotteryInfo::getHasLotteryList();
-        foreach ($infos as $info) {
-            if($times > 9) {
-                $this->last_task_finish = false;
-                break;
-            }
-            //TODO 删除动态
-            LotteryInfo::delete($info['lottery_id']);
-            $times++;
-        }
+//        $infos = LotteryInfo::getHasLotteryList();
+//        foreach ($infos as $info) {
+//            if ($times > 9) {
+//                $this->last_task_finish = false;
+//                break;
+//            }
+//            //TODO 删除动态
+//            LotteryInfo::delete($info['lottery_id']);
+//            $times++;
+//        }
     }
 
     /**
@@ -171,49 +177,78 @@ class Lottery extends BasePlugin
 
     /**
      * 获取抽奖信息
-     * @param int $lottery_id
+     * @param int $business_id
      * @return array
      */
-    protected function getLotteryInfo(int $lottery_id): array
+    protected function getLotteryInfo(int $business_id): array
     {
         delay(3);
         $user = User::parseCookie();
-        $url = 'https://api.vc.bilibili.com/lottery_svr/v1/lottery_svr/detail_by_lid';
+        $url = 'https://api.vc.bilibili.com/lottery_svr/v1/lottery_svr/lottery_notice';
+        $headers = [
+            'origin' => 'https://www.bilibili.com',
+            'referer' => 'https://www.bilibili.com/'
+        ];
         $payload = [
-            'lottery_id' => $lottery_id,
+            'business_id' => $business_id,
+            'business_type' => 10, // 1.转发动态 10.直播预约
             'csrf' => $user['csrf'],
         ];
-        $response = Request::getJson(true, 'pc', $url, $payload);
+        echo $business_id.PHP_EOL;
+        $response = Request::getJson(true, 'pc', $url, $payload, $headers);
+        print_r($response);
 
-        // 抽奖不存在
+        // 抽奖不存在/请求错误/请求被拦截
         if ($response['code'] === -9999 || $response['code'] === 4000014 || $response['code'] === -412) {
-//            if ($response['code'] === -412) {
-//                Log::warning("抽奖：请求被拦截，暂定无效请求");
-//            }
             return [
                 'status' => -9999,
             ];
         }
         $data = $response['data'];
-        // business_type为0的则为无效抽奖
-        if ($data['business_type'] === 0) {
-            return [
-                'status' => -1,
-            ];
-        }
         // 已开奖
-        if ($data['lottery_time'] <= time())  {
+        if ($data['lottery_time'] <= time()) {
             return [
                 'status' => 2,
             ];
         }
+
         return [
-            'lottery_id' => $lottery_id,
+            'business_id' => $business_id, // business_type=1时是动态Id business_type=10时是预约直播Id
+            'lottery_id' => $data['lottery_id'], // 抽奖ID
+            'lottery_time' => $data['lottery_time'], // 开奖时间
+            'lottery_detail_url' => $data['lottery_detail_url'], // 抽奖详情页
+            'need_feed' => $data['lottery_feed_limit'] === 1, // 是否需要关注
+            'need_post' => $data['need_post'] === 1, //是否需要发货地址
+            'sender_uid' => $data['sender_uid'], // 发起人UID
             'status' => $data['status'], // 0 未开奖 2 已开奖 -1 已失效 -9999 不存在
             'type' => $data['business_type'], // 1.转发动态 10.直播预约
-            'need_feed' => $data['lottery_feed_limit'] === 1, // 是否需要关注
-            'business_id' => $data['business_id'], // business_type=1时是动态Id business_type=10时是预约直播Id
+            'ts' => $data['ts'], // 时间戳
+            'prizes' => $this->parsePrizes($data), // 奖品
         ];
+    }
+
+
+    /**
+     * 解析奖品
+     * @param array $data
+     * @return string
+     */
+    protected function parsePrizes(array $data): string
+    {
+        $prizes = '';
+        $prizeData = [
+            'first_prize' => ['一等奖', 'first_prize_cmt'],
+            'second_prize' => ['二等奖', 'second_prize_cmt'],
+            'third_prize' => ['三等奖', 'third_prize_cmt']
+        ];
+        //
+        foreach ($prizeData as $key => $value) {
+            if (isset($data[$key]) && isset($data[$value[1]])) {
+                $prizes .= "{$value[0]}: {$data[$value[1]]} * {$data[$key]}\n";
+            }
+        }
+        //
+        return $prizes;
     }
 
     /**
@@ -221,51 +256,123 @@ class Lottery extends BasePlugin
      * @param array $info
      * @return void
      */
-    protected function joinLottery(array $info): void
+    protected function reserve(array $info): void
     {
-        $dynamic_enable = getConf('lottery.dynamic_enable', false);
-        $live_enable = getConf('lottery.live_enable', false);
-
-        if ($info['type'] === 1 && $dynamic_enable) {
-            $dynamic_id = $info['business_id'];
-            //TODO 转发动态
-            //TODO 关注用户并放到指定分组
-        } else if ($info['type'] === 10 && $live_enable) {
-            $reserve_id = $info['business_id'];
-            $this->reserveLive($reserve_id);
-        }
-    }
-
-    /**
-     * 删除动态
-     * @param string $dynamic_id
-     * @return void
-     */
-    protected function deleteDynamic(string $dynamic_id): void
-    {
-        //TODO 删除动态
-    }
-
-    /**
-     * 预约直播
-     * @param int $reserve_id
-     * @return void
-     */
-    protected function reserveLive(int $reserve_id): void
-    {
+        //
         $user = User::parseCookie();
+        //
         $url = 'https://api.vc.bilibili.com/dynamic_mix/v1/dynamic_mix/reserve_attach_card_button';
+        $headers = [
+            'origin' => 'https://space.bilibili.com',
+            'referer' => "https://space.bilibili.com/{$info['sender_uid']}/dynamic"
+        ];
         $payload = [
             'cur_btn_status' => 1,
-            'reserve_id' => $reserve_id,
+            'dynamic_id' => $info['id_str'],
+            'attach_card_type' => 'reserve',
+            'reserve_id' => $info['business_id'],
+            'reserve_total' => $info['reserve_total'],
+            'spmid' => '',
             'csrf' => $user['csrf'],
         ];
-        $response = Request::postJson(true, 'pc', $url, $payload);
-
-        if($response['code'] === 0 || $response['code'] === 7604003) { //预约成功/已经预约
-            Log::info("抽奖: 预约直播成功 ReserveId: $reserve_id");
+        //
+        $response = Request::postJson(true, 'pc', $url, $payload, $headers);
+        //
+        if ($response['code'] === 0 || $response['code'] === 7604003) { //预约成功/已经预约
+            Log::info("抽奖: 预约直播成功 ID: {$info['business_id']} UP: {$info['sender_uid']} 预约人数: {$info['reserve_total']}");
+            Log::info("抽奖: 地址: {$info['lottery_detail_url']}");
+            Log::info("抽奖: 奖品: {$info['prizes']}");
         } else {
-            Log::warning("抽奖: 预约直播失败 ReserveId: $reserve_id Error: {$response['code']} -> {$response['message']}");
+            Log::warning("抽奖: 预约直播失败 ReserveId: $info[business_id] Error: {$response['code']} -> {$response['message']}");
         }
     }
+
+
+    /**
+     * 提取动态参数
+     * @param string $data
+     * @return array
+     */
+    protected function extractDynamicParameters(string $data): array
+    {
+        $result = [];
+        preg_match('/"reserve_total":(\d+)/', $data, $b); // 正则匹配
+        if (isset($b[1])) {
+            $result['reserve_total'] = $b[1];
+        }
+        preg_match('/"reserve_total": (\d+)/', $data, $b); // 正则匹配
+        if (isset($b[1])) {
+            $result['reserve_total'] = $b[1];
+        }
+        preg_match('/"id_str":(\d+)/', $data, $b); // 正则匹配
+        if (isset($b[1])) {
+            $result['id_str'] = $b[1];
+        }
+        preg_match('/"id_str": (\d+)/', $data, $b); // 正则匹配
+        if (isset($b[1])) {
+            $result['id_str'] = $b[1];
+        }
+        return $result;
+    }
+
+    /**
+     * 过滤指定动态
+     * @param array $dynamic_list
+     * @param int $rid
+     * @return array
+     */
+    protected function filterDynamic(array $dynamic_list, int $rid): array
+    {
+        foreach ($dynamic_list as $dynamic) {
+            $dynamic_str = json_encode($dynamic);
+            if (str_contains($dynamic_str, '"rid":' . $rid) || str_contains($dynamic_str, '"rid": ' . $rid)) {
+                return $this->extractDynamicParameters($dynamic_str);
+            }
+        }
+        return [];
+    }
+
+
+    /**
+     * 获取指定空间动态列表
+     * @param int $host_mid
+     * @return array
+     */
+    protected function fetchSpaceDynamic(int $host_mid): array
+    {
+        $url = 'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space';
+        $headers = [
+            'origin' => 'https://space.bilibili.com',
+            'referer' => "https://space.bilibili.com/{$host_mid}/dynamic"
+        ];
+        $payload = [
+            'offset' => '',
+            'host_mid' => $host_mid,
+            'timezone_offset' => '-480',
+            'features' => 'itemOpusStyle'
+        ];
+        //
+        $response = Request::getJson(true, 'pc', $url, $payload, $headers);
+        //
+        if ($response['code']) {
+            Log::warning("获取({$host_mid})空间动态失败: {$response['code']} -> {$response['message']}");
+            return [];
+        }
+        //
+        return $response['data']['items'] ?? [];
+    }
+
+    protected function joinLottery(array $info): void
+    {
+        $dynamic_list = $this->fetchSpaceDynamic($info['sender_uid']);
+        $dynamic = $this->filterDynamic($dynamic_list, $info['business_id']);
+        if (!isset($dynamic['id_str']) || !isset($dynamic['reserve_total'])) {
+            Log::warning("抽奖: 未找到指定动态 ReserveId: $info[business_id]");
+            return;
+        }
+        // 合并数组
+        $info = array_merge($info, $dynamic);
+        $this->reserve($info);
+    }
+
 }

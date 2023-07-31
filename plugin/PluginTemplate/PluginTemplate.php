@@ -27,12 +27,15 @@ class PluginTemplate extends BasePlugin
      */
     protected ?array $info = [
         'hook' => __CLASS__, // hook
-        'name' => 'PluginTemplate', // 插件名称
+        'name' => 'PolishTheMedal', // 插件名称
         'version' => '0.0.1', // 插件版本
         'desc' => '插件模板', // 插件描述
         'author' => 'Lkeme',// 作者
         'priority' => 9999, // 插件优先级
         'cycle' => '1(小时)', // 运行周期
+        // 新增字段
+        'start' => '08:00:00', // 插件开始日期
+        'end' => '23:00:00', // 插件结束日期
     ];
 
     /**
@@ -54,11 +57,14 @@ class PluginTemplate extends BasePlugin
      */
     public function execute(): void
     {
-//        if (TimeLock::getTimes() > time()) return;
-        //
-        // todo
-        //
-//        TimeLock::setTimes(24 * 60 * 60);
+        // 时间段限制
+        // if (!TimeLock::isWithinTimeRange($this->info['start'], $this->info['end'])) return;
+        // 时间锁限制
+        // if (TimeLock::getTimes() > time()) return;
+
+        // todo ...
+
+        //TimeLock::setTimes(24 * 60 * 60);
     }
 
 
