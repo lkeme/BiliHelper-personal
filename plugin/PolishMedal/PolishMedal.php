@@ -17,6 +17,7 @@
 
 use Bhp\Api\Msg\ApiMsg;
 use Bhp\Api\XLive\AppUcenter\V1\ApiFansMedal;
+use Bhp\Cache\Cache;
 use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
 use Bhp\Plugin\Plugin;
@@ -44,12 +45,19 @@ class PolishMedal extends BasePlugin
     private static int $metal_lock = 0; // 勋章时间锁
 
     /**
+     * @var array
+     */
+    private static array $black_list = []; // 黑名单
+
+    /**
      * @param Plugin $plugin
      */
     public function __construct(Plugin &$plugin)
     {
         // 时间锁
         TimeLock::initTimeLock();
+        //
+        Cache::initCache();
         // 缓存
         $plugin->register($this, 'execute');
     }
@@ -133,11 +141,14 @@ class PolishMedal extends BasePlugin
      */
     private static function fetchGreyMedalList(bool $all = false): void
     {
+        self::$black_list = Cache::get('black_list') ?? self::$black_list;
+        // 获取徽章列表
         $data = self::fetchMedalList();
         foreach ($data as $vo) {
             // 过滤主站勋章
             if (!isset($vo['roomid']) || $vo['roomid'] == 0) continue;
-
+            // 过滤黑名单
+            if (in_array($vo['roomid'], self::$black_list)) continue;
             // 如果是每天擦亮 ，就不过滤|否则过滤掉，只点亮灰色
             if ($all) {
                 self::$grey_fans_medals[] = [
@@ -177,8 +188,24 @@ class PolishMedal extends BasePlugin
         if (isset($res['code']) && $res['code'] == 0) {
             Log::notice("在直播间@{$medal['roomid']}发送点亮弹幕成功");
         } else {
-            Log::warning("在直播间@{$medal['roomid']}发送点亮弹幕失败, CODE -> {$res['code']} MSG -> {$res['message']} ");
+            self::triggerException($medal, $res);
         }
     }
 
+    protected static function triggerException(array $medal, array $res): void
+    {
+        Log::warning("在直播间@{$medal['roomid']}发送点亮弹幕失败, CODE -> {$res['code']} MSG -> {$res['message']} ");
+        //
+        switch ($res['code']) {
+            case 1003:
+                Log::info("直播间@{$medal['roomid']}已被禁言, 加入黑名单");
+                self::$black_list[] = $medal['roomid'];
+                Cache::set('black_list', self::$black_list);
+                break;
+            default:
+                break;
+        }
+
+
+    }
 }
