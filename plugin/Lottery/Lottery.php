@@ -74,13 +74,10 @@ class Lottery extends BasePlugin
      */
     public function execute(): void
     {
-        echo "ghahahahha";
         if (!getEnable('lottery')) return;
         if (TimeLock::getTimes() > time() && $this->last_task_finish) return;
-        echo "ghahahahha";
 
         $this->lotteryTask();
-        echo "ghahahahha";
 
         // 2-6小时 未完成6-10秒
         TimeLock::setTimes($this->last_task_finish ? (mt_rand(2, 6) * 60 * 60) : mt_rand(6, 10));
