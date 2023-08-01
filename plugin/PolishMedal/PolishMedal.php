@@ -141,7 +141,7 @@ class PolishMedal extends BasePlugin
      */
     private static function fetchGreyMedalList(bool $all = false): void
     {
-        self::$black_list = Cache::get('black_list') ?? self::$black_list;
+        self::$black_list = ($tmp = Cache::get('black_list')) ? $tmp : [];
         // 获取徽章列表
         $data = self::fetchMedalList();
         foreach ($data as $vo) {
