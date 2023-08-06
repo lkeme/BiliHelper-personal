@@ -1,4 +1,4 @@
-<p align="center"><img width="300px" src="https://user-images.githubusercontent.com/19500576/118621710-36428180-b7f9-11eb-891d-3f5697347cef.png"></p>
+<p align="center"><img width="300px" src="https://user-images.githubusercontent.com/19500576/118621710-36428180-b7f9-11eb-891d-3f5697347cef.png" alt=""></p>
 
 [//]: # (<p align="center"><img width="300px" src="https://i.loli.net/2018/04/20/5ad97bd395912.jpeg"></p>)
 
@@ -29,10 +29,10 @@
 
 <p align="center">
 
-<img src="https://img.shields.io/badge/Version-2.1.0.230430-orange.svg?longCache=true&style=for-the-badge">
-<img src="https://img.shields.io/badge/PHP-8.1+-green.svg?longCache=true&style=for-the-badge">
-<img src="https://img.shields.io/badge/Composer-latest-blueviolet.svg?longCache=true&style=for-the-badge">
-<img src="https://img.shields.io/badge/License-mit-blue.svg?longCache=true&style=for-the-badge">
+<img src="https://img.shields.io/badge/Version-2.2.0.230806-orange.svg?longCache=true&style=for-the-badge" alt="">
+<img src="https://img.shields.io/badge/PHP-8.1+-green.svg?longCache=true&style=for-the-badge" alt="">
+<img src="https://img.shields.io/badge/Composer-latest-blueviolet.svg?longCache=true&style=for-the-badge" alt="">
+<img src="https://img.shields.io/badge/License-mit-blue.svg?longCache=true&style=for-the-badge" alt="">
 
 </p>
 
@@ -54,7 +54,7 @@
 ## 👤 游客访问
 
 <p align="center"> 
-   <img alingn="center" src="https://profile-counter.glitch.me/BiliHelper-personal/count.svg" />
+   <img alingn="center" src="https://profile-counter.glitch.me/BiliHelper-personal/count.svg"  alt=""/>
 
 [//]: # (    <br>)
 
@@ -113,7 +113,7 @@ Group: [602815575](https://jq.qq.com/?_wv=1027&k=UaalVexM) | **请不要来问�
 | LiveGoldBox     | 0.0.1   | 直播金色宝箱(实物抽奖)   | Lkeme             | 1110 | 6-10(分钟)  | √      |
 | AwardRecords    | 0.0.1   | 获奖记录           | Lkeme             | 1111 | 5(分钟)     | √      |
 | VipPoint        | 0.0.1   | 大会员积分          | Lkeme             | 1112 | 5(分钟)     | √      |
-| Lotty           | 0.0.1   | 抽奖             | MoeHero           | 1113 | 5(分钟)     | √      |
+| Lottery         | 0.0.2   | 抽奖             | MoeHero/Lkeme     | 1113 | 5(分钟)     | √      |
 | DailyGold       | 0.0.1   | 每日电池(APP)      | Lkeme             | 1114 | 24(小时)    | √      |
 | PolishMedal     | 0.0.1   | 点亮灰色勋章         | possible318/Lkeme | 1115 | 1(小时)     | √      |
 
@@ -130,7 +130,7 @@ Group: [602815575](https://jq.qq.com/?_wv=1027&k=UaalVexM) | **请不要来问�
 
 效果图不代表当前版本，请以当前最新版本运行结果为准。
 
-<p align="center"><img width="680px" src="https://user-images.githubusercontent.com/19500576/118621918-6853e380-b7f9-11eb-8c73-e041c402a56b.png"></p>
+<p align="center"><img width="680px" src="https://user-images.githubusercontent.com/19500576/118621918-6853e380-b7f9-11eb-8c73-e041c402a56b.png" alt=""></p>
 
 [comment]: <> (![Image]&#40;https://i.loli.net/2019/07/13/5d296961a4bae41364.png&#41;)
 
@@ -145,7 +145,7 @@ Group: [602815575](https://jq.qq.com/?_wv=1027&k=UaalVexM) | **请不要来问�
 感谢 `JetBrains` 提供优秀的IDE。
 
 <a href="https://www.jetbrains.com/?from=BiliHelper-personal" target="_blank">
-<img src="https://tva1.sinaimg.cn/large/008eGmZEly1gov9g3tzrnj30u00wj0tn.jpg" width="150"/>
+<img src="https://tva1.sinaimg.cn/large/008eGmZEly1gov9g3tzrnj30u00wj0tn.jpg" width="150" alt=""/>
 </a>
 
 ## 🪪 License

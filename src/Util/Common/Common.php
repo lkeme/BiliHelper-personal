@@ -21,6 +21,29 @@ class Common
 {
 
     /**
+     * 判断指定时间戳是否在今天内
+     * @param int $timestamp
+     * @return bool
+     */
+    public static function isTimestampInToday(int $timestamp): bool
+    {
+        // 将时间戳转换为日期
+        $date = date('Y-m-d', $timestamp);
+
+        // 获取今天的日期
+        $today = date('Y-m-d');
+
+        // 判断日期是否相等
+        if ($date == $today) {
+            // 该时间戳在今天内
+            return true;
+        } else {
+            // 该时间戳不在今天内
+            return false;
+        }
+    }
+
+    /**
      * 获取十三位时间戳
      * @return int
      */
