@@ -137,7 +137,7 @@ class DailyGold extends BasePlugin
         $filteredArray = array_filter($filteredArray, function ($element) {
             return ($element['status'] == 2);
         });
-        if ($filteredArray){
+        if ($filteredArray) {
             Log::info("每日电池: 任务已经完成，可以领取奖励");
             return -2;
         }

@@ -90,6 +90,7 @@ a {
     outline: 0;
     box-shadow: 0 0 0 4px rgb(32 107 196 / 25%);
 }
+
 .form-control:disabled {
     background-color: #f1f5f9;
     opacity: 1;
@@ -123,6 +124,7 @@ a {
     background-color: #437cff;
     border-color: transparent;
 }
+
 #success {
     background-color: #2fb344;
     cursor: default;

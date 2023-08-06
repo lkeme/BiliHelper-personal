@@ -1,8 +1,8 @@
-<p align="center"><img width="300px" src="https://user-images.githubusercontent.com/19500576/118621710-36428180-b7f9-11eb-891d-3f5697347cef.png"></p>
+<p style="text-align: center;"><img width="300px" src="https://user-images.githubusercontent.com/19500576/118621710-36428180-b7f9-11eb-891d-3f5697347cef.png" alt=""></p>
 
-[comment]: <> (<p align="center"><img width="300px" src="https://i.loli.net/2018/04/20/5ad97bd395912.jpeg"></p>)
+[comment]: <> (<p style="text-align: center;"><img width="300px" src="https://i.loli.net/2018/04/20/5ad97bd395912.jpeg"></p>)
 
-<div align="center"> 
+<div style="text-align: center;"> 
 
 [![](https://img.shields.io/badge/Author-Lkeme-blueviolet "作者")](https://github.com/lkeme/ )
 ![](https://img.shields.io/badge/dynamic/json?label=GitHub%20Followers&query=%24.data.totalSubs&url=https%3A%2F%2Fapi.spencerwoo.com%2Fsubstats%2F%3Fsource%3Dgithub%26queryKey%3Dlkeme&labelColor=282c34&color=181717&logo=github&longCache=true "关注数量")
@@ -64,7 +64,9 @@
 <details>
 <summary>其余镜像 展开查看</summary>
 <pre><code>
+
 + cnpkg(全量镜像)
+
 ```shell script
 # 使用帮助
 > https://php.cnpkg.org/
@@ -108,7 +110,8 @@
 > composer config -g repos.packagist composer https://packagist.mirrors.sjtug.sjtu.edu.cn
 ```
 
-</code></pre>
+</code>
+</pre>
 </details>
 
 ## 使用指南
@@ -176,27 +179,28 @@ $ php app.php
 9. 单个或者多个插件测试
 
 ```shell
-$ php app.php test m:d -p plugin
-$ php app.php test m:d -P plugin,plugin1
-$ php app.php test m:d -p VipPoint
+$ php app.php test m:d -p plugin # 单个插件
+$ php app.php test m:d -p VipPoint  # 单个插件示例
+$ php app.php test m:d -P plugin,plugin1 # 多个插件
+$ php app.php test m:d -P VipPoint,Lottery # 多个插件
 ```
 
-<p align="center"><img width="680px" src="https://user-images.githubusercontent.com/19500576/118621472-f8455d80-b7f8-11eb-9fec-500148a566b4.png"></p>
+<p style="text-align: center;"><img width="680px" src="https://user-images.githubusercontent.com/19500576/118621472-f8455d80-b7f8-11eb-9fec-500148a566b4.png" alt=""></p>
 
-[comment]: <> (<p align="center"><img width="680px" src="https://i.loli.net/2018/04/21/5adb497dc3ece.png"></p>)
+[comment]: <> (<p style="text-align: center;"><img width="680px" src="https://i.loli.net/2018/04/21/5adb497dc3ece.png"></p>)
 
 ## Docker使用指南
 
 <strong>🌐 镜像加速器</strong>（部分网络原因导致拉取镜像失败）<br/><br/>
-<details><summary><strong><code>已经藏起来啦~~ 点击展开 嘻嘻~</code></strong></summary></code>
+<details><summary><strong><code> ~</code></strong></summary>
 
-> 以下是通用系统配置，部分特殊系统修改可能不一样，请自行搜索解决。  
+> 以下是通用系统配置，部分特殊系统修改可能不一样，请自行搜索解决。
 
-`在文件 /etc/docker/daemon.json 写入以下内容，如果部分不可用节点自行删除`  
+`在文件 /etc/docker/daemon.json 写入以下内容，如果部分不可用节点自行删除`
 
 ```json
 {
-    "registry-mirrors":[
+    "registry-mirrors": [
         "https://0b27f0a81a00f3560fbdc00ddd2f99e0.mirror.swr.myhuaweicloud.com",
         "https://dockerproxy.com",
         "https://hub-mirror.c.163.com",
@@ -210,9 +214,9 @@ $ php app.php test m:d -p VipPoint
 }
 
 ```
+
 <br>
 </details>
-
 
 1. 安装好[Docker](https://yeasy.gitbooks.io/docker_practice/content/install/)
 2. 直接命令行拉取镜像后运行
@@ -231,7 +235,10 @@ $ docker run -itd --rm -e USER_NAME=你的B站登录账号 -e USER_PASSWORD=你�
 
 [//]: # (2. 修改)
 
-1. 下载 [配置文件夹](https://github.com/lkeme/BiliHelper-personal/tree/master/profile) `注意是文件夹,可以完整下载后提出来`
+1.
+
+下载 [配置文件夹](https://github.com/lkeme/BiliHelper-personal/tree/master/profile) `注意是文件夹,可以完整下载后提出来`
+
 2. 重命名 `profile/example -> profile/user` , 修改 `profile/user/config/user.ini`
 3. 通过下面的命令进行挂载并运行
 
@@ -355,10 +362,10 @@ stdout_logfile=/tmp/bilibili.log
 
 脚本出现 error 级别的报错，会调用通知地址进行提醒，这里推荐两个服务
 
-|服务|官网|
-|---|---|
-|Server酱|https://sc.ftqq.com/|
-|TelegramBot|https://core.telegram.org/bots/api|
+| 服务          | 官网                                 |
+|-------------|------------------------------------|
+| Server酱     | https://sc.ftqq.com/               |
+| TelegramBot | https://core.telegram.org/bots/api |
 
 示范如下
 

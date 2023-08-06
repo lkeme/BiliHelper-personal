@@ -71,7 +71,7 @@ class Task extends SingleTon
      */
     public static function execTasks(): void
     {
-         Future\awaitAll(self::$promises);
+        Future\awaitAll(self::$promises);
     }
 }
 

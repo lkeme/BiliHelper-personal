@@ -33,8 +33,8 @@ class MultiRequest
     protected array $options = [];
     protected Closure $successCallback;
     protected Closure $errorCallback;
-    protected array$urls = [];
-    protected string$method;
+    protected array $urls = [];
+    protected string $method;
     protected int $concurrency = 10;
 
     /**

@@ -15,7 +15,6 @@
  *  | |_| | | | | |___  | | | | | | | |___  | |___  | |     | |___  | | \ \   　じしf_, )ノ
  *  |_____/ |_| |_____| |_| |_| |_| |_____| |_____| |_|     |_____| |_|  \_\
  */
-
 class JsonFileManager
 {
     private string $filename;
@@ -109,7 +108,7 @@ class HttpServer
                 'seccode' => $seccode,
             ];
             $this->json->write($data);
-             $this->toResponse(10003);
+            $this->toResponse(10003);
             return;
         }
         if ($path === '/fetch' && $method === 'GET') {
@@ -117,9 +116,9 @@ class HttpServer
             $challenge = $_GET['challenge'];
             $data = $this->json->read();
             if (empty($data[$challenge])) {
-                 $this->toResponse(10001, '暂未获取到验证结果');
+                $this->toResponse(10001, '暂未获取到验证结果');
             } else {
-                 $this->toResponse(10000, '成功获取到验证结果', $data[$challenge]);
+                $this->toResponse(10000, '成功获取到验证结果', $data[$challenge]);
             }
             return;
         }

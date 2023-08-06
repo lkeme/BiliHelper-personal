@@ -14,7 +14,6 @@
  *  | |_| | | | | |___  | | | | | | | |___  | |___  | |     | |___  | | \ \   　じしf_, )ノ
  *  |_____/ |_| |_____| |_| |_| |_| |_____| |_____| |_|     |_____| |_|  \_\
  */
-
 trait Bonus
 {
     use CommonTaskInfo;
@@ -33,7 +32,7 @@ trait Bonus
             return true;
         }
         //
-        $this->worker($data, $name, $title, $code,1);
+        $this->worker($data, $name, $title, $code, 1);
         return false;
     }
 

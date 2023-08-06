@@ -14,49 +14,49 @@
 </head>
 
 <body>
-    <div class="box">
-        <div class="title">极验手动验证</div>
-        <div class="form">
-            <label class="form-label">gt</label>
-            <input type="text" class="form-control" id="gt" placeholder="请输入 gt">
-        </div>
-        <div class="form">
-            <label class="form-label">challenge</label>
-            <input type="text" class="form-control" id="challenge" placeholder="请输入 challenge">
-        </div>
+<div class="box">
+    <div class="title">极验手动验证</div>
+    <div class="form">
+        <label class="form-label">gt</label>
+        <input type="text" class="form-control" id="gt" placeholder="请输入 gt">
+    </div>
+    <div class="form">
+        <label class="form-label">challenge</label>
+        <input type="text" class="form-control" id="challenge" placeholder="请输入 challenge">
+    </div>
 
-        <div id="captcha">
-            <div id="gen" class="btn">生成验证码</div>
-            <div id="success" class="btn hide">验证成功</div>
-            <div id="wait" class="hide">
-                <div class="loading">
-                    <div class="loading-dot"></div>
-                    <div class="loading-dot"></div>
-                    <div class="loading-dot"></div>
-                    <div class="loading-dot"></div>
-                </div>
+    <div id="captcha">
+        <div id="gen" class="btn">生成验证码</div>
+        <div id="success" class="btn hide">验证成功</div>
+        <div id="wait" class="hide">
+            <div class="loading">
+                <div class="loading-dot"></div>
+                <div class="loading-dot"></div>
+                <div class="loading-dot"></div>
+                <div class="loading-dot"></div>
             </div>
-        </div>
-
-        <div id="result" class="hide">
-            <div class="result-title">验证结果</div>
-            <div class="form">
-                <label class="form-label">new-challenge</label>
-                <input type="text" class="form-control" id="new-challenge" style="cursor: text;" disabled>
-            </div>
-            <div class="form">
-                <label class="form-label">validate</label>
-                <input type="text" class="form-control" id="validate" style="cursor: text;" disabled>
-            </div>
-            <div class="form">
-                <label class="form-label">seccode</label>
-                <input type="text" class="form-control" id="seccode" style="cursor: text;" disabled>
-            </div>
-            <div class="btn" id="result-btn">提交反馈结果</div>
         </div>
     </div>
 
-    <div class="toast-box">消息</div>
+    <div id="result" class="hide">
+        <div class="result-title">验证结果</div>
+        <div class="form">
+            <label class="form-label">new-challenge</label>
+            <input type="text" class="form-control" id="new-challenge" style="cursor: text;" disabled>
+        </div>
+        <div class="form">
+            <label class="form-label">validate</label>
+            <input type="text" class="form-control" id="validate" style="cursor: text;" disabled>
+        </div>
+        <div class="form">
+            <label class="form-label">seccode</label>
+            <input type="text" class="form-control" id="seccode" style="cursor: text;" disabled>
+        </div>
+        <div class="btn" id="result-btn">提交反馈结果</div>
+    </div>
+</div>
+
+<div class="toast-box">消息</div>
 </body>
 
 </html>

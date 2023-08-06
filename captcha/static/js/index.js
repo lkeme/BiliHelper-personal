@@ -143,7 +143,7 @@ window.onload = function () {
             dataType: 'json',
             data: {
                 challenge: challengeInput.value,
-                new_challenge : newChallengeInput.value,
+                new_challenge: newChallengeInput.value,
                 validate: validateInput.value,
                 seccode: seccodeInput.value
             },

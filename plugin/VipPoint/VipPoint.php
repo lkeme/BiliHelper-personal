@@ -16,6 +16,7 @@
  */
 
 
+use Bhp\Api\Api\X\VipPoint\ApiTask;
 use Bhp\Cache\Cache;
 use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
@@ -39,6 +40,8 @@ class VipPoint extends BasePlugin
     use BuyVipProduct;
     use BuyVipMall;
     use PointInfo;
+    use DressView;
+    use DressBuyAmount;
 
     /**
      * 插件信息
@@ -57,6 +60,16 @@ class VipPoint extends BasePlugin
     /**
      * @var string
      */
+    protected string $home_task = 'https://big.bilibili.com/mobile/bigPoint/task';
+
+    /**
+     * @var string
+     */
+    protected string $home = 'https://big.bilibili.com/mobile/bigPoint';
+
+    /**
+     * @var string
+     */
     protected string $title = '大会员积分';
 
     /**
@@ -69,9 +82,11 @@ class VipPoint extends BasePlugin
      * @var array|string[]
      */
     protected array $target_tasks = [
-        'signIn' => '签到任务',
-        'bonus' => '福利任务',
-        'privilege' => '体验任务',
+//        'dressUp' => '使用免费体验装扮权益',
+
+        'signIn' => '每日签到',
+        'bonus' => '大会员福利大积分',
+        'privilege' => '浏览大会员权益页面',
         'viewAnimate' => '浏览追番频道页10秒',
         'viewFilmChannel' => '浏览影视频道页10秒',
         'viewVipMall' => '浏览会员购页面10秒',
@@ -79,7 +94,9 @@ class VipPoint extends BasePlugin
         'buyVipVideo' => '购买单点付费影片',
         'buyVipProduct' => '购买指定大会员产品',
         'buyVipMall' => '购买指定会员购商品',
-        'pointInfo' => '已有积分'
+        'dressView' => '浏览装扮商城主页',
+        'dressBuyAmount' => '购买装扮',
+        'pointInfo' => '积分信息'
     ];
 
     /**
@@ -174,7 +191,7 @@ class VipPoint extends BasePlugin
      */
     protected function getTaskList(): bool
     {
-        $response = \Bhp\Api\Api\X\VipPoint\ApiTask::combine();
+        $response = ApiTask::combine();
         if ($response['code']) {
             Log::warning('大会员积分: 获取任务列表失败');
             return false;

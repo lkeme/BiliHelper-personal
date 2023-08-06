@@ -159,7 +159,7 @@ class TimeLock extends SingleTon
      * @param string $end
      * @return bool
      */
-    public static function isWithinTimeRange(string $start, string $end):bool
+    public static function isWithinTimeRange(string $start, string $end): bool
     {
         // date_default_timezone_set('Asia/Shanghai');
         $startTime = strtotime(date($start));

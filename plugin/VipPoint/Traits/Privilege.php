@@ -14,7 +14,6 @@
  *  | |_| | | | | |___  | | | | | | | |___  | |___  | |     | |___  | | \ \   　じしf_, )ノ
  *  |_____/ |_| |_____| |_| |_| |_| |_____| |_____| |_|     |_____| |_|  \_\
  */
-
 trait Privilege
 {
     use CommonTaskInfo;
@@ -24,7 +23,7 @@ trait Privilege
      * @param string $name
      * @return bool
      */
-    public function privilege(array $data, string $name):bool
+    public function privilege(array $data, string $name): bool
     {
         $title = '体验任务';
         $code = 'privilege';
@@ -33,7 +32,7 @@ trait Privilege
             return true;
         }
         //
-        $this->worker($data, $name, $title, $code,1);
+        $this->worker($data, $name, $title, $code, 1);
         return false;
     }
 

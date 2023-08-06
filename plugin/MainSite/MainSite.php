@@ -268,7 +268,7 @@ class MainSite extends BasePlugin
             return 0;
         }
         //
-        $logs = $response['data']['list'] ;
+        $logs = $response['data']['list'];
         $coins = 0;
         //
         foreach ($logs as $log) {

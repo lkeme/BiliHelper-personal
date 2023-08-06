@@ -62,6 +62,7 @@ class ApiTask
         $user = User::parseCookie();
         //
         $url = 'https://api.bilibili.com/pgc/activity/score/task/receive';
+        // $url = 'https://api.bilibili.com/pgc/activity/score/task/receive/v2';
         $payload = [
             'taskCode' => $task_code,
             'csrf' => $user['csrf'],
@@ -82,6 +83,7 @@ class ApiTask
         $user = User::parseCookie();
         //
         $url = 'https://api.bilibili.com/pgc/activity/score/task/complete';
+        // $url = 'https://api.bilibili.com/pgc/activity/score/task/complete/v2';
         $payload = [
             'taskCode' => $task_code,
             'csrf' => $user['csrf'],

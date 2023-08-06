@@ -12,7 +12,7 @@ enable = false
 url = "http://localhost:50001"
 ```
 
-###  如何开启验证码手动识别服务地址
+### 如何开启验证码手动识别服务地址
 
 > 需要手动开启配置开关`enable = true`，并且配置`url`为验证码手动识别服务地址。
 
@@ -28,7 +28,6 @@ docker run -itd --rm -e CAPTCHA=1 -e CAPTCHA_HOST=localhost -e CAPTCHA_PORT=5000
 -e CAPTCHA_PORT=50002 # 验证码手动识别服务地址  默认 50001 需要注意端口映射关系
 ```
 
-
 > 注意：如果你使用的是`docker-compose`，请参考`docker-compose.yml`文件中的`captcha`服务配置。
 
 ##### 本地用户
@@ -40,8 +39,7 @@ cd captcha && php -S localhost:50002
 
 > 验证码处理目录在`captcha`目录下，可以自行修改。
 
-
-###  如何使用验证码手动识别服务地址
+### 如何使用验证码手动识别服务地址
 
 在开启验证码手动识别服务地址后，登录模块会自动显示手动地址。复制地址到浏览器中打开，会显示相应的界面。
 

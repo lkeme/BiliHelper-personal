@@ -126,7 +126,7 @@
         script.async = true;
 
         // 对geetest的静态资源添加 crossOrigin
-        if ( /static\.geetest\.com/g.test(url)) {
+        if (/static\.geetest\.com/g.test(url)) {
             script.crossOrigin = "anonymous";
         }
 
@@ -258,7 +258,8 @@
             pt: pt,
             exception_url: url,
             error_code: config.error_code
-        }, function (err) {})
+        }, function (err) {
+        })
     }
 
     var throwError = function (errorType, config) {
@@ -298,11 +299,11 @@
             config.api_server = 'yumchina.geetest.com';
         }
 
-        if(userConfig.gt){
+        if (userConfig.gt) {
             window.GeeGT = userConfig.gt
         }
 
-        if(userConfig.challenge){
+        if (userConfig.challenge) {
             window.GeeChallenge = userConfig.challenge
         }
 

@@ -43,7 +43,8 @@ class ApiCaptcha
      * @param array $captcha
      * @return array
      */
-    public static function ocr(array $captcha):array{
+    public static function ocr(array $captcha): array
+    {
         $url = 'https://captcha-v1.mudew.com:19951/';
         $payload = [
             'type' => 'gt3',
@@ -54,7 +55,7 @@ class ApiCaptcha
         $headers = [
             'Content-Type' => 'application/json',
         ];
-        return Request::postJson(true,'other', $url, $payload, $headers);
+        return Request::postJson(true, 'other', $url, $payload, $headers);
     }
 
     /**

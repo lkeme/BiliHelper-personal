@@ -75,7 +75,7 @@ class QrSpec
         return self::$capacity[$version][Constants::QRCAP_WORDS] - self::$capacity[$version][Constants::QRCAP_EC][$level];
     }
 
-    public static function getECCLength(int $version,int  $level)
+    public static function getECCLength(int $version, int $level)
     {
         return self::$capacity[$version][Constants::QRCAP_EC][$level];
     }

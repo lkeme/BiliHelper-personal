@@ -14,7 +14,7 @@
  *  | |_| | | | | |___  | | | | | | | |___  | |___  | |     | |___  | | \ \   　じしf_, )ノ
  *  |_____/ |_| |_____| |_| |_| |_| |_____| |_____| |_|     |_____| |_|  \_\
  */
-trait ViewVipMall
+trait DressBuyAmount
 {
     use CommonTaskInfo;
 
@@ -23,17 +23,16 @@ trait ViewVipMall
      * @param string $name
      * @return bool
      */
-    public function viewVipMall(array $data, string $name): bool
+    public function dressBuyAmount(array $data, string $name): bool
     {
         $title = '日常任务';
-        $code = 'vipmallview';
+        $code = 'dressbuyamount';
         //
         if ($this->isComplete($data, $name, $title, $code)) {
             return true;
         }
         //
-        $this->worker($data, $name, $title, $code, 3);
-        return false;
+        return $this->worker($data, $name, $title, $code, 4);
     }
 
 

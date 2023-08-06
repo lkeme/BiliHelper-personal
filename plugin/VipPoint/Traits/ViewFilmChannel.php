@@ -14,7 +14,6 @@
  *  | |_| | | | | |___  | | | | | | | |___  | |___  | |     | |___  | | \ \   　じしf_, )ノ
  *  |_____/ |_| |_____| |_| |_| |_| |_____| |_____| |_|     |_____| |_|  \_\
  */
-
 trait ViewFilmChannel
 {
     use CommonTaskInfo;
@@ -34,7 +33,7 @@ trait ViewFilmChannel
             return true;
         }
         //
-        $this->worker($data, $name, $title, $code,2, $channel);
+        $this->worker($data, $name, $title, $code, 2, $channel);
         return false;
     }
 

@@ -88,7 +88,7 @@ class ApiQrcode
     public static function goConfrimUrl(string $url): array
     {
         // 取出url的主体部分
-        $query =  parse_url($url)['query'];
+        $query = parse_url($url)['query'];
         // 取出url参数部分转为数组
         parse_str($query, $payload);
         $headers = [
