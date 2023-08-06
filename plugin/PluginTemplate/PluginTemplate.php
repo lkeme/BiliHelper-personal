@@ -27,7 +27,7 @@ class PluginTemplate extends BasePlugin
      */
     protected ?array $info = [
         'hook' => __CLASS__, // hook
-        'name' => 'PolishTheMedal', // 插件名称
+        'name' => 'PluginTemplate', // 插件名称
         'version' => '0.0.1', // 插件版本
         'desc' => '插件模板', // 插件描述
         'author' => 'Lkeme',// 作者

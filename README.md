@@ -116,6 +116,7 @@ Group: [602815575](https://jq.qq.com/?_wv=1027&k=UaalVexM) | **请不要来问�
 | Lottery         | 0.0.2   | 抽奖             | MoeHero/Lkeme     | 1113 | 5(分钟)     | √      |
 | DailyGold       | 0.0.1   | 每日电池(APP)      | Lkeme             | 1114 | 24(小时)    | √      |
 | PolishMedal     | 0.0.1   | 点亮灰色勋章         | possible318/Lkeme | 1115 | 1(小时)     | √      |
+| BatchUnfollow   | 0.0.1   | 批量取消关注         | Lkeme             | 1116 | 5-10(分钟)  | √      |
 
 </details>
 
