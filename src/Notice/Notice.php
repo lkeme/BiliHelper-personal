@@ -181,7 +181,7 @@ class Notice extends SingleTon
                 'content' => "[$now_time] 用户: $uname 详情: $msg"
             ],
             'activity_lottery' => [
-                'title' => '主站九宫格抽奖活动',
+                'title' => '转盘抽奖活动',
                 'content' => "[$now_time] 用户: $uname 详情: $msg"
             ],
             'jury_leave_office' => [

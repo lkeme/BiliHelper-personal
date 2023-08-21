@@ -61,7 +61,7 @@ class Task extends SingleTon
                     Log::error($error_msg);
                     // Notice::push('error', $error_msg);
                 }
-                delay(1);
+                delay(0.1);
             }
         });
     }
