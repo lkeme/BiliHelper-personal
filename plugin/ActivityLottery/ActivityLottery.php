@@ -123,7 +123,7 @@ class ActivityLottery extends BasePlugin
         if ($ending) {
             Cache::set('config', $this->config);
         } else {
-            print_r(Cache::get('config'));
+            // print_r(Cache::get('config'));
             $this->config = ($tmp = Cache::get('config')) ? $tmp : [];
             //
             $keys = ['invalid_sids', 'wait_add_infos', 'wait_get_infos', 'wait_do_infos'];
