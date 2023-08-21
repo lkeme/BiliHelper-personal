@@ -301,7 +301,6 @@ class ActivityLottery extends BasePlugin
         $url = 'aHR0cHM6Ly9yYXcua2dpdGh1Yi5jb20vbGtlbWUvQmlsaUhlbHBlci1wZXJzb25hbC9tYXN0ZXIvcmVzb3VyY2VzL2FjdGl2aXR5X2luZm9zLmpzb24=';
         $url = base64_decode($url);
         $response = Request::getJson(true, 'other', $url);
-        print_r($response);
         //
         $this->_fetchRemoteInfos($response['data']);
     }
