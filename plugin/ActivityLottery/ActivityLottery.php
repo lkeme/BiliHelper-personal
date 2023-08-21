@@ -37,7 +37,7 @@ class ActivityLottery extends BasePlugin
         'desc' => '转盘活动', // 插件描述
         'author' => 'Lkeme',// 作者
         'priority' => 1117, // 插件优先级
-        'cycle' => '1(分钟)', //  运行周期
+        'cycle' => '3-7(分钟)', //  运行周期
         // 新增字段
         'start' => '08:00:00', // 插件开始日期
         'end' => '23:00:00', // 插件结束日期
@@ -105,7 +105,7 @@ class ActivityLottery extends BasePlugin
         if (isset($this->config[date("Y-m-d")]['add']) && isset($this->config[date("Y-m-d")]['get']) && isset($this->config[date("Y-m-d")]['do'])) {
             TimeLock::setTimes(TimeLock::timing(11) + mt_rand(1, 120) * 60);
         } else {
-            TimeLock::setTimes(65);
+            TimeLock::setTimes(mt_rand(3, 7) * 60);
         }
 
         //
