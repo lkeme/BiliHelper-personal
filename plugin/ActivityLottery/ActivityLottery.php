@@ -123,7 +123,9 @@ class ActivityLottery extends BasePlugin
         if ($ending) {
             Cache::set('config', $this->config);
         } else {
-            $this->config = Cache::get('config');
+            print_r(Cache::get('config'));
+            $this->config = ($tmp = Cache::get('config')) ? $tmp : [];
+            //
             $keys = ['invalid_sids', 'wait_add_infos', 'wait_get_infos', 'wait_do_infos'];
             foreach ($keys as $key) {
                 if (!isset($this->config[$key])) $this->config[$key] = [];
@@ -298,7 +300,8 @@ class ActivityLottery extends BasePlugin
         //
         $url = 'aHR0cHM6Ly9yYXcua2dpdGh1Yi5jb20vbGtlbWUvQmlsaUhlbHBlci1wZXJzb25hbC9tYXN0ZXIvcmVzb3VyY2VzL2FjdGl2aXR5X2luZm9zLmpzb24=';
         $url = base64_decode($url);
-        $response = Request::getJson(false, 'other', $url);
+        $response = Request::getJson(true, 'other', $url);
+        print_r($response);
         //
         $this->_fetchRemoteInfos($response['data']);
     }
