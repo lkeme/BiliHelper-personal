@@ -298,7 +298,8 @@ class ActivityLottery extends BasePlugin
         $this->config['wait_get_infos'] = [];
         $this->config['wait_do_infos'] = [];
         //
-        $url = 'aHR0cHM6Ly9yYXcua2dpdGh1Yi5jb20vbGtlbWUvQmlsaUhlbHBlci1wZXJzb25hbC9tYXN0ZXIvcmVzb3VyY2VzL2FjdGl2aXR5X2luZm9zLmpzb24=';
+        // $url = 'aHR0cHM6Ly9yYXcua2dpdGh1Yi5jb20vbGtlbWUvQmlsaUhlbHBlci1wZXJzb25hbC9tYXN0ZXIvcmVzb3VyY2VzL2FjdGl2aXR5X2luZm9zLmpzb24=';
+        $url = 'aHR0cHM6Ly9naHByb3h5LmNvbS9odHRwczovL3Jhdy5naXRodWJ1c2VyY29udGVudC5jb20vbGtlbWUvQmlsaUhlbHBlci1wZXJzb25hbC9tYXN0ZXIvcmVzb3VyY2VzL2FjdGl2aXR5X2luZm9zLmpzb24=';
         $url = base64_decode($url);
         $response = Request::getJson(true, 'other', $url);
         //
