@@ -34,14 +34,14 @@ class Lottery extends BasePlugin
      * 插件信息
      * @var array|string[]
      */
-    protected ?array $info = [
+    public ?array $info = [
         'hook' => __CLASS__, // hook
         'name' => 'Lottery', // 插件名称
         'version' => '0.0.2', // 插件版本
         'desc' => '抽奖', // 插件描述
         'author' => 'MoeHero/Lkeme',// 作者
         'priority' => 1113, // 插件优先级
-        'cycle' => '2-6(小时)', // 运行周期
+        'cycle' => '10-25(分钟)', // 运行周期
     ];
 
     /**
@@ -87,8 +87,8 @@ class Lottery extends BasePlugin
         $this->handleLottery($global_uid);
         //
         $this->saveConfig();
-        // 2-6小时 未完成6-10秒
-        TimeLock::setTimes(mt_rand(6, 16) * 60);
+        // 10-25分钟
+        TimeLock::setTimes(mt_rand(10, 25) * 60);
     }
 
     /**

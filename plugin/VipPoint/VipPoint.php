@@ -47,7 +47,7 @@ class VipPoint extends BasePlugin
      * 插件信息
      * @var array|string[]
      */
-    protected ?array $info = [
+    public ?array $info = [
         'hook' => __CLASS__, // hook
         'name' => 'VipPoint', // 插件名称
         'version' => '0.0.1', // 插件版本

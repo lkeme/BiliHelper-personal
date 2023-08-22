@@ -17,6 +17,8 @@
 
 namespace Bhp\Plugin;
 
+use Bhp\Log\Log;
+use Bhp\TimeLock\TimeLock;
 use Bhp\Util\AsciiTable\AsciiTable;
 use Bhp\Util\DesignPattern\SingleTon;
 
@@ -91,6 +93,9 @@ class Plugin extends SingleTon
                 $class = &$staff[0]; // 引用过来的类
                 $method = $staff[1]; // 类下面的方法
                 if (method_exists($class, $method)) {
+                    //
+                    if (!$this->canItRun($class)) continue;
+                    //
                     $func_result = $class->$method(...$params);
                     if (is_numeric($func_result)) {
                         // 这里判断返回值是不是字符串,如果不是将不进行返回到页面上
@@ -237,6 +242,25 @@ class Plugin extends SingleTon
         foreach ($th_list as $item) {
             // Log::info($item);
             echo $item . PHP_EOL;
+        }
+    }
+
+    /**
+     * @param mixed $class
+     * @return bool
+     */
+    protected function canItRun(mixed $class): bool
+    {
+        if (!isset($class->info['start']) || !isset($class->info['end'])) {
+            // Log::info("插件 {$class->info['name']} 全天运行");
+            return true;
+        }
+        if (TimeLock::isWithinTimeRange($class->info['start'], $class->info['end'])) {
+            // Log::info("插件 {$class->info['name']} 运行时间段");
+            return true;
+        } else {
+            // Log::info("插件 {$class->info['name']} 不在运行时间段");
+            return false;
         }
     }
 

@@ -31,6 +31,8 @@ trait BasePluginInfo
         'author' => 'Lkeme',// 作者
         'priority' => 0, // 插件优先级
         'cycle' => 'cycle', // 运行周期
+        'start' => '07:00:00', // 插件运行开始时间
+        'end' => '23:00:00', // 插件运行结束时间
     ];
 
     /**
@@ -45,6 +47,30 @@ trait BasePluginInfo
      * @return $this
      */
     protected function setHook(string $value, string $key = 'hook'): static
+    {
+        $this->info[$key] = $value;
+        return $this;
+    }
+
+    /**
+     * 设置运行周期
+     * @param string $value
+     * @param string $key
+     * @return $this
+     */
+    protected function setStart(string $value, string $key = 'start'): static
+    {
+        $this->info[$key] = $value;
+        return $this;
+    }
+
+    /**
+     * 设置运行周期
+     * @param string $value
+     * @param string $key
+     * @return $this
+     */
+    protected function setEnd(string $value, string $key = 'end'): static
     {
         $this->info[$key] = $value;
         return $this;

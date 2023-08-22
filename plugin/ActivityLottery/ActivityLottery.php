@@ -30,7 +30,7 @@ class ActivityLottery extends BasePlugin
      * 插件信息
      * @var array|string[]
      */
-    protected ?array $info = [
+    public ?array $info = [
         'hook' => __CLASS__, // hook
         'name' => 'ActivityLottery', // 插件名称
         'version' => '0.0.1', // 插件版本
@@ -38,9 +38,8 @@ class ActivityLottery extends BasePlugin
         'author' => 'Lkeme',// 作者
         'priority' => 1117, // 插件优先级
         'cycle' => '3-7(分钟)', //  运行周期
-        // 新增字段
-        'start' => '08:00:00', // 插件开始日期
-        'end' => '23:00:00', // 插件结束日期
+        'start' => '07:30:00', // 插件运行开始时间
+        'end' => '23:30:00', // 插件运行结束时间
     ];
 
     /**
@@ -73,44 +72,28 @@ class ActivityLottery extends BasePlugin
      */
     public function execute(): void
     {
-        // 时间段限制
-        // if (!TimeLock::isWithinTimeRange($this->info['start'], $this->info['end'])) return;
         // 时间锁限制
         if (TimeLock::getTimes() > time() || !getEnable('activity_lottery')) return;
-
+        // 今日执行
+        if (isset($this->config[date("Y-m-d")]['add']) && isset($this->config[date("Y-m-d")]['get']) && isset($this->config[date("Y-m-d")]['do'])) return;
         //
         $this->initConfig();
-
         delay(1);
-
         // 获取远程数据
         $this->fetchRemoteInfos();
-
         delay(1);
-
         // 增加次数
         $this->addMyTimes();
-
         delay(1);
-
         // 查询次数
         $this->getMyTimes();
-
         delay(1);
-
         // 执行次数
         $this->doMyTimes();
-
-        //
-        if (isset($this->config[date("Y-m-d")]['add']) && isset($this->config[date("Y-m-d")]['get']) && isset($this->config[date("Y-m-d")]['do'])) {
-            TimeLock::setTimes(TimeLock::timing(11) + mt_rand(1, 120) * 60);
-        } else {
-            TimeLock::setTimes(mt_rand(3, 7) * 60);
-        }
-
         //
         $this->initConfig(true);
-
+        //
+        TimeLock::setTimes(mt_rand(3, 7) * 60);
     }
 
 

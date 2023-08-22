@@ -27,7 +27,7 @@ class BatchUnfollow extends BasePlugin
      * 插件信息
      * @var array|string[]
      */
-    protected ?array $info = [
+    public ?array $info = [
         'hook' => __CLASS__, // hook
         'name' => 'BatchUnfollow', // 插件名称
         'version' => '0.0.1', // 插件版本
@@ -35,9 +35,6 @@ class BatchUnfollow extends BasePlugin
         'author' => 'Lkeme',// 作者
         'priority' => 1116, // 插件优先级
         'cycle' => '5-10(分钟)', // 运行周期
-        // 新增字段
-        'start' => '08:00:00', // 插件开始日期
-        'end' => '23:00:00', // 插件结束日期
     ];
 
     /**
@@ -64,8 +61,6 @@ class BatchUnfollow extends BasePlugin
      */
     public function execute(): void
     {
-        // 时间段限制
-        // if (!TimeLock::isWithinTimeRange($this->info['start'], $this->info['end'])) return;
         // 时间锁限制
         if (TimeLock::getTimes() > time() || !getEnable('batch_unfollow')) return;
         //
