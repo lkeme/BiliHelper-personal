@@ -53,6 +53,11 @@ class ActivityLottery extends BasePlugin
     ];
 
     /**
+     * @var array
+     */
+    protected array $count0 = [];
+
+    /**
      * @param Plugin $plugin
      */
     public function __construct(Plugin &$plugin)
@@ -127,7 +132,7 @@ class ActivityLottery extends BasePlugin
         if (empty($this->config['wait_add_infos']) && empty($this->config['wait_get_infos']) && empty($this->config['wait_do_infos'])) {
             $this->config[date("Y-m-d")]['do'] = true;
             return;
-        };
+        }
         //
         $info = array_shift($this->config['wait_do_infos']);
         if (is_null($info)) return;
@@ -147,11 +152,7 @@ class ActivityLottery extends BasePlugin
      */
     protected function _doMyTimes(array $info, array $data): void
     {
-        // 结束|无效
-        if ($data['code'] == 170001 || $data['code'] == 175003) {
-            Log::warning("转盘活动: 当前活动 {$info['title']} 已经结束或失效 Error: {$data['code']} -> {$data['message']}");
-            return;
-        }
+        if ($this->checkInvalidSid($info, $data)) return;
         //
         if ($data['code'] != 0) {
             Log::warning("转盘活动: 当前活动 {$info['title']} 执行失败 Error: {$data['code']} -> {$data['message']}");
@@ -178,7 +179,7 @@ class ActivityLottery extends BasePlugin
         if (empty($this->config['wait_add_infos']) && empty($this->config['wait_get_infos'])) {
             $this->config[date("Y-m-d")]['get'] = true;
             return;
-        };
+        }
         //
         $info = array_shift($this->config['wait_get_infos']);
         if (is_null($info)) return;
@@ -198,11 +199,7 @@ class ActivityLottery extends BasePlugin
      */
     protected function _getMyTimes(array $info, array $data): void
     {
-        // 结束|无效
-        if ($data['code'] == 170001 || $data['code'] == 175003) {
-            Log::warning("转盘活动: 当前活动 {$info['title']} 已经结束或失效 Error: {$data['code']} -> {$data['message']}");
-            return;
-        }
+        if ($this->checkInvalidSid($info, $data)) return;
         //
         if ($data['code'] != 0 || !isset($data['data']['times'])) {
             Log::warning("转盘活动: 当前活动 {$info['title']} 获取次数失败 Error: {$data['code']} -> {$data['message']}");
@@ -210,6 +207,15 @@ class ActivityLottery extends BasePlugin
         }
         //
         if ($data['data']['times'] == 0) {
+            // 连续两次没有次数，判定为已不可用。两天才能判定
+            if (in_array($info['sid'], $this->count0)) {
+                Log::warning("转盘活动: 当前活动 {$info['title']} 连续两次没有次数，判定为已不可用");
+                $this->config['invalid_sids'][] = $info['sid'];
+                return;
+            } else {
+                $this->count0[] = $info['sid'];
+            }
+            //
             Log::warning("转盘活动: 当前活动 {$info['title']} 没有次数了");
             return;
         }
@@ -231,7 +237,7 @@ class ActivityLottery extends BasePlugin
         if (empty($this->config['wait_add_infos'])) {
             $this->config[date("Y-m-d")]['add'] = true;
             return;
-        };
+        }
         //
         $info = array_shift($this->config['wait_add_infos']);
         if (is_null($info)) return;
@@ -253,11 +259,7 @@ class ActivityLottery extends BasePlugin
      */
     protected function _addMyTimes(array $info, array $data): void
     {
-        // 结束|无效
-        if ($data['code'] == 170001 || $data['code'] == 175003) {
-            Log::warning("转盘活动: 当前活动 {$info['title']} 已经结束或失效 Error: {$data['code']} -> {$data['message']}");
-            return;
-        }
+        if ($this->checkInvalidSid($info, $data)) return;
         //
         if ($data['code'] != 0 || !isset($data['data']['add_num'])) {
             Log::warning("转盘活动: 当前活动 {$info['title']} 增加次数失败 Error: {$data['code']} -> {$data['message']}");
@@ -266,6 +268,21 @@ class ActivityLottery extends BasePlugin
         //
         Log::info("转盘活动: 当前活动 {$info['title']} 增加次数 {$data['data']['add_num']}");
         $this->config['wait_get_infos'][] = $info;
+    }
+
+    /**
+     * @param array $info
+     * @param array $data
+     * @return bool
+     */
+    protected function checkInvalidSid(array $info, array $data): bool
+    {
+        if ($data['code'] == 170001 || $data['code'] == 175003 || $data['code'] == 170405) {
+            Log::warning("转盘活动: 当前活动 {$info['title']} 已不可用 Error: {$data['code']} -> {$data['message']}");
+            $this->config['invalid_sids'][] = $info['sid'];
+            return true;
+        }
+        return false;
     }
 
 
@@ -298,7 +315,7 @@ class ActivityLottery extends BasePlugin
     {
         $new_data = [];
         //
-        foreach ($data as $_ => $value) {
+        foreach ($data as $value) {
             // 活动无效
             if (in_array($value['sid'], $this->config['invalid_sids'])) continue;
             $new_data[] = $value;
