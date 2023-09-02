@@ -324,7 +324,7 @@ class ActivityLottery extends BasePlugin
         shuffle($new_data);
         $this->config['wait_add_infos'] = $new_data;
         //
-        Log::info("转盘活动: 获取远程数据" . count($new_data) . "条");
+        Log::info("转盘活动: 获取到有效远程数据" . count($new_data) . "条");
         //
         $this->config[date("Y-m-d")]['fetch'] = true;
     }
