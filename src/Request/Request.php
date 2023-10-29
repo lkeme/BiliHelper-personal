@@ -19,6 +19,7 @@ namespace Bhp\Request;
 
 use Bhp\Cache\Cache;
 use Bhp\Log\Log;
+use Bhp\Notice\Notice;
 use Bhp\Util\ArrayR\ArrayR;
 use Bhp\Util\DesignPattern\SingleTon;
 use Bhp\Util\Exceptions\MethodNotFoundException;
@@ -241,6 +242,7 @@ class Request extends SingleTon
             Log::warning("CURl -> RETRY: $retry ERROR: {$e->getMessage()} ERRNO: {$e->getCode()} STATUS:  Waiting for recovery!");
             sleep(15);
         }
+        Notice::push('network_error','客户端出现网络波动或异常错误，已经尝试重试多次，但是依然无法恢复，请检查网络是否正常！');
         failExit('网络异常，超出最大尝试次数，退出程序~');
     }
 

@@ -168,8 +168,8 @@ class Notice extends SingleTon
                 'title' => '任务小黑屋',
                 'content' => "[$now_time] 用户: $uname 小黑屋: $msg"
             ],
-            'error' => [
-                'title' => '程序运行错误',
+            'network_error' => [
+                'title' => '网络异常 ',
                 'content' => "[$now_time] 用户: $uname 错误详情: $msg"
             ],
             'key_expired' => [
