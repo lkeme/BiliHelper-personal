@@ -124,8 +124,9 @@ class Login extends BasePlugin
                 break;
             case 3:
                 // 二维码模式
-                $this->qrcodeLogin();
-                break;
+                failExit('已不支持扫码登录模式，当前推荐短信登录模式');
+                // $this->qrcodeLogin();
+                // break;
             default:
                 failExit('登录模式配置错误');
         }
@@ -265,9 +266,9 @@ class Login extends BasePlugin
         //
         // $this->updateInfo('username',$this->username);
         // $this->updateInfo('password',$this->password);
-        // 转换
-        $access_token = $this->tvConvert();
-        $this->updateInfo('access_token', $access_token);
+        // 转换 TODO: 扫码无效
+        // $access_token = $this->tvConvert();
+        // $this->updateInfo('access_token', $access_token);
     }
 
     /**
