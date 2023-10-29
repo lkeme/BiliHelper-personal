@@ -15,6 +15,7 @@
  *  |_____/ |_| |_____| |_| |_| |_| |_____| |_____| |_|     |_____| |_|  \_\
  */
 
+use Bhp\Api\Vip\ApiExperience;
 use Bhp\Api\Vip\ApiPrivilege;
 use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
@@ -49,6 +50,7 @@ class VipPrivilege extends BasePlugin
         3 => '年度专享漫画礼包',
         4 => '大会员专享会员购包邮券',
         5 => '年度专享漫画礼包',
+        9 => '会员观看任意1个视频即可领取，日限1次',
     ];
 
     /**
@@ -73,8 +75,8 @@ class VipPrivilege extends BasePlugin
         //
         $this->receiveTask();
         //
-        // 定时11点 + 随机120分钟
-        TimeLock::setTimes(TimeLock::timing(11) + mt_rand(1, 120) * 60);
+        // 定时23点 + 随机10-30分钟
+        TimeLock::setTimes(TimeLock::timing(23) + mt_rand(10, 30) * 60);
     }
 
     /**
@@ -94,10 +96,32 @@ class VipPrivilege extends BasePlugin
             if ($privilege['state'] != 0) {
                 continue;
             }
-            // 领取奖励
-            $this->myVipPrivilegeReceive($privilege['type']);
+            // 特殊类型
+            if ($privilege['type'] != 9) {
+                // 领取奖励
+                $this->myVipPrivilegeReceive($privilege['type']);
+            } else {
+                // 领取额外经验
+                $this->myVipExtraExp();
+            }
         }
     }
+
+    /**
+     * 大会员额外经验
+     * @return void
+     */
+    protected function myVipExtraExp(): void
+    {
+        $response = ApiExperience::add();
+        //
+        if (!$response['code']) {
+            Log::info("大会员额外经验: 领取额外经验成功");
+        } else {
+            Log::warning("大会员额外经验: 领取额外经验失败  {$response['code']} -> {$response['message']}");
+        }
+    }
+
 
     /**
      * 获取我的大会员权益列表
