@@ -109,7 +109,7 @@ case ${VERSION} in
     if [ "$CAPTCHA" == "1" ]; then
         echo -e "\n ======== \n ${Info} ${GreenBG} 正在使用验证码服务 ${Font} \n ======== \n"
         echo -e "\n ======== \n ${Info} ${GreenBG} 验证码服务地址：http://${CAPTCHA_HOST}:${CAPTCHA_PORT} ${Font} \n ======== \n"
-        (cd ./captcha && php -S $CAPTCHA_HOST:$CAPTCHA_PORT &) ; (cd .. && php app.php m:a)
+        (cd ./captcha && php -S $CAPTCHA_HOST:$CAPTCHA_PORT &) ; (php app.php m:a)
     else
         php app.php m:a
     fi
