@@ -3,15 +3,15 @@
     "project": "BiliHelper-personal",
     "branch": "master",
     "source": "https://github.com/lkeme/BiliHelper-personal",
-    "raw_url": "https://gh.notifyplus.cf/https://github.com/lkeme/BiliHelper-personal/blob/master/resources/version.json",
-    "master_raw_url": "https://gh.notifyplus.cf/https://github.com/lkeme/BiliHelper-personal/blob/master/resources/version.json",
-    "dev_raw_url": "https://gh.notifyplus.cf/https://github.com/lkeme/BiliHelper-personal/blob/dev/resources/version.json",
+    "raw_url": "https://github.com/lkeme/BiliHelper-personal/blob/master/resources/version.json",
+    "master_raw_url": "https://github.com/lkeme/BiliHelper-personal/blob/master/resources/version.json",
+    "dev_raw_url": "https://github.com/lkeme/BiliHelper-personal/blob/dev/resources/version.json",
     "master_purge_url": "https://cdn.staticaly.com/gh/lkeme/BiliHelper-personal/master/resources/version.json",
     "dev_purge_url": "https://cdn.staticaly.com/gh/lkeme/BiliHelper-personal/dev/resources/version.json",
-    "version": "2.3.0.230821",
+    "version": "2.4.0.231102",
     "des": "程序有更新，请及时线上查看更新哦~",
-    "time": "2023年08月21日",
+    "time": "2023-11-02",
     "ini_version": "0.0.1",
     "ini_des": "配置有更新，请及时线上查看更新哦~",
-    "ini_time": "2023年08月21日"
+    "ini_time": "2023-11-02"
 }

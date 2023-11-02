@@ -22,6 +22,7 @@ use Bhp\Plugin\BasePluginRW;
 use Bhp\Plugin\Plugin;
 use Bhp\Request\Request;
 use Bhp\TimeLock\TimeLock;
+use Bhp\Util\GhProxy\GhProxy;
 use Bhp\Util\Resource\Resource;
 
 class CheckUpdate extends BasePluginRW
@@ -119,11 +120,12 @@ class CheckUpdate extends BasePluginRW
     {
         $branch = getConf('app.branch');
         $url = $this->resource->get($branch . '_raw_url');
+        $url = GhProxy::mirror($url);
         $payload = [];
         // 防止错误拉取
-        if (is_null($url)) {
-            return json_decode('{"code":404}', false);
-        }
+//        if (is_null($url)) {
+//            return json_decode('{"code":404}', false);
+//        }
         //
         return Request::getJson(false, 'other', $url, $payload);
     }
