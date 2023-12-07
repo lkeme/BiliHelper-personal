@@ -142,11 +142,31 @@ class Common
 //            $output .= chr(mt_rand(33, 126));    //生成php随机数
 //        }
 //        return $output;
+        $key = '';
         $pattern = '1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLOMNOPQRSTUVWXYZ';
         for ($i = 0; $i < $length; $i++) {
             $key .= $pattern[mt_rand(0, 35)];    //生成php随机数
         }
         return $key;
     }
+
+    /**
+     * 端口扫描
+     * @param string $ip
+     * @param int $port
+     * @param float|null $timeout_ms
+     * @return bool
+     */
+    public static function scanPort(string $ip, int $port, ?float $timeout_ms = 1000): bool
+    {
+        $socket = @fsockopen($ip, $port, $err_code, $err_msg, $timeout_ms / 1000); // 将毫秒转换为秒
+        if ($socket) {
+            fclose($socket);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
 
 }

@@ -125,8 +125,8 @@ class Login extends BasePlugin
             case 3:
                 // 二维码模式
                 failExit('已不支持扫码登录模式，当前推荐短信登录模式');
-                // $this->qrcodeLogin();
-                // break;
+            // $this->qrcodeLogin();
+            // break;
             default:
                 failExit('登录模式配置错误');
         }
@@ -729,7 +729,18 @@ class Login extends BasePlugin
      */
     protected function ocrCaptcha(string $gt, string $challenge): array
     {
+        $err_msg = '请参考以下验证码文档(https://github.com/lkeme/BiliHelper-personal/blob/master/docs/CAPTCHA.md)修正';
+        //
         if (getConf('login_captcha.url') && getEnable('login_captcha')) {
+            // 检查服务是否开启
+            $ocr_server_info = parse_url(getConf('login_captcha.url'));
+            if (!isset($ocr_server_info['host']) || !isset($ocr_server_info['port'])) {
+                failExit("验证码识别服务器配置错误，$err_msg");
+            }
+            if (!Common::scanPort($ocr_server_info['host'], $ocr_server_info['port'])) {
+                failExit("验证码识别服务器端口不通，$err_msg");
+            }
+            //
             Log::info('请在浏览器中打开以下链接，完成验证码识别');
             Log::info(getConf('login_captcha.url') . '/geetest?gt=' . $gt . '&challenge=' . $challenge);
             Log::info('请在2分钟内完成识别操作');
@@ -751,7 +762,7 @@ class Login extends BasePlugin
             }
             failExit('验证码识别超时');
         } else {
-            failExit('验证码识别并未开启');
+            failExit("验证码识别并未开启，$err_msg");
         }
     }
 
