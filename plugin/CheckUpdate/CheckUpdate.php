@@ -60,12 +60,12 @@ class CheckUpdate extends BasePluginRW
      */
     public function execute(): void
     {
-        if (TimeLock::getTimes() > time()) return;
+        if (TimeLock::getTimes() > time() || !getEnable('check_update')) return;
         //
         if ($this->_checkUpdate()) {
             TimeLock::setTimes(24 * 60 * 60);
         } else {
-            TimeLock::setTimes(1 * 60 * 60);
+            TimeLock::setTimes(3 * 60 * 60);
         }
     }
 
