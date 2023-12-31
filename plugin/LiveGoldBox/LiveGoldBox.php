@@ -77,7 +77,7 @@ class LiveGoldBox extends BasePlugin
     {
         if (TimeLock::getTimes() > time() || !getEnable('live_gold_box')) return;
         // 2022-06-07
-        $this->calcAidRange(1030, 1230);
+        $this->calcAidRange(1050, 1250);
         //
         $lottery_list = $this->fetchLotteryList();
         //
@@ -139,7 +139,7 @@ class LiveGoldBox extends BasePlugin
             if ($response['code']) {
                 Log::warning("金色宝箱: $title($aid->$num) 参与抽奖失败 {$response['code']} -> {$response['message']}~");
             } else {
-                Log::notice("色宝箱: $title($aid->$num) 参与抽奖成功~");
+                Log::notice("金色宝箱: $title($aid->$num) 参与抽奖成功~");
             }
         }
     }
