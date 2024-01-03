@@ -364,6 +364,10 @@ class Login extends BasePlugin
         //
         $captcha = $this->sendSms($this->username, getConf('login_country.code'));
         $code = $this->cliInput('请输入收到的短信验证码: ');
+        if ($code == '') {
+            failExit('短信验证码不能为空');
+        }
+        //
         $response = ApiLogin::smsLogin($captcha, $code);
         //
         $this->loginAfter($mode, $response['code'], $response);

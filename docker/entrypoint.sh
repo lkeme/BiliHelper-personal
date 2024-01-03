@@ -14,9 +14,9 @@ case ${MIRRORS} in
     git remote set-url origin https://github.com/lkeme/BiliHelper-personal.git
     ;;
 "1")
-    # https://ghproxy.com/
-    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-ghproxy.com(KR|韩国) ${Font} \n ======== \n"
-    git remote set-url origin https://ghproxy.com/https://github.com/lkeme/BiliHelper-personal.git
+    # https://mirror.ghproxy.com/
+    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-mirror.ghproxy.com(KR|韩国) ${Font} \n ======== \n"
+    git remote set-url origin https://mirror.ghproxy.com/https://github.com/lkeme/BiliHelper-personal.git
     ;;
 "2")
     # http://gitclone.com/
@@ -44,9 +44,9 @@ case ${MIRRORS} in
     git remote set-url origin https://gh.api.99988866.xyz/https://github.com/lkeme/BiliHelper-personal.git
     ;;
 "7")
-    # https://kgithub.com/
-    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-kgithub.com(SG|新加坡) ${Font} \n ======== \n"
-    git remote set-url origin https://kgithub.com/lkeme/BiliHelper-personal.git
+    # https://githubfast.com/
+    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-githubfast.com(SG|新加坡) ${Font} \n ======== \n"
+    git remote set-url origin https://githubfast.com/lkeme/BiliHelper-personal.git
     ;;
 "8")
     # https://github.moeyy.xyz/
@@ -54,14 +54,14 @@ case ${MIRRORS} in
     git remote set-url origin https://github.moeyy.xyz/https://github.com/lkeme/BiliHelper-personal.git
     ;;
 "9")
-    # https://hub.fgit.ml/
-    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-hub.fgit.ml(HK|香港) ${Font} \n ======== \n"
-    git remote set-url origin https://hub.fgit.ml/lkeme/BiliHelper-personal.git
+    # https://hub.yzuu.cf/
+    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-hub.yzuu.cf(HK|香港) ${Font} \n ======== \n"
+    git remote set-url origin https://hub.yzuu.cf/lkeme/BiliHelper-personal.git
     ;;
 "10")
-    # https://hub.fgit.gq/
-    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-hub.fgit.gq(HK|香港) ${Font} \n ======== \n"
-    git remote set-url origin https://hub.fgit.gq/lkeme/BiliHelper-personal.git
+    # https://hub.nuaa.cf/
+    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-hub.nuaa.cf(HK|香港) ${Font} \n ======== \n"
+    git remote set-url origin https://hub.nuaa.cf/lkeme/BiliHelper-personal.git
     ;;
 *)
     echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-github.com(RAW|源站) ${Font} \n ======== \n"
