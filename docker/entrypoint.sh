@@ -24,44 +24,19 @@ case ${MIRRORS} in
     git remote set-url origin https://gitclone.com/github.com/lkeme/BiliHelper-personal.git
     ;;
 "3")
-    # https://hub.gitfast.tk/
-    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-hub.gitfast.tk(US|美国) ${Font} \n ======== \n"
-    git remote set-url origin https://hub.gitfast.tk/lkeme/BiliHelper-personal.git
-    ;;
-"4")
-    # https://hub.gitslow.tk/
-    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-hub.gitslow.tk(US|美国) ${Font} \n ======== \n"
-    git remote set-url origin https://hub.gitslow.tk/lkeme/BiliHelper-personal.git
-    ;;
-"5")
-    # https://hub.verge.tk/
-    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-hub.verge.tk(US|美国) ${Font} \n ======== \n"
-    git remote set-url origin https://hub.verge.tk/lkeme/BiliHelper-personal.git
-    ;;
-"6")
     # https://gh.api.99988866.xyz/
     echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-gh.api.99988866.xyz(US|美国) ${Font} \n ======== \n"
     git remote set-url origin https://gh.api.99988866.xyz/https://github.com/lkeme/BiliHelper-personal.git
     ;;
-"7")
+"4")
     # https://githubfast.com/
     echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-githubfast.com(SG|新加坡) ${Font} \n ======== \n"
     git remote set-url origin https://githubfast.com/lkeme/BiliHelper-personal.git
     ;;
-"8")
+"5")
     # https://github.moeyy.xyz/
     echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-github.moeyy.xyz(SG|新加坡) ${Font} \n ======== \n"
     git remote set-url origin https://github.moeyy.xyz/https://github.com/lkeme/BiliHelper-personal.git
-    ;;
-"9")
-    # https://hub.yzuu.cf/
-    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-hub.yzuu.cf(HK|香港) ${Font} \n ======== \n"
-    git remote set-url origin https://hub.yzuu.cf/lkeme/BiliHelper-personal.git
-    ;;
-"10")
-    # https://hub.nuaa.cf/
-    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-hub.nuaa.cf(HK|香港) ${Font} \n ======== \n"
-    git remote set-url origin https://hub.nuaa.cf/lkeme/BiliHelper-personal.git
     ;;
 *)
     echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-github.com(RAW|源站) ${Font} \n ======== \n"

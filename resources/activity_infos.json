@@ -3,94 +3,58 @@
     "remarks": "有需要可以自己添加，或者提pr",
     "data": [
         {
-            "sid": "newLottery_b0bb0c99-ac87-11ee-ab09-e8b47005dab5",
-            "title": "三口娘新年福利俱乐部",
-            "url": "https://www.bilibili.com/blackboard/activity-9Gfs8Ig9qS.html",
-            "update_time": "2024-01-19 20:02:58"
+            "sid": "newLottery_0f975072-b507-11ee-ab09-e8b47005dab5",
+            "title": "山河万里，加康加年味",
+            "url": "https://www.bilibili.com/blackboard/activity-xsrJFie8z2.html",
+            "update_time": "2024-02-08 20:04:42"
         },
         {
             "sid": "newLottery_199d12ba-a56a-11ee-ab09-e8b47005dab5",
             "title": "哔哩哔哩课堂年度臻选榜发布啦！",
             "url": "https://www.bilibili.com/blackboard/activity-phMDNe7aks.html",
-            "update_time": "2024-01-19 20:03:00"
+            "update_time": "2024-02-08 20:04:44"
+        },
+        {
+            "sid": "newLottery_52df2765-b462-11ee-ab09-e8b47005dab5",
+            "title": "哔哩哔哩新春季-年味拯救计划",
+            "url": "https://www.bilibili.com/blackboard/activity-1lbCdmuouE.html",
+            "update_time": "2024-02-08 20:04:45"
+        },
+        {
+            "sid": "newLottery_617fde6f-b062-11ee-ab09-e8b47005dab5",
+            "title": "2023包月充电年终回顾",
+            "url": "https://www.bilibili.com/blackboard/activity-sQ82yskw9b.html",
+            "update_time": "2024-02-08 20:04:46"
+        },
+        {
+            "sid": "newLottery_c67f5549-b4f3-11ee-ab09-e8b47005dab5",
+            "title": "实「健」出真知",
+            "url": "https://www.bilibili.com/blackboard/activity-LyVooRp9QC.html",
+            "update_time": "2024-02-08 20:04:48"
         },
         {
             "sid": "newLottery_670e0a22-b11b-11ee-ab09-e8b47005dab5",
             "title": "寻找2024外卖神探",
             "url": "https://www.bilibili.com/blackboard/activity-KVWMa5XZfO.html",
-            "update_time": "2024-01-19 20:03:01"
+            "update_time": "2024-02-08 20:04:49"
         },
         {
             "sid": "newLottery_3ee8e12e-ad17-11ee-ab09-e8b47005dab5",
             "title": "2024自由补玩计划",
             "url": "https://www.bilibili.com/blackboard/activity-zybwjh.html",
-            "update_time": "2024-01-19 20:03:02"
-        },
-        {
-            "sid": "newLottery_478d5d69-a9e2-11ee-ab09-e8b47005dab5",
-            "title": "元梦之星新春会抽奖机",
-            "url": "https://www.bilibili.com/blackboard/activity-j2LtB828Yj.html",
-            "update_time": "2024-01-19 20:03:04"
-        },
-        {
-            "sid": "newLottery_ca51e2eb-9af6-11ee-ab09-e8b47005dab5",
-            "title": "神州奇遇记",
-            "url": "https://www.bilibili.com/blackboard/activity-xsBPJY5959.html",
-            "update_time": "2024-01-19 20:03:05"
-        },
-        {
-            "sid": "newLottery_c700b403-9b6f-11ee-ab09-e8b47005dab5",
-            "title": "冬日必备·美食御寒季",
-            "url": "https://www.bilibili.com/blackboard/activity-ym1OdSDXtj.html",
-            "update_time": "2024-01-19 20:03:06"
-        },
-        {
-            "sid": "newLottery_96a7262c-90ea-11ee-ab09-e8b47005dab5",
-            "title": "送你喜爱的城市C位出道！",
-            "url": "https://www.bilibili.com/blackboard/activity-AIaWvFlxWE.html",
-            "update_time": "2024-01-19 20:03:08"
-        },
-        {
-            "sid": "newLottery_71c7d92f-932a-11ee-ab09-e8b47005dab5",
-            "title": "仰望U8越野课堂",
-            "url": "https://www.bilibili.com/blackboard/activity-OjUTmfmp50.html",
-            "update_time": "2024-01-19 20:03:09"
-        },
-        {
-            "sid": "newLottery_1b471867-882e-11ee-ab09-e8b47005dab5",
-            "title": "2024WOD独家登陆B站！",
-            "url": "https://www.bilibili.com/blackboard/activity-NDNvSbhZK7.html",
-            "update_time": "2024-01-19 20:03:10"
-        },
-        {
-            "sid": "newLottery_4a49476b-7d29-11ee-ab09-e8b47005dab5",
-            "title": "方程豹DMO豹力科技研究院",
-            "url": "https://www.bilibili.com/blackboard/activity-frgLQHbqPE.html",
-            "update_time": "2024-01-19 20:03:12"
+            "update_time": "2024-02-08 20:04:51"
         },
         {
             "sid": "newLottery_97fdb9e3-e348-11ed-9251-a4ae12675bc2",
             "title": "2023 TCR世界巡回赛",
             "url": "https://www.bilibili.com/blackboard/activity-TCRWorldTour2023H5.html",
-            "update_time": "2024-01-19 20:03:13"
-        },
-        {
-            "sid": "newLottery_9a1fc6b0-9b19-11ee-ab09-e8b47005dab5",
-            "title": "AIGC产品大赏",
-            "url": "https://www.bilibili.com/blackboard/activity-ChzRxNidKn.html",
-            "update_time": "2024-01-19 20:03:15"
+            "update_time": "2024-02-08 20:04:54"
         },
         {
             "sid": "newLottery_0acc57ed-2f98-11ee-9251-a4ae12675bc2",
             "title": "王者战报重现高光",
             "url": "https://www.bilibili.com/blackboard/activity-uuXjUtvB0Y.html",
-            "update_time": "2024-01-19 20:03:16"
-        },
-        {
-            "sid": "newLottery_9010c1b1-6d8f-11ee-ab09-e8b47005dab5",
-            "title": "迪士尼奇妙百年：影迷打卡狂欢",
-            "url": "https://www.bilibili.com/blackboard/activity-4SlG9G1TOe.html",
-            "update_time": "2024-01-19 20:03:17"
+            "update_time": "2024-02-08 20:04:55"
         }
     ]
 }

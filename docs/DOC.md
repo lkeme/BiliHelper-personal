@@ -261,14 +261,9 @@ $ -e VERSION=2 # 使用 版本 V2.x.x(默认选项)
 $ -e MIRRORS=0 # 使用 github.com(RAW|源站|默认)
 $ -e MIRRORS=1 # 使用 mirror.ghproxy.com(JP|日本)
 $ -e MIRRORS=2 # 使用 gitclone.com(CN|中国)
-$ -e MIRRORS=3 # 使用 hub.gitfast.tk(US|美国)
-$ -e MIRRORS=4 # 使用 hub.gitslow.tk(US|美国)
-$ -e MIRRORS=5 # 使用 hub.verge.tk(US|美国)
-$ -e MIRRORS=6 # 使用 gh.api.99988866.xyz(US|美国)
-$ -e MIRRORS=7 # 使用 githubfast.com(KR|韩国)
-$ -e MIRRORS=8 # 使用 github.moeyy.xyz(HK|香港)
-$ -e MIRRORS=9 # 使用 hub.yzuu.cf(US|美国)
-$ -e MIRRORS=10 # 使用 hub.nuaa.cf(US|美国)
+$ -e MIRRORS=3 # 使用 gh.api.99988866.xyz(US|美国)
+$ -e MIRRORS=4 # 使用 githubfast.com(KR|韩国)
+$ -e MIRRORS=5 # 使用 github.moeyy.xyz(HK|香港)
 $ -e MIRRORS=custom -e CUSTOM_CLONE_URL=https://github.com/lkeme/BiliHelper-personal.git # 使用 自定义克隆地址
 ```
 
