@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2023 ~ 2024
+ *  Updated: 2024 ~ 2025
  *
  *   _____   _   _       _   _   _   _____   _       _____   _____   _____
  *  |  _  \ | | | |     | | | | | | | ____| | |     |  _  \ | ____| |  _  \ &   ／l、
@@ -22,6 +22,7 @@ use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
 use Bhp\Plugin\Plugin;
 use Bhp\TimeLock\TimeLock;
+use Bhp\Util\ArrayR\ArrayR;
 use Bhp\Util\Fake\Fake;
 
 class PolishMedal extends BasePlugin
@@ -184,7 +185,8 @@ class PolishMedal extends BasePlugin
 
         Log::info("开始点亮直播间@{$medal['roomid']}的勋章");
         // 擦亮
-        $res = ApiMsg::sendBarrageAPP($medal['roomid'], Fake::emoji());
+        $custom_word = empty($words = getConf('polish_medal.reply_words')) ? Fake::emoji() : ArrayR::toRand(explode(',', $words));
+        $res = ApiMsg::sendBarrageAPP($medal['roomid'], $custom_word);
         if (isset($res['code']) && $res['code'] == 0) {
             Log::notice("在直播间@{$medal['roomid']}发送点亮弹幕成功");
         } else {

@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2023 ~ 2024
+ *  Updated: 2024 ~ 2025
  *
  *   _____   _   _       _   _   _   _____   _       _____   _____   _____
  *  |  _  \ | | | |     | | | | | | | ____| | |     |  _  \ | ____| |  _  \ &   ／l、
@@ -51,6 +51,16 @@ class ArrayR
         }
         //array_slice 取该数组中的某一段
         return array_slice($arr, 0, $num);
+    }
+
+    /**
+     * 随机获取数组中的一个元素
+     * @param array $arr
+     * @return string
+     */
+    public static function toRand(array $arr): string
+    {
+        return $arr[array_rand($arr)];
     }
 }
 
