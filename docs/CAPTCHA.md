@@ -20,6 +20,8 @@ url = "http://localhost:50001"
 
 以外部挂载配置文件为例
 
+> 命令行中只会显示填入的值，`localhost`一般本地使用，容器或者外部使用`0.0.0.0`，访问时请替换成对应的地址。
+
 ```bash
 docker run -itd --rm -e CAPTCHA=1 -e CAPTCHA_HOST=localhost -e CAPTCHA_PORT=50002 -p 50002:50002 -v /path/to/your/confFilePath:/app/profile/user lkeme/bilihelper-personal
 

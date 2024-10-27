@@ -29,7 +29,7 @@
 
 <p align=center>
 
-<img src="https://img.shields.io/badge/Version-2.4.0.231102-orange.svg?longCache=true&style=for-the-badge" alt="">
+<img src="https://img.shields.io/badge/Version-2.4.1.241027-orange.svg?longCache=true&style=for-the-badge" alt="">
 <img src="https://img.shields.io/badge/PHP-8.1+-green.svg?longCache=true&style=for-the-badge" alt="">
 <img src="https://img.shields.io/badge/Composer-latest-blueviolet.svg?longCache=true&style=for-the-badge" alt="">
 <img src="https://img.shields.io/badge/License-mit-blue.svg?longCache=true&style=for-the-badge" alt="">

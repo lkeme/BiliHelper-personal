@@ -278,8 +278,17 @@ $ -e MIRRORS=custom -e CUSTOM_CLONE_URL=https://github.com/lkeme/BiliHelper-pers
 - -v模式使用短信登录
 
 ```
-配置文件里设置好，发送完短信 
-docker attach 或者docker exec 再进去容器里输入
+配置文件里设置好，发送完短信，命令行中使用docker attach 或者docker exec 进去容器后里输入
+
+Q: docker exec方式使用ctrl+c退出容器，容器会停止运行怎么办？
+A: 使用docker exec -it 容器ID /bin/bash进入容器，然后使用exit退出容器，容器不会停止运行。
+
+Q: docker attach方式使用ctrl+c退出容器，容器会停止运行怎么办？
+A: 请用ctrl+p+q退出容器，容器不会停止运行。
+A1: 添加-sig-proxy=false参数，docker attach --sig-proxy=false 容器ID，ctrl+c退出容器，容器不会停止运行。
+
+Q: 使用portainer容器管理新建的容器，命令行无法输入直接验证失败怎么办？
+A: 在容器设置Advanced container settings -> Commands & logging -> Console -> 勾选 Interactive & TTY (-i -t) ，保存后重新部署容器即可。
 ```
 
 - 注意: Docker镜像已经包含了所有所需的运行环境，无需在本地环境弄composer。每次启动容器时，都会与项目进行同步以确保版本最新。

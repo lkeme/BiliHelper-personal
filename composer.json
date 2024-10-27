@@ -35,12 +35,6 @@
             "canonical": false
         },
         {
-            "description": "packagist.kr",
-            "type": "composer",
-            "url": "https://packagist.kr",
-            "canonical": false
-        },
-        {
             "description": "AliCloud",
             "type": "composer",
             "url": "https://mirrors.aliyun.com/composer/",

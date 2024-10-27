@@ -8,6 +8,24 @@
 
 [comment]: <> (</details>)
 
+## v2.4.1.241027 alpha (2024-10-27)
+
+### Added
+
+-
+
+### Changed
+
+- 更新设备信息
+
+### Fixed
+
+- 完善部分文档
+
+### Remarks
+
+-
+
 ## v2.4.0.231102 alpha (2023-11-02)
 
 ### Added
