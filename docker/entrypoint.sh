@@ -14,9 +14,9 @@ case ${MIRRORS} in
     git remote set-url origin https://github.com/lkeme/BiliHelper-personal.git
     ;;
 "1")
-    # https://mirror.ghproxy.com/
-    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-mirror.ghproxy.com(KR|韩国) ${Font} \n ======== \n"
-    git remote set-url origin https://mirror.ghproxy.com/https://github.com/lkeme/BiliHelper-personal.git
+    # https://gitdl.cn/
+    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-gitdl.cn(ESP|西班牙) ${Font} \n ======== \n"
+    git remote set-url origin https://gitdl.cn/https://github.com/lkeme/BiliHelper-personal.git
     ;;
 "2")
     # http://gitclone.com/

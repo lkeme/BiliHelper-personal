@@ -259,7 +259,7 @@ $ -e VERSION=2 # 使用 版本 V2.x.x(默认选项)
 
 ```shell script
 $ -e MIRRORS=0 # 使用 github.com(RAW|源站|默认)
-$ -e MIRRORS=1 # 使用 mirror.ghproxy.com(JP|日本)
+$ -e MIRRORS=1 # 使用 gitdl.cn(ESP|西班牙)
 $ -e MIRRORS=2 # 使用 gitclone.com(CN|中国)
 $ -e MIRRORS=3 # 使用 gh.api.99988866.xyz(US|美国)
 $ -e MIRRORS=4 # 使用 githubfast.com(KR|韩国)

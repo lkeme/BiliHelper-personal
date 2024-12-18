@@ -112,7 +112,7 @@ class Notice extends SingleTon
      */
     protected function filterMsgWords(string $msg): bool
     {
-        $default_words = FilterWords::getInstance()->get("Notice.default");
+        $default_words = FilterWords::getInstance()->get('Notice.default');
         $custom_words = explode(',', getConf('notify.filter_words'));
         $total_words = array_merge($default_words, $custom_words);
         foreach ($total_words as $word) {
@@ -359,17 +359,22 @@ class Notice extends SingleTon
     {
         Log::info('使用Debug推送消息');
         $url = getConf('notify_debug.url');
+
         $payload = [
-            'receiver' => getConf('notify_debug.token'),
+            'token' => getConf('notify_debug.token'),
             'title' => $info['title'],
-            'body' => $info['content'],
-            'url' => '',
+            'content' => $info['content'],
+            'link' => '',
+            'tags' => 'Debug'
         ];
-        $raw = Request::post('other', $url, $payload);
+        $headers = [
+            'Content-Type' => 'application/json',
+        ];
+        $raw = Request::put('other', $url, $payload, $headers);
         $de_raw = json_decode($raw, true);
-        // {"success": true, "msg": null, "data": {"errcode": 0, "errmsg": "ok", "msgid": 1231, "token": "456"}}
-        if ($de_raw['success']) {
-            Log::notice("推送消息成功: {$de_raw['data']['msgid']}");
+
+        if (isset($de_raw['data']['status']) && $de_raw['data']['status'] == 0) {
+            Log::notice("推送消息成功: {$de_raw['data']['message']}");
         } else {
             Log::warning("推送消息失败: $raw");
         }

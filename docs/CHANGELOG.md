@@ -8,6 +8,26 @@
 
 [comment]: <> (</details>)
 
+## v2.4.2.241218 alpha (2024-12-18)
+
+### Added
+
+-
+
+### Changed
+
+- 更新设备信息
+- 更新DockerFile
+
+### Fixed
+
+- 修复Debug推送
+- 加速镜像错误
+
+### Remarks
+
+-
+
 ## v2.4.1.241027 alpha (2024-10-27)
 
 ### Added
