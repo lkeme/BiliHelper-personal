@@ -44,9 +44,9 @@ class LiveSignIn extends BasePlugin
     public function __construct(Plugin &$plugin)
     {
         //
-        TimeLock::initTimeLock();
+//        TimeLock::initTimeLock();
         // $this::class
-        $plugin->register($this, 'execute');
+//        $plugin->register($this, 'execute');
     }
 
     /**

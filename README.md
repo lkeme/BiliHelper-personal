@@ -103,7 +103,6 @@ Group: [602815575](https://jq.qq.com/?_wv=1027&k=UaalVexM) | **请不要来问�
 | MainSite        | 0.0.1   | 主站任务(观看\分享\投币) | Lkeme             | 1100 | 24(小时)    | √      |
 | Manga           | 0.0.1   | 漫画签到/分享        | Lkeme             | 1101 | 24(小时)    | √      |
 | LoveClub        | 0.0.1   | 友爱社签到          | Lkeme             | 1102 | 24(小时)    | √      |
-| LiveSignIn      | 0.0.1   | 直播签到           | Lkeme             | 1103 | 24(小时)    | √      |
 | GameForecast    | 0.0.1   | 游戏赛事预测(破产机)    | Lkeme             | 1104 | 24(小时)    | √      |
 | Silver2Coin     | 0.0.1   | 银瓜子兑换硬币        | Lkeme             | 1105 | 24(小时)    | √      |
 | Judge           | 0.0.1   | 風機委員投票         | Lkeme             | 1106 | 15-30(分钟) | √      |
@@ -118,6 +117,8 @@ Group: [602815575](https://jq.qq.com/?_wv=1027&k=UaalVexM) | **请不要来问�
 | PolishMedal     | 0.0.1   | 点亮灰色勋章         | possible318/Lkeme | 1115 | 1(小时)     | √      |
 | BatchUnfollow   | 0.0.1   | 批量取消关注         | Lkeme             | 1116 | 5-10(分钟)  | √      |
 | ActivityLottery | 0.0.1   | 转盘活动           | Lkeme             | 1117 | 3-7(分钟)   | √      |
+| LiveSignIn      | 0.0.1   | 直播签到           | Lkeme             | 1103 | 24(小时)    | 已下线    |
+
 </details>
 
 ## 🖥️星图

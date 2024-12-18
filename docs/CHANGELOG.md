@@ -18,11 +18,13 @@
 
 - 更新设备信息
 - 更新DockerFile
+- 移除失效活动(LiveSignIn)
 
 ### Fixed
 
 - 修复Debug推送
 - 加速镜像错误
+- 修复cli错误的版本
 
 ### Remarks
 

@@ -53,7 +53,7 @@
         "bramus/monolog-colored-line-formatter": "dev-master",
         "symfony/yaml": "^6.0",
         "toolkit/stdlib": "*",
-        "adhocore/cli": "dev-main",
+        "adhocore/cli": "^v1.0.0",
         "lkeme/data": "4.x-dev",
         "grasmash/expander": "dev-main",
         "amphp/amp": "3.x-dev",
