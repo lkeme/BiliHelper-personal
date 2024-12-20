@@ -2,6 +2,8 @@
     "code": 200,
     "LiveGoldBox": {
         "sensitive": [
+            "故障",
+            "演练",
             "预演",
             "加密",
             "test",
