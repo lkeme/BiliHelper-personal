@@ -77,7 +77,7 @@ class LiveGoldBox extends BasePlugin
     {
         if (TimeLock::getTimes() > time() || !getEnable('live_gold_box')) return;
         // 2022-06-07
-        $this->calcAidRange(1050, 1250);
+        $this->calcAidRange(1169, 1269);
         //
         $lottery_list = $this->fetchLotteryList();
         //
