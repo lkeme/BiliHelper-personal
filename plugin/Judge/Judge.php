@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2024 ~ 2025
+ *  Updated: 2018 ~ 2026
  *
  *   _____   _   _       _   _   _   _____   _       _____   _____   _____
  *  |  _  \ | | | |     | | | | | | | ____| | |     |  _  \ | ____| |  _  \ &   ／l、
@@ -297,7 +297,7 @@ class Judge extends BasePlugin
         // 只是嘗試 TODO 更換位置
         if (getConf('judge.auto_apply', false, 'bool') && $data['allow_apply']) {
             // 情況壹
-            if ($data['apply_status'] == -1) {
+            if ($data['apply_status'] == -1 || $data['apply_status'] == 4) {
                 $this->juryApply();
             }
             // 情況貳 一種特殊情況

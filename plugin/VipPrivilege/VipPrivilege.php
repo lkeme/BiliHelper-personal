@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2024 ~ 2025
+ *  Updated: 2018 ~ 2026
  *
  *   _____   _   _       _   _   _   _____   _       _____   _____   _____
  *  |  _  \ | | | |     | | | | | | | ____| | |     |  _  \ | ____| |  _  \ &   ／l、
@@ -42,6 +42,23 @@ class VipPrivilege extends BasePlugin
 
     /**
      * @var array|string[]
+     * BCoin: 1,
+     * MallCoupon: 2,
+     * ComicCoupon: 3,
+     * FreightCoupon: 4,
+     * ComicMallCoupon: 5,
+     * GarbFreeCoupon: 6,
+     * CheeseClasseCoupon: 7,
+     * KingOfGloryCoupon: 8,
+     * LevelAcceleration: 9,
+     * CakeCoupon: 10,
+     * MovieCoupon: 11,
+     * DisneyCoupon: 12,
+     * BirthdayImage: 13,
+     * MovieVoucher: 14,
+     * StarBox: 15,
+     * MagicStone: 16,
+     * GameCoupon: 17
      */
     protected array $privilege = [
         0 => '未知奖励0(未知奖励0)',
@@ -52,8 +69,16 @@ class VipPrivilege extends BasePlugin
         5 => '年度专享漫画礼包(漫画商城优惠券)',
         6 => '大会员专享会员体验卡(装扮体验卡)',
         7 => '大会员专享课堂优惠券(课堂优惠券)',
-        8 => '未知奖励8(未知奖励8)',
+        8 => '大会员专享王者荣耀优惠券(游戏优惠券)',
         9 => '会员观看任意1个视频即可领取，日限1次(额外经验)',
+        10 => '大会员专享蛋糕优惠券(蛋糕优惠券)',
+        11 => '大会员专享电影优惠券(电影优惠券)',
+        12 => '大会员专享迪士尼优惠券(迪士尼优惠券)',
+        13 => '大会员专享生日礼图(生日礼图)',
+        14 => '大会员专享电影券(电影券)',
+        15 => '年度专享会员购星光宝盒88折券(折扣券)',
+        16 => '大会员专享会员购10魔晶(魔晶)',
+        17 => '大会员专享游戏优惠券(游戏优惠券)',
     ];
 
     /**
@@ -154,6 +179,12 @@ class VipPrivilege extends BasePlugin
         // {"code":0,"message":"0","ttl":1}
         // {-101: "账号未登录", -111: "csrf 校验失败", -400: "请求错误", 69800: "网络繁忙 请稍后重试", 69801: "你已领取过该权益"}
         $response = ApiPrivilege::receive($type);
+        // 判断type是否在$this->privilege
+        if (!array_key_exists($type, $this->privilege)) {
+            $type = "未知奖励$type";
+        } else {
+            $type = $this->privilege[$type];
+        }
         //
         switch ($response['code']) {
             case -101:

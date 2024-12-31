@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2024 ~ 2025
+ *  Updated: 2018 ~ 2026
  *  Source: https://raw.githubusercontent.com/abmmhasan/UUID/main/src/Uuid.php
  *
  *   _____   _   _       _   _   _   _____   _       _____   _____   _____

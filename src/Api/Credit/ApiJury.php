@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2024 ~ 2025
+ *  Updated: 2018 ~ 2026
  *
  *   _____   _   _       _   _   _   _____   _       _____   _____   _____
  *  |  _  \ | | | |     | | | | | | | ____| | |     |  _  \ | ____| |  _  \ &   ／l、
@@ -36,7 +36,7 @@ class ApiJury
             'referer' => 'https://www.bilibili.com/',
         ];
         // {"code":25005,"message":"请成为風機委員后再试","ttl":1}
-        // {"code":0,"message":"0","ttl":1,"data":{"uname":"","face":"http://i2.hdslb.com/bfs/face/.jpg","case_total":,"term_end":,"status":1}}
+        // {"code":0,"message":"0","ttl":1,"data":{"uname":"","face":"http://i0.hdslb.com/bfs/face/.jpg","case_total":,"term_end":0,"status":2,"apply_status":4,"err_msg":"已卸任风纪委员","allow_apply":true}}
         return Request::getJson(true, 'pc', $url, $payload, $headers);
     }
 

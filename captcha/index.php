@@ -5,7 +5,7 @@
  *  Author: Lkeme
  *  License: The MIT License
  *  Email: Useri@live.cn
- *  Updated: 2024 ~ 2025
+ *  Updated: 2018 ~ 2026
  *  Source: Colter23/geetest-validator
  *
  *   _____   _   _       _   _   _   _____   _       _____   _____   _____
