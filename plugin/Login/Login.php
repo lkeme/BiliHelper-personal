@@ -164,7 +164,9 @@ class Login extends BasePlugin
         //
         $token = getU('access_token');
         $this->myInfo($token);
-
+        // 保持pc_cookie
+        $this->patchCookie();
+        //
         return true;
     }
 
@@ -224,21 +226,37 @@ class Login extends BasePlugin
     }
 
     /**
-     * cookie补丁
-     * @return string
+     * CookiePatch
+     * @return void
      */
-    public function patchCookie(): string
+    public function patchCookie(): void
     {
-//        $response = ApiMain::home();
-        $bvid_list = ["BV16X4y1g7wT", "BV1cy4y1k7A2", "BV1bz4y1r7Ug", "BV1ti4y1K7uw", "BV1GK411K7Ke", "BV1CC4y1a7ee", "BV1PK411L7h5", "BV1qt411j7fV", "BV1yt4y1Q7SS", "BV1mi4y1b76M", "BV1pi4y147tQ", "BV1FE411A7Xd", "BV19E41197Kc", "BV1tJ411W7hw", "BV1w7411P7jJ", "BV1Jb411W7dH", "BV12J411X7cD", "BV1Nt4y1D7pW", "BV1Wb411v7WN", "BV1Yc411h7uQ", "BV1x54y1e7zf", "BV1UE411y7Wy", "BV1zp4y1U7Z5", "BV1mK411V7wY", "BV1ht411L72V", "BV16Z4y1H7NG", "BV1jE41137eu", "BV1dW411n7La", "BV1Jb411U7u2", "BV1kt411d7Ht", "BV1Sx411T7QQ", "BV1bW411n7fY", "BV1Ys41167aL", "BV1es411D7sW", "BV1f4411M7QC", "BV1XW411F7L6", "BV1xx411c7mu", "BV1Ss411o7vY", "BV1js411f7jY", "BV1gs411B7y4", "BV12s411N7g2", "BV1fs411t7EK", "BV15W411W7NJ", "BV1xx411c7XW", "BV1vx411K7jb", "BV1Ls41127sG", "BV1GW411g7mc", "BV1Hx411V7n9", "BV1hs411Q7zf", "BV1zs411S7sz", "BV1Us411d71V", "BV1EW41167Yv", "BV1px411N7Yd", "BV1Yx411A7wM", "BV1Js411o76u", "BV1Xs411X7wh", "BV1nx411F7Jf", "BV1Dt411r7Tv", "BV1xx411c79H", "BV1Bx411c7hB", "BV1ix411c7Ye", "BV1Vs411y7TM", "BV1rs411S736", "BV11p411o73u", "BV1Js411Z7Nq", "BV1nx411F7fM", "BV1YW411n7aW", "BV1Ds411m7c5", "BV1Fx411w7GK", "BV1cs411S7DX", "BV1cb411V7Lm", "BV1Kt41147o3", "BV1Mt411D73n", "BV1fx411c7v6", "BV1dx411P79c", "BV1es41197ai", "BV1hx411w7MG", "BV1Ys411H7QK", "BV1Kx411y7TJ", "BV1ts411D7mf", "BV1Sx41117dD", "BV1tx411P7N4", "BV1fs411k7Kj", "BV1Sx411T7L3", "BV1es41197hA"];
-        $response = ApiMain::video($bvid_list[array_rand($bvid_list)]);
+        $pc_cookie = getU('pc_cookie');
+        // 判断cookie里是否存在`buvid3`字段
+        if (str_contains($pc_cookie, 'buvid3')) {
+            Log::info('CookiePatch: buvid3已存在');
+            return;
+        }
+        Log::warning('CookiePatch: buvid3不存在,尝试获取Cookie补丁');
+        // 尝试获取buvid3
+        // 方案1
+        // $bvid_list = ["BV16X4y1g7wT", "BV1cy4y1k7A2", "BV1bz4y1r7Ug", "BV1ti4y1K7uw", "BV1GK411K7Ke", "BV1CC4y1a7ee", "BV1PK411L7h5", "BV1qt411j7fV", "BV1yt4y1Q7SS", "BV1mi4y1b76M", "BV1pi4y147tQ", "BV1FE411A7Xd", "BV19E41197Kc", "BV1tJ411W7hw", "BV1w7411P7jJ", "BV1Jb411W7dH", "BV12J411X7cD", "BV1Nt4y1D7pW", "BV1Wb411v7WN", "BV1Yc411h7uQ", "BV1x54y1e7zf", "BV1UE411y7Wy", "BV1zp4y1U7Z5", "BV1mK411V7wY", "BV1ht411L72V", "BV16Z4y1H7NG", "BV1jE41137eu", "BV1dW411n7La", "BV1Jb411U7u2", "BV1kt411d7Ht", "BV1Sx411T7QQ", "BV1bW411n7fY", "BV1Ys41167aL", "BV1es411D7sW", "BV1f4411M7QC", "BV1XW411F7L6", "BV1xx411c7mu", "BV1Ss411o7vY", "BV1js411f7jY", "BV1gs411B7y4", "BV12s411N7g2", "BV1fs411t7EK", "BV15W411W7NJ", "BV1xx411c7XW", "BV1vx411K7jb", "BV1Ls41127sG", "BV1GW411g7mc", "BV1Hx411V7n9", "BV1hs411Q7zf", "BV1zs411S7sz", "BV1Us411d71V", "BV1EW41167Yv", "BV1px411N7Yd", "BV1Yx411A7wM", "BV1Js411o76u", "BV1Xs411X7wh", "BV1nx411F7Jf", "BV1Dt411r7Tv", "BV1xx411c79H", "BV1Bx411c7hB", "BV1ix411c7Ye", "BV1Vs411y7TM", "BV1rs411S736", "BV11p411o73u", "BV1Js411Z7Nq", "BV1nx411F7fM", "BV1YW411n7aW", "BV1Ds411m7c5", "BV1Fx411w7GK", "BV1cs411S7DX", "BV1cb411V7Lm", "BV1Kt41147o3", "BV1Mt411D73n", "BV1fx411c7v6", "BV1dx411P79c", "BV1es41197ai", "BV1hx411w7MG", "BV1Ys411H7QK", "BV1Kx411y7TJ", "BV1ts411D7mf", "BV1Sx41117dD", "BV1tx411P7N4", "BV1fs411k7Kj", "BV1Sx411T7L3", "BV1es41197hA"];
+        // $response = ApiMain::video($bvid_list[array_rand($bvid_list)]);
+        // 方案2
+        $response = ApiMain::home();
         $headers = $response['Set-Cookie'];
         $cookies = [];
         foreach ($headers as $header) {
             preg_match_all('/^(.*);/iU', $header, $cookie);
             $cookies[] = $cookie[0][0];
         }
-        return implode("", array_reverse($cookies));
+        $set_cookie = implode("", array_reverse($cookies));
+        if (!str_contains($set_cookie, 'buvid3')) {
+            Log::warning('CookiePatch: 本次未获取到buvid3');
+        } else {
+            Log::notice('CookiePatch: buvid3已获取,' . $set_cookie);
+        }
+        $this->updateInfo('pc_cookie', $pc_cookie . $set_cookie);
     }
 
     /**
@@ -256,8 +274,7 @@ class Login extends BasePlugin
         //
         $cookie = $this->formatCookie($data['data']['cookie_info']['cookies']);
         $this->updateInfo('cookie', $cookie);
-        // patch cookie
-        $this->updateInfo('pc_cookie', $cookie . $this->patchCookie());
+        $this->updateInfo('pc_cookie', $cookie);
         //
         $user = User::parseCookie();
         $this->updateInfo('uid', $user['uid'], false);
