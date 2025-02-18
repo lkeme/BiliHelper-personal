@@ -78,26 +78,27 @@ class CheckUpdate extends BasePluginRW
         Log::info('开始检查项目更新');
         // resource object
         $offline = $this->fetchOfflineVersion();
+        $offline_version = $offline->get('version');
         //
         Log::info('拉取线上最新配置');
         // object
         $online = $this->fetchOnlineVersion();
+        $online_version = $online->version;
         // 网络错误
         if ($online->code != 200) {
             Log::warning('检查更新: 拉取线上失败，网络错误！');
             return false;
         }
         // 比较版本
-        if ($this->compareVersion($offline->get('version'), $online->version)) {
+        if ($this->compareVersion($offline_version, $online_version)) {
             //
-            $version = $online->version;
             $time = $online->update_time;
             $desc = $online->update_description;
-            $info = "请注意版本变动更新哦~\n\n版本号: $version\n\n更新日志: $desc\n\n更新时间: $time\n\n";
+            $info = "请注意版本变动更新哦~\n\n版本号: $online_version\n\n更新日志: $desc\n\n更新时间: $time\n\n";
             Log::notice($info);
             Notice::push('update', $info);
         } else {
-            Log::info('程序已是最新版本');
+            Log::info("当前程序版本($offline_version)已是最新");
         }
         return true;
     }
