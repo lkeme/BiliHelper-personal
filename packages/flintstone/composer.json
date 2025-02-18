@@ -1,5 +1,5 @@
 {
-    "name": "fire015/flintstone-fix-php-84",
+    "name": "fire015/flintstone",
     "type": "library",
     "description": "A key/value database store using flat files for PHP",
     "keywords": ["flintstone", "database", "cache", "files", "memory"],

@@ -23,28 +23,31 @@
     },
     "repositories": [
         {
-            "description": "Development package",
+            "description": "fire015/flintstone",
             "type": "path",
             "url": "packages/flintstone",
             "canonical": false
         },
         {
+            "description": "php-ds/php-ds",
+            "type": "path",
+            "url": "packages/php-ds",
+            "canonical": false
+        },
+        {
             "description": "PhpComposer",
             "type": "composer",
-            "url": "https://packagist.phpcomposer.com",
-            "canonical": false
+            "url": "https://packagist.phpcomposer.com"
         },
         {
             "description": "TencentCloud",
             "type": "composer",
-            "url": "https://mirrors.tencent.com/composer/",
-            "canonical": false
+            "url": "https://mirrors.tencent.com/composer/"
         },
         {
             "description": "AliCloud",
             "type": "composer",
-            "url": "https://mirrors.aliyun.com/composer/",
-            "canonical": false
+            "url": "https://mirrors.aliyun.com/composer/"
         }
     ],
     "require": {
@@ -63,11 +66,12 @@
         "jbzoo/data": "dev-master",
         "grasmash/expander": "dev-main",
         "amphp/amp": "3.x-dev",
-        "fire015/flintstone-fix-php-84": "dev-master",
         "overtrue/pinyin": "dev-master",
         "guzzlehttp/guzzle": "^7.0",
         "toolkit/pflag": "dev-main",
         "symfony/console": "^7.0",
+        "fire015/flintstone": "dev-master",
+        "php-ds/php-ds": "dev-master as v1.1",
         "malios/php-to-ascii-table": "dev-master"
     },
     "autoload": {

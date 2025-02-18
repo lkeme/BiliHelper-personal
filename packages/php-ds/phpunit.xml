@@ -1,0 +1,25 @@
+<phpunit
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+    beStrictAboutChangesToGlobalState="true"
+    beStrictAboutOutputDuringTests="true"
+    beStrictAboutTodoAnnotatedTests="true"
+    bootstrap="tests/bootstrap.php"
+    colors="true"
+>
+    <testsuites>
+        <testsuite name="DS Tests">
+            <directory>vendor/php-ds/tests/tests</directory>
+        </testsuite>
+    </testsuites>
+    <coverage>
+        <include>
+            <directory>src</directory>
+        </include>
+        <report>
+            <clover outputFile="build/logs/coverage.xml" />
+            <html outputDirectory="build/logs/coverage" />
+            <text outputFile="build/logs/coverage.txt" />
+        </report>
+    </coverage>
+</phpunit>

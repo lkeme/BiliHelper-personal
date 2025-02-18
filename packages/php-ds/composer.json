@@ -1,0 +1,33 @@
+{
+    "name": "php-ds/php-ds",
+    "license": "MIT",
+    "description": "Specialized data structures as alternatives to the PHP array",
+    "keywords": ["php", "ds", "data structures", "polyfill"],
+    "authors": [
+        {
+            "name": "Rudi Theunissen",
+            "email": "rudolf.theunissen@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.4",
+        "ext-json": "*"
+    },
+    "require-dev": {
+        "php-ds/tests": "^1.5"
+    },
+    "provide": {
+        "ext-ds": "1.5.0"
+    },
+    "suggest": {
+        "ext-ds": "to improve performance and reduce memory usage"
+    },
+    "scripts": {
+        "test": "phpunit"
+    },
+    "autoload": {
+        "psr-4" : {
+            "Ds\\": "src"
+        }
+    }
+}
