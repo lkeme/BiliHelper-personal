@@ -20,6 +20,11 @@ namespace Bhp\Util\Resource;
 use Grasmash\Expander\Expander;
 use Grasmash\Expander\Stringifier;
 use JBZoo\Data\Data;
+use JBZoo\Data\Ini;
+use JBZoo\Data\JSON;
+use JBZoo\Data\PhpArray;
+use JBZoo\Data\Yml;
+use Symfony\Component\Yaml\Yaml;
 use function JBZoo\Data\data;
 use function JBZoo\Data\ini;
 use function JBZoo\Data\phpArray;
@@ -35,9 +40,9 @@ class Resource extends Collection
     protected const FORMAT_JSON = 'json';
 
     /**
-     * @var Data
+     * @var Ini|JSON|Yml|PhpArray|Data
      */
-    protected Data $config;
+    protected Ini|JSON|Yml|PhpArray|Data $config;
 
     /**
      * @var string
@@ -73,15 +78,15 @@ class Resource extends Collection
      * 切换解析器
      * @param string $filepath
      * @param string $format
-     * @return Data
+     * @return Ini|JSON|Yml|PhpArray|Data
      */
-    protected function switchParser(string $filepath, string $format): Data
+    protected function switchParser(string $filepath, string $format): Ini|Json|Yml|PhpArray|Data
     {
         return match ($format) {
             Resource::FORMAT_INI => ini($filepath),
-            Resource::FORMAT_PHP => phpArray($filepath),
-            Resource::FORMAT_YML, Resource::FORMAT_YAML => yml($filepath),
             Resource::FORMAT_JSON => json($filepath),
+            Resource::FORMAT_YML, Resource::FORMAT_YAML => yml($filepath),
+            Resource::FORMAT_PHP => phpArray($filepath),
             default => data($filepath),
         };
     }

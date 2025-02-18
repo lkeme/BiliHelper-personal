@@ -1,0 +1,25 @@
+{
+    "name": "fire015/flintstone-fix-php-84",
+    "type": "library",
+    "description": "A key/value database store using flat files for PHP",
+    "keywords": ["flintstone", "database", "cache", "files", "memory"],
+    "homepage": "https://github.com/fire015/flintstone",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jason M",
+            "email": "emailfire@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "Flintstone\\": "src/"
+        }
+    },
+    "require-dev" : {
+        "phpunit/phpunit": "^9"
+    }
+}

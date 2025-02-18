@@ -8,6 +8,25 @@
 
 [comment]: <> (</details>)
 
+## v2.4.5.250218 alpha (2025-02-18)
+
+### Added
+
+-
+
+### Changed
+
+- 更新设备信息
+
+### Fixed
+
+- 尝试修复(-403)账号异常,操作失败
+- Make database config type explicitely nullable (fix php84 deprecation)
+
+### Remarks
+
+- Goodbye 2024
+
 ## v2.4.3.241231 alpha (2024-12-31)
 
 ### Added

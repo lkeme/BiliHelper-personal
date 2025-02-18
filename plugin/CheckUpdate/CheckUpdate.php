@@ -89,11 +89,11 @@ class CheckUpdate extends BasePluginRW
         }
         // 比较版本
         if ($this->compareVersion($offline->get('version'), $online->version)) {
-            // TODO 完善消息 支持markdown
-            $time = $online->time;
+            //
             $version = $online->version;
-            $des = $online->des;
-            $info = "请注意版本变动更新哦~\n\n版本号: $version\n\n更新日志: $des\n\n更新时间: $time\n\n";
+            $time = $online->update_time;
+            $desc = $online->update_description;
+            $info = "请注意版本变动更新哦~\n\n版本号: $version\n\n更新日志: $desc\n\n更新时间: $time\n\n";
             Log::notice($info);
             Notice::push('update', $info);
         } else {

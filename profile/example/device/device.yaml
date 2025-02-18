@@ -3,8 +3,8 @@ device_version: 0.0.1
 app:
   bili_a: # Android
     package: "tv.danmaku.bili"
-    version: "8.27.0"
-    build: "8270400"
+    version: "8.33.0"
+    build: "8330200"
     channel: "bili"
     device: "phone"
     mobi_app: "android"
@@ -15,7 +15,7 @@ app:
     secret_key: "NTYwYzUyY2NkMjg4ZmVkMDQ1ODU5ZWQxOGJmZmQ5NzM"
     app_key_n: "NzgzYmJiNzI2NDQ1MWQ4Mg=="
     secret_key_n: "MjY1MzU4M2M4ODczZGVhMjY4YWI5Mzg2OTE4YjFkNjU="
-    statistics: '{"appId":1,"platform":3,"version":"8.27.0","abtest":""}'
+    statistics: '{"appId":1,"platform":3,"version":"8.33.0","abtest":""}'
   bili_i: # IOS
     app_key: "MjdlYjUzZmM5MDU4ZjhjMw=="
     secret_key: "YzJlZDUzYTc0ZWVlZmUzY2Y5OWZiZDAxZDhjOWMzNzU="

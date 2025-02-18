@@ -23,6 +23,12 @@
     },
     "repositories": [
         {
+            "description": "Development package",
+            "type": "path",
+            "url": "packages/flintstone",
+            "canonical": false
+        },
+        {
             "description": "PhpComposer",
             "type": "composer",
             "url": "https://packagist.phpcomposer.com",
@@ -51,17 +57,17 @@
         "ext-mbstring": "*",
         "monolog/monolog": "dev-main",
         "bramus/monolog-colored-line-formatter": "dev-master",
-        "symfony/yaml": "^6.0",
+        "symfony/yaml": "^7.0",
         "toolkit/stdlib": "*",
         "adhocore/cli": "^v1.0.0",
-        "lkeme/data": "4.x-dev",
+        "jbzoo/data": "dev-master",
         "grasmash/expander": "dev-main",
         "amphp/amp": "3.x-dev",
-        "fire015/flintstone": "dev-master",
+        "fire015/flintstone-fix-php-84": "dev-master",
         "overtrue/pinyin": "dev-master",
         "guzzlehttp/guzzle": "^7.0",
         "toolkit/pflag": "dev-main",
-        "symfony/console": "^6.0",
+        "symfony/console": "^7.0",
         "malios/php-to-ascii-table": "dev-master"
     },
     "autoload": {
