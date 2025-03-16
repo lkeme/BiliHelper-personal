@@ -293,6 +293,12 @@ A: 在容器设置Advanced container settings -> Commands & logging -> Console -
 
 - 注意: Docker镜像已经包含了所有所需的运行环境，无需在本地环境弄composer。每次启动容器时，都会与项目进行同步以确保版本最新。
 
+- 不需要自动更新
+
+```shell script
+$ -e AUTO_UPDATE=0 # 不自动更新
+```
+
 ## 升级指南
 
 > 注意新版本的配置文件是否变动，则需要重新覆盖配置文件，并重新填写设置
