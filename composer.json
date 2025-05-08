@@ -2,7 +2,7 @@
     "name": "lkeme/bilihelper-personal",
     "description": "B 站自动领瓜子、直播助手、直播挂机脚本、主站助手 - PHP 版（Personal）",
     "type": "project",
-    "version": "2.*.*-dev",
+    "version": "2.4.x-dev",
     "minimum-stability": "stable",
     "license": "MIT",
     "authors": [

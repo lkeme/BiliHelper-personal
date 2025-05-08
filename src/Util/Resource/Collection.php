@@ -66,7 +66,7 @@ class Collection extends \Toolkit\Stdlib\Std\Collection
      *
      * @return mixed
      */
-    public function set(string $key, mixed $value): self
+    public function set(string $key, mixed $value): static
     {
         if ($this->keyPathSep && strpos($key, $this->keyPathSep) > 0) {
             Arr::setByPath($this->data, $key, $value, $this->keyPathSep);
