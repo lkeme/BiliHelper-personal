@@ -109,7 +109,7 @@ Group: [602815575](https://jq.qq.com/?_wv=1027&k=UaalVexM) | **请不要来问�
 | VipPrivilege    | 0.0.1   | 领取大会员权益        | Lkeme             | 1107 | 24(小时)    | √      |
 | BpConsumption   | 0.0.1   | 大会员B币券消费       | Lkeme             | 1108 | 24(小时)    | √      |
 | LiveReservation | 0.0.1   | 预约直播有奖         | Lkeme             | 1109 | 1-3(小时)   | √      |
-| LiveGoldBox     | 0.0.1   | 直播金色宝箱(实物抽奖)   | Lkeme             | 1110 | 6-10(分钟)  | √      |
+| LiveGoldBox     | 0.0.1   | 直播金色宝箱(实物抽奖)   | Lkeme             | 1110 | 6-10(分钟)  | 暂时废弃   |
 | AwardRecords    | 0.0.1   | 获奖记录           | Lkeme             | 1111 | 5(分钟)     | √      |
 | VipPoint        | 0.0.1   | 大会员积分          | Lkeme             | 1112 | 5(分钟)     | √      |
 | Lottery         | 0.0.2   | 抽奖             | MoeHero/Lkeme     | 1113 | 10-25(分钟) | √      |

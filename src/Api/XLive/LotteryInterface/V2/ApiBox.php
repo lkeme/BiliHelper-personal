@@ -25,15 +25,16 @@ class ApiBox
      * 抽奖
      * @param int $aid
      * @param int $round
+     * @param int $room_id
      * @return array
      */
-    public static function draw(int $aid, int $round): array
+    public static function draw(int $aid, int $round, int $room_id): array
     {
-        // $url = 'https://api.live.bilibili.com/lottery/v1/Box/draw';
         $url = 'https://api.live.bilibili.com/xlive/lottery-interface/v2/Box/draw';
         $payload = [
             'aid' => $aid,
             'number' => $round,
+            'room_id' => $room_id,
         ];
         return Request::getJson(true, 'pc', $url, $payload);
     }

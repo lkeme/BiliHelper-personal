@@ -61,11 +61,11 @@ class LiveGoldBox extends BasePlugin
     public function __construct(Plugin &$plugin)
     {
         // 时间锁
-        TimeLock::initTimeLock();
+        // TimeLock::initTimeLock();
         // 缓存
-        Cache::initCache();
+        // Cache::initCache();
         // $this::class
-        $plugin->register($this, 'execute');
+        // $plugin->register($this, 'execute');
     }
 
     /**
@@ -135,7 +135,11 @@ class LiveGoldBox extends BasePlugin
     {
         foreach ($lottery_list as $lottery) {
             extract($lottery);
-            $response = ApiBox::draw($aid, $num);
+
+            // https://live.bilibili.com/p/html/live-room-treasurebox/index.html?aid={aid}
+            // room_id 参数缺失，暂时废弃任务
+
+            $response = ApiBox::draw($aid, $num, 0);
             if ($response['code']) {
                 Log::warning("金色宝箱: $title($aid->$num) 参与抽奖失败 {$response['code']} -> {$response['message']}~");
             } else {
