@@ -39,7 +39,7 @@ class ApiTask
         //
         $user = User::parseCookie();
         //
-        $url = 'https://api.bilibili.com/pgc/activity/score/task/sign';
+        $url = 'https://api.bilibili.com/pgc/activity/score/task/sign2';
         //
         $payload = [
             'disable_rcmd' => '0',
