@@ -36,11 +36,6 @@
 
 </p>
 
-## 🌟 临时通知
-
-- [【master分支 版本2.x.x】](https://github.com/lkeme/BiliHelper-personal/tree/master) 功能陆续开发(当前推荐)
-- [【1.x.x分支 版本1.x.x】](https://github.com/lkeme/BiliHelper-personal/tree/1.x.x) 功能完整(后续不再维护)
-
 ## 📌 公告通知
 
 代码开源，本地化99.9%，项目不收集或使用任何敏感信息，兴趣所致，一切只为学习。
@@ -54,12 +49,8 @@
 ## 👤 游客访问
 
 <p align=center> 
-   <img align=center src="https://profile-counter.glitch.me/BiliHelper-personal/count.svg"  alt=""/>
-
-[//]: # (    <br>)
-
-[//]: # (    <img src="https://count.getloli.com/get/@:BiliHelper-personal" alt=":BiliHelper-personal" />)
- </p>
+   <img align=center src="https://count.getloli.com/get/@:BiliHelper-personal"  alt=":BiliHelper-personal"/>
+</p>
 
 ## 🖨️ 相关文档
 
