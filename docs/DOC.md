@@ -271,11 +271,15 @@ $ -e MIRRORS=custom -e CUSTOM_CLONE_URL=https://github.com/lkeme/BiliHelper-pers
 
 - -v模式使用短信登录
 
-```
-配置文件里设置好，发送完短信，命令行中使用docker attach 或者docker exec 进去容器后里输入
+配置文件里设置好，等待发送完短信，在命令行中使用命令进入容器，然后输入收到的验证码即可
 
-Q: docker exec方式使用ctrl+c退出容器，容器会停止运行怎么办？
-A: 使用docker exec -it 容器ID /bin/bash进入容器，然后使用exit退出容器，容器不会停止运行。
+```shell
+$ docker attach 容器ID
+```
+
+```
+Q: 容器停止后，容器不见了？
+A: 请删除运行时的 --rm 参数
 
 Q: docker attach方式使用ctrl+c退出容器，容器会停止运行怎么办？
 A: 请用ctrl+p+q退出容器，容器不会停止运行。
