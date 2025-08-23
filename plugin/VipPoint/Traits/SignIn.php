@@ -17,6 +17,7 @@
 
 
 use Bhp\Api\Api\Pgc\Activity\Score\ApiTask;
+use Bhp\Api\Api\X\VipPoint\ApiTask as VipPointApiTask;
 use Bhp\Log\Log;
 
 trait SignIn
@@ -44,13 +45,20 @@ trait SignIn
      */
     protected function _signIn(string $name): bool
     {
+        // {"code":xxxx,"message":"xxxxx"}
         // {"code":0,"message":"success"}
+        // {"code":6007000,"message":"签到失败，请刷新重试"}  判断为重复签到
         $response = ApiTask::sign();
-        //
         if ($response['code']) {
-            Log::warning("大会员积分@{$name}: 签到失败" . json_encode($response));
+            if (isset($response['message']) && $response['message'] == '签到失败，请刷新重试') {
+                Log::warning("大会员积分@{$name}: 今日已签到，重复签到");
+                return true;
+            }
+            Log::warning("大会员积分@{$name}: 签到失败，错误码 {$response['code']} " . json_encode($response, JSON_UNESCAPED_UNICODE));
             return false;
         }
+        //
+        Log::info("大会员积分@{$name}: 签到成功");
         return true;
     }
 
@@ -58,20 +66,25 @@ trait SignIn
     /**
      * 是否已经签到
      * @param array $data
-     * @param string $now
-     * @return int
+     * @param string $name
+     * @return bool
      */
-    protected function _isSignIn(array $data, string $now): int
+    protected function _isSignIn(array $data, string $name): bool
     {
-        $histories = $data['data']['task_info']['sing_task_item']['histories'] ?? [];
-        //
-        foreach ($histories as $h) {
-            // day: "2022-09-10" is_today: true score: 5 signed: true
-            if ($h['day'] == $now && isset($h['is_today']) && $h['signed'] && $h['is_today']) {
-                return $h['score'];
-            }
+        $response = VipPointApiTask::homepageCombine();
+        if ($response['code']) {
+            Log::warning('大会员积分: 获取签到信息失败');
+            return false;
         }
-        return 0;
+        //
+        $data = $response['data'];
+        if ($data['task']['signed']) {
+            Log::info("大会员积分@{$name}: 今日已完成签到，已有积分 {$data['point_info']['point']}分，剩余 {$data['task']['task_count']} 项积分任务待完成");
+            return true;
+        }
+        //
+        Log::info("大会员积分@{$name}: 今日未完成签到，已有积分 {$data['point_info']['point']}分，剩余 {$data['task']['task_count']} 项积分任务待完成");
+        return false;
     }
 
 
@@ -83,14 +96,7 @@ trait SignIn
      */
     protected function isSignIn(array $data, string $name): bool
     {
-        $now = date("Y-m-d");
-        //
-        if ($score = $this->_isSignIn($data, $now)) {
-            Log::info("大会员积分@{$name}: 今日完成签到，获得积分 {$score}分 已累计签到 {$data['data']['task_info']['sing_task_item']['count']}天");
-            return true;
-        }
-
-        return false;
+        return $this->_isSignIn($data, $name);
     }
 
 }

@@ -14,9 +14,9 @@ case ${MIRRORS} in
     git remote set-url origin https://github.com/lkeme/BiliHelper-personal.git
     ;;
 "1")
-    # https://gitdl.cn/
-    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-gitdl.cn(ESP|西班牙) ${Font} \n ======== \n"
-    git remote set-url origin https://gitdl.cn/https://github.com/lkeme/BiliHelper-personal.git
+    # https://ghfast.top/
+    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-ghfast.top(US|美国) ${Font} \n ======== \n"
+    git remote set-url origin https://ghfast.top/https://github.com/lkeme/BiliHelper-personal.git
     ;;
 "2")
     # http://gitclone.com/
@@ -24,19 +24,19 @@ case ${MIRRORS} in
     git remote set-url origin https://gitclone.com/github.com/lkeme/BiliHelper-personal.git
     ;;
 "3")
-    # https://gh.api.99988866.xyz/
-    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-gh.api.99988866.xyz(US|美国) ${Font} \n ======== \n"
-    git remote set-url origin https://gh.api.99988866.xyz/https://github.com/lkeme/BiliHelper-personal.git
+    # https://gh-proxy.com/
+    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-gh-proxy.com(US|美国) ${Font} \n ======== \n"
+    git remote set-url origin https://gh-proxy.com/https://github.com/lkeme/BiliHelper-personal.git
     ;;
 "4")
     # https://githubfast.com/
-    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-githubfast.com(SG|新加坡) ${Font} \n ======== \n"
+    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-githubfast.com(KR|韩国) ${Font} \n ======== \n"
     git remote set-url origin https://githubfast.com/lkeme/BiliHelper-personal.git
     ;;
 "5")
-    # https://github.moeyy.xyz/
-    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-github.moeyy.xyz(SG|新加坡) ${Font} \n ======== \n"
-    git remote set-url origin https://github.moeyy.xyz/https://github.com/lkeme/BiliHelper-personal.git
+    # https://hub.gitmirror.com/
+    echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-hub.gitmirror.com(US|美国) ${Font} \n ======== \n"
+    git remote set-url origin https://hub.gitmirror.com/https://github.com/lkeme/BiliHelper-personal.git
     ;;
 *)
     echo -e "\n ======== \n ${Info} ${GreenBG} 切换源-github.com(RAW|源站) ${Font} \n ======== \n"

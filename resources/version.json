@@ -8,7 +8,7 @@
     "dev_raw_url": "https://raw.githubusercontent.com/lkeme/BiliHelper-personal/dev/resources/version.json",
     "master_purge_url": "https://cdn.staticaly.com/gh/lkeme/BiliHelper-personal/master/resources/version.json",
     "dev_purge_url": "https://cdn.staticaly.com/gh/lkeme/BiliHelper-personal/dev/resources/version.json",
-    "version": "2.4.5.250218",
-    "update_time": "2025-02-18",
+    "version": "2.5.0.250823",
+    "update_time": "2025-08-23",
     "update_description": "程序有更新，请及时线上查看更新哦~"
 }

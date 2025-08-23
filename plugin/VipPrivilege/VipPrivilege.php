@@ -23,6 +23,7 @@ use Bhp\Plugin\Plugin;
 use Bhp\TimeLock\TimeLock;
 use Bhp\User\User;
 use Bhp\Util\Exceptions\NoLoginException;
+use function Amp\delay;
 
 class VipPrivilege extends BasePlugin
 {
@@ -82,6 +83,19 @@ class VipPrivilege extends BasePlugin
     ];
 
     /**
+     * @var array|string[]
+     */
+    protected array $privilege_blacklists = [
+        18 => '淘宝账号查询异常，请退出重试',
+        20 => '饿了么领取活动已经过期~',
+        21 => '超大会员身份状态异常',
+        24 => '请求错误', // 未知
+        25 => '请求错误', // 未知
+        26 => '请求错误', // 正式大会员专属票务优惠券-229减18
+        27 => '请求错误', // 正式漫展-大会员专属票务优惠券169减10
+    ];
+
+    /**
      * @param Plugin $plugin
      */
     public function __construct(Plugin &$plugin)
@@ -117,23 +131,37 @@ class VipPrivilege extends BasePlugin
         // 如果为年度大会员
         if (!User::isYearVip('大会员权益')) return;
         //
-        $privilege_list = $this->myVipPrivilege();
+        $privilege_list = $this->filterCanReceive($this->myVipPrivilege());
+        Log::info('大会员权益: 可领取权益数 ' . count($privilege_list));
         //
         foreach ($privilege_list as $privilege) {
-            // 是否领取状态
-            if ($privilege['state'] != 0) {
-                continue;
-            }
-            // 特殊类型
-            if ($privilege['type'] != 9) {
-                // 领取奖励
-                $this->myVipPrivilegeReceive($privilege['type']);
-            } else {
+            // 随机延迟 5-10秒
+            delay(mt_rand(5, 10));
+            // 特殊类型 9 每日10经验 需要观看视频
+            if ($privilege['type'] == 9) {
                 // 领取额外经验
                 $this->myVipExtraExp();
+                continue;
             }
+            // 领取奖励
+            $this->myVipPrivilegeReceive($privilege['type']);
         }
     }
+
+    /**
+     * 过滤可领取的权益
+     * @param array $privilege_list
+     * @return array
+     */
+    protected function filterCanReceive(array $privilege_list): array
+    {
+        // 是否领取状态 0：未兑换 | 1：已兑换 | 2：未完成（若需要完成）
+        // 黑名单
+        return array_filter($privilege_list, function ($privilege) {
+            return $privilege['state'] == 0 && !array_key_exists($privilege['type'], $this->privilege_blacklists);
+        });
+    }
+
 
     /**
      * 大会员额外经验
@@ -144,7 +172,9 @@ class VipPrivilege extends BasePlugin
         $response = ApiExperience::add();
         //
         if (!$response['code']) {
-            Log::info("大会员额外经验: 领取额外经验成功");
+            Log::notice("大会员额外经验: 领取额外经验成功");
+        } else if ($response['code'] == 69198) {
+            Log::info("大会员额外经验: 用户经验已经领取");
         } else {
             Log::warning("大会员额外经验: 领取额外经验失败  {$response['code']} -> {$response['message']}");
         }
@@ -177,6 +207,7 @@ class VipPrivilege extends BasePlugin
     protected function myVipPrivilegeReceive(int $type): void
     {
         // {"code":0,"message":"0","ttl":1}
+        // {"code":73319,"message":"73319","ttl":1}
         // {-101: "账号未登录", -111: "csrf 校验失败", -400: "请求错误", 69800: "网络繁忙 请稍后重试", 69801: "你已领取过该权益"}
         $response = ApiPrivilege::receive($type);
         // 判断type是否在$this->privilege
@@ -190,10 +221,13 @@ class VipPrivilege extends BasePlugin
             case -101:
                 throw new NoLoginException($response['message']);
             case 0:
-                Log::notice("大会员权益: 领取权益 {$this->privilege[$type]} 成功");
+                Log::notice("大会员权益: 领取权益[$type]成功");
+                break;
+            case 73319:
+                Log::warning("大会员权益: 领取权益[$type]失败，暂时未到可领取时间");
                 break;
             default:
-                Log::warning("大会员权益: 领取权益 {$this->privilege[$type]} 失败  {$response['code']} -> {$response['message']}");
+                Log::warning("大会员权益: 领取权益[$type]失败， {$response['code']} -> {$response['message']}");
                 break;
         }
     }

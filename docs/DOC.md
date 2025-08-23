@@ -201,15 +201,9 @@ $ php app.php test m:d -P VipPoint,Lottery # 多个插件
 ```json
 {
     "registry-mirrors": [
-        "https://0b27f0a81a00f3560fbdc00ddd2f99e0.mirror.swr.myhuaweicloud.com",
-        "https://dockerproxy.com",
-        "https://hub-mirror.c.163.com",
-        "https://mirror.baidubce.com",
-        "https://oyukeh0j.mirror.aliyuncs.com",
-        "https://ypzju6vq.mirror.aliyuncs.com",
-        "https://registry.docker-cn.com",
-        "http://hub-mirror.c.163.com",
-        "https://docker.mirrors.ustc.edu.cn"
+        "https://docker.1ms.run",
+        "https://docker.1panel.live",
+        "https://hub.rat.dev"
     ]
 }
 
@@ -259,11 +253,11 @@ $ -e VERSION=2 # 使用 版本 V2.x.x(默认选项)
 
 ```shell script
 $ -e MIRRORS=0 # 使用 github.com(RAW|源站|默认)
-$ -e MIRRORS=1 # 使用 gitdl.cn(ESP|西班牙)
+$ -e MIRRORS=1 # 使用 ghfast.top(US|美国)
 $ -e MIRRORS=2 # 使用 gitclone.com(CN|中国)
-$ -e MIRRORS=3 # 使用 gh.api.99988866.xyz(US|美国)
+$ -e MIRRORS=3 # 使用 gh-proxy.com(US|美国)
 $ -e MIRRORS=4 # 使用 githubfast.com(KR|韩国)
-$ -e MIRRORS=5 # 使用 github.moeyy.xyz(HK|香港)
+$ -e MIRRORS=5 # 使用 hub.gitmirror.com(US|美国)
 $ -e MIRRORS=custom -e CUSTOM_CLONE_URL=https://github.com/lkeme/BiliHelper-personal.git # 使用 自定义克隆地址
 ```
 

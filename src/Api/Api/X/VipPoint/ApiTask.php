@@ -30,12 +30,26 @@ class ApiTask
     ];
 
     /**
-     * 用户信息
+     * 任务界面信息
+     * https://big.bilibili.com/mobile/bigPoint/task
      * @return array
      */
     public static function combine(): array
     {
         $url = 'https://api.bilibili.com/x/vip_point/task/combine';
+        $payload = [];
+        $headers = array_merge([], self::$headers);
+        return Request::getJson(true, 'app', $url, Sign::common($payload), $headers);
+    }
+
+    /**
+     * 主页界面信息
+     * https://big.bilibili.com/mobile/bigPoint
+     * @return array
+     */
+    public static function homepageCombine(): array
+    {
+        $url = 'https://api.bilibili.com/x/vip_point/homepage/combine';
         $payload = [];
         $headers = array_merge([], self::$headers);
         return Request::getJson(true, 'app', $url, Sign::common($payload), $headers);

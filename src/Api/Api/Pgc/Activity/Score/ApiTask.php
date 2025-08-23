@@ -43,6 +43,7 @@ class ApiTask
         //
         $payload = [
             'disable_rcmd' => '0',
+            'buvid' => Request::getBuvid(),
             'csrf' => $user['csrf'],
             'statistics' => getDevice('app.bili_a.statistics'),
         ];
