@@ -45,7 +45,7 @@
 
 + 阿里云(全量镜像)
 
-```shell script
+```shell
 # 使用帮助
 > https://developer.aliyun.com/composer
 # 使用命令
@@ -54,7 +54,7 @@
 
 + 恢复默认镜像|Composer.phar加速下载
 
-```shell script
+```shell
 > composer config -g --unset repos.packagist
 
 > https://mirrors.cloud.tencent.com/composer/composer.phar
@@ -67,7 +67,7 @@
 
 + cnpkg(全量镜像)
 
-```shell script
+```shell
 # 使用帮助
 > https://php.cnpkg.org/
 # 使用命令
@@ -76,7 +76,7 @@
 
 + 腾讯云(全量镜像)
 
-```shell script
+```shell
 # 使用帮助
 > https://mirrors.cloud.tencent.com/help/composer.html
 # 使用命令
@@ -85,7 +85,7 @@
 
 + PhpComposer(全量镜像)
 
-```shell script
+```shell
 # 使用帮助
 > https://pkg.phpcomposer.com/
 # 使用命令
@@ -94,7 +94,7 @@
 
 + 华为云(全量镜像)
 
-```shell script
+```shell
 # 使用帮助
 > https://mirrors.huaweicloud.com/repository/php/
 # 使用命令
@@ -103,7 +103,7 @@
 
 + 交通大学(非全量镜像)
 
-```shell script
+```shell
 # 使用帮助
 > https://packagist.mirrors.sjtug.sjtu.edu.cn/
 # 使用命令
@@ -118,31 +118,27 @@
 
 1. 下载（克隆）项目代码，初始化项目
 
-```shell script
+```shell
 $ git clone https://github.com/lkeme/BiliHelper-personal.git
 $ cp -r profile/example profile/user
 ```
 
 2. 使用 [composer](https://getcomposer.org/download/) 工具进行安装
 
-```shell script
+```shell
 $ composer install
 ```
 
-[comment]: <> (composer dump-autoload &#40;-o&#41;)
-
-[comment]: <> (composer dumpautoload &#40;-o&#41;)
-
 3. 按照说明修改配置文件 `profile/user/config/user.ini`
 
- ```shell script
+ ```shell
  # 默认只需填写帐号密码，按需求开启其他功能即可
  ...
  ```
 
 4. 运行测试
 
-```shell script
+```shell
 $ php app.php
 # 默认配置user
 $ php app.php m:a 
@@ -152,7 +148,7 @@ $ php app.php m:a
 
 5. 复制一份profile/example配置文件夹，修改账号密码即可
 
- ```shell script
+ ```shell
  # 默认配置 darling {darling}是配置文件名，可任意
  $ php app.php darling m:a 
  # 如果写了用户参数 不带m:a 与上同等效果 
@@ -165,7 +161,7 @@ $ php app.php m:a
 
 7. 命令模式
 
-```shell script
+```shell
 # 获取所有命令
 $ php app.php
  mode:app     m:a    [主要模式] 默认功能
@@ -219,30 +215,23 @@ $ php app.php test m:d -P VipPoint,Lottery # 多个插件
 
 - 通过环境变量进行传入
 
-```shell script
+```shell
 $ docker run -itd --rm -e USER_NAME=你的B站登录账号 -e USER_PASSWORD=你的B站密码 lkeme/bilihelper-personal
 ```
 
 - 通过配置文件进行传入(能保留登录状态，自定义配置)
 
-[//]: # (1. 下载[配置文件]&#40;https://raw.githubusercontent.com/lkeme/BiliHelper-personal/master/conf/user.ini.example&#41;)
-
-[//]: # (2. 修改)
-
-1.
-
-下载 [配置文件夹](https://github.com/lkeme/BiliHelper-personal/tree/master/profile) `注意是文件夹,可以完整下载后提出来`
-
-2. 重命名 `profile/example -> profile/user` , 修改 `profile/user/config/user.ini`
+1. 下载 [代码压缩包](https://ghfast.top/https://github.com/lkeme/BiliHelper-personal/archive/refs/heads/master.zip)，解压后提取`profile`目录
+2. 将`profile/example`重命名为`profile/user`, 修改 `profile/user/config/user.ini`
 3. 通过下面的命令进行挂载并运行
 
-```shell script
+```shell
 $ docker run -itd --rm -v /path/to/your/confFilePath:/app/profile/user lkeme/bilihelper-personal
 ```
 
 - 版本兼容
 
-```shell script
+```shell
 $ -e VERSION=1 # 使用 版本 V1.x.x(兼容处理)
 $ -e VERSION=2 # 使用 版本 V2.x.x(默认选项)
 ```
@@ -251,7 +240,7 @@ $ -e VERSION=2 # 使用 版本 V2.x.x(默认选项)
 
 > 以下加速镜像均为网络收集，感谢公益提供者，如有问题请联系删除
 
-```shell script
+```shell
 $ -e MIRRORS=0 # 使用 github.com(RAW|源站|默认)
 $ -e MIRRORS=1 # 使用 ghfast.top(US|美国)
 $ -e MIRRORS=2 # 使用 gitclone.com(CN|中国)
@@ -261,13 +250,22 @@ $ -e MIRRORS=5 # 使用 hub.gitmirror.com(US|美国)
 $ -e MIRRORS=custom -e CUSTOM_CLONE_URL=https://github.com/lkeme/BiliHelper-personal.git # 使用 自定义克隆地址
 ```
 
-- 相关参数
+- 👉 相关参数
 
-```ps
-  -it 前台运行
-  -itd 后台运行
-  -v 本地文件:容器内部文件 ==> 挂载本地文件到容器中。本地文件路径随便变，容器内部文件路径不能变。
-```
+| 选项     | 简单易懂的含义                                            |
+|--------|----------------------------------------------------|
+| `-i`   | 让你能往容器里输入内容（保持输入通道打开）                              |
+| `-t`   | 给容器“配一个键盘和屏幕”，让它像在电脑前运行一样                          |
+| `-d`   | 让容器在后台悄悄运行，不占当前窗口                                  |
+| `--rm` | 容器一停止，自动删掉它，不留下“垃圾”。（临时测试用，跑完就干净删除，省得手动 docker rm） |
+| `-v`   | 把电脑上的文件夹或文件“共享”给容器用（双向同步）                          |
+
+- ✅ 组合小贴士
+
+| 组合     | 含义                   | 必须 |
+|--------|----------------------|----|
+| `-it`  | 搭配使用，就像“打开一个能打字的控制台” | ✔  |
+| `-itd` | 既能输入又有终端，还在后台跑       | ✔  |
 
 - -v模式使用短信登录
 
@@ -275,15 +273,18 @@ $ -e MIRRORS=custom -e CUSTOM_CLONE_URL=https://github.com/lkeme/BiliHelper-pers
 
 ```shell
 $ docker attach 容器ID
+$ docker attach --sig-proxy=false 容器ID  # 关闭信号代理：本地终端按键（如 Ctrl+C）不会转发给容器进程，防止误关闭容器
 ```
 
 ```
 Q: 容器停止后，容器不见了？
 A: 请删除运行时的 --rm 参数
 
+Q: 短信发送后，容器没有等待输入验证码就退出了？
+A: 检查docker运行参数是否少了(-it/-itd)参数。
+
 Q: docker attach方式使用ctrl+c退出容器，容器会停止运行怎么办？
 A: 请用ctrl+p+q退出容器，容器不会停止运行。
-A1: 添加-sig-proxy=false参数，docker attach --sig-proxy=false 容器ID，ctrl+c退出容器，容器不会停止运行。
 
 Q: 使用portainer容器管理新建的容器，命令行无法输入直接验证失败怎么办？
 A: 在容器设置Advanced container settings -> Commands & logging -> Console -> 勾选 Interactive & TTY (-i -t) ，保存后重新部署容器即可。
@@ -293,7 +294,7 @@ A: 在容器设置Advanced container settings -> Commands & logging -> Console -
 
 - 不需要自动更新
 
-```shell script
+```shell
 $ -e AUTO_UPDATE=0 # 不自动更新
 ```
 
@@ -404,7 +405,7 @@ APP_CALLBACK="https://api.telegram.org/bot<TOKEN>/sendMessage?chat_id=<CHAR_ID>&
 通常可以在直播间页面的 url 获取到它
 
 ```
-http://live.bilibili.com/9522051
+https://live.bilibili.com/9522051
 ```
 
 长位直播间ID获取

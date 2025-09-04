@@ -16,7 +16,8 @@
  */
 
 use Bhp\Api\Vip\ApiExperience;
-use Bhp\Api\Vip\ApiPrivilege;
+use Bhp\Api\Vip\ApiPrivilegeAssets;
+use Bhp\Api\Vip\ApiVipCenter;
 use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
 use Bhp\Plugin\Plugin;
@@ -39,60 +40,6 @@ class VipPrivilege extends BasePlugin
         'author' => 'Lkeme',// 作者
         'priority' => 1107, // 插件优先级
         'cycle' => '24(小时)', // 运行周期
-    ];
-
-    /**
-     * @var array|string[]
-     * BCoin: 1,
-     * MallCoupon: 2,
-     * ComicCoupon: 3,
-     * FreightCoupon: 4,
-     * ComicMallCoupon: 5,
-     * GarbFreeCoupon: 6,
-     * CheeseClasseCoupon: 7,
-     * KingOfGloryCoupon: 8,
-     * LevelAcceleration: 9,
-     * CakeCoupon: 10,
-     * MovieCoupon: 11,
-     * DisneyCoupon: 12,
-     * BirthdayImage: 13,
-     * MovieVoucher: 14,
-     * StarBox: 15,
-     * MagicStone: 16,
-     * GameCoupon: 17
-     */
-    protected array $privilege = [
-        0 => '未知奖励0(未知奖励0)',
-        1 => '年度专享B币赠送(B币券)',
-        2 => '年度专享会员购优惠券(会员购优惠券)',
-        3 => '年度专享漫画礼包(漫画福利券)',
-        4 => '大会员专享会员购包邮券(会员购包邮券)',
-        5 => '年度专享漫画礼包(漫画商城优惠券)',
-        6 => '大会员专享会员体验卡(装扮体验卡)',
-        7 => '大会员专享课堂优惠券(课堂优惠券)',
-        8 => '大会员专享王者荣耀优惠券(游戏优惠券)',
-        9 => '会员观看任意1个视频即可领取，日限1次(额外经验)',
-        10 => '大会员专享蛋糕优惠券(蛋糕优惠券)',
-        11 => '大会员专享电影优惠券(电影优惠券)',
-        12 => '大会员专享迪士尼优惠券(迪士尼优惠券)',
-        13 => '大会员专享生日礼图(生日礼图)',
-        14 => '大会员专享电影券(电影券)',
-        15 => '年度专享会员购星光宝盒88折券(折扣券)',
-        16 => '大会员专享会员购10魔晶(魔晶)',
-        17 => '大会员专享游戏优惠券(游戏优惠券)',
-    ];
-
-    /**
-     * @var array|string[]
-     */
-    protected array $privilege_blacklists = [
-        18 => '淘宝账号查询异常，请退出重试',
-        20 => '饿了么领取活动已经过期~',
-        21 => '超大会员身份状态异常',
-        24 => '请求错误', // 未知
-        25 => '请求错误', // 未知
-        26 => '请求错误', // 正式大会员专属票务优惠券-229减18
-        27 => '请求错误', // 正式漫展-大会员专属票务优惠券169减10
     ];
 
     /**
@@ -121,6 +68,7 @@ class VipPrivilege extends BasePlugin
         TimeLock::setTimes(TimeLock::timing(23) + mt_rand(10, 30) * 60);
     }
 
+
     /**
      * 领取
      * @return void
@@ -131,7 +79,12 @@ class VipPrivilege extends BasePlugin
         // 如果为年度大会员
         if (!User::isYearVip('大会员权益')) return;
         //
-        $privilege_list = $this->filterCanReceive($this->myVipPrivilege());
+        $privilege_list = array_merge($this->vipExtraEx(), $this->filterCanReceive());
+        if (empty($privilege_list)) {
+            Log::info('大会员权益: 当前无可领取权益');
+            return;
+        }
+
         Log::info('大会员权益: 可领取权益数 ' . count($privilege_list));
         //
         foreach ($privilege_list as $privilege) {
@@ -140,26 +93,103 @@ class VipPrivilege extends BasePlugin
             // 特殊类型 9 每日10经验 需要观看视频
             if ($privilege['type'] == 9) {
                 // 领取额外经验
-                $this->myVipExtraExp();
+                $this->extraExp();
                 continue;
             }
             // 领取奖励
-            $this->myVipPrivilegeReceive($privilege['type']);
+            $this->privilegeAssetReceive($privilege);
         }
     }
 
     /**
+     * 大会员额外权益
+     * @return array|array[]
+     */
+    protected function vipExtraEx(): array
+    {
+        $response = ApiVipCenter::v2();
+        //
+        if ($response['code']) {
+            Log::warning("大会员权益: 获取大会员额外经验领取状态失败 {$response['code']} -> {$response['message']}");
+            return [];
+        }
+        //data.experience.state 0-未领取 1-已领取
+        if (isset($response['data']['experience']['state']) && $response['data']['experience']['state'] == 0) {
+            return [
+                [
+                    'type' => 9,
+                    'title' => '专属等级加速包',
+                    'token' => '',
+                    'state' => 0,
+                    'customized_text' => '每日10经验',
+                ]
+            ];
+        }
+        return [];
+    }
+
+
+    /**
      * 过滤可领取的权益
-     * @param array $privilege_list
      * @return array
      */
-    protected function filterCanReceive(array $privilege_list): array
+    protected function filterCanReceive(): array
     {
-        // 是否领取状态 0：未兑换 | 1：已兑换 | 2：未完成（若需要完成）
-        // 黑名单
-        return array_filter($privilege_list, function ($privilege) {
-            return $privilege['state'] == 0 && !array_key_exists($privilege['type'], $this->privilege_blacklists);
+        $response = ApiPrivilegeAssets::list();
+        // 请求失败
+        if ($response['code']) {
+            Log::warning("大会员权益: 获取APP端权益列表失败 {$response['code']} -> {$response['message']}");
+            return [];
+        }
+        // 过滤tabs
+        $tab = array_filter($response['data']['tabs'], function ($tab) {
+            return $tab['name'] == '站内福利' && $tab['type'] == 1 && $tab['type_code'] == 'welfare';
         });
+        if (empty($tab)) {
+            Log::warning("大会员权益: 获取APP端权益列表失败，未找到站内福利");
+            return [];
+        }
+        $tab = array_values($tab)[0];
+        /// 遍历groups
+        $privilege_list = [];
+        foreach ($tab['groups'] as $group) {
+            // 跳过年度专享游戏礼包
+            if (isset($group['title']) && $group['title'] === '年度专享游戏礼包') {
+                continue;
+            }
+            // 特色权益二选一，只选B币券
+            if (isset($group['title']) && $group['title'] === '特色权益二选一') {
+                foreach ($group['privilege_skus'] as $sku) {
+                    if ($sku['title'] === 'B币券' && isset($sku['exchange']['can_exchange'], $sku['exchange']['hit_exchange_limit']) && $sku['exchange']['can_exchange'] && !$sku['exchange']['hit_exchange_limit']) {
+                        $customized_text = $this->getCustomizedText($sku);
+                        $privilege_list[] = [
+                            'type' => $sku['type'],
+                            'title' => $sku['title'],
+                            'token' => $sku['token'],
+                            'state' => $sku['exchange']['state'] ?? 0,
+                            'customized_text' => $customized_text,
+                        ];
+                        break; // 只选一个
+                    }
+                }
+                continue;
+            }
+            // 其他group，遍历privilege_skus
+            foreach ($group['privilege_skus'] as $sku) {
+                if (isset($sku['exchange']['can_exchange'], $sku['exchange']['hit_exchange_limit']) && $sku['exchange']['can_exchange'] && !$sku['exchange']['hit_exchange_limit']) {
+                    $customized_text = $this->getCustomizedText($sku);
+                    $privilege_list[] = [
+                        'type' => $sku['type'],
+                        'title' => $sku['title'],
+                        'token' => $sku['token'],
+                        'state' => $sku['exchange']['state'] ?? 0,
+                        'customized_text' => $customized_text,
+                    ];
+                }
+            }
+        }
+        //
+        return $privilege_list;
     }
 
 
@@ -167,7 +197,7 @@ class VipPrivilege extends BasePlugin
      * 大会员额外经验
      * @return void
      */
-    protected function myVipExtraExp(): void
+    protected function extraExp(): void
     {
         $response = ApiExperience::add();
         //
@@ -182,54 +212,35 @@ class VipPrivilege extends BasePlugin
 
 
     /**
-     * 获取我的大会员权益列表
-     * @return array
-     */
-    protected function myVipPrivilege(): array
-    {
-        // {"code":0,"message":"0","ttl":1,"data":{"list":[{"type":1,"state":0,"expire_time":1622476799},{"type":2,"state":0,"expire_time":1622476799}]}}
-        $response = ApiPrivilege::my();
-        //
-        if ($response['code']) {
-            Log::warning("大会员权益: 获取权益列表失败 {$response['code']} -> {$response['message']}");
-            return [];
-        } else {
-            Log::info('大会员权益: 获取权益列表成功 ' . count($response['data']['list']));
-            return $response['data']['list'];
-        }
-    }
-
-    /**
-     * 领取我的大会员权益
-     * @param int $type
+     * 领取大会员权益
+     * @param array $asset
      * @throws NoLoginException
      */
-    protected function myVipPrivilegeReceive(int $type): void
+    protected function privilegeAssetReceive(array $asset): void
     {
-        // {"code":0,"message":"0","ttl":1}
-        // {"code":73319,"message":"73319","ttl":1}
-        // {-101: "账号未登录", -111: "csrf 校验失败", -400: "请求错误", 69800: "网络繁忙 请稍后重试", 69801: "你已领取过该权益"}
-        $response = ApiPrivilege::receive($type);
-        // 判断type是否在$this->privilege
-        if (!array_key_exists($type, $this->privilege)) {
-            $type = "未知奖励$type";
-        } else {
-            $type = $this->privilege[$type];
-        }
+        $response = ApiPrivilegeAssets::exchange($asset['token']);
         //
         switch ($response['code']) {
             case -101:
                 throw new NoLoginException($response['message']);
             case 0:
-                Log::notice("大会员权益: 领取权益[$type]成功");
-                break;
-            case 73319:
-                Log::warning("大会员权益: 领取权益[$type]失败，暂时未到可领取时间");
+                Log::notice("大会员权益: 领取权益[{$asset['title']} * {$asset['customized_text']}]成功");
                 break;
             default:
-                Log::warning("大会员权益: 领取权益[$type]失败， {$response['code']} -> {$response['message']}");
+                Log::warning("大会员权益: 领取权益[{$asset['title']} * {$asset['customized_text']}]失败 {$response['code']} -> {$response['message']}");
                 break;
         }
     }
 
+    /**
+     * 获取并格式化权益自定义文本
+     * @param array $sku
+     * @return string
+     */
+    protected function getCustomizedText(array $sku): string
+    {
+        $customized = $sku['icon']['customized'] ?? [];
+        if (empty($customized)) return '';
+        return ($customized['number'] ?? '') . ($customized['currency_symbol'] ?? '') . ($customized['unit'] ?? '') . ($customized['logo_text'] ?? '');
+    }
 }
