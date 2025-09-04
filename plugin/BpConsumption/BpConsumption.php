@@ -77,9 +77,15 @@ class BpConsumption extends BasePlugin
         if ($bp_balance != 5) return;
         // 消费B币充电
         if (getConf('bp_consumption.bp2charge', false, 'bool')) {
-            // UID为空就切换成自己的
+            // UID为空就切换成作者的
+            $up_mid = getConf('bp_consumption.bp2charge_uid', 6580464, 'int');
+            // 额外判断 现在不能给自己充电
             $user = User::parseCookie();
-            $up_mid = getConf('bp_consumption.bp2charge_uid', intval($user['uid']), 'int');
+            if ($up_mid == intval($user['uid'])) {
+                Log::warning("消费B币券: 充电UID不能为自己 {$up_mid}，请检查设置项");
+                return;
+            }
+
             $this->BP2charge($up_mid, $bp_balance);
             return;
         }
