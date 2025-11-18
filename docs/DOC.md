@@ -229,6 +229,13 @@ $ docker run -itd --rm -e USER_NAME=你的B站登录账号 -e USER_PASSWORD=你�
 $ docker run -itd --rm -v /path/to/your/confFilePath:/app/profile/user lkeme/bilihelper-personal
 ```
 
+- 通过配置文件进行传入且使用验证码(示例命令)
+
+```shell
+$ docker run -itd -e MIRRORS=2 -e CAPTCHA=1 -e CAPTCHA_HOST=0.0.0.0 -e CAPTCHA_PORT=50001 -p 50001:50001 -v
+ /your/path/bh/profile/user:/app/profile/user lkeme/bilihelper-personal
+```
+
 - 版本兼容
 
 ```shell

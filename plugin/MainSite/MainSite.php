@@ -175,7 +175,7 @@ class MainSite extends BasePlugin
      */
     protected function reward(string $aid): void
     {
-        $response = ApiCoin::coin($aid);
+        $response = ApiCoin::appCoin($aid);
         //
         switch ($response['code']) {
             case -101:
@@ -184,6 +184,7 @@ class MainSite extends BasePlugin
                 Log::notice("主站任务: $aid 投币成功");
                 break;
             default:
+                // Log::info(json_encode($response, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
                 Log::warning("主站任务: $aid 投币失败 {$response['code']} -> {$response['message']}");
         }
     }

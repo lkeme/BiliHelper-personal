@@ -26,6 +26,7 @@ trait PointInfo
      */
     public function pointInfo(array $data, string $name): bool
     {
+        // 0：成功 、-101：账号未登录 、-401：非法访问 、-403：访问权限不足 、-111：csrf 校验失败 、-400：请求错误 、69800：网络繁忙 请稍后再试 、69801：你已领取过该权益
         $ts = date('Y-m-d H:i:s', $data['data']['current_ts']);
         $point = $data['data']['point_info']['point'];
         Log::notice("大会员积分@$name: 截至 $ts 您当前拥有 $point 个积分");
