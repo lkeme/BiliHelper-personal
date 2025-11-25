@@ -83,6 +83,10 @@ class VipPoint extends BasePlugin
      */
     protected array $target_tasks = [
 //        'dressUp' => '使用免费体验装扮权益',
+//        'tvodbuy' => '购买单点付费影片',
+//        'ogvwatchnew' => '观看剧集内容',
+//        'offlinetask' => '购买联动线下门店商品',
+//        'vipmallbuy'=>'购买指定会员购商品',
 
         'signIn' => '每日签到',
         'bonus' => '大会员福利大积分',
