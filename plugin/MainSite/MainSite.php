@@ -78,7 +78,8 @@ class MainSite extends BasePlugin
         if ($this->watchTask() && $this->shareTask() && $this->coinTask()) {
             TimeLock::setTimes(TimeLock::timing(10));
         } else {
-            TimeLock::setTimes(3600);
+            // 失败重试时间 1~3小时 尝试通过延迟调整-403
+            TimeLock::setTimes(mt_rand(60, 180) * 60);
         }
         // 缓存结束
         Cache::set('records', $this->records);
@@ -340,7 +341,7 @@ class MainSite extends BasePlugin
                 $this->records[$key][] = $this->getKey();
                 return true;
             default:
-                Log::warning("主站任务: $aid 分享失败 {$response['code']} -> {$response['message']}");
+                Log::warning("主站任务: $aid 分享失败 {$response['code']} -> {$response['message']}，稍后将重试");
                 return false;
         }
     }
