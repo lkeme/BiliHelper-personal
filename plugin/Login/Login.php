@@ -234,7 +234,8 @@ class Login extends BasePlugin
         $pc_cookie = getU('pc_cookie');
         // 判断cookie里是否存在`buvid3`字段
         if (str_contains($pc_cookie, 'buvid3')) {
-            Log::info('CookiePatch: buvid3已存在，尝试更新Cookie补丁');
+            Log::info('CookiePatch: buvid3已存在');
+            return;
         } else {
             Log::warning('CookiePatch: buvid3不存在，尝试获取Cookie补丁');
         }
