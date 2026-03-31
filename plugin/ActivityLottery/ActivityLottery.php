@@ -24,7 +24,6 @@ use Bhp\Plugin\Plugin;
 use Bhp\Request\Request;
 use Bhp\Scheduler\TaskResult;
 use Bhp\Util\GhProxy\GhProxy;
-use function Amp\delay;
 
 class ActivityLottery extends BasePlugin implements PluginTaskInterface
 {
@@ -79,13 +78,9 @@ class ActivityLottery extends BasePlugin implements PluginTaskInterface
             return TaskResult::nextDayAt(7, 30);
         }
 
-        delay(1.0);
         $this->fetchRemoteInfos();
-        delay(1.0);
         $this->addMyTimes();
-        delay(1.0);
         $this->getMyTimes();
-        delay(1.0);
         $this->doMyTimes();
         $this->initConfig(true);
 

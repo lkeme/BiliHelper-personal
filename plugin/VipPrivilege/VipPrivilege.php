@@ -15,6 +15,7 @@
  *  |_____/ |_| |_____| |_| |_| |_| |_____| |_____| |_|     |_____| |_|  \_\
  */
 
+use Bhp\Cache\Cache;
 use Bhp\Api\Vip\ApiExperience;
 use Bhp\Api\Vip\ApiPrivilegeAssets;
 use Bhp\Api\Vip\ApiVipCenter;
@@ -25,10 +26,13 @@ use Bhp\Plugin\Plugin;
 use Bhp\Scheduler\TaskResult;
 use Bhp\User\User;
 use Bhp\Util\Exceptions\NoLoginException;
-use function Amp\delay;
 
 class VipPrivilege extends BasePlugin implements PluginTaskInterface
 {
+    private const CACHE_SCOPE = 'VipPrivilege';
+    private const CACHE_KEY = 'pending_privileges';
+    private const CACHE_DATE_KEY = 'pending_privileges_date';
+
     /**
      * 插件信息
      * @var array|string[]
@@ -48,6 +52,7 @@ class VipPrivilege extends BasePlugin implements PluginTaskInterface
      */
     public function __construct(Plugin &$plugin)
     {
+        Cache::initCache(self::CACHE_SCOPE);
         $this->bootPlugin($plugin, true);
     }
 
@@ -57,6 +62,7 @@ class VipPrivilege extends BasePlugin implements PluginTaskInterface
             return TaskResult::keepSchedule();
         }
 
+        $this->resetTaskResult();
         try {
             $this->receiveTask();
         } catch (NoLoginException $e) {
@@ -64,7 +70,7 @@ class VipPrivilege extends BasePlugin implements PluginTaskInterface
             return TaskResult::after(3600);
         }
 
-        return TaskResult::nextAt(23, 0, 0, 10, 30);
+        return $this->resolveTaskResult(TaskResult::nextAt(23, 0, 0, 10, 30));
     }
 
 
@@ -78,25 +84,37 @@ class VipPrivilege extends BasePlugin implements PluginTaskInterface
         // 如果为年度大会员
         if (!User::isYearVip('大会员权益')) return;
         //
-        $privilege_list = array_merge($this->vipExtraEx(), $this->filterCanReceive());
+        $privilege_list = $this->loadPendingPrivileges();
+        if ($privilege_list === []) {
+            $privilege_list = array_merge($this->vipExtraEx(), $this->filterCanReceive());
+            $this->savePendingPrivileges($privilege_list);
+        }
+
         if (empty($privilege_list)) {
             Log::info('大会员权益: 当前无可领取权益');
             return;
         }
 
-        Log::info('大会员权益: 可领取权益数 ' . count($privilege_list));
-        //
-        foreach ($privilege_list as $privilege) {
-            delay((float)mt_rand(5, 10));
-            // 特殊类型 9 每日10经验 需要观看视频
-            if ($privilege['type'] == 9) {
-                // 领取额外经验
-                $this->extraExp();
-                continue;
-            }
-            // 领取奖励
+        Log::info('大会员权益: 待领取权益数 ' . count($privilege_list));
+        $privilege = array_shift($privilege_list);
+        if (!is_array($privilege)) {
+            $this->clearPendingPrivileges();
+            return;
+        }
+
+        if (($privilege['type'] ?? 0) == 9) {
+            $this->extraExp();
+        } else {
             $this->privilegeAssetReceive($privilege);
         }
+
+        if ($privilege_list === []) {
+            $this->clearPendingPrivileges();
+            return;
+        }
+
+        $this->savePendingPrivileges($privilege_list);
+        $this->scheduleAfter((float)mt_rand(5, 10), 'continue vip privilege queue');
     }
 
     /**
@@ -240,5 +258,36 @@ class VipPrivilege extends BasePlugin implements PluginTaskInterface
         $customized = $sku['icon']['customized'] ?? [];
         if (empty($customized)) return '';
         return ($customized['number'] ?? '') . ($customized['currency_symbol'] ?? '') . ($customized['unit'] ?? '') . ($customized['logo_text'] ?? '');
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    protected function loadPendingPrivileges(): array
+    {
+        $today = date('Y-m-d');
+        $savedDate = Cache::get(self::CACHE_DATE_KEY, self::CACHE_SCOPE);
+        if (!is_string($savedDate) || $savedDate !== $today) {
+            return [];
+        }
+
+        $privileges = Cache::get(self::CACHE_KEY, self::CACHE_SCOPE);
+
+        return is_array($privileges) ? array_values($privileges) : [];
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $privileges
+     */
+    protected function savePendingPrivileges(array $privileges): void
+    {
+        Cache::set(self::CACHE_DATE_KEY, date('Y-m-d'), self::CACHE_SCOPE);
+        Cache::set(self::CACHE_KEY, array_values($privileges), self::CACHE_SCOPE);
+    }
+
+    protected function clearPendingPrivileges(): void
+    {
+        Cache::set(self::CACHE_DATE_KEY, '', self::CACHE_SCOPE);
+        Cache::set(self::CACHE_KEY, [], self::CACHE_SCOPE);
     }
 }

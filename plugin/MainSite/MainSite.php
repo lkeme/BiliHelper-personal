@@ -15,28 +15,31 @@
  *  |_____/ |_| |_____| |_| |_| |_| |_____| |_____| |_|     |_____| |_|  \_\
  */
 
-use Bhp\Api\Api\X\Player\ApiPlayer;
-use Bhp\Api\DynamicSvr\ApiDynamicSvr;
 use Bhp\Api\Video\ApiCoin;
 use Bhp\Api\Video\ApiShare;
 use Bhp\Api\Video\ApiWatch;
 use Bhp\Api\Video\ApiVideo;
 use Bhp\Log\Log;
+use Bhp\Plugin\Builtin\MainSite\MainSiteArchiveService;
+use Bhp\Plugin\Builtin\MainSite\MainSiteRecordStore;
+use Bhp\Plugin\Builtin\MainSite\MainSiteRuntimeState;
 use Bhp\Plugin\BasePlugin;
 use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
 use Bhp\Scheduler\TaskResult;
 use Bhp\User\User;
-use Bhp\Util\ArrayR\ArrayR;
 use Bhp\Util\Exceptions\NoLoginException;
-use Bhp\Cache\Cache;
 
 class MainSite extends BasePlugin implements PluginTaskInterface
 {
     /**
-     * @var array|array[]
+     * @var MainSiteRuntimeState|null
      */
-    protected array $records = [];
+    protected ?MainSiteRuntimeState $state = null;
+
+    protected ?MainSiteRecordStore $recordStore = null;
+
+    protected ?MainSiteArchiveService $archiveService = null;
 
     /**
      * 插件信息
@@ -57,7 +60,6 @@ class MainSite extends BasePlugin implements PluginTaskInterface
      */
     public function __construct(Plugin &$plugin)
     {
-        Cache::initCache();
         $this->bootPlugin($plugin, true);
     }
 
@@ -67,19 +69,25 @@ class MainSite extends BasePlugin implements PluginTaskInterface
             return TaskResult::keepSchedule();
         }
 
-        $this->records = ($tmp = Cache::get('records')) ? $tmp : $this->initRecords();
+        $this->resetTaskResult();
+        $this->state = MainSiteRuntimeState::bootstrap(
+            $this->recordStore()->load(),
+            $this->recordStore()->defaults(),
+        );
 
         try {
             $success = $this->watchTask() && $this->shareTask() && $this->coinTask();
         } catch (NoLoginException $e) {
-            Cache::set('records', $this->records);
+            $this->persistState();
             Log::warning("主站任务: {$e->getMessage()}");
             return TaskResult::after(3600);
         }
 
-        Cache::set('records', $this->records);
+        $this->persistState();
 
-        return $success ? TaskResult::nextAt(10) : TaskResult::after(mt_rand(60, 180) * 60);
+        return $this->resolveTaskResult(
+            $success ? TaskResult::nextAt(10) : TaskResult::after(mt_rand(60, 180) * 60)
+        );
     }
 
     /**
@@ -103,13 +111,10 @@ class MainSite extends BasePlugin implements PluginTaskInterface
      */
     protected function fetchCustomArchives(int $num = 30): array
     {
-        if ($this->config('main_site.fetch_aids_mode') == 'random') {
-            // 随机热门稿件榜单
-            return $this->getTopArchives($num);
-        } else {
-            // 固定获取关注UP稿件榜单, 不足会随机补全
-            return $this->getFollowUpArchives($num);
-        }
+        return $this->archiveService()->fetchPreferredArchives(
+            (string)$this->config('main_site.fetch_aids_mode', 'random'),
+            $num
+        );
     }
 
 
@@ -122,6 +127,7 @@ class MainSite extends BasePlugin implements PluginTaskInterface
     protected function coinTask(string $key = 'coin'): bool
     {
         if (!$this->config('main_site.add_coin', false, 'bool')) return true;
+        $state = $this->state();
         // 已满6级
         if ($this->config('main_site.when_lv6_stop_coin', false, 'bool')) {
             $userInfo = User::userNavInfo();
@@ -131,37 +137,53 @@ class MainSite extends BasePlugin implements PluginTaskInterface
             }
         };
         //
-        if (in_array($this->getKey(), $this->records[$key])) return true;
+        if ($state->hasMarker($key, $this->getKey())) return true;
+        $pendingCoins = $state->pendingCoins();
+        if ($pendingCoins === []) {
         // 预计数量 失败默认0  避免损失
-        $estimate_num = $this->config('main_site.add_coin_num', 0, 'int');
+            $estimate_num = $this->config('main_site.add_coin_num', 0, 'int');
         // 库存数量
-        $stock_num = $this->getCoinStock();
-        $already_num = $this->getCoinAlready();
+            $stock_num = $this->getCoinStock();
+            $already_num = $this->getCoinAlready();
         // 实际数量 处理硬币库存少于预计数量
-        $actual_num = intval(min($estimate_num, $stock_num)) - $already_num;
+            $actual_num = intval(min($estimate_num, $stock_num)) - $already_num;
         //
-        Log::info("主站任务: 硬币库存 $stock_num 预投 $estimate_num 已投 $already_num 还需投币 $actual_num");
+            Log::info("主站任务: 硬币库存 $stock_num 预投 $estimate_num 已投 $already_num 还需投币 $actual_num");
         // 上限
-        if ($actual_num <= 0) {
-            Log::notice('主站任务: 今日投币上限已满');
-            // 插入
-            $this->records[$key][] = $this->getKey();
-            return true;
-        }
+            if ($actual_num <= 0) {
+                Log::notice('主站任务: 今日投币上限已满');
+                $state->markCompleted($key, $this->getKey());
+                return true;
+            }
         // 稿件列表
-        $aids = $this->fetchCustomArchives($actual_num);
+            $aids = $this->fetchCustomArchives($actual_num);
         // 从二维数组里取出aid
-        $aids = array_column($aids, 'aid');
+            $aids = array_map('strval', array_column($aids, 'aid'));
         //
-        Log::info("主站任务: 预投币稿件 " . implode(" ", $aids));
-        // 投币
-        foreach ($aids as $aid) {
-            $this->reward((string)$aid);
-            //
-            sleep(1);
+            Log::info("主站任务: 预投币稿件 " . implode(" ", $aids));
+            $state->setPendingCoins($aids);
+            $pendingCoins = $state->pendingCoins();
         }
-        // 插入
-        $this->records[$key][] = $this->getKey();
+
+        if ($pendingCoins === []) {
+            return false;
+        }
+
+        $aid = $pendingCoins[0];
+        if (!$this->reward((string)$aid)) {
+            $this->scheduleAfter(60.0);
+            return false;
+        }
+
+        array_shift($pendingCoins);
+        if ($pendingCoins !== []) {
+            $state->setPendingCoins($pendingCoins);
+            $this->scheduleAfter(1.0);
+            return false;
+        }
+
+        $state->clearPendingCoins();
+        $state->markCompleted($key, $this->getKey());
         return true;
     }
 
@@ -171,7 +193,7 @@ class MainSite extends BasePlugin implements PluginTaskInterface
      * @return void
      * @throws NoLoginException
      */
-    protected function reward(string $aid): void
+    protected function reward(string $aid): bool
     {
         $response = ApiCoin::appCoin($aid);
         //
@@ -180,10 +202,10 @@ class MainSite extends BasePlugin implements PluginTaskInterface
                 throw new NoLoginException($response['message']);
             case 0:
                 Log::notice("主站任务: $aid 投币成功");
-                break;
+                return true;
             default:
-                // Log::info(json_encode($response, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
                 Log::warning("主站任务: $aid 投币失败 {$response['code']} -> {$response['message']}");
+                return false;
         }
     }
 
@@ -193,67 +215,6 @@ class MainSite extends BasePlugin implements PluginTaskInterface
      * @param int $ps
      * @return array
      */
-    protected function getTopArchives(int $num, int $ps = 30): array
-    {
-        $response = ApiVideo::dynamicRegion($ps);
-        //
-        if ($response['code']) {
-            Log::warning("主站任务: 获取首页推荐失败 {$response['code']} -> {$response['message']}");
-            return $this->getTopFeedRCMDArchives($num);
-        }
-        return ArrayR::toSlice($response['data']['archives'], $num);
-    }
-
-    /**
-     * 获取榜单稿件列表
-     * @param int $num
-     * @return array
-     */
-    protected function getTopFeedRCMDArchives(int $num): array
-    {
-        $new_archives = [];
-        //
-        $response = ApiVideo::topFeedRCMD();
-        $archives = ArrayR::toSlice($response['data']['item'], $num);
-        //
-        foreach ($archives as $archive) {
-            $archive['aid'] = $archive['id'];
-            unset($archive['id']);
-            $new_archives[] = $archive;
-        }
-        return $new_archives;
-    }
-
-    /**
-     * 获取关注UP稿件列表
-     * @param int $num
-     * @return array
-     */
-    protected function getFollowUpArchives(int $num): array
-    {
-        $archives = [];
-        //
-        $response = ApiDynamicSvr::followUpDynamic();
-        //
-        if ($response['code']) {
-            Log::warning("主站任务: 获取UP稿件失败 {$response['code']} -> {$response['message']}");
-        } else {
-            foreach ($response['data']['cards'] as $i => $card) {
-                // if ($i >= $num) break;
-                // JSON_ERROR_CTRL_CHAR
-                $temp = preg_replace('/[\x00-\x1F]/', '', $card['card']);
-                $archives[] = json_decode($temp, true);
-            }
-            $archives = ArrayR::toSlice($archives, $num, false);
-        }
-        // 此处补全缺失
-        if (($t_num = count($archives)) < $num) {
-            Log::warning("主站任务: 获取UP稿件数量不足，将自动补全随机稿件。");
-            $archives = array_merge($archives, $this->getTopArchives($num - $t_num));
-        }
-        return $archives;
-    }
-
     /**
      * 已投币数量
      * @return int
@@ -321,10 +282,10 @@ class MainSite extends BasePlugin implements PluginTaskInterface
     {
         if (!$this->config('main_site.share', false, 'bool')) return true;
         //
-        if (in_array($this->getKey(), $this->records[$key])) return true;
+        if ($this->state()->hasMarker($key, $this->getKey())) return true;
         //
         $archives = $this->fetchCustomArchives(10);
-        $archive = array_pop($archives);
+        $archive = $this->archiveService()->takeLastArchive($archives);
         $aid = (string)$archive['aid'];
 
         //
@@ -334,8 +295,7 @@ class MainSite extends BasePlugin implements PluginTaskInterface
                 throw new NoLoginException($response['message']);
             case 0:
                 Log::notice("主站任务: $aid 分享成功");
-                // 插入
-                $this->records[$key][] = $this->getKey();
+                $this->state()->markCompleted($key, $this->getKey());
                 return true;
             default:
                 Log::warning("主站任务: $aid 分享失败 {$response['code']} -> {$response['message']}，稍后将重试");
@@ -352,10 +312,15 @@ class MainSite extends BasePlugin implements PluginTaskInterface
     {
         if (!$this->config('main_site.watch', false, 'bool')) return true;
         //
-        if (in_array($this->getKey(), $this->records[$key])) return true;
+        $state = $this->state();
+        if ($state->hasMarker($key, $this->getKey())) return true;
+        $pendingWatch = $state->pendingWatch();
+        if ($pendingWatch !== null) {
+            return $this->finishPendingWatch($pendingWatch, $key);
+        }
         //
         $archives = $this->fetchCustomArchives(10);
-        $archive = array_pop($archives);
+        $archive = $this->archiveService()->takeLastArchive($archives);
         //
         if (isset($archive['duration']) && is_int($archive['duration'])) {
             $info = $archive;
@@ -380,7 +345,27 @@ class MainSite extends BasePlugin implements PluginTaskInterface
             Log::warning("主站任务: $aid 观看失败 {$response['code']} -> {$response['message']}");
             return false;
         }
-        sleep(5);
+        $state->setPendingWatch([
+            'aid' => $aid,
+            'cid' => $cid,
+            'duration' => $duration,
+        ]);
+        $this->scheduleAfter(5.0);
+        return false;
+    }
+
+    /**
+     * @param array<string, int|string> $pendingWatch
+     */
+    protected function finishPendingWatch(array $pendingWatch, string $key): bool
+    {
+        $aid = (string)($pendingWatch['aid'] ?? '');
+        $cid = (string)($pendingWatch['cid'] ?? '');
+        $duration = (int)($pendingWatch['duration'] ?? 0);
+        if ($aid === '' || $cid === '' || $duration <= 0) {
+            $this->state()->clearPendingWatch();
+            return false;
+        }
         //
         $data = [];
         $data['played_time'] = $duration - 1;
@@ -390,12 +375,13 @@ class MainSite extends BasePlugin implements PluginTaskInterface
         $response = ApiWatch::heartbeat($aid, $cid, $duration, $data);
         if ($response['code']) {
             Log::warning("主站任务: $aid 观看失败 {$response['code']} -> {$response['message']}");
+            $this->scheduleAfter(60.0);
             return false;
         }
         //
         Log::notice("主站任务: $aid 观看成功");
-        // 插入
-        $this->records[$key][] = $this->getKey();
+        $this->state()->clearPendingWatch();
+        $this->state()->markCompleted($key, $this->getKey());
         return true;
     }
 
@@ -406,15 +392,7 @@ class MainSite extends BasePlugin implements PluginTaskInterface
      */
     protected function getArchiveInfo(string $aid): array
     {
-        $response = ApiPlayer::pageList($aid);
-        //
-        if ($response['code'] == -404 || !isset($response['data'])) {
-            Log::warning("主站任务: $aid 获取稿件信息失败 {$response['code']} -> {$response['message']}");
-            return [];
-        }
-        $archive_info = $response['data'][0];
-        $archive_info['aid'] = $aid;
-        return $archive_info;
+        return $this->archiveService()->fetchArchiveInfo($aid);
     }
 
 
@@ -441,6 +419,35 @@ class MainSite extends BasePlugin implements PluginTaskInterface
     protected function getKey(): string
     {
         return substr(md5(md5(date("Y-m-d", time()))), 8, 8);
+    }
+
+    protected function state(): MainSiteRuntimeState
+    {
+        if ($this->state === null) {
+            $this->state = MainSiteRuntimeState::bootstrap(
+                $this->recordStore()->load(),
+                $this->recordStore()->defaults(),
+            );
+        }
+
+        return $this->state;
+    }
+
+    protected function persistState(): void
+    {
+        if ($this->state !== null) {
+            $this->recordStore()->save($this->state->all());
+        }
+    }
+
+    protected function recordStore(): MainSiteRecordStore
+    {
+        return $this->recordStore ??= new MainSiteRecordStore();
+    }
+
+    protected function archiveService(): MainSiteArchiveService
+    {
+        return $this->archiveService ??= new MainSiteArchiveService();
     }
 
 }

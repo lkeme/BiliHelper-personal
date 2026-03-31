@@ -121,6 +121,7 @@ class VipPoint extends BasePlugin implements PluginTaskInterface
             return TaskResult::keepSchedule();
         }
 
+        $this->resetTaskResult();
         $this->initTask();
 
         if (!User::isVip($this->title)) {
@@ -138,7 +139,7 @@ class VipPoint extends BasePlugin implements PluginTaskInterface
 
             $this->executeTask($target, $value);
 
-            return TaskResult::after(5 * 60);
+            return $this->resolveTaskResult(TaskResult::after(5 * 60));
         }
 
         return TaskResult::nextAt(9);
@@ -170,12 +171,17 @@ class VipPoint extends BasePlugin implements PluginTaskInterface
     protected function initTask(): void
     {
         $now = date("Y-m-d");
-        if (isset($this->tasks[$now])) return;
-        //
-        $this->setTask('start', true);
-        //
-        foreach ($this->target_tasks as $target => $_) {
-            $this->setTask($target, false);
+        if (!isset($this->tasks[$now])) {
+            $this->setTask('start', true);
+            $this->setTask('DelayedAction', null);
+            foreach ($this->target_tasks as $target => $_) {
+                $this->setTask($target, false);
+            }
+            return;
+        }
+
+        if (!array_key_exists('DelayedAction', $this->tasks[$now])) {
+            $this->setTask('DelayedAction', null);
         }
     }
 

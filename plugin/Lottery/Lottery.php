@@ -26,7 +26,6 @@ use Bhp\Request\Request;
 use Bhp\Scheduler\TaskResult;
 use Bhp\User\User;
 use Bhp\Util\Common\Common;
-use function Amp\delay;
 
 
 class Lottery extends BasePlugin implements PluginTaskInterface
@@ -120,8 +119,6 @@ class Lottery extends BasePlugin implements PluginTaskInterface
         $this->fetchValidArticleUrls($uid);
         //
         $this->fetchValidDynamicUrl($uid);
-        //
-        delay(3);
     }
 
     /**
@@ -132,8 +129,6 @@ class Lottery extends BasePlugin implements PluginTaskInterface
     protected function handleDynamic(string $uid): void
     {
         $this->fetchDynamicReserve();
-        //
-        delay(3);
     }
 
     /**
@@ -473,7 +468,6 @@ class Lottery extends BasePlugin implements PluginTaskInterface
 //     */
 //    protected function getLotteryInfo(int $business_id): array
 //    {
-//        delay(3);
 //        $user = User::parseCookie();
 //        $url = 'https://api.vc.bilibili.com/lottery_svr/v1/lottery_svr/lottery_notice';
 //        $headers = [

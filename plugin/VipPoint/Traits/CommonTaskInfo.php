@@ -19,6 +19,8 @@ use Bhp\Log\Log;
 
 trait CommonTaskInfo
 {
+    protected const VIEW_DELAY_TASK_KEY = 'DelayedAction';
+
     /**
      * 是否已经完成
      * @param array $data
@@ -131,7 +133,31 @@ trait CommonTaskInfo
      */
     protected function completeView(string $task_code, string $name, string $channel): bool
     {
-        sleep(mt_rand(10, 20));
+        $action = $this->getTask(self::VIEW_DELAY_TASK_KEY);
+        if (is_array($action) && ($action['task_code'] ?? null) === $task_code && ($action['type'] ?? null) === 'deliver') {
+            $remaining = max(0, (int)(($action['execute_at'] ?? time()) - time()));
+            if ($remaining > 0) {
+                $this->scheduleAfter((float)$remaining);
+                return false;
+            }
+
+            $channel = (string)($action['context']['channel'] ?? $channel);
+            $this->setTask(self::VIEW_DELAY_TASK_KEY, null);
+        } else {
+            $delaySeconds = mt_rand(10, 20);
+            $this->setTask(self::VIEW_DELAY_TASK_KEY, [
+                'task_code' => $task_code,
+                'type' => 'deliver',
+                'context' => [
+                    'channel' => $channel,
+                ],
+                'execute_at' => time() + $delaySeconds,
+            ]);
+            Log::info("大会员积分@{$name}: {$task_code} 任务等待 {$delaySeconds}s 后继续执行");
+            $this->scheduleAfter((float)$delaySeconds);
+            return false;
+        }
+
         // 做任务
         $response = \Bhp\Api\Api\Pgc\Activity\Deliver\ApiTask::complete($channel);
         if ($response['code']) {
@@ -149,7 +175,28 @@ trait CommonTaskInfo
      */
     protected function completeVipMallView(string $task_code, string $name,): bool
     {
-        sleep(mt_rand(10, 20));
+        $action = $this->getTask(self::VIEW_DELAY_TASK_KEY);
+        if (is_array($action) && ($action['task_code'] ?? null) === $task_code && ($action['type'] ?? null) === 'vip_mall_view') {
+            $remaining = max(0, (int)(($action['execute_at'] ?? time()) - time()));
+            if ($remaining > 0) {
+                $this->scheduleAfter((float)$remaining);
+                return false;
+            }
+
+            $this->setTask(self::VIEW_DELAY_TASK_KEY, null);
+        } else {
+            $delaySeconds = mt_rand(10, 20);
+            $this->setTask(self::VIEW_DELAY_TASK_KEY, [
+                'task_code' => $task_code,
+                'type' => 'vip_mall_view',
+                'context' => [],
+                'execute_at' => time() + $delaySeconds,
+            ]);
+            Log::info("大会员积分@{$name}: {$task_code} 任务等待 {$delaySeconds}s 后继续执行");
+            $this->scheduleAfter((float)$delaySeconds);
+            return false;
+        }
+
         // 做任务
         $response = \Bhp\Api\Show\Api\Activity\Fire\Common\ApiEvent::dispatch();
         if ($response['code']) {
