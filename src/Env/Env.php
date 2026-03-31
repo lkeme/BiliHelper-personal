@@ -19,6 +19,7 @@ namespace Bhp\Env;
 
 use Bhp\Log\Log;
 use Bhp\Util\Resource\BaseResource;
+use Bhp\Util\AppTerminator;
 
 class Env extends BaseResource
 {
@@ -59,7 +60,8 @@ class Env extends BaseResource
         //
         $this->app_name = $this->resource->get('project', 'BiliHelper-personal');
         $this->app_version = $this->resource->get('version', '0.0.0.000000');
-        $this->app_branch = $this->resource->get('branch', 'master');
+        $overrideBranch = trim((string)getenv('BRANCH'));
+        $this->app_branch = $overrideBranch !== '' ? $overrideBranch : $this->resource->get('branch', 'master');
         $this->app_source = $this->resource->get('source', 'https://github.com/lkeme/BiliHelper-personal');
         //
         $this->inspectConfigure()->inspectExtension();
@@ -77,7 +79,7 @@ class Env extends BaseResource
                 Log::error("检查到项目依赖 $extension 扩展未加载。");
                 Log::error("请在 php.ini中启用 $extension 扩展后重试。");
                 Log::error("程序常见问题请移步 $this->app_source 文档部分查看。");
-                failExit("");
+                AppTerminator::fail('');
             }
         }
         return $this;
@@ -93,10 +95,10 @@ class Env extends BaseResource
         Log::info("使用说明请移步 $this->app_source 查看");
 
         if (PHP_SAPI != 'cli') {
-            failExit('Please run this script from command line .');
+            AppTerminator::fail('Please run this script from command line .');
         }
-        if (version_compare(PHP_VERSION, '8.1.0', '<')) {
-            failExit('Please upgrade PHP version > 8.1.0 .');
+        if (version_compare(PHP_VERSION, '8.3.0', '<')) {
+            AppTerminator::fail('Please upgrade PHP version >= 8.3.0 .');
         }
         return $this;
     }

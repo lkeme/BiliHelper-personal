@@ -20,14 +20,17 @@ use Bhp\Api\Api\X\VipPoint\ApiTask;
 use Bhp\Cache\Cache;
 use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
+use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
-use Bhp\TimeLock\TimeLock;
+use Bhp\Scheduler\TaskResult;
 use Bhp\User\User;
+use Bhp\Util\AppTerminator;
+use Bhp\Util\Loader\DirectoryLoader;
 
 include_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'Traits' . DIRECTORY_SEPARATOR . 'CommonTaskInfo.php');
-requireDir(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'Traits' . DIRECTORY_SEPARATOR, ['CommonTaskInfo.php']);
+DirectoryLoader::requireDir(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'Traits' . DIRECTORY_SEPARATOR, ['CommonTaskInfo.php']);
 
-class VipPoint extends BasePlugin
+class VipPoint extends BasePlugin implements PluginTaskInterface
 {
     use SignIn;
     use Bonus;
@@ -108,56 +111,42 @@ class VipPoint extends BasePlugin
      */
     public function __construct(Plugin &$plugin)
     {
-        // 时间锁
-        TimeLock::initTimeLock();
-        // 缓存
         Cache::initCache();
-        // $this::class
-        $plugin->register($this, 'execute');
+        $this->bootPlugin($plugin, true);
     }
 
-    /**
-     * 执行
-     * @return void
-     */
-    public function execute(): void
+    public function runOnce(): TaskResult
     {
-        if (TimeLock::getTimes() > time() || !getEnable('vip_point')) return;
-        //
+        if (!$this->enabled('vip_point')) {
+            return TaskResult::keepSchedule();
+        }
+
         $this->initTask();
-        //
-        $this->receiveTask();
-        // 全部完成
-        if (TimeLock::getTimes() <= time()) {
-            TimeLock::setTimes(TimeLock::timing(9));
+
+        if (!User::isVip($this->title)) {
+            return TaskResult::nextAt(9);
         }
+
+        if (!$this->getTaskList()) {
+            return TaskResult::after(10 * 60);
+        }
+
+        foreach ($this->target_tasks as $target => $value) {
+            if ($this->getTask($target)) {
+                continue;
+            }
+
+            $this->executeTask($target, $value);
+
+            return TaskResult::after(5 * 60);
+        }
+
+        return TaskResult::nextAt(9);
     }
 
     /**
      * @return void
      */
-    protected function receiveTask(): void
-    {
-        // 如果为大会员
-        if (!User::isVip($this->title)) return;
-        // 获取远程任务列表
-        if (!$this->getTaskList()) {
-            TimeLock::setTimes(10 * 60);
-            return;
-        };
-        //
-        foreach ($this->target_tasks as $target => $value) {
-            // 任务完成跳过
-            if ($this->getTask($target)) continue;
-            // 未完成执行
-            $this->executeTask($target, $value);
-            //
-            TimeLock::setTimes(5 * 60);
-            // 每次执行一个任务
-            return;
-        }
-    }
-
     /**
      * 动态执行任务
      * @param string $target
@@ -169,7 +158,7 @@ class VipPoint extends BasePlugin
         $response = $this->getTask('TaskList');
         //
         if (!method_exists($this, $target)) {
-            failExit("VipPoint 不存在{$target}方法 请暂时关闭任务检查代码或通知开发者");
+            AppTerminator::fail("VipPoint 不存在{$target}方法 请暂时关闭任务检查代码或通知开发者");
         }
         //
         $this->setTask($target, $this->$target($response, $name));

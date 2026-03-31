@@ -19,6 +19,7 @@ namespace Bhp\User;
 
 use Bhp\Api\Vip\ApiUser;
 use Bhp\Log\Log;
+use Bhp\Runtime\Runtime;
 use Bhp\Util\Common\Common;
 use Bhp\Util\DesignPattern\SingleTon;
 use JetBrains\PhpStorm\ArrayShape;
@@ -40,7 +41,7 @@ class User extends SingleTon
     #[ArrayShape(['csrf' => "mixed|string", 'uid' => "mixed|string", 'sid' => "mixed|string"])]
     public static function parseCookie(): array
     {
-        $cookies = getU('cookie');
+        $cookies = Runtime::getInstance()->context()->auth('cookie');
         preg_match('/bili_jct=(.{32})/', $cookies, $token);
         preg_match('/DedeUserID=(\d+)/', $cookies, $uid);
         preg_match('/DedeUserID__ckMd5=(.{16})/', $cookies, $sid);

@@ -85,7 +85,7 @@ class ApiHeartBeat
      */
     protected static function calcClientSign(array $t): string
     {
-        $url = getConf('heartbeat.app');
+        $url = (string)Config::getInstance()->get('heartbeat.app');
         $r = [3, 7, 2, 6, 8];
         $response = ApiCalcSign::heartBeat($url, $t, $r);
         if ($response['code'] != 0) {

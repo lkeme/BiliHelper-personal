@@ -17,6 +17,7 @@
 
 namespace Bhp\Api\Passport;
 
+use Bhp\Config\Config;
 use Bhp\Request\Request;
 use Bhp\Sign\Sign;
 
@@ -64,7 +65,7 @@ class ApiCaptcha
      */
     public static function fetch(string $challenge): array
     {
-        $url = getConf('login_captcha.url') . '/fetch';
+        $url = Config::getInstance()->get('login_captcha.url') . '/fetch';
         $payload = [
             'challenge' => $challenge,
         ];

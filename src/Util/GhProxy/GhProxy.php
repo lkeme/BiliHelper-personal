@@ -16,6 +16,9 @@
  */
 
 namespace Bhp\Util\GhProxy;
+
+use Bhp\Config\Config;
+
 class GhProxy
 {
     /**
@@ -24,9 +27,9 @@ class GhProxy
      */
     public static function mirror(string $url): string
     {
-        if (!getEnable('network_github') || $url == '') return $url;
+        if (!Config::getInstance()->get('network_github.enable', false, 'bool') || $url == '') return $url;
         //
-        if (($mirror = getConf('network_github.mirror')) != '') {
+        if (($mirror = Config::getInstance()->get('network_github.mirror', '')) != '') {
             return $mirror . $url;
         }
         //

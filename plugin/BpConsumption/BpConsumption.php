@@ -19,11 +19,12 @@ use Bhp\Api\Pay\ApiPay;
 use Bhp\Api\Pay\ApiWallet;
 use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
+use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
-use Bhp\TimeLock\TimeLock;
+use Bhp\Scheduler\TaskResult;
 use Bhp\User\User;
 
-class BpConsumption extends BasePlugin
+class BpConsumption extends BasePlugin implements PluginTaskInterface
 {
     /**
      * 插件信息
@@ -44,23 +45,18 @@ class BpConsumption extends BasePlugin
      */
     public function __construct(Plugin &$plugin)
     {
-        //
-        TimeLock::initTimeLock();
-        // $this::class
-        $plugin->register($this, 'execute');
+        $this->bootPlugin($plugin, true);
     }
 
-    /**
-     * 执行
-     * @return void
-     */
-    public function execute(): void
+    public function runOnce(): TaskResult
     {
-        if (TimeLock::getTimes() > time() || !getEnable('bp_consumption')) return;
-        //
+        if (!$this->enabled('bp_consumption')) {
+            return TaskResult::keepSchedule();
+        }
+
         $this->consumptionTask();
-        // 定时14点 + 随机120分钟| 根据逻辑前置
-        TimeLock::setTimes(TimeLock::timing(14) + mt_rand(1, 120) * 60);
+
+        return TaskResult::nextAt(14, 0, 0, 1, 120);
     }
 
     /**
@@ -76,9 +72,9 @@ class BpConsumption extends BasePlugin
         // 最大支持5
         if ($bp_balance != 5) return;
         // 消费B币充电
-        if (getConf('bp_consumption.bp2charge', false, 'bool')) {
+        if ($this->config('bp_consumption.bp2charge', false, 'bool')) {
             // UID为空就切换成作者的
-            $up_mid = getConf('bp_consumption.bp2charge_uid', 6580464, 'int');
+            $up_mid = $this->config('bp_consumption.bp2charge_uid', 6580464, 'int');
             // 额外判断 现在不能给自己充电
             $user = User::parseCookie();
             if ($up_mid == intval($user['uid'])) {
@@ -90,7 +86,7 @@ class BpConsumption extends BasePlugin
             return;
         }
         // 消费B币充值金瓜子
-        if (getConf('bp_consumption.bp2gold', false, 'bool')) {
+        if ($this->config('bp_consumption.bp2gold', false, 'bool')) {
             $this->BP2gold($bp_balance);
         }
 

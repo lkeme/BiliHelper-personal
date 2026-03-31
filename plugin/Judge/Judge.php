@@ -19,10 +19,11 @@ use Bhp\Api\Credit\ApiJury;
 use Bhp\Log\Log;
 use Bhp\Notice\Notice;
 use Bhp\Plugin\BasePlugin;
+use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
-use Bhp\TimeLock\TimeLock;
+use Bhp\Scheduler\TaskResult;
 
-class Judge extends BasePlugin
+class Judge extends BasePlugin implements PluginTaskInterface
 {
     /**
      * 插件信息
@@ -62,32 +63,24 @@ class Judge extends BasePlugin
      */
     public function __construct(Plugin &$plugin)
     {
-        //
-        TimeLock::initTimeLock();
-//        // 需要缓存
-//        Cache::initCache();
-        // $this::class
-        $plugin->register($this, 'execute');
+        $this->bootPlugin($plugin, true);
     }
 
-    /**
-     * 执行
-     * @return void
-     */
-    public function execute(): void
+    public function runOnce(): TaskResult
     {
-        if (TimeLock::getTimes() > time() || !getEnable('judge')) return;
-        // 资格判断 没有资格就60-120分钟后计息 不排除其他错误
+        $this->resetTaskResult();
+
+        if (!$this->enabled('judge')) {
+            return TaskResult::keepSchedule();
+        }
+
         if (!$this->juryInfo()) {
-            TimeLock::setTimes(mt_rand(60, 120) * 60);
-            return;
+            return $this->resolveTaskResult(TaskResult::after(mt_rand(60, 120) * 60));
         }
-        //
+
         $this->judgementTask();
-        // 如果没有设置时间 就设置个默认时间 可能在一秒钟内处理完 所以 <=
-        if (TimeLock::getTimes() <= time()) {
-            TimeLock::setTimes(mt_rand(15, 30) * 60);
-        }
+
+        return $this->resolveTaskResult(TaskResult::after(mt_rand(15, 30) * 60));
     }
 
     /**
@@ -133,7 +126,7 @@ class Judge extends BasePlugin
         // 尝试修复25018 未测试
         $this->vote($case_id, 0);
         //
-        TimeLock::setTimes(60 + 5);
+        $this->scheduleAfter(60 + 5);
         return false;
     }
 
@@ -248,11 +241,11 @@ class Judge extends BasePlugin
                 return $cid;
             case 25005:
                 Log::warning("風紀委員: 获取案例ID失敗 {$response['code']} -> {$response['message']}");
-                TimeLock::setTimes(TimeLock::timing(10));
+                $this->taskResult = TaskResult::nextAt(10);
                 break;
             case 25006:
                 Log::warning("風紀委員: 获取案例ID失敗 {$response['code']} -> {$response['message']}");
-                TimeLock::setTimes(TimeLock::timing(10));
+                $this->taskResult = TaskResult::nextAt(10);
                 Notice::push('jury_leave_office', $response['message']);
                 break;
             case 25008:
@@ -260,7 +253,7 @@ class Judge extends BasePlugin
                 break;
             case 25014:
                 Log::info("風紀委員: 今日案件已審滿，感謝您對社區的貢獻，明天再來看看吧~");
-                TimeLock::setTimes(TimeLock::timing(7, 0, 0, true));
+                $this->taskResult = TaskResult::nextAt(7, 0, 0, 1, 60);
                 break;
             default:
                 Log::warning("風紀委員: 获取案例ID失敗 {$response['code']} -> {$response['message']}");
@@ -295,7 +288,7 @@ class Judge extends BasePlugin
         }
         $data = $response['data'];
         // 只是嘗試 TODO 更換位置
-        if (getConf('judge.auto_apply', false, 'bool') && $data['allow_apply']) {
+        if ($this->config('judge.auto_apply', false, 'bool') && $data['allow_apply']) {
             // 情況壹
             if ($data['apply_status'] == -1 || $data['apply_status'] == 4) {
                 $this->juryApply();

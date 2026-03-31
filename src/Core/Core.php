@@ -59,9 +59,7 @@ class Core extends SingleTon
         define('APP_PLUGIN_PATH', $this->global_path . DIRECTORY_SEPARATOR . 'plugin' . DIRECTORY_SEPARATOR);
         // Profile
         define('PROFILE_CONFIG_PATH', $this->fillPath('config'));
-        define('PROFILE_DEVICE_PATH', $this->fillPath('device'));
         define('PROFILE_LOG_PATH', $this->fillPath('log'));
-        define('PROFILE_TASK_PATH', $this->fillPath('task'));
         define('PROFILE_CACHE_PATH', $this->fillPath('cache'));
 
         // 判断profile/*是否存在存在
@@ -87,11 +85,14 @@ class Core extends SingleTon
      */
     protected function initSystemPath(): void
     {
+        $legacyDevicePath = $this->fillPath('device');
+        if (is_dir($legacyDevicePath)) {
+            Path::RemoveDirectoryRecursively($legacyDevicePath);
+        }
+
         $system_paths = [
             PROFILE_CONFIG_PATH,
-            PROFILE_DEVICE_PATH,
             PROFILE_LOG_PATH,
-            PROFILE_TASK_PATH,
             PROFILE_CACHE_PATH
         ];
         foreach ($system_paths as $path) {

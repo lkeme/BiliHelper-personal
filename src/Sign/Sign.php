@@ -17,6 +17,9 @@
 
 namespace Bhp\Sign;
 
+use Bhp\Config\Config;
+use Bhp\Device\Device;
+use Bhp\Runtime\Runtime;
 use Bhp\Util\DesignPattern\SingleTon;
 
 class Sign extends SingleTon
@@ -36,19 +39,20 @@ class Sign extends SingleTon
      */
     public static function android(array $payload): array
     {
+        $context = Runtime::getInstance()->context();
         # Android 新
-        $app_key = base64_decode(getDevice('app.bili_a.app_key_n'));
-        $app_secret = base64_decode(getDevice('app.bili_a.secret_key_n'));
+        $app_key = base64_decode((string)Device::getInstance()->get('app.bili_a.app_key_n'));
+        $app_secret = base64_decode((string)Device::getInstance()->get('app.bili_a.secret_key_n'));
         //
         $default = [
-            'access_key' => getU('access_token'),
+            'access_key' => $context->auth('access_token'),
             'actionKey' => 'appkey',
             'appkey' => $app_key,
-            'build' => getDevice('app.bili_a.build'),
-            'channel' => getDevice('app.bili_a.channel'),
-            'device' => getDevice('app.bili_a.device'),
-            'mobi_app' => getDevice('app.bili_a.mobi_app'),
-            'platform' => getDevice('app.bili_a.platform'),
+            'build' => Device::getInstance()->get('app.bili_a.build'),
+            'channel' => Device::getInstance()->get('app.bili_a.channel'),
+            'device' => Device::getInstance()->get('app.bili_a.device'),
+            'mobi_app' => Device::getInstance()->get('app.bili_a.mobi_app'),
+            'platform' => Device::getInstance()->get('app.bili_a.platform'),
             'c_locale' => 'zh_CN', //  zh-Hans_CH
             's_locale' => 'zh_CN', // zh-Hans_CH
             'disable_rcmd' => '0', //
@@ -67,7 +71,7 @@ class Sign extends SingleTon
      */
     public static function login(array $payload): array
     {
-        return match ((int)getConf('login_mode.mode')) {
+        return match ((int)Config::getInstance()->get('login_mode.mode')) {
             2, 1 => self::android($payload),
             3 => self::tv($payload),
             default => self::common($payload),
@@ -82,8 +86,8 @@ class Sign extends SingleTon
     public static function tv(array $payload): array
     {
         # Tv
-        $app_key = base64_decode(getDevice('app.bili_t.app_key'));
-        $app_secret = base64_decode(getDevice('app.bili_t.secret_key'));
+        $app_key = base64_decode((string)Device::getInstance()->get('app.bili_t.app_key'));
+        $app_secret = base64_decode((string)Device::getInstance()->get('app.bili_t.secret_key'));
         //
         $default = [
             'appkey' => $app_key,
@@ -103,18 +107,19 @@ class Sign extends SingleTon
      */
     public static function common(array $payload): array
     {
+        $context = Runtime::getInstance()->context();
         # Android 旧
-        $app_key = base64_decode(getDevice('app.bili_a.app_key'));
-        $app_secret = base64_decode(getDevice('app.bili_a.secret_key'));
+        $app_key = base64_decode((string)Device::getInstance()->get('app.bili_a.app_key'));
+        $app_secret = base64_decode((string)Device::getInstance()->get('app.bili_a.secret_key'));
 
         $default = [
-            'access_key' => getU('access_token'),
+            'access_key' => $context->auth('access_token'),
             'actionKey' => 'appkey',
             'appkey' => $app_key,
-            'build' => getDevice('app.bili_a.build'),
-            'device' => getDevice('app.bili_a.device'),
-            'mobi_app' => getDevice('app.bili_a.mobi_app'),
-            'platform' => getDevice('app.bili_a.platform'),
+            'build' => Device::getInstance()->get('app.bili_a.build'),
+            'device' => Device::getInstance()->get('app.bili_a.device'),
+            'mobi_app' => Device::getInstance()->get('app.bili_a.mobi_app'),
+            'platform' => Device::getInstance()->get('app.bili_a.platform'),
             'c_locale' => 'zh_CN', //  zh-Hans_CH
             's_locale' => 'zh_CN', // zh-Hans_CH
             'disable_rcmd' => '0', //

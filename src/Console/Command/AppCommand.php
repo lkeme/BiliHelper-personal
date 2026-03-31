@@ -17,11 +17,11 @@
 
 namespace Bhp\Console\Command;
 
-use Ahc\Cli\Input\Command;
-use Ahc\Cli\IO\Interactor;
+use Bhp\Console\Cli\Command;
+use Bhp\Console\Cli\Interactor;
 use Bhp\Log\Log;
 use Bhp\Plugin\Plugin;
-use Bhp\Task\Task;
+use Bhp\Scheduler\Scheduler;
 
 class AppCommand extends Command
 {
@@ -39,11 +39,11 @@ class AppCommand extends Command
         //
         $this
             ->usage(
-                '<bold>  $0</end> <comment>profile mode:app</end> ## 完整命令<eol/>' .
-                '<bold>  $0</end> <comment>profile m:a</end> ## 完整命令(缩写)<eol/>' .
-                '<bold>  $0</end> <comment>profile</end> ## 省略命令(保留profile命令)<eol/>' .
-                '<bold>  $0</end> <comment>mode:app</end> ## 省略命令(保留动作命令)<eol/>' .
-                '<bold>  $0</end> <comment>m:d</end> ## 省略命令(保留动作命令)(缩写)<eol/>'
+                '  $0 profile mode:app  完整命令' . PHP_EOL .
+                '  $0 profile m:a       完整命令(缩写)' . PHP_EOL .
+                '  $0 profile           省略动作命令' . PHP_EOL .
+                '  $0 mode:app          省略 profile 命令' . PHP_EOL .
+                '  $0 m:a               省略 profile 命令(缩写)'
             );
     }
 
@@ -61,12 +61,9 @@ class AppCommand extends Command
     public function execute(): void
     {
         Log::info("执行 $this->desc");
-        //
-        $plugins = Plugin::getPlugins();
-        foreach ($plugins as $plugin) {
-            Task::addTask($plugin['hook'], null);
-        }
-        //
-        Task::execTasks();
+
+        $scheduler = Scheduler::getInstance();
+        $scheduler->registerPlugins(array_values(Plugin::getPlugins()));
+        $scheduler->run();
     }
 }

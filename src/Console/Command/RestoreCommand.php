@@ -17,9 +17,10 @@
 
 namespace Bhp\Console\Command;
 
-use Ahc\Cli\Input\Command;
-use Ahc\Cli\IO\Interactor;
+use Bhp\Console\Cli\Command;
+use Bhp\Console\Cli\Interactor;
 use Bhp\Log\Log;
+use Bhp\Profile\ProfileCacheResetService;
 
 final class RestoreCommand extends Command
 {
@@ -34,6 +35,13 @@ final class RestoreCommand extends Command
     public function __construct()
     {
         parent::__construct('mode:restore', $this->desc);
+        $this
+            ->option('-p --purge-auth', '同时清空登录态凭据')
+            ->usage(
+                '  $0 mode:restore' . PHP_EOL .
+                '  $0 m:r' . PHP_EOL .
+                '  $0 m:r --purge-auth'
+            );
     }
 
     /**
@@ -50,8 +58,6 @@ final class RestoreCommand extends Command
     public function execute(): void
     {
         Log::info("执行 $this->desc");
-
-        // 清理排程文件
-        // 清理缓存文件
+        (new ProfileCacheResetService())->reset((bool)($this->values()['purge-auth'] ?? false));
     }
 }

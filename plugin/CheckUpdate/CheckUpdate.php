@@ -19,13 +19,14 @@ use Bhp\Cache\Cache;
 use Bhp\Log\Log;
 use Bhp\Notice\Notice;
 use Bhp\Plugin\BasePluginRW;
+use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
+use Bhp\Remote\RemoteResourceResolver;
 use Bhp\Request\Request;
-use Bhp\TimeLock\TimeLock;
-use Bhp\Util\GhProxy\GhProxy;
+use Bhp\Scheduler\TaskResult;
 use Bhp\Util\Resource\Resource;
 
-class CheckUpdate extends BasePluginRW
+class CheckUpdate extends BasePluginRW implements PluginTaskInterface
 {
     /**
      * 插件信息
@@ -46,27 +47,19 @@ class CheckUpdate extends BasePluginRW
      */
     public function __construct(Plugin &$plugin)
     {
-        //
-        TimeLock::initTimeLock();
-        //
         Cache::initCache();
-        // $this::class
-        $plugin->register($this, 'execute');
+        $this->bootPlugin($plugin, true);
     }
 
-    /**
-     * 执行
-     * @return void
-     */
-    public function execute(): void
+    public function runOnce(): TaskResult
     {
-        if (TimeLock::getTimes() > time() || !getEnable('check_update')) return;
-        //
-        if ($this->_checkUpdate()) {
-            TimeLock::setTimes(24 * 60 * 60);
-        } else {
-            TimeLock::setTimes(3 * 60 * 60);
+        if (!$this->enabled('check_update')) {
+            return TaskResult::keepSchedule();
         }
+
+        return $this->_checkUpdate()
+            ? TaskResult::after(24 * 60 * 60)
+            : TaskResult::after(3 * 60 * 60);
     }
 
     /**
@@ -119,15 +112,12 @@ class CheckUpdate extends BasePluginRW
      */
     protected function fetchOnlineVersion(): object
     {
-        $branch = getConf('app.branch');
-        $url = $this->resource->get($branch . '_raw_url');
-        $url = GhProxy::mirror($url);
+        $resolver = new RemoteResourceResolver();
+        $branch = $resolver->branch();
+        $url = $resolver->resourceRawUrl('version.json');
         $payload = [];
-        // 防止错误拉取
-//        if (is_null($url)) {
-//            return json_decode('{"code":404}', false);
-//        }
-        //
+        Log::info("检查更新: 使用远程资源分支 {$branch}");
+
         return Request::getJson(false, 'other', $url, $payload);
     }
 

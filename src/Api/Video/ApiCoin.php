@@ -18,6 +18,7 @@
 namespace Bhp\Api\Video;
 
 use Bhp\Request\Request;
+use Bhp\Runtime\Runtime;
 use Bhp\Sign\Sign;
 use Bhp\User\User;
 
@@ -68,7 +69,7 @@ class ApiCoin
         $url = 'https://app.bilibili.com/x/v2/view/coin/add';
         //
         $payload = [
-            'access_key' => getU('access_token'),
+            'access_key' => Runtime::getInstance()->context()->auth('access_token'),
             'aid' => $aid,
             'multiply' => $multiply, // 投币*1
             'select_like' => $select_like,// 默认不点赞

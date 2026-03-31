@@ -17,16 +17,37 @@
 
 namespace Bhp\Console;
 
-use Ahc\Cli\Application;
+use Bhp\Console\Cli\Application;
 use Bhp\Console\Command\AppCommand;
+use Bhp\Console\Command\DoctorCommand;
 use Bhp\Console\Command\DebugCommand;
+use Bhp\Console\Command\ProfilesCommand;
 use Bhp\Console\Command\RestoreCommand;
 use Bhp\Console\Command\ScriptCommand;
+use Bhp\Env\Env;
 use Bhp\Util\DesignPattern\SingleTon;
-use Exception;
+use Bhp\Util\AppTerminator;
 
 class Console extends SingleTon
 {
+    /**
+     * @var string[]
+     */
+    private const COMMAND_TOKENS = [
+        'mode:app',
+        'm:a',
+        'mode:debug',
+        'm:d',
+        'mode:restore',
+        'm:r',
+        'mode:script',
+        'm:s',
+        'mode:doctor',
+        'm:o',
+        'mode:profiles',
+        'm:p',
+    ];
+
     /**
      * @var string
      */
@@ -69,24 +90,18 @@ LOGO;
      */
     public static function parse(array $argv, string $default = 'user', array $reserved = ['example']): string
     {
-        try {
-            // backup
-            // $argv = $argv ?? $_SERVER['argv'];
-            // $filename = str_contains($argv[1] ?? '', ':') ? $default : $args[1] ?? $default;
+        $argv = $argv ?? $_SERVER['argv'];
+        self::getInstance()->argv = $argv;
 
-            $argv = $argv ?? $_SERVER['argv'];
-            self::getInstance()->argv = $argv;
-            $app = new Application('parse');
-            $args = $app->parse($argv);
-            // 省略参数
-            $filename = str_contains($args->args()[0] ?? '', ':') ? $default : $args->args()[0] ?? $default;
-            unset($app);
-        } catch (Exception $e) {
-            failExit('解析命令行参数错误', ['msg' => $e->getMessage()]);
+        $filename = $default;
+        $first = (string)($argv[1] ?? '');
+        if ($first !== '' && !str_starts_with($first, '-') && !self::isCommandToken($first)) {
+            $filename = $first;
         }
+
         // 保留关键字
         if (in_array($filename, $reserved)) {
-            failExit("不能使用程序保留关键字 {$filename}");
+            AppTerminator::fail("不能使用程序保留关键字 {$filename}");
         }
 
         return $filename;
@@ -98,9 +113,10 @@ LOGO;
      */
     protected function transArgv(array $argv): array
     {
-        if (isset($argv[1]) && !str_contains($argv[1], ':')) {
+        if (isset($argv[1]) && $this->shouldStripProfileToken((string)$argv[1])) {
             unset($argv[1]);
         }
+
         return array_values($argv);
     }
 
@@ -109,14 +125,29 @@ LOGO;
      */
     public function register(): void
     {
-        $this->app = new Application(getAppName(), getAppVersion());
+        $env = Env::getInstance();
+        $this->app = new Application($env->app_name, $env->app_version);
         $this->app
             ->add(new AppCommand(), 'm:a', true) // 模式1
             ->add(new ScriptCommand(), 'm:s') // 模式2
             ->add(new RestoreCommand(), 'm:r')  // 模式3
             ->add(new DebugCommand(), 'm:d')  // 模式4
+            ->add(new DoctorCommand(), 'm:o')  // 模式5
+            ->add(new ProfilesCommand(), 'm:p')  // 模式6
             ->logo($this->logo)
             ->handle($this->transArgv($this->argv));
+    }
+
+    private static function isCommandToken(string $token): bool
+    {
+        return in_array($token, self::COMMAND_TOKENS, true);
+    }
+
+    private function shouldStripProfileToken(string $token): bool
+    {
+        return $token !== ''
+            && !str_starts_with($token, '-')
+            && !self::isCommandToken($token);
     }
 
 }

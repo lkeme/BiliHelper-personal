@@ -20,11 +20,12 @@ use Bhp\Cache\Cache;
 use Bhp\FilterWords\FilterWords;
 use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
+use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
-use Bhp\TimeLock\TimeLock;
+use Bhp\Scheduler\TaskResult;
 use Bhp\Util\Exceptions\NoLoginException;
 
-class LiveGoldBox extends BasePlugin
+class LiveGoldBox extends BasePlugin implements PluginTaskInterface
 {
     /**
      * 插件信息
@@ -60,30 +61,26 @@ class LiveGoldBox extends BasePlugin
      */
     public function __construct(Plugin &$plugin)
     {
-        // 时间锁
-        // TimeLock::initTimeLock();
-        // 缓存
-        // Cache::initCache();
-        // $this::class
-        // $plugin->register($this, 'execute');
+        Cache::initCache();
+        $this->bootPlugin($plugin, true);
     }
 
-    /**
-     * 执行
-     * @return void
-     * @throws NoLoginException
-     */
-    public function execute(): void
+    public function runOnce(): TaskResult
     {
-        if (TimeLock::getTimes() > time() || !getEnable('live_gold_box')) return;
-        //
-        $this->calcAidRange(1216, 1316);
-        //
-        $lottery_list = $this->fetchLotteryList();
-        //
-        $this->drawLottery($lottery_list);
-        //
-        TimeLock::setTimes(mt_rand(6, 10) * 60);
+        if (!$this->enabled('live_gold_box')) {
+            return TaskResult::keepSchedule();
+        }
+
+        try {
+            $this->calcAidRange(1216, 1316);
+            $lottery_list = $this->fetchLotteryList();
+            $this->drawLottery($lottery_list);
+        } catch (NoLoginException $e) {
+            Log::warning("金色宝箱: {$e->getMessage()}");
+            return TaskResult::after(3600);
+        }
+
+        return TaskResult::after(mt_rand(6, 10) * 60);
     }
 
     /**

@@ -20,13 +20,14 @@ use Bhp\Api\Vip\ApiPrivilegeAssets;
 use Bhp\Api\Vip\ApiVipCenter;
 use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
+use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
-use Bhp\TimeLock\TimeLock;
+use Bhp\Scheduler\TaskResult;
 use Bhp\User\User;
 use Bhp\Util\Exceptions\NoLoginException;
 use function Amp\delay;
 
-class VipPrivilege extends BasePlugin
+class VipPrivilege extends BasePlugin implements PluginTaskInterface
 {
     /**
      * 插件信息
@@ -47,25 +48,23 @@ class VipPrivilege extends BasePlugin
      */
     public function __construct(Plugin &$plugin)
     {
-        //
-        TimeLock::initTimeLock();
-        // $this::class
-        $plugin->register($this, 'execute');
+        $this->bootPlugin($plugin, true);
     }
 
-    /**
-     * 执行
-     * @return void
-     * @throws NoLoginException
-     */
-    public function execute(): void
+    public function runOnce(): TaskResult
     {
-        if (TimeLock::getTimes() > time() || !getEnable('vip_privilege')) return;
-        //
-        $this->receiveTask();
-        //
-        // 定时23点 + 随机10-30分钟
-        TimeLock::setTimes(TimeLock::timing(23) + mt_rand(10, 30) * 60);
+        if (!$this->enabled('vip_privilege')) {
+            return TaskResult::keepSchedule();
+        }
+
+        try {
+            $this->receiveTask();
+        } catch (NoLoginException $e) {
+            Log::warning("大会员权益: {$e->getMessage()}");
+            return TaskResult::after(3600);
+        }
+
+        return TaskResult::nextAt(23, 0, 0, 10, 30);
     }
 
 
@@ -88,8 +87,7 @@ class VipPrivilege extends BasePlugin
         Log::info('大会员权益: 可领取权益数 ' . count($privilege_list));
         //
         foreach ($privilege_list as $privilege) {
-            // 随机延迟 5-10秒
-            delay(mt_rand(5, 10));
+            delay((float)mt_rand(5, 10));
             // 特殊类型 9 每日10经验 需要观看视频
             if ($privilege['type'] == 9) {
                 // 领取额外经验

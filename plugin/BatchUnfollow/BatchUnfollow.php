@@ -18,10 +18,11 @@
 use Bhp\Api\Api\X\Relation\ApiRelation;
 use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
+use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
-use Bhp\TimeLock\TimeLock;
+use Bhp\Scheduler\TaskResult;
 
-class BatchUnfollow extends BasePlugin
+class BatchUnfollow extends BasePlugin implements PluginTaskInterface
 {
     /**
      * 插件信息
@@ -47,34 +48,25 @@ class BatchUnfollow extends BasePlugin
      */
     public function __construct(Plugin &$plugin)
     {
-        // 时间锁
-        TimeLock::initTimeLock();
-        // 缓存
-        // Cache::initCache();
-        // $this::class
-        $plugin->register($this, 'execute');
+        $this->bootPlugin($plugin, true);
     }
 
-    /**
-     * 执行
-     * @return void
-     */
-    public function execute(): void
+    public function runOnce(): TaskResult
     {
-        // 时间锁限制
-        if (TimeLock::getTimes() > time() || !getEnable('batch_unfollow')) return;
-        //
+        if (!$this->enabled('batch_unfollow')) {
+            return TaskResult::keepSchedule();
+        }
+
         if (empty($this->wait_unfollows)) {
             $this->fetchFollows();
-            //
             if (empty($this->wait_unfollows)) {
-                TimeLock::setTimes(mt_rand(60, 120) * 60);
-                return;
+                return TaskResult::after(mt_rand(60, 120) * 60);
             }
         } else {
             $this->unfollow();
         }
-        TimeLock::setTimes(mt_rand(5, 10) * 60);
+
+        return TaskResult::after(mt_rand(5, 10) * 60);
     }
 
     /**
@@ -85,7 +77,7 @@ class BatchUnfollow extends BasePlugin
     {
         $follows = [];
         //
-        if (getConf('batch_unfollow.tag') == 'all') {
+        if ($this->config('batch_unfollow.tag') == 'all') {
             $response = ApiRelation::followings(1, 50);
             if ($response['code'] != 0) {
                 Log::warning("批量取关: 获取关注列表失败: {$response['code']} -> {$response['message']}");
@@ -95,7 +87,7 @@ class BatchUnfollow extends BasePlugin
                 $follows[] = ['mid' => $item['mid'], 'uname' => $item['uname']];
             }
         } else {
-            $target_tag = getConf('batch_unfollow.tag');
+            $target_tag = $this->config('batch_unfollow.tag');
             //
             $response = ApiRelation::tags();
             if ($response['code'] != 0) {

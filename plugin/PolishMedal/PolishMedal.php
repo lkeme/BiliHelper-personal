@@ -20,12 +20,13 @@ use Bhp\Api\XLive\AppUcenter\V1\ApiFansMedal;
 use Bhp\Cache\Cache;
 use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
+use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
-use Bhp\TimeLock\TimeLock;
+use Bhp\Scheduler\TaskResult;
 use Bhp\Util\ArrayR\ArrayR;
 use Bhp\Util\Fake\Fake;
 
-class PolishMedal extends BasePlugin
+class PolishMedal extends BasePlugin implements PluginTaskInterface
 {
 
     /**
@@ -44,6 +45,7 @@ class PolishMedal extends BasePlugin
 
     private static array $grey_fans_medals = []; // 灰色勋章
     private static int $metal_lock = 0; // 勋章时间锁
+    private static int $next_polish_at = 0;
 
     /**
      * @var array
@@ -55,45 +57,41 @@ class PolishMedal extends BasePlugin
      */
     public function __construct(Plugin &$plugin)
     {
-        // 时间锁
-        TimeLock::initTimeLock();
-        //
         Cache::initCache();
-        // 缓存
-        $plugin->register($this, 'execute');
+        $this->bootPlugin($plugin, true);
     }
 
-    /**
-     * 执行
-     * @return void
-     */
-    public function execute(): void
+    public function runOnce(): TaskResult
     {
-        if (TimeLock::getTimes() > time() || !getEnable('polish_medal')) return;
+        if (!$this->enabled('polish_medal')) {
+            return TaskResult::keepSchedule();
+        }
 
-        if (self::$metal_lock < time()) {
-            // 如果勋章过多导致未处理完，就1小时一次，否则10小时一次。
+        $now = time();
+        if (self::$metal_lock < $now) {
             if (empty(self::$grey_fans_medals)) {
-                // 处理每日
-                if (getConf('polish_medal.everyday', false, 'bool')) {
-                    // 如果是 直接定时到第二天7点
+                if ($this->config('polish_medal.everyday', false, 'bool')) {
                     self::fetchGreyMedalList(true);
-                    self::$metal_lock = time() + TimeLock::timing(7, 0, 0, true);
+                    self::$metal_lock = $now + (int)TaskResult::secondsUntilNextAt(7, 0, 0, 1, 60);
                 } else {
-                    // 否则按正常逻辑
                     self::fetchGreyMedalList();
-                    self::$metal_lock = time() + 10 * 60 * 60; // 10小时
+                    self::$metal_lock = $now + 10 * 60 * 60;
                 }
             } else {
-                self::$metal_lock = time() + 60 * 60; // 1小时一次
+                self::$metal_lock = $now + 60 * 60;
             }
         }
-        // 点亮灰色勋章
-        if (TimeLock::getTimes() < time()) {
-            // 随机4-10分钟处理一次点亮操作
+
+        if (!empty(self::$grey_fans_medals) && self::$next_polish_at <= $now) {
             self::polishTheMedal();
-            TimeLock::setTimes(mt_rand(4, 10) * 60);
+            self::$next_polish_at = time() + mt_rand(4, 10) * 60;
         }
+
+        if (!empty(self::$grey_fans_medals)) {
+            return TaskResult::after(max(60, self::$next_polish_at - time()));
+        }
+
+        return TaskResult::after(max(60, self::$metal_lock - time()));
     }
 
     /**
@@ -185,7 +183,7 @@ class PolishMedal extends BasePlugin
 
         Log::info("开始点亮直播间@{$medal['roomid']}的勋章");
         // 擦亮
-        $custom_word = empty($words = getConf('polish_medal.reply_words')) ? Fake::emoji() : ArrayR::toRand(explode(',', $words));
+        $custom_word = empty($words = (string)$this->config('polish_medal.reply_words', '')) ? Fake::emoji() : ArrayR::toRand(explode(',', $words));
         $res = ApiMsg::sendBarrageAPP($medal['roomid'], $custom_word);
         if (isset($res['code']) && $res['code'] == 0) {
             Log::notice("在直播间@{$medal['roomid']}发送点亮弹幕成功");

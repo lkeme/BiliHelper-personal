@@ -18,10 +18,11 @@
 use Bhp\Api\Space\ApiReservation;
 use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
+use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
-use Bhp\TimeLock\TimeLock;
+use Bhp\Scheduler\TaskResult;
 
-class LiveReservation extends BasePlugin
+class LiveReservation extends BasePlugin implements PluginTaskInterface
 {
     /**
      * 插件信息
@@ -42,23 +43,18 @@ class LiveReservation extends BasePlugin
      */
     public function __construct(Plugin &$plugin)
     {
-        //
-        TimeLock::initTimeLock();
-        // $this::class
-        $plugin->register($this, 'execute');
+        $this->bootPlugin($plugin, true);
     }
 
-    /**
-     * 执行
-     * @return void
-     */
-    public function execute(): void
+    public function runOnce(): TaskResult
     {
-        if (TimeLock::getTimes() > time() || !getEnable('live_reservation')) return;
-        //
+        if (!$this->enabled('live_reservation')) {
+            return TaskResult::keepSchedule();
+        }
+
         $this->reservationTask();
-        // 1-3小时
-        TimeLock::setTimes(mt_rand(1, 3) * 60 * 60);
+
+        return TaskResult::after(mt_rand(1, 3) * 60 * 60);
     }
 
     /**
@@ -66,7 +62,7 @@ class LiveReservation extends BasePlugin
      */
     protected function reservationTask(): void
     {
-        $vmids = getConf('live_reservation.vmids');
+        $vmids = (string)$this->config('live_reservation.vmids', '');
         $vmids = explode(',', $vmids);
         // 获取目标列表->获取预约列表->执行预约列表
         foreach ($vmids as $vmid) {

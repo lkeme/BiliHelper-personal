@@ -17,19 +17,7 @@
 
 namespace Bhp\Util\Resource;
 
-use Grasmash\Expander\Expander;
-use Grasmash\Expander\Stringifier;
-use JBZoo\Data\Data;
-use JBZoo\Data\Ini;
-use JBZoo\Data\JSON;
-use JBZoo\Data\PhpArray;
-use JBZoo\Data\Yml;
 use Symfony\Component\Yaml\Yaml;
-use function JBZoo\Data\data;
-use function JBZoo\Data\ini;
-use function JBZoo\Data\phpArray;
-use function JBZoo\Data\json;
-use function JBZoo\Data\yml;
 
 class Resource extends Collection
 {
@@ -40,74 +28,146 @@ class Resource extends Collection
     protected const FORMAT_JSON = 'json';
 
     /**
-     * @var Ini|JSON|Yml|PhpArray|Data
+     * @var array<string, mixed>
      */
-    protected Ini|JSON|Yml|PhpArray|Data $config;
+    protected array $config = [];
 
-    /**
-     * @var string
-     */
-    protected string $file_path;
+    protected string $file_path = '';
+    protected string $parser = '';
 
-    /**
-     * @var string
-     */
-    protected string $parser;
-
-    /**
-     * 加载资源文件
-     * @param string|array $file_path
-     * @param string $parser
-     * @return Resource
-     */
     public function loadF(string|array $file_path, string $parser): Resource
     {
-        // 存储文件路径
+        if (!is_string($file_path)) {
+            $this->config = [];
+            $this->file_path = '';
+            $this->parser = $parser;
+            $this->reload();
+
+            return $this;
+        }
+
         $this->file_path = $file_path;
-        // 存储解析器
         $this->parser = $parser;
-        // 加载文件
         $this->config = $this->switchParser($file_path, $parser);
-        // 加载数据
         $this->reload();
-        //
+
         return $this;
     }
 
     /**
-     * 切换解析器
-     * @param string $filepath
-     * @param string $format
-     * @return Ini|JSON|Yml|PhpArray|Data
+     * @return array<string, mixed>
      */
-    protected function switchParser(string $filepath, string $format): Ini|Json|Yml|PhpArray|Data
+    protected function switchParser(string $filepath, string $format): array
     {
         return match ($format) {
-            Resource::FORMAT_INI => ini($filepath),
-            Resource::FORMAT_JSON => json($filepath),
-            Resource::FORMAT_YML, Resource::FORMAT_YAML => yml($filepath),
-            Resource::FORMAT_PHP => phpArray($filepath),
-            default => data($filepath),
+            self::FORMAT_INI => $this->parseIni($filepath),
+            self::FORMAT_JSON => $this->parseJson($filepath),
+            self::FORMAT_YML, self::FORMAT_YAML => $this->parseYaml($filepath),
+            self::FORMAT_PHP => $this->parsePhp($filepath),
+            default => [],
         };
     }
 
-    /**
-     * 清空并重载数据
-     * @return Resource
-     */
     protected function reload(): Resource
     {
-        // 转换一次 ${}
-        $expander = new Expander();
-        $expander->setStringifier(new Stringifier());
-        $expanded = $expander->expandArrayProperties($this->config->getArrayCopy());
-        // 清除数据
+        $expanded = $this->expandArrayProperties($this->config);
         $this->clear();
-        // 加载数据
         $this->load($expanded);
-        //
+
         return $this;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    protected function parseIni(string $filepath): array
+    {
+        $data = parse_ini_file($filepath, true, INI_SCANNER_TYPED);
 
+        return is_array($data) ? $data : [];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function parseJson(string $filepath): array
+    {
+        $content = file_get_contents($filepath);
+        if (!is_string($content) || trim($content) === '') {
+            return [];
+        }
+
+        $decoded = json_decode($content, true);
+
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function parseYaml(string $filepath): array
+    {
+        $data = Yaml::parseFile($filepath);
+
+        return is_array($data) ? $data : [];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function parsePhp(string $filepath): array
+    {
+        $data = include $filepath;
+
+        return is_array($data) ? $data : [];
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
+     */
+    protected function expandArrayProperties(array $data): array
+    {
+        $expanded = $data;
+
+        for ($i = 0; $i < 5; $i++) {
+            $next = $this->expandValue($expanded, $expanded);
+            if ($next === $expanded) {
+                break;
+            }
+
+            $expanded = $next;
+        }
+
+        return $expanded;
+    }
+
+    /**
+     * @param array<string, mixed> $root
+     */
+    protected function expandValue(mixed $value, array $root): mixed
+    {
+        if (is_array($value)) {
+            $result = [];
+            foreach ($value as $key => $item) {
+                $result[$key] = $this->expandValue($item, $root);
+            }
+
+            return $result;
+        }
+
+        if (!is_string($value) || !str_contains($value, '${')) {
+            return $value;
+        }
+
+        return preg_replace_callback('/\$\{([^}]+)\}/', function (array $matches) use ($root) {
+            $resolved = $this->getByPath($root, trim((string)$matches[1]));
+
+            if (is_scalar($resolved) || $resolved === null) {
+                return (string)$resolved;
+            }
+
+            return $matches[0];
+        }, $value) ?? $value;
+    }
 }

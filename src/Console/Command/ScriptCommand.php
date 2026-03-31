@@ -17,8 +17,8 @@
 
 namespace Bhp\Console\Command;
 
-use Ahc\Cli\Input\Command;
-use Ahc\Cli\IO\Interactor;
+use Bhp\Console\Cli\Command;
+use Bhp\Console\Cli\Interactor;
 use Bhp\Log\Log;
 
 final class ScriptCommand extends Command

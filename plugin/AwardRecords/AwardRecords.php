@@ -23,10 +23,11 @@ use Bhp\Cache\Cache;
 use Bhp\Log\Log;
 use Bhp\Notice\Notice;
 use Bhp\Plugin\BasePlugin;
+use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
-use Bhp\TimeLock\TimeLock;
+use Bhp\Scheduler\TaskResult;
 
-class AwardRecords extends BasePlugin
+class AwardRecords extends BasePlugin implements PluginTaskInterface
 {
     /**
      * @var array|array[]
@@ -62,25 +63,19 @@ class AwardRecords extends BasePlugin
      */
     public function __construct(Plugin &$plugin)
     {
-        // 时间锁
-        TimeLock::initTimeLock();
-        // 缓存
         Cache::initCache();
-        // $this::class
-        $plugin->register($this, 'execute');
+        $this->bootPlugin($plugin, true);
     }
 
-    /**
-     * 执行
-     * @return void
-     */
-    public function execute(): void
+    public function runOnce(): TaskResult
     {
-        if (TimeLock::getTimes() > time() || !getEnable('award_records')) return;
-        //
+        if (!$this->enabled('award_records')) {
+            return TaskResult::keepSchedule();
+        }
+
         $this->awardRecordsTask();
-        //
-        TimeLock::setTimes(5 * 60);
+
+        return TaskResult::after(5 * 60);
     }
 
     /**

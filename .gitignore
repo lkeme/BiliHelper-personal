@@ -1,7 +1,3 @@
-# Created by .ignore support plugin (hsz.mobi)
-### Example user template template
-### Example user template
-
 # IntelliJ project files
 .idea
 .idea/
@@ -10,16 +6,6 @@ tmp/
 *.iml
 out
 gen
-composer.lock
-#Traits/
-README1.md
-
-script.php
-test.php
-test1.php
-index1.php
-
-# ignore all files in lib/
 
 # except for .gitkeep
 !.gitkeep
@@ -29,6 +15,9 @@ index1.php
 /Todo
 /backup
 /vendor
+.worktrees/
+/build/
+/reference/
 
 # 保留忽略目录下的指定文件夹
 /profile/*

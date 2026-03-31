@@ -18,11 +18,12 @@
 use Bhp\Api\XLive\ApiRevenueWallet;
 use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
+use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
-use Bhp\TimeLock\TimeLock;
+use Bhp\Scheduler\TaskResult;
 use Bhp\Util\Exceptions\NoLoginException;
 
-class Silver2Coin extends BasePlugin
+class Silver2Coin extends BasePlugin implements PluginTaskInterface
 {
     /**
      * 插件信息
@@ -43,31 +44,31 @@ class Silver2Coin extends BasePlugin
      */
     public function __construct(Plugin &$plugin)
     {
-        //
-        TimeLock::initTimeLock();
-        // $this::class
-        $plugin->register($this, 'execute');
+        $this->bootPlugin($plugin, true);
     }
 
-    /**
-     * 执行
-     * @return void
-     * @throws NoLoginException
-     */
-    public function execute(): void
+    public function runOnce(): TaskResult
     {
-        if (TimeLock::getTimes() > time() || !getEnable('silver2coin')) return;
-        //
-        if ($this->before()) {
-            if (!$this->exchangeTask()) {
-                TimeLock::setTimes(3600);
-                return;
-            }
-            //
-            $this->after();
+        if (!$this->enabled('silver2coin')) {
+            return TaskResult::keepSchedule();
         }
-        // 定时10点 + 1-60分钟随机
-        TimeLock::setTimes(TimeLock::timing(10, 0, 0, true));
+
+        try {
+            if (!$this->before()) {
+                return TaskResult::nextAt(10, 0, 0, 1, 60);
+            }
+
+            if (!$this->exchangeTask()) {
+                return TaskResult::after(3600);
+            }
+
+            $this->after();
+        } catch (NoLoginException $e) {
+            Log::warning("银瓜子兑换硬币: {$e->getMessage()}");
+            return TaskResult::after(3600);
+        }
+
+        return TaskResult::nextAt(10, 0, 0, 1, 60);
     }
 
     /**

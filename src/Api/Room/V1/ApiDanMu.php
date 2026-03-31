@@ -26,7 +26,7 @@ class ApiDanMu
      * @param int $room_id
      * @return array
      */
-    public static function getConf(int $room_id): array
+    public static function getRoomConfig(int $room_id): array
     {
         $url = 'https://api.live.bilibili.com/room/v1/Danmu/getConf';
         $payload = [

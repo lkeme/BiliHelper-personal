@@ -17,8 +17,6 @@
 
 namespace Bhp\Util\AsciiTable;
 
-use AsciiTable\Builder;
-use AsciiTable\Exception\BuilderException;
 use Closure;
 
 class AsciiTable
@@ -346,7 +344,7 @@ class AsciiTable
 
 
     /**
-     * 数组转表格(外置)
+     * 数组转表格
      * @param array $data
      * @param string|null $title
      * @param bool $print
@@ -354,21 +352,43 @@ class AsciiTable
      */
     public static function array2table(array $data, ?string $title = null, bool $print = false): array
     {
-        $th_list = [];
-        //
-        $builder = new Builder();
-        $builder->addRows($data);
-        //
-        if (!is_null($title)) {
-            $builder->setTitle($title);
+        $renderer = new self($data);
+        $table = rtrim($renderer->getTable());
+        $th_list = $table === '' ? [] : (preg_split('/\R/u', $table) ?: []);
+
+        if ($title !== null && $title !== '') {
+            $width = max(array_map([self::class, 'displayWidth'], $th_list ?: [$title]));
+            array_unshift($th_list, self::padDisplay($title, $width, STR_PAD_BOTH));
         }
-        //
-        foreach (explode("\r\n", $builder->renderTable()) as $value) {
-            if ($value) {
-                $th_list[] = $value;
-                if ($print) echo $value . PHP_EOL;
+
+        if ($print) {
+            foreach ($th_list as $value) {
+                echo $value . PHP_EOL;
             }
         }
+
         return $th_list;
+    }
+
+    protected static function displayWidth(string $value): int
+    {
+        return (int)((strlen($value) + mb_strlen($value, 'UTF-8')) / 2);
+    }
+
+    protected static function padDisplay(string $value, int $width, int $alignment): string
+    {
+        $visible = self::displayWidth($value);
+        $padding = max(0, $width - $visible);
+        if ($alignment === STR_PAD_LEFT) {
+            return str_repeat(' ', $padding) . $value;
+        }
+
+        if ($alignment === STR_PAD_BOTH) {
+            $left = intdiv($padding, 2);
+            $right = $padding - $left;
+            return str_repeat(' ', $left) . $value . str_repeat(' ', $right);
+        }
+
+        return $value . str_repeat(' ', $padding);
     }
 }

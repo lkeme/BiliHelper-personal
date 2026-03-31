@@ -1,0 +1,48 @@
+<?php declare(strict_types=1);
+
+namespace Bhp\Login;
+
+use Bhp\Login\LoginRuntimeState;
+
+final class LoginPendingFlowResumeService
+{
+    public function __construct(
+        private readonly LoginFlowController $flowController,
+        private readonly LoginPendingFlowLifecycleService $pendingFlowLifecycleService,
+    ) {
+    }
+
+    /**
+     * @param array<string, mixed> $flow
+     * @param callable(float):void $scheduleAfter
+     * @param callable():void $clearPendingFlow
+     * @param callable(string, string, string):void $resumeAccountLogin
+     * @param callable(string, string, string, string, string):(?array<string, mixed>) $sendSms
+     * @param callable(string):string $promptCode
+     * @param callable(array<string, mixed>, string):void $completeSmsLogin
+     * @param callable(string):bool $validateQrAuthCode
+     */
+    public function resume(
+        array $flow,
+        LoginRuntimeState $state,
+        callable $scheduleAfter,
+        callable $clearPendingFlow,
+        callable $resumeAccountLogin,
+        callable $sendSms,
+        callable $promptCode,
+        callable $completeSmsLogin,
+        callable $validateQrAuthCode,
+    ): void {
+        $this->flowController->resume(
+            $flow,
+            fn (string $challenge): ?array => $this->pendingFlowLifecycleService->fetchCaptchaResult($state, $challenge),
+            $scheduleAfter,
+            $clearPendingFlow,
+            $resumeAccountLogin,
+            $sendSms,
+            $promptCode,
+            $completeSmsLogin,
+            $validateQrAuthCode,
+        );
+    }
+}

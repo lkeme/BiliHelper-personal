@@ -18,11 +18,12 @@
 use Bhp\Api\Manga\ApiManga;
 use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
+use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
-use Bhp\TimeLock\TimeLock;
+use Bhp\Scheduler\TaskResult;
 use Bhp\Util\Exceptions\NoLoginException;
 
-class Manga extends BasePlugin
+class Manga extends BasePlugin implements PluginTaskInterface
 {
     /**
      * 插件信息
@@ -43,26 +44,23 @@ class Manga extends BasePlugin
      */
     public function __construct(Plugin &$plugin)
     {
-        //
-        TimeLock::initTimeLock();
-        // $this::class
-        $plugin->register($this, 'execute');
+        $this->bootPlugin($plugin, true);
     }
 
-    /**
-     * 执行
-     * @return void
-     * @throws NoLoginException
-     */
-    public function execute(): void
+    public function runOnce(): TaskResult
     {
-        if (TimeLock::getTimes() > time() || !getEnable('manga')) return;
-        //
-        if ($this->shareTask() && $this->signInTask()) {
-            TimeLock::setTimes(TimeLock::timing(10));
-        } else {
-            TimeLock::setTimes(3600);
+        if (!$this->enabled('manga')) {
+            return TaskResult::keepSchedule();
         }
+
+        try {
+            $success = $this->shareTask() && $this->signInTask();
+        } catch (NoLoginException $e) {
+            Log::warning("漫画: {$e->getMessage()}");
+            return TaskResult::after(3600);
+        }
+
+        return $success ? TaskResult::nextAt(10) : TaskResult::after(3600);
     }
 
     /**

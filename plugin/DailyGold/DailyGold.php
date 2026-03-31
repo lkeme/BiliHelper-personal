@@ -19,11 +19,12 @@ use Bhp\Api\XLive\AppRoom\V1\ApiDM;
 use Bhp\Api\XLive\AppUcenter\V1\ApiUserTask;
 use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
+use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
-use Bhp\TimeLock\TimeLock;
+use Bhp\Scheduler\TaskResult;
 use Bhp\Util\Fake\Fake;
 
-class DailyGold extends BasePlugin
+class DailyGold extends BasePlugin implements PluginTaskInterface
 {
     /**
      * 插件信息
@@ -44,56 +45,39 @@ class DailyGold extends BasePlugin
      */
     public function __construct(Plugin &$plugin)
     {
-        // 时间锁
-        TimeLock::initTimeLock();
-        // $this::class
-        $plugin->register($this, 'execute');
+        $this->bootPlugin($plugin, true);
     }
 
-    /**
-     * 执行
-     * @return void
-     */
-    public function execute(): void
+    public function runOnce(): TaskResult
     {
-        if (TimeLock::getTimes() > time() || !getEnable('daily_gold')) return;
-        //
-        $up_uid = (int)getConf('daily_gold.target_up_id', '');
-        $up_room_id = (int)getConf('daily_gold.target_room_id', '');
-        if (!$up_room_id || !$up_uid) return;
-        // {"task_id":45,"type":2,"goal_type":2,"target":0,"task_title":"看新主播30秒,并发弹幕鼓励TA","title_param":["30","1"],"task_sub_title":"点击「去看看」做任务","sub_title_param":null,"total_reward":20,"received_reward":0,"reward_type":1,"rules":"1.必须点击“去看看”按钮，进入的新主播直播间才计为任务直播间，在这些直播间内才可完成本任务；\n2.每个任务直播间，每天仅可完成1次任务，或领取1次奖励，请上下滑浏览更多任务直播间，才能完成更多任务；\n3.观看时长要求：30秒需单次在同一个任务直播间内连续观看，退房后或上下滑后，观看时长将重新计算，建议观看时多和主播互动哦；\n4.发送弹幕要求：建议发送友好的，跟当前直播内容相关的弹幕，如鼓励夸赞主播、鼓励主播表演才艺等，不能是纯数字、纯字母、纯符号等无意义内容，也不能是表情包，且字数必须大于等于3，内容符合哔哩哔哩社区公约，否则可能不计为有效弹幕；\n5.由于参与人数较多，任务直播间可能会失效，若在任务直播间打开福利中心，本任务按钮显示“去看看”，则说明本任务直播间已失效，请上下滑浏览更多任务直播间。","priority":0,"progress":0,"status":1,"schema_dst":0,"btn_text":"暂无新任务","finished_text":"观看任务已达成","finished_sub_text":"","num":1,"available":0}"
+        if (!$this->enabled('daily_gold')) {
+            return TaskResult::keepSchedule();
+        }
+
+        $up_uid = (int)$this->config('daily_gold.target_up_id', '');
+        $up_room_id = (int)$this->config('daily_gold.target_room_id', '');
+        if (!$up_room_id || !$up_uid) {
+            return TaskResult::keepSchedule();
+        }
+
         $process = $this->getUserUnfinishedTask($up_uid);
 
         switch ($process) {
             case 0:
-                // 默认一次弹幕进度
                 $this->sendDM($up_room_id, Fake::emoji(true));
-                TimeLock::setTimes(mt_rand(30, 60) * 60);
-                break;
+                return TaskResult::after(mt_rand(30, 60) * 60);
             case -1:
-                // 获取失败
-                TimeLock::setTimes(10 * 60);
-                break;
+                return TaskResult::after(10 * 60);
             case -2:
-                // 领取ing
                 if (!$this->userTaskReceiveRewards($up_uid)) {
-                    // 领取失败 TODO
-                    // [code] => 27000002
-                    // [message] => 领取失败，请重试
-                    // [data][num] => 0
-                    TimeLock::setTimes(10 * 60);
+                    return TaskResult::after(10 * 60);
                 } else {
-                    // TODO 因活动变动，每个人的任务详情不一致，暂时解决方案，可能会影响电池的获取
-                    // 领取完成
-                    TimeLock::setTimes(TimeLock::timing(7, 0, 0, true));
+                    return TaskResult::nextAt(7, 0, 0, 1, 60);
                 }
-                break;
             case -3:
-                // 领取完成
-                TimeLock::setTimes(TimeLock::timing(7, 0, 0, true));
-                break;
+                return TaskResult::nextAt(7, 0, 0, 1, 60);
             default:
-                break;
+                return TaskResult::keepSchedule();
         }
     }
 

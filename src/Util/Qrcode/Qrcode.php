@@ -18,9 +18,6 @@
 namespace Bhp\Util\Qrcode;
 
 use Bhp\Util\Qrcode\Lib\QrCode as QrConsole;
-use Symfony\Component\Console\Formatter\OutputFormatterStyle;
-use Symfony\Component\Console\Output\ConsoleOutput;
-use Symfony\Component\Console\Output\OutputInterface;
 
 define('QR_CACHEABLE', true);                                                               // use cache - more disk reads but less CPU power, masks and format templates are stored there
 define('QR_CACHE_DIR', dirname(__FILE__) . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR);  // used when QR_CACHEABLE === true
@@ -45,23 +42,22 @@ class Qrcode
      */
     public static function show(string $text): void
     {
-        $output = new ConsoleOutput();
-        static::initQrcodeStyle($output);
-        //
-        $pxMap[0] = static::isWin() ? '<whitec>mm</whitec>' : '<whitec>  </whitec>';
-        $pxMap[1] = '<blackc>  </blackc>';
+        static::enableVt100IfPossible();
+
+        $pxMap[0] = static::whiteBlock();
+        $pxMap[1] = static::blackBlock();
         //
         $text = QrConsole::text($text);
         $length = strlen($text[0]);
-        $output->write("\n");
+        fwrite(STDOUT, PHP_EOL);
         //
         foreach ($text as $line) {
-            $output->write($pxMap[0]);
+            fwrite(STDOUT, $pxMap[0]);
             for ($i = 0; $i < $length; $i++) {
                 $type = substr($line, $i, 1);
-                $output->write($pxMap[$type]);
+                fwrite(STDOUT, $pxMap[$type]);
             }
-            $output->writeln($pxMap[0]);
+            fwrite(STDOUT, $pxMap[0] . PHP_EOL);
         }
     }
 
@@ -74,15 +70,20 @@ class Qrcode
         return strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
     }
 
-    /**
-     * init qrCode style.
-     * @param OutputInterface $output
-     */
-    protected static function initQrcodeStyle(OutputInterface $output): void
+    protected static function enableVt100IfPossible(): void
     {
-        $style = new OutputFormatterStyle('black', 'black', ['bold']);
-        $output->getFormatter()->setStyle('blackc', $style);
-        $style = new OutputFormatterStyle('white', 'white', ['bold']);
-        $output->getFormatter()->setStyle('whitec', $style);
+        if (DIRECTORY_SEPARATOR === '\\' && function_exists('sapi_windows_vt100_support')) {
+            @sapi_windows_vt100_support(STDOUT, true);
+        }
+    }
+
+    protected static function blackBlock(): string
+    {
+        return "\033[40m  \033[0m";
+    }
+
+    protected static function whiteBlock(): string
+    {
+        return static::isWin() ? "\033[47mmm\033[0m" : "\033[47m  \033[0m";
     }
 }

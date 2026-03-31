@@ -18,17 +18,21 @@
 namespace Bhp\Request;
 
 use Bhp\Cache\Cache;
+use Bhp\Http\HttpClient;
+use Bhp\Http\HttpResponse;
+use Bhp\Http\RequestOptions;
 use Bhp\Log\Log;
 use Bhp\Notice\Notice;
-use Bhp\Util\ArrayR\ArrayR;
+use Bhp\Runtime\AppContext;
+use Bhp\Runtime\Runtime;
 use Bhp\Util\DesignPattern\SingleTon;
 use Bhp\Util\Exceptions\MethodNotFoundException;
 use Bhp\Util\Exceptions\ResponseEmptyException;
 use Bhp\Util\Fake\Fake;
+use Bhp\Util\AppTerminator;
 use Exception;
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
-use Psr\Http\Message\ResponseInterface;
+use RuntimeException;
+use Throwable;
 
 /**
  * @method static get(string $os, string $url, array $params = [], array $headers = [], float $timeout = 30.0)
@@ -47,11 +51,6 @@ class Request extends SingleTon
      * @var array
      */
     protected array $caches;
-
-    /**
-     * @var Client|null
-     */
-    protected ?Client $client = null;
 
     /**
      * @var array
@@ -89,22 +88,6 @@ class Request extends SingleTon
         return self::getInstance()->buvid;
     }
 
-
-    /**
-     * 初始化客户端
-     * @param string $request_id
-     * @param array $config
-     * @return Request
-     */
-    protected function withClient(string $request_id, array $config = []): static
-    {
-        if (is_null($this->client)) {
-            $this->client = new Client($config);
-        }
-        // clone 对象深拷贝
-        $this->setRequest($request_id, 'client', clone $this->client);
-        return $this;
-    }
 
     /**
      * 请求地址
@@ -153,7 +136,7 @@ class Request extends SingleTon
             'Accept-Encoding' => 'gzip',
             'Accept-Language' => 'zh-cn',
             'Connection' => 'keep-alive',
-            'User-Agent' => getDevice('platform.headers.app_ua'),
+            'User-Agent' => (string)$this->context()->device('platform.headers.app_ua'),
             // 'Content-Type' => 'application/x-www-form-urlencoded',
             // 'User-Agent' => 'Mozilla/5.0 BiliDroid/5.51.1 (bbcallen@gmail.com)',
             // 'Referer' => 'https://live.bilibili.com/',
@@ -163,21 +146,23 @@ class Request extends SingleTon
             'Accept' => "application/json, text/plain, */*",
             'Accept-Encoding' => 'gzip, deflate',
             'Accept-Language' => "zh-CN,zh;q=0.9",
-            'User-Agent' => getDevice('platform.headers.pc_ua'),
+            'User-Agent' => (string)$this->context()->device('platform.headers.pc_ua'),
             // 'Content-Type' => 'application/x-www-form-urlencoded',
             // 'Referer' => 'https://live.bilibili.com/',
         ];
         //
         $other_headers = [
-            'User-Agent' => getDevice('platform.headers.other_ua'),
+            'User-Agent' => (string)$this->context()->device('platform.headers.other_ua'),
         ];
         $default_headers = ${$os . "_headers"} ?? $other_headers;
-        if (in_array($os, ['app', 'pc']) && getU('cookie') != "") {
+        $cookie = $this->context()->auth('cookie');
+        if (in_array($os, ['app', 'pc']) && $cookie !== '') {
             // patch cookie
-            if ($os == 'pc' && getU('pc_cookie') != "") {
-                $default_headers['Cookie'] = getU('pc_cookie');
+            $pcCookie = $this->context()->auth('pc_cookie');
+            if ($os == 'pc' && $pcCookie !== '') {
+                $default_headers['Cookie'] = $pcCookie;
             } else {
-                $default_headers['Cookie'] = getU('cookie');
+                $default_headers['Cookie'] = $cookie;
             }
         }
         //
@@ -200,10 +185,10 @@ class Request extends SingleTon
             'headers' => $this->getRequest($request_id, 'headers'),
             'timeout' => $timeout,
             'http_errors' => false,
-            'verify' => getConf('network_ssl.verify', false, 'bool'),
+            'verify' => $this->context()->config('network_ssl.verify', false, 'bool'),
         ];
-        if (getEnable('network_proxy')) {
-            $default_options['proxy'] = getConf('network_proxy.proxy');
+        if ($this->context()->enabled('network_proxy')) {
+            $default_options['proxy'] = (string)$this->context()->config('network_proxy.proxy');
         }
         //
         $this->setRequest($request_id, 'options', array_merge($default_options, $add_options));
@@ -214,36 +199,45 @@ class Request extends SingleTon
     /**
      * 处理请求
      * @param string $request_id
-     * @return ResponseInterface
+     * @return HttpResponse
      */
-    protected function handle(string $request_id): ResponseInterface
+    protected function handle(string $request_id): HttpResponse
     {
-        $client = (object)$this->getRequest($request_id, 'client');
+        return $this->handleWithHttpClient($request_id);
+    }
+
+    protected function handleWithHttpClient(string $request_id): HttpResponse
+    {
         $url = (string)$this->getRequest($request_id, 'url');
         $method = (string)$this->getRequest($request_id, 'method');
         $options = (array)$this->getRequest($request_id, 'options');
-        //
+        $requestOptions = $this->toHttpRequestOptions($options);
+        $classifier = new RequestFailureClassifier();
+
         foreach ($this->retry_times as $retry) {
             try {
-                // $response = $this->client->get($url, $options);
-                // $response = $this->client->$method($url, $options);
-                // 稍有性能损耗，不过影响不大
-                $response = call_user_func_array([$client, $method], [$url, $options]);
-                if (is_null($response) or empty($response)) throw new ResponseEmptyException("Value IsEmpty");
+                $response = HttpClient::getInstance()->send($method, $url, $requestOptions);
+                if ($response->getBody() === '' && $requestOptions->sink === null) {
+                    throw new ResponseEmptyException('Value IsEmpty');
+                }
+
                 return $response;
-            } catch (RequestException $e) {
-                // var_dump($e->getRequest());
-                if ($e->hasResponse()) var_dump($e->getResponse());
             } catch (ResponseEmptyException|Exception $e) {
-                // $e->getHandlerContext()
-                // var_dump($e);
+                $category = $classifier->classify($e);
+                Log::warning("Target -> URL: {$url} METHOD: {$method}");
+                Log::warning("HTTP -> RETRY: {$retry} CATEGORY: {$category} ERROR: {$e->getMessage()} ERRNO: {$e->getCode()} STATUS: Waiting for recovery!");
+            } catch (Throwable $throwable) {
+                $exception = new RuntimeException($throwable->getMessage(), (int)$throwable->getCode(), $throwable);
+                $category = $classifier->classifyMessage($throwable->getMessage());
+                Log::warning("Target -> URL: {$url} METHOD: {$method}");
+                Log::warning("HTTP -> RETRY: {$retry} CATEGORY: {$category} ERROR: {$exception->getMessage()} ERRNO: {$exception->getCode()} STATUS: Waiting for recovery!");
             }
-            Log::warning("Target -> URL: $url METHOD: $method");
-            Log::warning("CURl -> RETRY: $retry ERROR: {$e->getMessage()} ERRNO: {$e->getCode()} STATUS:  Waiting for recovery!");
+
             sleep(15);
         }
+
         Notice::push('network_error','客户端出现网络波动或异常错误，已经尝试重试多次，但是依然无法恢复，请检查网络是否正常！');
-        failExit('网络异常，超出最大尝试次数，退出程序~');
+        AppTerminator::fail('网络异常，超出最大尝试次数，退出程序~');
     }
 
     /**
@@ -253,9 +247,9 @@ class Request extends SingleTon
      * @param array $params
      * @param array $headers
      * @param float $timeout
-     * @return ResponseInterface
+     * @return HttpResponse
      */
-    protected static function _getResponse(string $os, string $url, array $params = [], array $headers = [], float $timeout = 30.0): ResponseInterface
+    protected static function _getResponse(string $os, string $url, array $params = [], array $headers = [], float $timeout = 30.0): HttpResponse
     {
         //
         $rid = self::getInstance()->startRequest();
@@ -265,7 +259,6 @@ class Request extends SingleTon
         $payload['query'] = count($params) ? $params : [];
         //
         $response = self::getInstance()
-            ->withClient($rid)
             ->withUrl($rid, $url)
             ->withMethod($rid, 'get')
             ->withHeaders($rid, $os, $headers)
@@ -310,9 +303,9 @@ class Request extends SingleTon
      * @param array $params
      * @param array $headers
      * @param float $timeout
-     * @return ResponseInterface
+     * @return HttpResponse
      */
-    protected static function _postResponse($os, $url, array $params = [], array $headers = [], float $timeout = 30.0): ResponseInterface
+    protected static function _postResponse($os, $url, array $params = [], array $headers = [], float $timeout = 30.0): HttpResponse
     {
         //
         $rid = self::getInstance()->startRequest();
@@ -322,7 +315,6 @@ class Request extends SingleTon
         $payload['form_params'] = count($params) ? $params : [];
         //
         $response = self::getInstance()
-            ->withClient($rid)
             ->withUrl($rid, $url)
             ->withMethod($rid, 'post')
             ->withHeaders($rid, $os, $headers)
@@ -367,9 +359,9 @@ class Request extends SingleTon
      * @param array $params
      * @param array $headers
      * @param float $timeout
-     * @return ResponseInterface
+     * @return HttpResponse
      */
-    protected static function _putResponse($os, $url, array $params = [], array $headers = [], float $timeout = 30.0): ResponseInterface
+    protected static function _putResponse($os, $url, array $params = [], array $headers = [], float $timeout = 30.0): HttpResponse
     {
         //
         $rid = self::getInstance()->startRequest();
@@ -379,7 +371,6 @@ class Request extends SingleTon
         $payload['json'] = count($params) ? $params : [];
         //
         $response = self::getInstance()
-            ->withClient($rid)
             ->withUrl($rid, $url)
             ->withMethod($rid, 'post')
             ->withHeaders($rid, $os, $headers)
@@ -448,19 +439,32 @@ class Request extends SingleTon
     public static function single(string $method, string $url, array $payload = [], array $headers = [], int $timeout = 10): bool|string|null
     {
         Log::debug("[SINGLE] $url ", $payload);
-        //
-        $options = array(
-            'http' => array(
-                'method' => strtoupper($method),
-                'header' => ArrayR::toStr($headers),
-                'content' => http_build_query($payload),
-                'timeout' => $timeout,
-            ),
-        );
-        $result = $url ? @file_get_contents($url, false, stream_context_create($options)) : null;
-        //
-        Log::debug("[SINGLE] $result");
-        return $result ?: null;
+        if ($url === '') {
+            return null;
+        }
+
+        $options = new RequestOptions();
+        $options->headers = $headers;
+        $options->timeout = (float)$timeout;
+
+        $normalizedMethod = strtolower($method);
+        if ($normalizedMethod === 'get') {
+            $options->query = $payload;
+        } else {
+            $options->formParams = $payload;
+        }
+
+        try {
+            $response = HttpClient::getInstance()->send($method, $url, $options);
+            $result = $response->getBody();
+            Log::debug("[SINGLE] $result");
+
+            return $result !== '' ? $result : null;
+        } catch (Throwable $throwable) {
+            Log::warning("[SINGLE] {$throwable->getMessage()}");
+
+            return null;
+        }
     }
 
     // postAsync  getAsync
@@ -560,7 +564,6 @@ class Request extends SingleTon
         $payload['allow_redirects'] = false;
         //
         $response = self::getInstance()
-            ->withClient($rid)
             ->withUrl($rid, $url)
             ->withMethod($rid, 'get')
             ->withHeaders($rid, $os, $headers)
@@ -572,6 +575,53 @@ class Request extends SingleTon
         Log::debug("[HEADERS#$rid] " . $response->getBody());
         //
         return $response->getHeaders();
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function diagnosticsSummary(): array
+    {
+        $retryAttempts = count($this->retry_times);
+        $firstRetry = $retryAttempts > 0 ? (string)$this->retry_times[0] : '0';
+        $lastRetry = $retryAttempts > 0 ? (string)$this->retry_times[$retryAttempts - 1] : '0';
+        $retrySequence = $retryAttempts > 1 ? $firstRetry . '..' . $lastRetry : $lastRetry;
+        $buvidCached = $this->buvid !== null || Cache::get('buvid') !== false;
+
+        return [
+            'timeout_seconds' => (string)$this->timeout,
+            'retry_attempts' => (string)$retryAttempts,
+            'retry_sequence' => $retrySequence,
+            'retry_last' => $lastRetry,
+            'proxy_enabled' => $this->context()->enabled('network_proxy') ? 'yes' : 'no',
+            'buvid_cached' => $buvidCached ? 'yes' : 'no',
+            'governance_enabled' => $this->context()->config('request_governance.enable', false, 'bool') ? 'yes' : 'no',
+            'governance_mode' => (string)$this->context()->config('request_governance.mode', 'observe'),
+            'governance_window_seconds' => (string)$this->context()->config('request_governance.window_seconds', 60, 'int'),
+            'governance_max_requests_per_host' => (string)$this->context()->config('request_governance.max_requests_per_host', 60, 'int'),
+            'governance_cooldown_seconds' => (string)$this->context()->config('request_governance.cooldown_seconds', 30, 'int'),
+        ];
+    }
+
+    protected function toHttpRequestOptions(array $options): RequestOptions
+    {
+        $requestOptions = new RequestOptions();
+        $requestOptions->headers = (array)($options['headers'] ?? []);
+        $requestOptions->query = (array)($options['query'] ?? []);
+        $requestOptions->json = isset($options['json']) && is_array($options['json']) ? $options['json'] : null;
+        $requestOptions->formParams = isset($options['form_params']) && is_array($options['form_params']) ? $options['form_params'] : null;
+        $requestOptions->body = isset($options['body']) && is_string($options['body']) ? $options['body'] : null;
+        $requestOptions->sink = isset($options['sink']) && is_string($options['sink']) ? $options['sink'] : null;
+        $requestOptions->followRedirects = (bool)($options['allow_redirects'] ?? true);
+        $requestOptions->timeout = (float)($options['timeout'] ?? $this->timeout);
+        $requestOptions->proxy = isset($options['proxy']) && is_string($options['proxy']) ? $options['proxy'] : null;
+
+        return $requestOptions;
+    }
+
+    protected function context(): AppContext
+    {
+        return Runtime::getInstance()->context();
     }
 
 }

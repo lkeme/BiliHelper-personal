@@ -19,13 +19,14 @@ use Bhp\Cache\Cache;
 use Bhp\Log\Log;
 use Bhp\Notice\Notice;
 use Bhp\Plugin\BasePlugin;
+use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
 use Bhp\Request\Request;
-use Bhp\TimeLock\TimeLock;
+use Bhp\Scheduler\TaskResult;
 use Bhp\Util\GhProxy\GhProxy;
 use function Amp\delay;
 
-class ActivityLottery extends BasePlugin
+class ActivityLottery extends BasePlugin implements PluginTaskInterface
 {
     /**
      * 插件信息
@@ -63,43 +64,36 @@ class ActivityLottery extends BasePlugin
      */
     public function __construct(Plugin &$plugin)
     {
-        // 时间锁
-        TimeLock::initTimeLock();
-        // 缓存
         Cache::initCache();
-        // $this::class
-        $plugin->register($this, 'execute');
+        $this->bootPlugin($plugin, true);
     }
 
-
-    /**
-     * 执行
-     * @return void
-     */
-    public function execute(): void
+    public function runOnce(): TaskResult
     {
-        // 时间锁限制
-        if (TimeLock::getTimes() > time() || !getEnable('activity_lottery')) return;
-        // 今日执行
-        if (isset($this->config[date("Y-m-d")]['add']) && isset($this->config[date("Y-m-d")]['get']) && isset($this->config[date("Y-m-d")]['do'])) return;
-        //
+        if (!$this->enabled('activity_lottery')) {
+            return TaskResult::keepSchedule();
+        }
+
         $this->initConfig();
-        delay(1);
-        // 获取远程数据
+        if ($this->isFinishedToday()) {
+            return TaskResult::nextDayAt(7, 30);
+        }
+
+        delay(1.0);
         $this->fetchRemoteInfos();
-        delay(1);
-        // 增加次数
+        delay(1.0);
         $this->addMyTimes();
-        delay(1);
-        // 查询次数
+        delay(1.0);
         $this->getMyTimes();
-        delay(1);
-        // 执行次数
+        delay(1.0);
         $this->doMyTimes();
-        //
         $this->initConfig(true);
-        //
-        TimeLock::setTimes(mt_rand(3, 7) * 60);
+
+        if ($this->isFinishedToday()) {
+            return TaskResult::nextDayAt(7, 30);
+        }
+
+        return TaskResult::after(mt_rand(3, 7) * 60);
     }
 
 
@@ -120,6 +114,13 @@ class ActivityLottery extends BasePlugin
                 if (!isset($this->config[$key])) $this->config[$key] = [];
             }
         }
+    }
+
+    protected function isFinishedToday(): bool
+    {
+        $today = date('Y-m-d');
+
+        return isset($this->config[$today]['add'], $this->config[$today]['get'], $this->config[$today]['do']);
     }
 
     /**

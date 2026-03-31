@@ -1,0 +1,63 @@
+<?php declare(strict_types=1);
+
+namespace Bhp\Notice\Channel;
+
+use Bhp\Log\Log;
+use Bhp\Request\Request;
+
+final class WeComAppNoticeChannel extends AbstractNoticeChannel
+{
+    public function name(): string
+    {
+        return 'wecom-app';
+    }
+
+    public function supports(): bool
+    {
+        return trim((string)$this->config('notify_we_com_app.corp_id', '', 'string')) !== ''
+            && trim((string)$this->config('notify_we_com_app.corp_secret', '', 'string')) !== ''
+            && trim((string)$this->config('notify_we_com_app.agent_id', '', 'string')) !== '';
+    }
+
+    public function dispatch(array $payload): void
+    {
+        Log::info('使用weComApp推送消息');
+        $tokenResponse = Request::get('other', 'https://qyapi.weixin.qq.com/cgi-bin/gettoken', [
+            'corpid' => $this->config('notify_we_com_app.corp_id'),
+            'corpsecret' => $this->config('notify_we_com_app.corp_secret'),
+        ]);
+
+        $tokenDecoded = $this->decode($tokenResponse);
+        if (($tokenDecoded['errcode'] ?? -1) !== 0) {
+            Log::warning('access_token 获取失败', [
+                'errcode' => $tokenDecoded['errcode'] ?? null,
+                'errmsg' => $tokenDecoded['errmsg'] ?? null,
+            ]);
+            return;
+        }
+
+        Log::info('access_token 获取成功');
+
+        $sendRaw = Request::postJsonBody(
+            'other',
+            'https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=' . (string)$tokenDecoded['access_token'],
+            [
+                'touser' => $this->config('notify_we_com_app.to_user') ?: '@all',
+                'msgtype' => 'text',
+                'agentid' => $this->config('notify_we_com_app.agent_id'),
+                'text' => [
+                    'content' => $payload['title'] . " \n\n" . $payload['content'],
+                ],
+            ],
+            $this->jsonHeaders()
+        );
+
+        $sendDecoded = $this->decode($sendRaw);
+        if (($sendDecoded['errcode'] ?? -1) === 0) {
+            Log::notice('推送消息成功: ' . (string)($sendDecoded['errmsg'] ?? ''));
+            return;
+        }
+
+        $this->logFailure($sendRaw);
+    }
+}

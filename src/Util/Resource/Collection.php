@@ -17,102 +17,104 @@
 
 namespace Bhp\Util\Resource;
 
+use ArrayAccess;
+use Countable;
 use RecursiveArrayIterator;
-use Toolkit\Stdlib\Arr;
 use Traversable;
 use function is_array;
-use function serialize;
-use function strpos;
-use function unserialize;
 
-/**
- * Class Collection -> https://github.com/phppkg/config
- *
- * @package PhpPkg\Config
- *
- * 支持 链式的子节点 设置 和 值获取
- * e.g:
- * ```
- * $data = [
- *      'foo' => [
- *          'bar' => [
- *              'yoo' => 'value'
- *          ]
- *       ]
- * ];
- * $config = new Collection();
- * $config->get('foo.bar.yoo')` equals to $data['foo']['bar']['yoo'];
- * ```
- */
-class Collection extends \Toolkit\Stdlib\Std\Collection
+class Collection implements ArrayAccess, Countable, \IteratorAggregate
 {
     /**
-     * @var int
+     * @var array<string, mixed>
      */
-    public int $mergeDepth = 3;
+    protected array $data = [];
 
-    /**
-     * The key path separator.
-     *
-     * @var  string
-     */
+    public int $mergeDepth = 3;
     public string $keyPathSep = '.';
 
-    /**
-     * set config value by key/path
-     *
-     * @param string $key
-     * @param mixed $value
-     *
-     * @return mixed
-     */
+    public function clear(): static
+    {
+        $this->data = [];
+
+        return $this;
+    }
+
     public function set(string $key, mixed $value): static
     {
-        if ($this->keyPathSep && strpos($key, $this->keyPathSep) > 0) {
-            Arr::setByPath($this->data, $key, $value, $this->keyPathSep);
+        if ($this->keyPathSep !== '' && strpos($key, $this->keyPathSep) > 0) {
+            $this->setByPath($this->data, $key, $value, $this->keyPathSep);
+
             return $this;
         }
 
-        return parent::set($key, $value);
+        $this->data[$key] = $value;
+
+        return $this;
     }
 
-    /**
-     * @param string $key
-     * @param mixed|null $default
-     *
-     * @return mixed
-     */
     public function get(string $key, mixed $default = null): mixed
     {
-        if ($this->keyPathSep && strpos($key, $this->keyPathSep) > 0) {
-            return Arr::getByPath($this->data, $key, $default, $this->keyPathSep);
+        if ($this->keyPathSep !== '' && strpos($key, $this->keyPathSep) > 0) {
+            return $this->getByPath($this->data, $key, $default, $this->keyPathSep);
         }
 
-        return parent::get($key, $default);
+        return $this->data[$key] ?? $default;
+    }
+
+    public function getInt(string $key, mixed $default = null): int
+    {
+        return (int)$this->get($key, $default);
+    }
+
+    public function getString(string $key, mixed $default = null): string
+    {
+        $value = $this->get($key, $default);
+
+        if ($value === null) {
+            return '';
+        }
+
+        if (is_scalar($value)) {
+            return (string)$value;
+        }
+
+        return '';
+    }
+
+    public function getBool(string $key, mixed $default = null): bool
+    {
+        $value = $this->get($key, $default);
+
+        return match (true) {
+            is_bool($value) => $value,
+            is_string($value) => in_array(strtolower($value), ['1', 'true', 'yes', 'on'], true),
+            default => (bool)$value,
+        };
     }
 
     /**
-     * @param string $key
-     *
-     * @return bool
+     * @return array<string, mixed>
      */
+    public function getArray(string $key, mixed $default = null): array
+    {
+        $value = $this->get($key, $default);
+
+        return is_array($value) ? $value : (is_array($default) ? $default : []);
+    }
+
     public function exists(string $key): bool
     {
         return $this->get($key) !== null;
     }
 
-    /**
-     * @param string $key
-     *
-     * @return bool
-     */
     public function has(string $key): bool
     {
         return $this->exists($key);
     }
 
     /**
-     * @return array
+     * @return array<string, mixed>
      */
     public function getData(): array
     {
@@ -120,26 +122,23 @@ class Collection extends \Toolkit\Stdlib\Std\Collection
     }
 
     /**
-     * @return string
+     * @return array<string, mixed>
      */
+    public function getArrayCopy(): array
+    {
+        return $this->data;
+    }
+
     public function getKeyPathSep(): string
     {
         return $this->keyPathSep;
     }
 
-    /**
-     * @param string $keyPathSep
-     */
     public function setKeyPathSep(string $keyPathSep): void
     {
         $this->keyPathSep = $keyPathSep;
     }
 
-    /**
-     * @param array|Traversable $data
-     *
-     * @return $this
-     */
     public function load(array|Traversable $data): self
     {
         $this->bindData($this->data, $data);
@@ -147,11 +146,6 @@ class Collection extends \Toolkit\Stdlib\Std\Collection
         return $this;
     }
 
-    /**
-     * @param array|Traversable $data
-     *
-     * @return $this
-     */
     public function loadData(array|Traversable $data): self
     {
         $this->bindData($this->data, $data);
@@ -160,9 +154,7 @@ class Collection extends \Toolkit\Stdlib\Std\Collection
     }
 
     /**
-     * @param array $parent
-     * @param array|Traversable $data
-     * @param int $depth
+     * @param array<string, mixed> $parent
      */
     protected function bindData(array &$parent, array|Traversable $data, int $depth = 1): void
     {
@@ -175,7 +167,8 @@ class Collection extends \Toolkit\Stdlib\Std\Collection
                 if ($depth > $this->mergeDepth) {
                     $parent[$key] = $value;
                 } else {
-                    $this->bindData($parent[$key], $value, ++$depth);
+                    $nextDepth = $depth + 1;
+                    $this->bindData($parent[$key], $value, $nextDepth);
                 }
             } else {
                 $parent[$key] = $value;
@@ -184,35 +177,88 @@ class Collection extends \Toolkit\Stdlib\Std\Collection
     }
 
     /**
-     * @return array
+     * @return string[]
      */
     public function getKeys(): array
     {
         return array_keys($this->data);
     }
 
-    /**
-     * @return RecursiveArrayIterator
-     */
     public function getIterator(): Traversable
     {
         return new RecursiveArrayIterator($this->data);
     }
 
-    /**
-     * Unset an offset in the iterator.
-     *
-     * @param mixed $offset
-     */
-    public function offsetUnset($offset): void
+    public function offsetExists(mixed $offset): bool
     {
-        $this->set($offset, null);
+        return isset($this->data[(string)$offset]);
+    }
+
+    public function offsetGet(mixed $offset): mixed
+    {
+        return $this->get((string)$offset);
+    }
+
+    public function offsetSet(mixed $offset, mixed $value): void
+    {
+        $this->set((string)$offset, $value);
+    }
+
+    public function offsetUnset(mixed $offset): void
+    {
+        $this->set((string)$offset, null);
+    }
+
+    public function count(): int
+    {
+        return count($this->data);
     }
 
     public function __clone()
     {
-        $this->data = unserialize(serialize($this->data), [
-            'allowed_classes' => self::class
-        ]);
+        $copy = unserialize(serialize($this->data));
+        $this->data = is_array($copy) ? $copy : [];
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    protected function getByPath(array $data, string $path, mixed $default = null, string $separator = '.'): mixed
+    {
+        $segments = explode($separator, $path);
+        $current = $data;
+
+        foreach ($segments as $segment) {
+            if (!is_array($current) || !array_key_exists($segment, $current)) {
+                return $default;
+            }
+
+            $current = $current[$segment];
+        }
+
+        return $current;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    protected function setByPath(array &$data, string $path, mixed $value, string $separator = '.'): void
+    {
+        $segments = explode($separator, $path);
+        $current = &$data;
+
+        foreach ($segments as $index => $segment) {
+            $last = $index === array_key_last($segments);
+            if ($last) {
+                $current[$segment] = $value;
+                break;
+            }
+
+            if (!isset($current[$segment]) || !is_array($current[$segment])) {
+                $current[$segment] = [];
+            }
+
+            $current = &$current[$segment];
+        }
     }
 }

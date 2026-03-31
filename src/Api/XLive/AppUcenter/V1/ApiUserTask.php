@@ -17,6 +17,7 @@
 
 namespace Bhp\Api\XLive\AppUcenter\V1;
 
+use Bhp\Device\Device;
 use Bhp\Request\Request;
 use Bhp\Sign\Sign;
 
@@ -32,7 +33,7 @@ class ApiUserTask
         $url = 'https://api.live.bilibili.com/xlive/app-ucenter/v1/userTask/GetUserTaskProgress';
         $payload = [
             'target_id' => $up_id,
-            'statistics' => getDevice('app.bili_a.statistics'),
+            'statistics' => Device::getInstance()->get('app.bili_a.statistics'),
         ];
 
         // 已领取 {"code":0,"message":"0","ttl":1,"data":{"is_surplus":1,"status":3,"progress":5,"target":5,"wallet":{"gold":100,"silver":130},"linked_actions_progress":null}}
@@ -53,7 +54,7 @@ class ApiUserTask
         $url = 'https://api.live.bilibili.com/xlive/app-ucenter/v1/userTask/UserTaskReceiveRewards';
         $payload = [
             'target_id' => $up_id,
-            'statistics' => getDevice('app.bili_a.statistics'),
+            'statistics' => Device::getInstance()->get('app.bili_a.statistics'),
         ];
 
         // {"code":0,"message":"0","ttl":1,"data":{"num":1}}

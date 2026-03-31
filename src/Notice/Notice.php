@@ -17,6 +17,7 @@
 
 namespace Bhp\Notice;
 
+use Bhp\Config\Config;
 use Bhp\FilterWords\FilterWords;
 use Bhp\Log\Log;
 use Bhp\Request\Request;
@@ -49,7 +50,7 @@ class Notice extends SingleTon
     public static function push(string $type, string $msg = ''): void
     {
         // 开关
-        if (!getEnable('notify')) return;
+        if (!self::getInstance()->enabled('notify')) return;
         // 过滤词
         if (self::getInstance()->filterMsgWords($msg)) return;
         //
@@ -67,40 +68,40 @@ class Notice extends SingleTon
     {
         $info = $this->fillContent($type, $msg);
         //
-        if (getConf('notify_sct.sctkey')) {
+        if ($this->config('notify_sct.sctkey')) {
             $this->sctSend($info);
         }
-        if (getConf('notify_sc.sckey')) {
+        if ($this->config('notify_sc.sckey')) {
             $this->scSend($info);
         }
-        if (getConf('notify_telegram.bottoken') && getConf('notify_telegram.chatid')) {
+        if ($this->config('notify_telegram.bottoken') && $this->config('notify_telegram.chatid')) {
             $this->teleSend($info);
         }
-        if (getConf('notify_dingtalk.token')) {
+        if ($this->config('notify_dingtalk.token')) {
             $this->dingTalkSend($info);
         }
-        if (getConf('notify_pushplus.token')) {
+        if ($this->config('notify_pushplus.token')) {
             $this->pushPlusSend($info);
         }
-        if (getConf('notify_gocqhttp.target_qq') && getConf('notify_gocqhttp.token') && getConf('notify_gocqhttp.url')) {
+        if ($this->config('notify_gocqhttp.target_qq') && $this->config('notify_gocqhttp.token') && $this->config('notify_gocqhttp.url')) {
             $this->goCqhttp($info);
         }
-        if (getConf('notify_debug.token') && getConf('notify_debug.url')) {
+        if ($this->config('notify_debug.token') && $this->config('notify_debug.url')) {
             $this->debug($info);
         }
-        if (getConf('notify_we_com.token')) {
+        if ($this->config('notify_we_com.token')) {
             $this->weCom($info);
         }
-        if (getConf('notify_we_com_app.corp_id') && getConf('notify_we_com_app.corp_secret') && getConf('notify_we_com_app.agent_id')) {
+        if ($this->config('notify_we_com_app.corp_id') && $this->config('notify_we_com_app.corp_secret') && $this->config('notify_we_com_app.agent_id')) {
             $this->weComApp($info);
         }
-        if (getConf('notify_feishu.token')) {
+        if ($this->config('notify_feishu.token')) {
             $this->feiShuSend($info);
         }
-        if (getConf('notify_bark.token')) {
+        if ($this->config('notify_bark.token')) {
             $this->bark($info);
         }
-        if (getConf('notify_push_deer.token')) {
+        if ($this->config('notify_push_deer.token')) {
             $this->pushDeer($info);
         }
     }
@@ -113,7 +114,7 @@ class Notice extends SingleTon
     protected function filterMsgWords(string $msg): bool
     {
         $default_words = FilterWords::getInstance()->get('Notice.default');
-        $custom_words = explode(',', getConf('notify.filter_words'));
+        $custom_words = explode(',', (string)$this->config('notify.filter_words', ''));
         $total_words = array_merge($default_words, $custom_words);
         foreach ($total_words as $word) {
             if (empty($word)) continue;
@@ -133,7 +134,7 @@ class Notice extends SingleTon
     protected function fillContent(string $type, string $msg): array
     {
         $now_time = date('Y-m-d H:i:s');
-        $uname = getConf('print.uname') ?? getConf('login_account.username');
+        $uname = $this->config('print.uname') ?? $this->config('login_account.username');
 
         $info = match ($type) {
             'update' => [
@@ -211,7 +212,7 @@ class Notice extends SingleTon
     protected function dingTalkSend(array $info): void
     {
         Log::info('使用DingTalk机器人推送消息');
-        $url = 'https://oapi.dingtalk.com/robot/send?access_token=' . getConf('notify_dingtalk.token');
+        $url = 'https://oapi.dingtalk.com/robot/send?access_token=' . $this->config('notify_dingtalk.token');
         $payload = [
             'msgtype' => 'markdown',
             'markdown' => [
@@ -239,10 +240,10 @@ class Notice extends SingleTon
     protected function teleSend(array $info): void
     {
         Log::info('使用Tele机器人推送消息');
-        $base_url = getConf('notify_telegram.url') ?: 'https://api.telegram.org/bot';
-        $url = $base_url . getConf('notify_telegram.bottoken') . '/sendMessage';
+        $base_url = $this->config('notify_telegram.url') ?: 'https://api.telegram.org/bot';
+        $url = $base_url . $this->config('notify_telegram.bottoken') . '/sendMessage';
         $payload = [
-            'chat_id' => getConf('notify_telegram.chatid'),
+            'chat_id' => $this->config('notify_telegram.chatid'),
             'text' => $info['content']
         ];
         // {"ok":true,"result":{"message_id":7,"from":{"id":,"is_bot":true,"first_name":"","username":""},"chat":{"id":,"first_name":"","username":"","type":"private"},"date":,"text":""}}
@@ -263,7 +264,7 @@ class Notice extends SingleTon
     protected function scSend(array $info): void
     {
         Log::info('使用ServerChan推送消息');
-        $url = 'https://sc.ftqq.com/' . getConf('notify_sc.sckey') . '.send';
+        $url = 'https://sc.ftqq.com/' . $this->config('notify_sc.sckey') . '.send';
         $payload = [
             'text' => $info['title'],
             'desp' => $info['content'],
@@ -286,7 +287,7 @@ class Notice extends SingleTon
     protected function sctSend(array $info): void
     {
         Log::info('使用ServerChan(Turbo)推送消息');
-        $url = 'https://sctapi.ftqq.com/' . getConf('notify_sct.sctkey') . '.send';
+        $url = 'https://sctapi.ftqq.com/' . $this->config('notify_sct.sctkey') . '.send';
         $payload = [
             'text' => $info['title'],
             'desp' => $info['content'],
@@ -312,7 +313,7 @@ class Notice extends SingleTon
         Log::info('使用PushPlus酱推送消息');
         $url = 'https://www.pushplus.plus/send';
         $payload = [
-            'token' => getConf('notify_pushplus.token'),
+            'token' => $this->config('notify_pushplus.token'),
             'title' => $info['title'],
             'content' => $info['content']
         ];
@@ -334,10 +335,10 @@ class Notice extends SingleTon
     protected function goCqhttp(array $info): void
     {
         Log::info('使用GoCqhttp推送消息');
-        $url = getConf('notify_gocqhttp.url');
+        $url = (string)$this->config('notify_gocqhttp.url');
         $payload = [
-            'access_token' => getConf('notify_gocqhttp.token'),
-            'user_id' => getConf('notify_gocqhttp.target_qq'),
+            'access_token' => $this->config('notify_gocqhttp.token'),
+            'user_id' => $this->config('notify_gocqhttp.target_qq'),
             'message' => $info['content']
         ];
         $raw = Request::get('other', $url, $payload);
@@ -358,10 +359,10 @@ class Notice extends SingleTon
     protected function debug(array $info): void
     {
         Log::info('使用Debug推送消息');
-        $url = getConf('notify_debug.url');
+        $url = (string)$this->config('notify_debug.url');
 
         $payload = [
-            'token' => getConf('notify_debug.token'),
+            'token' => $this->config('notify_debug.token'),
             'title' => $info['title'],
             'content' => $info['content'],
             'link' => '',
@@ -388,7 +389,7 @@ class Notice extends SingleTon
     protected function weCom(array $info): void
     {
         Log::info('使用weCom推送消息');
-        $url = 'https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=' . getConf('notify_we_com.token');
+        $url = 'https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=' . $this->config('notify_we_com.token');
 
         $payload = [
             'msgtype' => 'markdown',
@@ -414,10 +415,10 @@ class Notice extends SingleTon
     protected function weComApp(array $info): void
     {
         Log::info('使用weComApp推送消息');
-        $corp_id = getConf('notify_we_com_app.corp_id');
-        $corp_secret = getConf('notify_we_com_app.corp_secret');
-        $agent_id = getConf('notify_we_com_app.agent_id');
-        $to_user = getConf('notify_we_com_app.to_user') ?? '@all';
+        $corp_id = $this->config('notify_we_com_app.corp_id');
+        $corp_secret = $this->config('notify_we_com_app.corp_secret');
+        $agent_id = $this->config('notify_we_com_app.agent_id');
+        $to_user = $this->config('notify_we_com_app.to_user') ?? '@all';
 
         // 获取token
         $url = 'https://qyapi.weixin.qq.com/cgi-bin/gettoken';
@@ -463,7 +464,7 @@ class Notice extends SingleTon
     protected function feiShuSend(array $info): void
     {
         Log::info('使用飞书webhook机器人推送消息');
-        $url = 'https://open.feishu.cn/open-apis/bot/v2/hook/' . getConf('notify_feishu.token');
+        $url = 'https://open.feishu.cn/open-apis/bot/v2/hook/' . $this->config('notify_feishu.token');
         $payload = [
             'msg_type' => 'text',
             'content' => [
@@ -494,7 +495,7 @@ class Notice extends SingleTon
         $info['title'] = urlencode($info['title']);
         $info['content'] = urlencode($info['content']);
         //
-        $url = 'https://api.day.app/' . getConf('notify_bark.token') . "/{$info['title']}/{$info['content']}";
+        $url = 'https://api.day.app/' . $this->config('notify_bark.token') . "/{$info['title']}/{$info['content']}";
         $de_raw = Request::getJson(true, 'other', $url, [], []);
         if ($de_raw['code'] === 200) {
             Log::notice("推送消息成功: {$de_raw['message']}");
@@ -512,8 +513,8 @@ class Notice extends SingleTon
     protected function pushDeer(array $info)
     {
         Log::info('使用 PushDeer 推送消息');
-        $token = getConf('notify_push_deer.token');
-        $url = getConf('notify_push_deer.url');
+        $token = $this->config('notify_push_deer.token');
+        $url = (string)$this->config('notify_push_deer.url', '');
         if (!str_contains($url, "http")) {
             $url = "https://api2.pushdeer.com/message/push";
         }
@@ -533,6 +534,16 @@ class Notice extends SingleTon
         } else {
             Log::warning("推送消息失败: $raw");
         }
+    }
+
+    protected function config(string $key, mixed $default = null, string $type = 'default'): mixed
+    {
+        return Config::getInstance()->get($key, $default, $type);
+    }
+
+    protected function enabled(string $key, bool $default = false): bool
+    {
+        return (bool)$this->config($key . '.enable', $default, 'bool');
     }
 
 }

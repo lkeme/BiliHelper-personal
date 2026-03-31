@@ -18,11 +18,12 @@
 use Bhp\Api\LinkGroup\ApiLoveClub;
 use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
+use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
-use Bhp\TimeLock\TimeLock;
+use Bhp\Scheduler\TaskResult;
 use Bhp\Util\Exceptions\NoLoginException;
 
-class LoveClub extends BasePlugin
+class LoveClub extends BasePlugin implements PluginTaskInterface
 {
     /**
      * 插件信息
@@ -43,28 +44,26 @@ class LoveClub extends BasePlugin
      */
     public function __construct(Plugin &$plugin)
     {
-        //
-        TimeLock::initTimeLock();
-        // $this::class
-        $plugin->register($this, 'execute');
+        $this->bootPlugin($plugin, true);
     }
 
-    /**
-     * 执行
-     * @return void
-     * @throws NoLoginException
-     */
-    public function execute(): void
+    public function runOnce(): TaskResult
     {
-        if (TimeLock::getTimes() > time() || !getEnable('love_club')) return;
-        //
-        $groups = $this->getGroupList();
-        foreach ($groups as $group) {
-            $this->signInGroup($group);
+        if (!$this->enabled('love_club')) {
+            return TaskResult::keepSchedule();
         }
-        //
-        TimeLock::setTimes(TimeLock::timing(10));
-        // TimeLock::setTimes(mt_rand(8, 12) * 60 * 60);
+
+        try {
+            $groups = $this->getGroupList();
+            foreach ($groups as $group) {
+                $this->signInGroup($group);
+            }
+        } catch (NoLoginException $e) {
+            Log::warning("友爱社: {$e->getMessage()}");
+            return TaskResult::after(3600);
+        }
+
+        return TaskResult::nextAt(10);
     }
 
     /**

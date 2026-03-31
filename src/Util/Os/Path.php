@@ -32,8 +32,8 @@ class Path
      */
     public static function SetFolderPermissions(string $path, int $permissions = 0777): void
     {
-        if (!file_exists($path)) {
-            chmod($path, $permissions);
+        if (file_exists($path)) {
+            @chmod($path, $permissions);
         }
     }
 
@@ -50,9 +50,37 @@ class Path
      */
     public static function CreateFolder(string $path, int $permissions = 0777): void
     {
-        if (!file_exists($path)) {
-            mkdir($path, $permissions);
+        if (!is_dir($path) && !file_exists($path)) {
+            @mkdir($path, $permissions, true);
         }
+    }
+
+    public static function RemoveDirectoryRecursively(string $path): bool
+    {
+        if (!is_dir($path)) {
+            return false;
+        }
+
+        $items = scandir($path);
+        if ($items === false) {
+            return false;
+        }
+
+        foreach ($items as $item) {
+            if ($item === '.' || $item === '..') {
+                continue;
+            }
+
+            $target = $path . DIRECTORY_SEPARATOR . $item;
+            if (is_dir($target)) {
+                self::RemoveDirectoryRecursively($target);
+                continue;
+            }
+
+            @unlink($target);
+        }
+
+        return @rmdir($path);
     }
 
 

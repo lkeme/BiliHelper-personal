@@ -27,6 +27,18 @@ class Config extends BaseResource
      */
     public function init(string $filename = 'user.ini'): void
     {
+        $targetPath = $this->getFilePath($filename);
+        $schema = new ConfigSchemaDefinition();
+        $result = (new ConfigTemplateSynchronizer())->synchronize($schema->exampleConfigPath(), $targetPath);
+        if ($result->changed) {
+            $message = '配置模板已同步: ' . basename($targetPath);
+            if ($result->backupPath !== null) {
+                $message .= ' (backup: ' . basename($result->backupPath) . ')';
+            }
+
+            fwrite(STDOUT, $message . PHP_EOL);
+        }
+
         $this->loadResource($filename, 'ini');
     }
 

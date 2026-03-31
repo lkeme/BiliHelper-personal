@@ -18,10 +18,11 @@
 use Bhp\Api\Esports\ApiGuess;
 use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
+use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
-use Bhp\TimeLock\TimeLock;
+use Bhp\Scheduler\TaskResult;
 
-class GameForecast extends BasePlugin
+class GameForecast extends BasePlugin implements PluginTaskInterface
 {
     /**
      * 插件信息
@@ -42,23 +43,18 @@ class GameForecast extends BasePlugin
      */
     public function __construct(Plugin &$plugin)
     {
-        //
-        TimeLock::initTimeLock();
-        // $this::class
-        $plugin->register($this, 'execute');
+        $this->bootPlugin($plugin, true);
     }
 
-    /**
-     * 执行
-     * @return void
-     */
-    public function execute(): void
+    public function runOnce(): TaskResult
     {
-        if (TimeLock::getTimes() > time() || !getEnable('game_forecast')) return;
-        //
+        if (!$this->enabled('game_forecast')) {
+            return TaskResult::keepSchedule();
+        }
+
         $this->startStake();
-        //
-        TimeLock::setTimes(TimeLock::timing(1, 30));
+
+        return TaskResult::nextAt(1, 30);
     }
 
     /**
@@ -107,13 +103,13 @@ class GameForecast extends BasePlugin
         $guess['oid'] = $question['contest']['id'];
         $guess['main_id'] = $question['questions'][0]['id'];
         $details = $question['questions'][0]['details'];
-        $guess['count'] = (($count = getConf('game_forecast.max_coin', 0, 'int')) <= 10) ? $count : 10;
+        $guess['count'] = (($count = $this->config('game_forecast.max_coin', 0, 'int')) <= 10) ? $count : 10;
         $guess['title'] = $question['questions'][0]['title'];
         foreach ($details as $detail) {
             $guess['title'] .= " 队伍: {$detail['option']} 赔率: {$detail['odds']}";
         }
         array_multisort(array_column($details, "odds"), SORT_ASC, $details);
-        switch (getConf('game_forecast.bet', 3, 'int')) {
+        switch ($this->config('game_forecast.bet', 3, 'int')) {
             case 1:
                 // 压大
                 $detail = array_pop($details);
@@ -144,8 +140,8 @@ class GameForecast extends BasePlugin
     protected function startStake(): void
     {
         //
-        $max_guess = getConf('game_forecast.max_num', 0, 'int');
-        $max_coin = getConf('game_forecast.max_coin', 0, 'int');
+        $max_guess = $this->config('game_forecast.max_num', 0, 'int');
+        $max_coin = $this->config('game_forecast.max_coin', 0, 'int');
         if ($max_guess <= 0 || $max_coin <= 0) {
             Log::warning('赛事预测: 每日竞猜次数或者硬币数量不能小于1');
             return;

@@ -20,15 +20,16 @@ use Bhp\Cache\Cache;
 use Bhp\FilterWords\FilterWords;
 use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
+use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
-use Bhp\TimeLock\TimeLock;
 use Bhp\Request\Request;
+use Bhp\Scheduler\TaskResult;
 use Bhp\User\User;
 use Bhp\Util\Common\Common;
 use function Amp\delay;
 
 
-class Lottery extends BasePlugin
+class Lottery extends BasePlugin implements PluginTaskInterface
 {
     /**
      * 插件信息
@@ -61,34 +62,24 @@ class Lottery extends BasePlugin
      */
     public function __construct(Plugin &$plugin)
     {
-        TimeLock::initTimeLock();
         Cache::initCache();
-        $plugin->register($this, 'execute');
+        $this->bootPlugin($plugin, true);
     }
 
-    /**
-     * 执行
-     * @return void
-     */
-    public function execute(): void
+    public function runOnce(): TaskResult
     {
-        if (!getEnable('lottery')) return;
-        //
-        if (TimeLock::getTimes() > time()) return;
-        //
+        if (!$this->enabled('lottery')) {
+            return TaskResult::keepSchedule();
+        }
+
         $this->initConfig();
-        //
         $global_uid = base64_decode('MTkwNTcwMjM3NQ==');
-        //
         $this->handleArticle($global_uid);
-        //
         $this->handleDynamic($global_uid);
-        //
         $this->handleLottery($global_uid);
-        //
         $this->saveConfig();
-        // 10-25分钟
-        TimeLock::setTimes(mt_rand(10, 25) * 60);
+
+        return TaskResult::after(mt_rand(10, 25) * 60);
     }
 
     /**

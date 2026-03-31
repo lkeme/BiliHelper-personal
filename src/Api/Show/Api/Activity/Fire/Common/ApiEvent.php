@@ -18,6 +18,7 @@
 
 namespace Bhp\Api\Show\Api\Activity\Fire\Common;
 
+use Bhp\Device\Device;
 use Bhp\Request\Request;
 use Bhp\Sign\Sign;
 use Bhp\User\User;
@@ -41,7 +42,7 @@ class ApiEvent
         //
         $params = [
             'csrf' => $user['csrf'],
-            'statistics' => getDevice('app.bili_a.statistics'),
+            'statistics' => Device::getInstance()->get('app.bili_a.statistics'),
         ];
         $url = 'https://show.bilibili.com/api/activity/fire/common/event/dispatch?' . http_build_query(Sign::common($params));
         //

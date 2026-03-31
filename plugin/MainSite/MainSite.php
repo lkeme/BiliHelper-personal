@@ -23,14 +23,15 @@ use Bhp\Api\Video\ApiWatch;
 use Bhp\Api\Video\ApiVideo;
 use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
+use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
-use Bhp\TimeLock\TimeLock;
+use Bhp\Scheduler\TaskResult;
 use Bhp\User\User;
 use Bhp\Util\ArrayR\ArrayR;
 use Bhp\Util\Exceptions\NoLoginException;
 use Bhp\Cache\Cache;
 
-class MainSite extends BasePlugin
+class MainSite extends BasePlugin implements PluginTaskInterface
 {
     /**
      * @var array|array[]
@@ -56,33 +57,29 @@ class MainSite extends BasePlugin
      */
     public function __construct(Plugin &$plugin)
     {
-        //
-        TimeLock::initTimeLock();
-        //
         Cache::initCache();
-        // $this::class
-        $plugin->register($this, 'execute');
+        $this->bootPlugin($plugin, true);
     }
 
-    /**
-     * 执行
-     * @return void
-     * @throws NoLoginException
-     */
-    public function execute(): void
+    public function runOnce(): TaskResult
     {
-        if (TimeLock::getTimes() > time() || !getEnable('main_site')) return;
-        // 缓存开始
-        $this->records = ($tmp = Cache::get('records')) ? $tmp : $this->initRecords();
-        //
-        if ($this->watchTask() && $this->shareTask() && $this->coinTask()) {
-            TimeLock::setTimes(TimeLock::timing(10));
-        } else {
-            // 失败重试时间 1~3小时 尝试通过延迟调整-403
-            TimeLock::setTimes(mt_rand(60, 180) * 60);
+        if (!$this->enabled('main_site')) {
+            return TaskResult::keepSchedule();
         }
-        // 缓存结束
+
+        $this->records = ($tmp = Cache::get('records')) ? $tmp : $this->initRecords();
+
+        try {
+            $success = $this->watchTask() && $this->shareTask() && $this->coinTask();
+        } catch (NoLoginException $e) {
+            Cache::set('records', $this->records);
+            Log::warning("主站任务: {$e->getMessage()}");
+            return TaskResult::after(3600);
+        }
+
         Cache::set('records', $this->records);
+
+        return $success ? TaskResult::nextAt(10) : TaskResult::after(mt_rand(60, 180) * 60);
     }
 
     /**
@@ -106,7 +103,7 @@ class MainSite extends BasePlugin
      */
     protected function fetchCustomArchives(int $num = 30): array
     {
-        if (getConf('main_site.fetch_aids_mode') == 'random') {
+        if ($this->config('main_site.fetch_aids_mode') == 'random') {
             // 随机热门稿件榜单
             return $this->getTopArchives($num);
         } else {
@@ -124,9 +121,9 @@ class MainSite extends BasePlugin
      */
     protected function coinTask(string $key = 'coin'): bool
     {
-        if (!getConf('main_site.add_coin', false, 'bool')) return true;
+        if (!$this->config('main_site.add_coin', false, 'bool')) return true;
         // 已满6级
-        if (getConf('main_site.when_lv6_stop_coin', false, 'bool')) {
+        if ($this->config('main_site.when_lv6_stop_coin', false, 'bool')) {
             $userInfo = User::userNavInfo();
             if ($userInfo->level_info->current_level >= 6) {
                 Log::notice('主站任务: 已满6级, 停止投币');
@@ -136,7 +133,7 @@ class MainSite extends BasePlugin
         //
         if (in_array($this->getKey(), $this->records[$key])) return true;
         // 预计数量 失败默认0  避免损失
-        $estimate_num = getConf('main_site.add_coin_num', 0, 'int');
+        $estimate_num = $this->config('main_site.add_coin_num', 0, 'int');
         // 库存数量
         $stock_num = $this->getCoinStock();
         $already_num = $this->getCoinAlready();
@@ -322,7 +319,7 @@ class MainSite extends BasePlugin
      */
     protected function shareTask(string $key = 'share'): bool
     {
-        if (!getConf('main_site.share', false, 'bool')) return true;
+        if (!$this->config('main_site.share', false, 'bool')) return true;
         //
         if (in_array($this->getKey(), $this->records[$key])) return true;
         //
@@ -353,7 +350,7 @@ class MainSite extends BasePlugin
      */
     protected function watchTask(string $key = 'watch'): bool
     {
-        if (!getConf('main_site.watch', false, 'bool')) return true;
+        if (!$this->config('main_site.watch', false, 'bool')) return true;
         //
         if (in_array($this->getKey(), $this->records[$key])) return true;
         //

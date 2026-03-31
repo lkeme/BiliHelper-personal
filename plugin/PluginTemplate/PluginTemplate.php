@@ -16,10 +16,11 @@
  */
 
 use Bhp\Plugin\BasePlugin;
+use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
-use Bhp\TimeLock\TimeLock;
+use Bhp\Scheduler\TaskResult;
 
-class PluginTemplate extends BasePlugin
+class PluginTemplate extends BasePlugin implements PluginTaskInterface
 {
     /**
      * 插件信息
@@ -43,26 +44,14 @@ class PluginTemplate extends BasePlugin
      */
     public function __construct(Plugin &$plugin)
     {
-//         // 时间锁
-//        TimeLock::initTimeLock();
-        // 缓存
-//        Cache::initCache();
-        // $this::class
-//        $plugin->register($this, 'execute');
+        $this->bootPlugin($plugin, true);
     }
 
-    /**
-     * 执行
-     * @return void
-     */
-    public function execute(): void
+    public function runOnce(): TaskResult
     {
-        // 时间锁限制
-        // if (TimeLock::getTimes() > time()) return;
-
         // todo ...
 
-        //TimeLock::setTimes(24 * 60 * 60);
+        return TaskResult::keepSchedule();
     }
 
 

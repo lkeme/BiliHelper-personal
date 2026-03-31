@@ -17,11 +17,13 @@
 
 namespace Bhp\Console\Command;
 
-use Ahc\Cli\Input\Command;
-use Ahc\Cli\IO\Interactor;
+use Bhp\Console\Cli\Command;
+use Bhp\Console\Cli\Interactor;
 use Bhp\Log\Log;
 use Bhp\Plugin\Plugin;
-use Bhp\Task\Task;
+use Bhp\Profile\ProfileCacheResetService;
+use Bhp\Scheduler\Scheduler;
+use Bhp\Util\AppTerminator;
 
 final class DebugCommand extends Command
 {
@@ -40,11 +42,13 @@ final class DebugCommand extends Command
         $this
             ->option('-p --plugin', '[默认会同时加载Login]测试插件')
             ->option('-P --plugins', '[默认会同时加载Login]测试插件列表')
+            ->option('-r --reset-cache', '执行前清理当前 profile 缓存（默认保留登录态）')
             ->usage(
-                '<bold>  $0</end> <comment>mode:debug --plugin TestPlugin</end> ## details 1<eol/>' .
-                '<bold>  $0</end> <comment>m:d -p TestPlugin</end> ## details 2<eol/>' .
-                '<bold>  $0</end> <comment>mode:debug --plugins TestPlugin|Test1Plugin</end> ## details 3<eol/>' .
-                '<bold>  $0</end> <comment>m:d -P TestPlugin,Test1Plugin</end> ## details 4<eol/>'
+                '  $0 mode:debug --plugin TestPlugin' . PHP_EOL .
+                '  $0 m:d -p TestPlugin' . PHP_EOL .
+                '  $0 mode:debug --plugins TestPlugin,Test1Plugin' . PHP_EOL .
+                '  $0 m:d -P TestPlugin,Test1Plugin' . PHP_EOL .
+                '  $0 m:d -p TestPlugin --reset-cache'
             );
     }
 
@@ -62,31 +66,47 @@ final class DebugCommand extends Command
     public function execute(): void
     {
         Log::info("执行 $this->desc");
-        //
-        if (is_null($this->values()['plugin']) || $this->values()['plugins']) {
-            failExit('发生错误，未加载插件');
+
+        $single = trim((string)($this->values()['plugin'] ?? ''));
+        $multi = trim((string)($this->values()['plugins'] ?? ''));
+        if ($single === '' && $multi === '') {
+            AppTerminator::fail('发生错误，未加载插件');
         }
-        //
-        $p = $this->values()['plugin'];
-        if (is_null($p)) {
-            $temp = $this->values()['plugins'];
-            $pp = explode(',', $temp);
-        } else {
-            $pp = [$p];
+
+        if ((bool)($this->values()['reset-cache'] ?? false)) {
+            Log::info('调试模式: 进入前清理缓存（保留登录态）');
+            (new ProfileCacheResetService())->reset();
         }
-        //
-        if (empty($pp)) failExit('没有插件输入');
-        array_unshift($pp, 'Login');
-        //
-        $plugins = Plugin::getPlugins();
-        foreach ($plugins as $plugin) {
-            if (!in_array($plugin['hook'], $pp)) {
-                continue;
+        $pp = [];
+        if ($single !== '') {
+            $pp[] = $single;
+        }
+
+        if ($multi !== '') {
+            $pp = array_merge($pp, preg_split('/[|,]/', $multi, -1, PREG_SPLIT_NO_EMPTY) ?: []);
+        }
+
+        $pp = array_values(array_unique(array_map('trim', $pp)));
+        if (empty($pp)) AppTerminator::fail('没有插件输入');
+
+        if (!in_array('Login', $pp, true)) {
+            array_unshift($pp, 'Login');
+        }
+
+        $selected = [];
+        foreach (Plugin::getPlugins() as $plugin) {
+            if (in_array((string)$plugin['hook'], $pp, true)) {
+                $selected[] = $plugin;
             }
-            Task::addTask($plugin['hook'], null);
         }
-        //
-        Task::execTasks();
+
+        if ($selected === []) {
+            AppTerminator::fail('没有匹配到可执行插件');
+        }
+
+        $scheduler = Scheduler::getInstance();
+        $scheduler->registerPlugins($selected);
+        $scheduler->run();
     }
 
 }

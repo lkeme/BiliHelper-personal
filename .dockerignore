@@ -1,0 +1,16 @@
+.git
+.git/
+.worktrees/
+worktrees/
+build/
+vendor/
+profile/*
+!profile/example/
+!profile/example/**
+reference/
+phpstan-bootstrap.php
+phpstan.neon.dist
+tools/
+docs/
+README.md
+reference/

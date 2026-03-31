@@ -2,8 +2,7 @@
     "name": "lkeme/bilihelper-personal",
     "description": "B 站自动领瓜子、直播助手、直播挂机脚本、主站助手 - PHP 版（Personal）",
     "type": "project",
-    "version": "2.4.x-dev",
-    "minimum-stability": "stable",
+    "minimum-stability": "dev",
     "license": "MIT",
     "authors": [
         {
@@ -23,18 +22,6 @@
     },
     "repositories": [
         {
-            "description": "fire015/flintstone",
-            "type": "path",
-            "url": "packages/flintstone",
-            "canonical": false
-        },
-        {
-            "description": "php-ds/php-ds",
-            "type": "path",
-            "url": "packages/php-ds",
-            "canonical": false
-        },
-        {
             "description": "TencentCloud",
             "type": "composer",
             "url": "https://mirrors.tencent.com/composer/"
@@ -46,7 +33,7 @@
         }
     ],
     "require": {
-        "php": ">=8.1",
+        "php": ">=8.3",
         "ext-curl": "*",
         "ext-openssl": "*",
         "ext-sockets": "*",
@@ -54,27 +41,14 @@
         "ext-zlib": "*",
         "ext-mbstring": "*",
         "monolog/monolog": "dev-main",
-        "bramus/monolog-colored-line-formatter": "dev-master",
-        "symfony/yaml": "^7.0",
-        "toolkit/stdlib": "*",
-        "adhocore/cli": "^v1.0.0",
-        "jbzoo/data": "dev-master",
-        "grasmash/expander": "dev-main",
+        "symfony/yaml": "8.1.x-dev",
         "amphp/amp": "3.x-dev",
-        "overtrue/pinyin": "dev-master",
-        "guzzlehttp/guzzle": "^7.0",
-        "toolkit/pflag": "dev-main",
-        "symfony/console": "^7.0",
-        "fire015/flintstone": "dev-master",
-        "php-ds/php-ds": "dev-master as v1.1",
-        "malios/php-to-ascii-table": "dev-master"
+        "amphp/http-client": "5.x-dev"
     },
     "autoload": {
         "psr-4": {
             "Bhp\\": "src/"
-        },
-        "files": [
-            "src/Helpers.php"
-        ]
-    }
+        }
+    },
+    "require-dev": {}
 }

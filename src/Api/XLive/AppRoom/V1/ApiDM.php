@@ -34,7 +34,6 @@ class ApiDM
         $params = [
             'aid' => '',
             'page' => '1',
-            //'statistics' => getDevice('app.bili_a.statistics'),
         ];
         $url = 'https://api.live.bilibili.com/xlive/app-room/v1/dM/sendmsg?' . http_build_query(Sign::common($params));
         $payload = [

@@ -18,7 +18,7 @@
 
 | Requirement  |
 |--------------|
-| PHP >=8.1    |
+| PHP >=8.3    |
 | php_curl     |
 | php_sockets  |
 | php_openssl  |
@@ -30,10 +30,8 @@
 
 + user
     - cache (包含登录状态、以及其他插件缓存)
-    - config (个人的配置、以及其他插件的设置)
-    - device (设备参数文件)
+    - config (个人配置、插件开关、可选 device override)
     - log (日志文件)
-    - task (排程文件)
 
 ## Composer
 
@@ -136,12 +134,21 @@ $ composer install
  ...
  ```
 
-4. 运行测试
+其中 `[app].branch` 用于控制远程资源与更新检查使用的分支：
+
+- `master`：默认线上稳定分支
+- `dev`：开发测试分支
+
+如果使用 Docker 并传入环境变量 `BRANCH`，则优先使用 `BRANCH`，`app.branch` 作为回退值。
+
+4. 运行命令
 
 ```shell
 $ php app.php
-# 默认配置user
-$ php app.php m:a 
+# 默认即 user + m:a
+$ php app.php m:a
+$ php app.php user
+$ php app.php user m:a
 ```
 
 > 以下是`多账户多开方案`，单个账户可以无视
@@ -157,7 +164,12 @@ $ php app.php m:a
 
 6. 自定义设备方案
 
-修改个人配置文件夹即可 `profile/user/device/device.yaml`
+默认设备参数位于 `resources/device/default.yaml`
+
+如需自定义，请在个人配置目录使用以下其一：
+
+- `profile/user/config/device.override.yaml`
+- `profile/user/config/device.override+.yaml`
 
 7. 命令模式
 
@@ -166,6 +178,8 @@ $ php app.php m:a
 $ php app.php
  mode:app     m:a    [主要模式] 默认功能
  mode:debug   m:d    [Debug模式] 开发测试使用
+ mode:doctor  m:o    [Doctor模式] 检查 profile 运行条件
+ mode:profiles m:p   [Profiles模式] 顺序执行多个 profile
  mode:restore m:r    [复位模式] 复位一些缓存以及设置
  mode:script  m:s    [脚本模式] 使用一些额外功能脚本
 ```
@@ -179,6 +193,10 @@ $ php app.php test m:d -p plugin # 单个插件
 $ php app.php test m:d -p VipPoint  # 单个插件示例
 $ php app.php test m:d -P plugin,plugin1 # 多个插件
 $ php app.php test m:d -P VipPoint,Lottery # 多个插件
+$ php app.php m:d -p VipPoint --reset-cache # 调试前清理缓存并保留登录态
+$ php app.php m:o # 检查当前 profile 与运行时诊断
+$ php app.php m:p --profiles user,other # 顺序执行多个 profile
+$ php app.php m:r --purge-auth # 清理缓存并同时清理登录态
 ```
 
 <p align=center><img width="680px" src="https://user-images.githubusercontent.com/19500576/118621472-f8455d80-b7f8-11eb-9fec-500148a566b4.png" alt=""></p>
@@ -217,6 +235,7 @@ $ php app.php test m:d -P VipPoint,Lottery # 多个插件
 
 ```shell
 $ docker run -itd --rm -e USER_NAME=你的B站登录账号 -e USER_PASSWORD=你的B站密码 lkeme/bilihelper-personal
+$ docker run -itd --rm -e BRANCH=dev -e USER_NAME=你的B站登录账号 -e USER_PASSWORD=你的B站密码 lkeme/bilihelper-personal
 ```
 
 - 通过配置文件进行传入(能保留登录状态，自定义配置)
@@ -236,11 +255,10 @@ $ docker run -itd -e MIRRORS=2 -e CAPTCHA=1 -e CAPTCHA_HOST=0.0.0.0 -e CAPTCHA_P
  /your/path/bh/profile/user:/app/profile/user lkeme/bilihelper-personal
 ```
 
-- 版本兼容
+- 当前 Docker 仅支持当前 profile 目录方案
 
 ```shell
-$ -e VERSION=1 # 使用 版本 V1.x.x(兼容处理)
-$ -e VERSION=2 # 使用 版本 V2.x.x(默认选项)
+$ -v /your/path/bh/profile/user:/app/profile/user
 ```
 
 - 使用github镜像加速
@@ -256,6 +274,18 @@ $ -e MIRRORS=4 # 使用 githubfast.com(KR|韩国)
 $ -e MIRRORS=5 # 使用 hub.gitmirror.com(US|美国)
 $ -e MIRRORS=custom -e CUSTOM_CLONE_URL=https://github.com/lkeme/BiliHelper-personal.git # 使用 自定义克隆地址
 ```
+
+- 代码分支与资源分支优先级
+
+```shell
+$ -e BRANCH=dev     # Docker 代码更新分支，同时也是远程资源分支的最高优先级
+```
+
+优先级规则：
+
+- `BRANCH`
+- `profile/user/config/user.ini` 中的 `app.branch`
+- `master`
 
 - 👉 相关参数
 

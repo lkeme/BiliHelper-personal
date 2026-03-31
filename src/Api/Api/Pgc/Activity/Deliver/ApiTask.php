@@ -17,6 +17,7 @@
 
 namespace Bhp\Api\Api\Pgc\Activity\Deliver;
 
+use Bhp\Device\Device;
 use Bhp\Request\Request;
 use Bhp\Sign\Sign;
 use Bhp\User\User;
@@ -46,7 +47,7 @@ class ApiTask
             'disable_rcmd' => '0',
             'position' => $position,
             'csrf' => $user['csrf'],
-            'statistics' => getDevice('app.bili_a.statistics'),
+            'statistics' => Device::getInstance()->get('app.bili_a.statistics'),
         ];
         //
         $headers = array_merge([], self::$headers);

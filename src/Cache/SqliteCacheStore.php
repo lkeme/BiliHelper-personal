@@ -1,0 +1,121 @@
+<?php declare(strict_types=1);
+
+namespace Bhp\Cache;
+
+final class SqliteCacheStore implements CacheStoreInterface
+{
+    private ?\SQLite3 $connection = null;
+
+    public function __construct(private readonly string $databasePath)
+    {
+    }
+
+    public function databasePath(): string
+    {
+        return $this->databasePath;
+    }
+
+    public function get(string $scope, string $key): mixed
+    {
+        $statement = $this->connection()->prepare(
+            'SELECT value FROM cache_entries WHERE scope = :scope AND cache_key = :cache_key LIMIT 1'
+        );
+        if (!$statement instanceof \SQLite3Stmt) {
+            return false;
+        }
+
+        $statement->bindValue(':scope', $scope, SQLITE3_TEXT);
+        $statement->bindValue(':cache_key', $key, SQLITE3_TEXT);
+        $result = $statement->execute();
+        if (!$result instanceof \SQLite3Result) {
+            return false;
+        }
+
+        $row = $result->fetchArray(SQLITE3_ASSOC);
+        $result->finalize();
+
+        if (!is_array($row) || !isset($row['value']) || !is_string($row['value'])) {
+            return false;
+        }
+
+        return json_decode($row['value'], true, 512, JSON_THROW_ON_ERROR);
+    }
+
+    public function set(string $scope, string $key, mixed $value): void
+    {
+        $statement = $this->connection()->prepare(
+            'INSERT INTO cache_entries(scope, cache_key, value, updated_at)
+             VALUES (:scope, :cache_key, :value, :updated_at)
+             ON CONFLICT(scope, cache_key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at'
+        );
+        if (!$statement instanceof \SQLite3Stmt) {
+            throw new \RuntimeException('无法准备 SQLite 写入语句');
+        }
+
+        $statement->bindValue(':scope', $scope, SQLITE3_TEXT);
+        $statement->bindValue(':cache_key', $key, SQLITE3_TEXT);
+        $statement->bindValue(':value', json_encode($value, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR), SQLITE3_TEXT);
+        $statement->bindValue(':updated_at', time(), SQLITE3_INTEGER);
+        $statement->execute();
+    }
+
+    /**
+     * @param array<string, mixed> $entries
+     */
+    public function importScope(string $scope, array $entries): void
+    {
+        if ($entries === []) {
+            return;
+        }
+
+        $connection = $this->connection();
+        $connection->exec('BEGIN IMMEDIATE TRANSACTION');
+
+        try {
+            foreach ($entries as $key => $value) {
+                $this->set($scope, (string) $key, $value);
+            }
+            $connection->exec('COMMIT');
+        } catch (\Throwable $throwable) {
+            $connection->exec('ROLLBACK');
+            throw $throwable;
+        }
+    }
+
+    public function clear(): void
+    {
+        $path = $this->databasePath;
+        if ($this->connection instanceof \SQLite3) {
+            $this->connection->close();
+            $this->connection = null;
+        }
+
+        if (is_file($path)) {
+            @unlink($path);
+        }
+    }
+
+    private function connection(): \SQLite3
+    {
+        if ($this->connection instanceof \SQLite3) {
+            return $this->connection;
+        }
+
+        $connection = new \SQLite3($this->databasePath);
+        $connection->busyTimeout(5000);
+        $connection->enableExceptions(true);
+        $connection->exec('PRAGMA journal_mode = WAL');
+        $connection->exec('PRAGMA synchronous = NORMAL');
+        $connection->exec(
+            'CREATE TABLE IF NOT EXISTS cache_entries (
+                scope TEXT NOT NULL,
+                cache_key TEXT NOT NULL,
+                value TEXT NOT NULL,
+                updated_at INTEGER NOT NULL,
+                PRIMARY KEY (scope, cache_key)
+            )'
+        );
+
+        return $this->connection = $connection;
+    }
+}
