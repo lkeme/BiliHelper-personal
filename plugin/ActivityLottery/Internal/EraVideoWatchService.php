@@ -4,9 +4,13 @@ namespace Bhp\Plugin\ActivityLottery\Internal;
 
 use Bhp\Api\Api\X\Player\ApiPlayer;
 use Bhp\Api\Video\ApiWatch;
+use Bhp\Automation\Watch\VideoWatchService;
+use Bhp\Automation\Watch\VideoWatchSession;
 
 final class EraVideoWatchService
 {
+    private ?VideoWatchService $watchService = null;
+
     /**
      * @param array<string, mixed> $archive
      * @return array<string, mixed>|null
@@ -119,23 +123,21 @@ final class EraVideoWatchService
             return false;
         }
 
-        $aid = (string)($archive['aid'] ?? '');
-        $cid = (string)($archive['cid'] ?? '');
-        $duration = (int)($archive['duration'] ?? 0);
-        $bvid = (string)($archive['bvid'] ?? '');
-        $session ??= $this->generateSession();
-
-        $response = ApiWatch::video($aid, $cid, $bvid, [
-            'session' => $session,
-        ]);
-        if (($response['code'] ?? -1) !== 0) {
+        try {
+            $this->watchService()->start(
+                (string)($archive['aid'] ?? ''),
+                (string)($archive['cid'] ?? ''),
+                [
+                    'duration' => (int)($archive['duration'] ?? 0),
+                    'bvid' => (string)($archive['bvid'] ?? ''),
+                    'session_id' => $session ?? '',
+                ],
+            );
+        } catch (\Throwable) {
             return false;
         }
 
-        $response = ApiWatch::heartbeat($aid, $cid, $duration, $bvid, [
-            'session' => $session,
-        ]);
-        return ($response['code'] ?? -1) === 0;
+        return true;
     }
 
     public function finish(array $archive, ?int $startedAt = null, ?int $watchedSeconds = null, ?string $session = null): bool
@@ -145,30 +147,19 @@ final class EraVideoWatchService
             return false;
         }
 
-        $aid = (string)($archive['aid'] ?? '');
-        $cid = (string)($archive['cid'] ?? '');
         $duration = (int)($archive['duration'] ?? 0);
-        $bvid = (string)($archive['bvid'] ?? '');
+        $watchSession = VideoWatchSession::start(
+            (string)($archive['aid'] ?? ''),
+            (string)($archive['cid'] ?? ''),
+            [
+                'duration' => $duration,
+                'bvid' => (string)($archive['bvid'] ?? ''),
+                'session_id' => $session ?? '',
+            ],
+        );
         $watchedSeconds = max(1, min($duration, (int)($watchedSeconds ?? $duration)));
-        $session ??= $this->generateSession();
 
-        $response = ApiWatch::heartbeat($aid, $cid, $duration, $bvid, [
-            'played_time' => $watchedSeconds >= $duration ? max(0, $duration - 1) : $watchedSeconds,
-            'play_type' => 0,
-            'start_ts' => time(),
-            'session' => $session,
-        ]);
-
-        return ($response['code'] ?? -1) === 0;
-    }
-
-    private function generateSession(): string
-    {
-        try {
-            return strtolower(bin2hex(random_bytes(16)));
-        } catch (\Throwable) {
-            return strtolower(md5(uniqid((string)mt_rand(), true)));
-        }
+        return $this->watchService()->finish($watchSession, $watchedSeconds);
     }
 
     private function aidFromBvid(string $bvid): string
@@ -197,5 +188,39 @@ final class EraVideoWatchService
         }
 
         return (string)(($result - 8728348608) ^ 177451812);
+    }
+
+    private function watchService(): VideoWatchService
+    {
+        return $this->watchService ??= new VideoWatchService(
+            startHandler: static function (VideoWatchSession $session): bool {
+                $response = ApiWatch::video($session->archiveId, $session->cid, $session->bvid, [
+                    'session' => $session->sessionId,
+                ]);
+                if (($response['code'] ?? -1) !== 0) {
+                    return false;
+                }
+
+                $response = ApiWatch::heartbeat(
+                    $session->archiveId,
+                    $session->cid,
+                    $session->duration,
+                    $session->bvid,
+                    ['session' => $session->sessionId]
+                );
+                return ($response['code'] ?? -1) === 0;
+            },
+            finishHandler: static function (VideoWatchSession $session, int $watchedSeconds): bool {
+                $duration = max(1, $session->duration);
+                $playedTime = $watchedSeconds >= $duration ? max(0, $duration - 1) : $watchedSeconds;
+                $response = ApiWatch::heartbeat($session->archiveId, $session->cid, $duration, $session->bvid, [
+                    'played_time' => $playedTime,
+                    'play_type' => 0,
+                    'start_ts' => time(),
+                    'session' => $session->sessionId,
+                ]);
+                return ($response['code'] ?? -1) === 0;
+            },
+        );
     }
 }

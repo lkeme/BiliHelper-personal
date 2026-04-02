@@ -6,6 +6,8 @@ use Bhp\Api\XLive\WebInterface\V1\Second\ApiList;
 use Bhp\Api\XLive\WebInterface\V1\WebMain\ApiRecommend;
 use Bhp\Api\XLive\DataInterface\V1\X25Kn\ApiTrace;
 use Bhp\Api\XLive\WebRoom\V1\Index\ApiIndex;
+use Bhp\Automation\Watch\LiveWatchService;
+use Bhp\Automation\Watch\LiveWatchSession;
 use Bhp\Log\Log;
 use Bhp\Request\Request;
 use Bhp\Runtime\Runtime;
@@ -16,6 +18,7 @@ final class EraLiveWatchService
     private bool $areaFetchFailureReported = false;
     /** @var array<string, string> */
     private array $areaWebIds = [];
+    private ?LiveWatchService $watchService = null;
 
     /**
      * @param string[] $roomIds
@@ -28,51 +31,21 @@ final class EraLiveWatchService
             return null;
         }
 
-        ApiIndex::roomEntryAction((int)$room['room_id']);
-
-        $session = [
-            'room_id' => (int)$room['room_id'],
-            'ruid' => (int)$room['ruid'],
-            'parent_area_id' => (int)$room['parent_area_id'],
-            'area_id' => (int)$room['area_id'],
-            'room_title' => (string)($room['room_title'] ?? ''),
-            'room_uname' => (string)($room['room_uname'] ?? ''),
-            'room_pick_source' => (string)($room['pick_source'] ?? 'room'),
-            'seq_id' => 0,
-            'live_buvid' => Fake::buvid(),
-            'live_uuid' => Fake::uuid4(),
-        ];
-
-        $response = ApiTrace::enter(
-            $session['room_id'],
-            $session['ruid'],
-            $session['parent_area_id'],
-            $session['area_id'],
-            $session['live_buvid'],
-            $session['live_uuid'],
-            $this->userAgent(),
+        $session = $this->watchService()->start(
+            (int)$room['room_id'],
+            [
+                'ruid' => (int)$room['ruid'],
+                'parent_area_id' => (int)$room['parent_area_id'],
+                'area_id' => (int)$room['area_id'],
+                'room_title' => (string)($room['room_title'] ?? ''),
+                'room_uname' => (string)($room['room_uname'] ?? ''),
+                'room_pick_source' => (string)($room['pick_source'] ?? 'room'),
+                'seq_id' => 0,
+                'live_buvid' => Fake::buvid(),
+                'live_uuid' => Fake::uuid4(),
+            ],
         );
-        if (($response['code'] ?? 0) !== 0) {
-            throw new \RuntimeException("x25Kn/E失败 {$response['code']} -> {$response['message']}");
-        }
-
-        $data = is_array($response['data'] ?? null) ? $response['data'] : [];
-        $secretKey = trim((string)($data['secret_key'] ?? ''));
-        $secretRule = $data['secret_rule'] ?? [];
-        $heartbeatInterval = max(30, (int)($data['heartbeat_interval'] ?? 60));
-        $ets = (int)($data['timestamp'] ?? 0);
-
-        if ($secretKey === '' || !is_array($secretRule) || $ets <= 0) {
-            throw new \RuntimeException('x25Kn/E返回缺少必要会话字段');
-        }
-
-        $session['heartbeat_interval'] = $heartbeatInterval;
-        $session['ets'] = $ets;
-        $session['secret_key'] = $secretKey;
-        $session['secret_rule'] = array_values(array_map(static fn (mixed $rule): int => (int)$rule, $secretRule));
-        $session['last_heartbeat_at'] = microtime(true);
-
-        return $session;
+        return $session->toArray();
     }
 
     /**
@@ -81,37 +54,8 @@ final class EraLiveWatchService
      */
     public function heartbeat(array $session): array
     {
-        $now = microtime(true);
-        $lastHeartbeatAt = max(0.0, (float)($session['last_heartbeat_at'] ?? 0.0));
-        $elapsedSeconds = $lastHeartbeatAt > 0
-            ? max(1, (int)floor($now - $lastHeartbeatAt))
-            : max(1, (int)($session['heartbeat_interval'] ?? 60));
-
-        $session['_debug_elapsed_seconds'] = $elapsedSeconds;
-        $session['_debug_heartbeat_at'] = $now;
-
-        $response = ApiTrace::heartbeat($session, $this->userAgent(), (int)($session['heartbeat_interval'] ?? 60));
-        if (($response['code'] ?? 0) !== 0) {
-            throw new \RuntimeException("x25Kn/X失败 {$response['code']} -> {$response['message']}");
-        }
-
-        $data = is_array($response['data'] ?? null) ? $response['data'] : [];
-        $session['seq_id'] = (int)($session['seq_id'] ?? 0) + 1;
-        $session['heartbeat_interval'] = max(30, (int)($data['heartbeat_interval'] ?? $session['heartbeat_interval'] ?? 60));
-        $session['ets'] = (int)($data['timestamp'] ?? $session['ets'] ?? 0);
-
-        $nextSecretKey = trim((string)($data['secret_key'] ?? ''));
-        if ($nextSecretKey !== '') {
-            $session['secret_key'] = $nextSecretKey;
-        }
-
-        if (is_array($data['secret_rule'] ?? null) && $data['secret_rule'] !== []) {
-            $session['secret_rule'] = array_values(array_map(static fn (mixed $rule): int => (int)$rule, $data['secret_rule']));
-        }
-
-        $session['last_heartbeat_at'] = $now;
-
-        return $session;
+        $nextSession = $this->watchService()->heartbeat(LiveWatchSession::fromArray($session));
+        return $nextSession->toArray();
     }
 
     /**
@@ -404,5 +348,80 @@ final class EraLiveWatchService
     private function userAgent(): string
     {
         return (string)Runtime::getInstance()->appContext()->device('platform.headers.pc_ua');
+    }
+
+    private function watchService(): LiveWatchService
+    {
+        return $this->watchService ??= new LiveWatchService(
+            startHandler: function (int $roomId, array $context): LiveWatchSession {
+                ApiIndex::roomEntryAction($roomId);
+
+                $response = ApiTrace::enter(
+                    $roomId,
+                    (int)($context['ruid'] ?? 0),
+                    (int)($context['parent_area_id'] ?? 0),
+                    (int)($context['area_id'] ?? 0),
+                    (string)($context['live_buvid'] ?? ''),
+                    (string)($context['live_uuid'] ?? ''),
+                    $this->userAgent(),
+                );
+                if (($response['code'] ?? 0) !== 0) {
+                    throw new \RuntimeException("x25Kn/E失败 {$response['code']} -> {$response['message']}");
+                }
+
+                $data = is_array($response['data'] ?? null) ? $response['data'] : [];
+                $secretKey = trim((string)($data['secret_key'] ?? ''));
+                $secretRule = $data['secret_rule'] ?? [];
+                $heartbeatInterval = max(30, (int)($data['heartbeat_interval'] ?? 60));
+                $ets = (int)($data['timestamp'] ?? 0);
+
+                if ($secretKey === '' || !is_array($secretRule) || $ets <= 0) {
+                    throw new \RuntimeException('x25Kn/E返回缺少必要会话字段');
+                }
+
+                return LiveWatchSession::start($roomId, array_merge($context, [
+                    'heartbeat_interval' => $heartbeatInterval,
+                    'ets' => $ets,
+                    'secret_key' => $secretKey,
+                    'secret_rule' => array_values(array_map(static fn (mixed $rule): int => (int)$rule, $secretRule)),
+                    'last_heartbeat_at' => microtime(true),
+                ]));
+            },
+            heartbeatHandler: function (LiveWatchSession $session): LiveWatchSession {
+                $now = microtime(true);
+                $lastHeartbeatAt = max(0.0, $session->lastHeartbeatAt);
+                $elapsedSeconds = $lastHeartbeatAt > 0
+                    ? max(1, (int)floor($now - $lastHeartbeatAt))
+                    : max(1, $session->heartbeatInterval);
+
+                $request = $session->with([
+                    '_debug_elapsed_seconds' => $elapsedSeconds,
+                    '_debug_heartbeat_at' => $now,
+                ]);
+                $response = ApiTrace::heartbeat($request->toArray(), $this->userAgent(), $session->heartbeatInterval);
+                if (($response['code'] ?? 0) !== 0) {
+                    throw new \RuntimeException("x25Kn/X失败 {$response['code']} -> {$response['message']}");
+                }
+
+                $data = is_array($response['data'] ?? null) ? $response['data'] : [];
+                $nextContext = [
+                    'seq_id' => $session->seqId + 1,
+                    'heartbeat_interval' => max(30, (int)($data['heartbeat_interval'] ?? $session->heartbeatInterval)),
+                    'ets' => (int)($data['timestamp'] ?? $session->ets),
+                    'last_heartbeat_at' => $now,
+                    '_debug_elapsed_seconds' => $elapsedSeconds,
+                    '_debug_heartbeat_at' => $now,
+                ];
+                $nextSecretKey = trim((string)($data['secret_key'] ?? ''));
+                if ($nextSecretKey !== '') {
+                    $nextContext['secret_key'] = $nextSecretKey;
+                }
+                if (is_array($data['secret_rule'] ?? null) && $data['secret_rule'] !== []) {
+                    $nextContext['secret_rule'] = array_values(array_map(static fn (mixed $rule): int => (int)$rule, $data['secret_rule']));
+                }
+
+                return $session->with($nextContext);
+            },
+        );
     }
 }
