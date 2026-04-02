@@ -19,11 +19,13 @@ Assert::false(
 );
 
 // 目录加载与合并
+/** @var ActivityCatalogItem[] $catalog */
 $catalogLoader = new ActivityCatalogLoader(
     activityLotteryFixturePath('catalog.local.json'),
     activityLotteryFixturePath('catalog.remote.json')
 );
 $catalog = $catalogLoader->load();
+Assert::same(true, is_array($catalog), '目录加载结果应为数组。');
 Assert::same(
     3,
     count($catalog),
@@ -33,9 +35,10 @@ $sharedItem = null;
 $localOnly = false;
 $remoteOnly = false;
 foreach ($catalog as $item) {
-    if (!$item instanceof ActivityCatalogItem) {
-        continue;
-    }
+    Assert::true(
+        $item instanceof ActivityCatalogItem,
+        '目录加载结果应由 ActivityCatalogItem 组成。'
+    );
     if ($item->id() === 'shared-activity') {
         $sharedItem = $item;
     }

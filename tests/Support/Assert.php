@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Support;
 
+use RuntimeException;
+
 if (!class_exists(Assert::class)) {
     class Assert
     {
