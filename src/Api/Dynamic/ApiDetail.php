@@ -2,7 +2,7 @@
 
 namespace Bhp\Api\Dynamic;
 
-use Bhp\Request\Request;
+use Bhp\Api\Support\ApiJson;
 
 final class ApiDetail
 {
@@ -11,13 +11,13 @@ final class ApiDetail
      */
     public static function detail(int $dynamicId): array
     {
-        return Request::getJson(true, 'pc', 'https://api.bilibili.com/x/polymer/web-dynamic/v1/detail', [
+        return ApiJson::get('pc', 'https://api.bilibili.com/x/polymer/web-dynamic/v1/detail', [
             'timezone_offset' => '-480',
             'id' => $dynamicId,
             'features' => 'itemOpusStyle',
         ], [
             'origin' => 'https://t.bilibili.com',
-            'referer' => 'https://t.bilibili.com/' . $dynamicId,
-        ]);
+            'referer' => 'https://www.bilibili.com/opus/' . $dynamicId,
+        ], 'dynamic.detail');
     }
 }

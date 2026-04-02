@@ -357,8 +357,7 @@ class AsciiTable
         $th_list = $table === '' ? [] : (preg_split('/\R/u', $table) ?: []);
 
         if ($title !== null && $title !== '') {
-            $width = max(array_map([self::class, 'displayWidth'], $th_list ?: [$title]));
-            array_unshift($th_list, self::padDisplay($title, $width, STR_PAD_BOTH));
+            $th_list = self::injectTitleIntoTopBorder($th_list, $title);
         }
 
         if ($print) {
@@ -390,5 +389,53 @@ class AsciiTable
         }
 
         return $value . str_repeat(' ', $padding);
+    }
+
+    /**
+     * @param array<int, string> $lines
+     * @return array<int, string>
+     */
+    protected static function injectTitleIntoTopBorder(array $lines, string $title): array
+    {
+        if ($lines === []) {
+            return [$title];
+        }
+
+        $title = trim($title);
+        if ($title === '') {
+            return $lines;
+        }
+
+        $top = $lines[0];
+        $innerWidth = max(0, self::displayWidth($top) - 2);
+        if ($innerWidth === 0) {
+            return $lines;
+        }
+
+        $titleCell = ' ' . $title . ' ';
+        if (self::displayWidth($titleCell) > $innerWidth) {
+            $lines[0] = '┌' . self::padDisplay($title, $innerWidth, STR_PAD_BOTH) . '┐';
+            return $lines;
+        }
+
+        $lines[0] = '┌' . self::padDisplayWithChar($titleCell, $innerWidth, '─', STR_PAD_BOTH) . '┐';
+        return $lines;
+    }
+
+    protected static function padDisplayWithChar(string $value, int $width, string $padChar, int $alignment): string
+    {
+        $visible = self::displayWidth($value);
+        $padding = max(0, $width - $visible);
+        if ($alignment === STR_PAD_LEFT) {
+            return str_repeat($padChar, $padding) . $value;
+        }
+
+        if ($alignment === STR_PAD_BOTH) {
+            $left = intdiv($padding, 2);
+            $right = $padding - $left;
+            return str_repeat($padChar, $left) . $value . str_repeat($padChar, $right);
+        }
+
+        return $value . str_repeat($padChar, $padding);
     }
 }

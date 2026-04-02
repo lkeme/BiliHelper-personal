@@ -16,4 +16,5 @@ final class RequestOptions
     public bool $followRedirects = true;
     public float $timeout = 30.0;
     public ?Cancellation $cancellation = null;
+    public bool $quiet = false;
 }

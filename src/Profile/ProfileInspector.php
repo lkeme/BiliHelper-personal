@@ -23,20 +23,6 @@ class ProfileInspector
         );
     }
 
-    /**
-     * @param ProfileContext[] $profiles
-     * @return ProfileInspectionResult[]
-     */
-    public function inspectMany(array $profiles): array
-    {
-        $results = [];
-        foreach ($profiles as $profile) {
-            $results[] = $this->inspect($profile);
-        }
-
-        return $results;
-    }
-
     protected function isDirectoryWritable(string $path): bool
     {
         return is_dir($path) && is_writable($path);

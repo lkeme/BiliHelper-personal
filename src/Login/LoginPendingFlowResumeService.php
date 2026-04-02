@@ -16,6 +16,7 @@ final class LoginPendingFlowResumeService
      * @param array<string, mixed> $flow
      * @param callable(float):void $scheduleAfter
      * @param callable():void $clearPendingFlow
+     * @param callable(array<string, mixed>):void $finalizePendingFlow
      * @param callable(string, string, string):void $resumeAccountLogin
      * @param callable(string, string, string, string, string):(?array<string, mixed>) $sendSms
      * @param callable(string):string $promptCode
@@ -27,6 +28,7 @@ final class LoginPendingFlowResumeService
         LoginRuntimeState $state,
         callable $scheduleAfter,
         callable $clearPendingFlow,
+        callable $finalizePendingFlow,
         callable $resumeAccountLogin,
         callable $sendSms,
         callable $promptCode,
@@ -38,6 +40,7 @@ final class LoginPendingFlowResumeService
             fn (string $challenge): ?array => $this->pendingFlowLifecycleService->fetchCaptchaResult($state, $challenge),
             $scheduleAfter,
             $clearPendingFlow,
+            $finalizePendingFlow,
             $resumeAccountLogin,
             $sendSms,
             $promptCode,

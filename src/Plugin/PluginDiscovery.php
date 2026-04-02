@@ -17,7 +17,7 @@ final class PluginDiscovery
                 continue;
             }
 
-            if (in_array($dirName, ['Login', 'PluginTemplate'], true)) {
+            if (in_array($dirName, ['Login', 'PluginTemplate', 'ScriptPluginTemplate'], true)) {
                 continue;
             }
 

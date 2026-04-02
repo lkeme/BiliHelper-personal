@@ -3,9 +3,11 @@
 namespace Bhp\Scheduler;
 
 use Bhp\Http\HttpRequestTrafficMonitor;
+use Bhp\Login\LoginPendingFlowStore;
 use Bhp\Log\Log;
 use Bhp\Plugin\Plugin;
 use Bhp\Util\DesignPattern\SingleTon;
+use Bhp\Util\AppTerminator;
 use Bhp\Util\Exceptions\NoLoginException;
 use Revolt\EventLoop;
 use Throwable;
@@ -40,6 +42,16 @@ class Scheduler extends SingleTon
                 ? max(0.05, (float)$plugin['interval_seconds'])
                 : $this->parseCycleToSeconds((string)$plugin['cycle']);
             $taskState = $states[$hook] ?? null;
+            $bootstrapFirst = (bool)($plugin['bootstrap_first'] ?? false);
+
+            $nextRunAtNs = $this->restoreDeadlineFromState($taskState['next_run_at'] ?? null, $now, $nowEpoch);
+            $failureCount = isset($taskState['failure_count']) ? max(0, (int)$taskState['failure_count']) : 0;
+            $circuitOpenUntilNs = $this->restoreDeadlineFromState($taskState['circuit_open_until'] ?? null, $now, $nowEpoch, 0.0);
+            if ($bootstrapFirst) {
+                $nextRunAtNs = $now;
+                $failureCount = 0;
+                $circuitOpenUntilNs = 0.0;
+            }
 
             $this->tasks[$hook] = new ScheduledTask(
                 $hook,
@@ -49,9 +61,9 @@ class Scheduler extends SingleTon
                 (string)($plugin['overrun_policy'] ?? TaskPolicy::SKIP),
                 max(1, (int)($plugin['max_concurrency'] ?? 1)),
                 max(0.1, (float)($plugin['timeout_seconds'] ?? 30.0)),
-                $this->restoreDeadlineFromState($taskState['next_run_at'] ?? null, $now, $nowEpoch),
+                $nextRunAtNs,
                 $intervalSeconds < 1.0,
-                (bool)($plugin['bootstrap_first'] ?? false),
+                $bootstrapFirst,
                 array_values(array_filter($plugin['governance_hosts'] ?? [], 'is_string')),
                 max(0, (int)($plugin['governance_window_seconds'] ?? 0)),
                 max(0, (int)($plugin['governance_max_requests_per_host'] ?? 0)),
@@ -61,8 +73,8 @@ class Scheduler extends SingleTon
                 (string)($plugin['governance_profile'] ?? ''),
                 max(0.0, (float)($plugin['governance_group_backoff_seconds'] ?? 0.0)),
                 max(0.0, (float)($plugin['governance_cooldown_multiplier'] ?? 0.0)),
-                isset($taskState['failure_count']) ? max(0, (int)$taskState['failure_count']) : 0,
-                $this->restoreDeadlineFromState($taskState['circuit_open_until'] ?? null, $now, $nowEpoch, 0.0),
+                $failureCount,
+                $circuitOpenUntilNs,
             );
         }
     }
@@ -138,6 +150,10 @@ class Scheduler extends SingleTon
 
         $now = $this->monotonicNowNs();
         foreach ($tasks as $task) {
+            if ($this->shouldHoldTaskForLoginPendingFlow($task)) {
+                continue;
+            }
+
             if ($task->nextRunAtNs > $now) {
                 continue;
             }
@@ -166,6 +182,10 @@ class Scheduler extends SingleTon
     {
         $now = $this->monotonicNowNs();
         foreach ($this->tasks as $task) {
+            if ($this->shouldHoldTaskForLoginPendingFlow($task)) {
+                continue;
+            }
+
             if ($task->highFrequency !== $highFrequency) {
                 continue;
             }
@@ -223,12 +243,20 @@ class Scheduler extends SingleTon
                     'task' => 'plugin.run',
                 ], fn () => Plugin::getInstance()->runTask($task->hook));
             } catch (NoLoginException $e) {
+                if ($task->hook === 'Login') {
+                    AppTerminator::fail("登录失败，终止运行: {$e->getMessage()}", [], 0);
+                }
+
                 Log::warning("[SCHEDULER] {$task->name} login required: {$e->getMessage()}", [
                     'plugin' => $task->hook,
                     'task' => 'plugin.run',
                 ]);
                 $result = TaskResult::after(3600);
             } catch (Throwable $e) {
+                if ($task->hook === 'Login') {
+                    AppTerminator::fail("登录异常，终止运行: {$e->getMessage()}", [], 0);
+                }
+
                 Log::error("[SCHEDULER] {$task->name} failed: {$e->getMessage()}", [
                     'plugin' => $task->hook,
                     'task' => 'plugin.run',
@@ -264,12 +292,20 @@ class Scheduler extends SingleTon
                 'task' => 'plugin.run',
             ], fn () => Plugin::getInstance()->runTask($task->hook));
         } catch (NoLoginException $e) {
+            if ($task->hook === 'Login') {
+                AppTerminator::fail("登录失败，终止启动: {$e->getMessage()}", [], 0);
+            }
+
             Log::warning("[SCHEDULER.INIT] {$task->name} login required: {$e->getMessage()}", [
                 'plugin' => $task->hook,
                 'task' => 'plugin.run',
             ]);
             $result = TaskResult::after(3600);
         } catch (Throwable $e) {
+            if ($task->hook === 'Login') {
+                AppTerminator::fail("登录异常，终止启动: {$e->getMessage()}", [], 0);
+            }
+
             Log::error("[SCHEDULER.INIT] {$task->name} failed: {$e->getMessage()}", [
                 'plugin' => $task->hook,
                 'task' => 'plugin.run',
@@ -493,6 +529,20 @@ class Scheduler extends SingleTon
     private function stateStore(): SchedulerStateStore
     {
         return $this->stateStore ??= new SchedulerStateStore();
+    }
+
+    private function shouldHoldTaskForLoginPendingFlow(ScheduledTask $task): bool
+    {
+        if ($task->hook === 'Login') {
+            return false;
+        }
+
+        return $this->hasPendingLoginFlow();
+    }
+
+    private function hasPendingLoginFlow(): bool
+    {
+        return (new LoginPendingFlowStore())->load() !== null;
     }
 
     private function restoreDeadlineFromState(

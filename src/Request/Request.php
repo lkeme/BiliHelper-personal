@@ -434,9 +434,10 @@ class Request extends SingleTon
      * @param array $payload
      * @param array $headers
      * @param int $timeout
+     * @param bool $quiet
      * @return bool|string|null
      */
-    public static function single(string $method, string $url, array $payload = [], array $headers = [], int $timeout = 10): bool|string|null
+    public static function single(string $method, string $url, array $payload = [], array $headers = [], int $timeout = 10, bool $quiet = false): bool|string|null
     {
         Log::debug("[SINGLE] $url ", $payload);
         if ($url === '') {
@@ -446,6 +447,7 @@ class Request extends SingleTon
         $options = new RequestOptions();
         $options->headers = $headers;
         $options->timeout = (float)$timeout;
+        $options->quiet = $quiet;
 
         $normalizedMethod = strtolower($method);
         if ($normalizedMethod === 'get') {
@@ -461,7 +463,11 @@ class Request extends SingleTon
 
             return $result !== '' ? $result : null;
         } catch (Throwable $throwable) {
-            Log::warning("[SINGLE] {$throwable->getMessage()}");
+            if ($quiet) {
+                Log::debug("[SINGLE] {$throwable->getMessage()}");
+            } else {
+                Log::warning("[SINGLE] {$throwable->getMessage()}");
+            }
 
             return null;
         }

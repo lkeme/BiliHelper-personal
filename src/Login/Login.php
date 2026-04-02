@@ -29,6 +29,7 @@ use Bhp\Plugin\Plugin;
 use Bhp\Runtime\Runtime;
 use Bhp\Util\Common\Common;
 use Bhp\Util\Exceptions\LoginException;
+use Bhp\Util\Exceptions\NoLoginException;
 use Bhp\Util\Exceptions\RequestException;
 use Bhp\Util\Qrcode\Qrcode;
 
@@ -104,18 +105,36 @@ class Login extends BasePlugin implements PluginTaskInterface
         try {
             if ($this->hasPendingLoginFlow()) {
                 $this->resumePendingLoginFlow();
-                return $this->resolveTaskResult(\Bhp\Scheduler\TaskResult::after(3600));
+                if ($this->hasPendingLoginFlow()) {
+                    return $this->resolveTaskResult(\Bhp\Scheduler\TaskResult::after(2.0));
+                }
+
+                $this->keepLogin();
+                return $this->resolveTaskResult(\Bhp\Scheduler\TaskResult::after(7200));
             }
 
             if (!$this->hasLoginTokens()) {
                 $this->initLogin();
-                return $this->resolveTaskResult(\Bhp\Scheduler\TaskResult::after(3600));
+                if ($this->hasPendingLoginFlow()) {
+                    return $this->resolveTaskResult(\Bhp\Scheduler\TaskResult::after(2.0));
+                }
+
+                $this->assertLoginReady('未获取到有效登录状态');
+                return $this->resolveTaskResult(\Bhp\Scheduler\TaskResult::after(7200));
             }
 
             $this->keepLogin();
         } catch (RequestException $e) {
             return $this->retryAfterRequestException($e, '登录', 10 * 60);
         } catch (LoginException $e) {
+            if ($this->hasPendingLoginFlow()) {
+                Log::warning("登录: {$e->getMessage()}");
+                return $this->retryAfter($e->getRetryAfterSeconds());
+            }
+
+            if (!$this->hasLoginTokens()) {
+                throw new NoLoginException($e->getMessage());
+            }
             Log::warning("登录: {$e->getMessage()}");
             return $this->retryAfter($e->getRetryAfterSeconds());
         }
@@ -153,18 +172,22 @@ class Login extends BasePlugin implements PluginTaskInterface
      */
     protected function initLogin(): void
     {
+        if (!$this->hasConfiguredLoginFallback()) {
+            throw new NoLoginException('未配置可用登录方式');
+        }
+
         Log::info('启动登录程序');
-        $this->sessionCoordinator()->initialize(
-            $this->auth('access_token'),
-            $this->auth('refresh_token'),
-            function (): void {
-                Log::info('准备载入登录令牌');
-                $this->login();
-            },
-            function (): void {
-                $this->keepLogin();
-            },
-        );
+        Log::info('准备载入登录令牌');
+        $this->login();
+        if ($this->hasPendingLoginFlow()) {
+            return;
+        }
+
+        if (!$this->hasLoginTokens()) {
+            throw new NoLoginException('未获取到有效登录状态');
+        }
+
+        $this->keepLogin();
     }
 
     /**
@@ -196,12 +219,43 @@ class Login extends BasePlugin implements PluginTaskInterface
             $this->auth('refresh_token'),
             $this->tokenLifecycleService(),
             function (): void {
+                if (!$this->hasConfiguredLoginFallback()) {
+                    throw new NoLoginException('登录令牌已失效，且未配置可回退登录方式');
+                }
+
                 $this->login();
+                if ($this->hasPendingLoginFlow()) {
+                    throw new LoginException('登录流程待完成', 2);
+                }
+
+                if (!$this->hasLoginTokens()) {
+                    throw new NoLoginException('未获取到有效登录状态');
+                }
             },
             function (): void {
                 $this->patchCookie();
             },
         );
+    }
+
+    protected function hasConfiguredLoginFallback(): bool
+    {
+        $modeId = (int)$this->config('login_mode.mode');
+        $username = trim((string)$this->config('login_account.username'));
+        $password = trim((string)$this->config('login_account.password'));
+
+        return match ($modeId) {
+            1 => $username !== '' && $password !== '',
+            2 => $username !== '',
+            default => false,
+        };
+    }
+
+    protected function assertLoginReady(string $message): void
+    {
+        if ($this->hasPendingLoginFlow() || !$this->hasLoginTokens()) {
+            throw new NoLoginException($message);
+        }
     }
 
     protected function resumePendingLoginFlow(): void
@@ -219,6 +273,12 @@ class Login extends BasePlugin implements PluginTaskInterface
             },
             function (): void {
                 $this->clearPendingLoginFlow();
+            },
+            function (array $flow): void {
+                $current = $this->currentPendingLoginFlow();
+                if ($current !== null && $current === $flow) {
+                    $this->clearPendingLoginFlow();
+                }
             },
             function (string $validate, string $challenge, string $mode): void {
                 $this->checkLogin(1);
@@ -272,6 +332,7 @@ class Login extends BasePlugin implements PluginTaskInterface
 
     protected function beginCaptchaLogin(string $targetUrl): void
     {
+        $this->invalidateSessionAuth();
         $result = $this->pendingFlowLifecycleService()->beginAccountCaptcha(
             $this->state(),
             $targetUrl,
@@ -287,6 +348,7 @@ class Login extends BasePlugin implements PluginTaskInterface
 
     protected function beginSmsCaptchaLogin(string $phone, string $cid, string $targetUrl): void
     {
+        $this->invalidateSessionAuth();
         $result = $this->pendingFlowLifecycleService()->beginSmsCaptcha(
             $this->state(),
             $phone,
@@ -304,6 +366,7 @@ class Login extends BasePlugin implements PluginTaskInterface
 
     protected function beginQrcodeLoginPolling(QrAuthCode $qrData): void
     {
+        $this->invalidateSessionAuth();
         $result = $this->pendingFlowLifecycleService()->beginQrcodePolling($this->state(), $qrData, time() + 180);
         $this->syncRuntimeState();
         Log::info("1.终端直接显示(输入:1)");
@@ -331,7 +394,6 @@ class Login extends BasePlugin implements PluginTaskInterface
             return $response;
         }
 
-        Log::info('验证码识别尚未完成');
         return null;
     }
 
@@ -674,6 +736,13 @@ class Login extends BasePlugin implements PluginTaskInterface
             (string)($this->password ?? ''),
             is_array($this->pendingLoginFlow) ? $this->pendingLoginFlow : null,
         );
+    }
+
+    protected function invalidateSessionAuth(): void
+    {
+        foreach (['access_token', 'refresh_token', 'cookie', 'pc_cookie', 'uid', 'csrf', 'sid'] as $key) {
+            $this->setAuth($key, '');
+        }
     }
 
     protected function syncRuntimeState(): void

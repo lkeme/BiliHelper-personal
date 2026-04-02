@@ -17,6 +17,7 @@
 
 namespace Bhp\Api\Api\X\Activity;
 
+use Bhp\Api\Support\ApiJson;
 use Bhp\Request\Request;
 use Bhp\User\User;
 
@@ -88,5 +89,26 @@ class ApiActivity
         return Request::getJson(true, 'pc', $url, $payload, $headers);
     }
 
+    /**
+     * 现代 ERA 任务页点击类完成动作
+     * @return array<string, mixed>
+     */
+    public static function sendPoints(string $taskId, string $counter, string $referer = 'https://www.bilibili.com/'): array
+    {
+        $user = User::parseCookie();
+        $url = 'https://api.bilibili.com/x/activity/task/send_points';
+        $headers = [
+            'origin' => 'https://www.bilibili.com',
+            'referer' => $referer,
+        ];
+        $payload = [
+            'activity' => $taskId,
+            'business' => $counter,
+            'timestamp' => (int)round(microtime(true) * 1000),
+            'csrf' => $user['csrf'],
+        ];
+
+        return ApiJson::post('pc', $url, $payload, $headers, 'x.activity.send_points');
+    }
 
 }

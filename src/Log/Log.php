@@ -31,9 +31,9 @@ class Log extends SingleTon
     protected ?Logger $_logger = null;
 
     /**
-     * @var array<int, array<string, mixed>>
+     * @var array<string, array<int, array<string, mixed>>>
      */
-    protected array $contextStack = [];
+    protected array $contextStacks = [];
 
     /**
      * @return void
@@ -262,12 +262,22 @@ class Log extends SingleTon
      */
     protected function pushContext(array $context): void
     {
-        $this->contextStack[] = $context;
+        $key = $this->currentContextKey();
+        $this->contextStacks[$key] ??= [];
+        $this->contextStacks[$key][] = $context;
     }
 
     protected function popContext(): void
     {
-        array_pop($this->contextStack);
+        $key = $this->currentContextKey();
+        if (!isset($this->contextStacks[$key])) {
+            return;
+        }
+
+        array_pop($this->contextStacks[$key]);
+        if ($this->contextStacks[$key] === []) {
+            unset($this->contextStacks[$key]);
+        }
     }
 
     /**
@@ -277,11 +287,21 @@ class Log extends SingleTon
     protected function mergedContext(array $context): array
     {
         $merged = [];
-        foreach ($this->contextStack as $item) {
+        foreach ($this->contextStacks[$this->currentContextKey()] ?? [] as $item) {
             $merged = array_replace($merged, $item);
         }
 
         return array_replace($merged, $context);
+    }
+
+    protected function currentContextKey(): string
+    {
+        $fiber = \Fiber::getCurrent();
+        if ($fiber === null) {
+            return 'main';
+        }
+
+        return 'fiber_' . spl_object_id($fiber);
     }
 
     /**

@@ -52,9 +52,15 @@ final class LoginTokenBundle
             }
         }
 
+        $accessToken = (string)($tokenInfo['access_token'] ?? '');
+        $refreshToken = (string)($tokenInfo['refresh_token'] ?? '');
+        if ($accessToken === '' || $refreshToken === '' || $cookieString === '') {
+            throw new \UnexpectedValueException('登录响应缺少有效凭据');
+        }
+
         return new self(
-            (string)($tokenInfo['access_token'] ?? ''),
-            (string)($tokenInfo['refresh_token'] ?? ''),
+            $accessToken,
+            $refreshToken,
             $cookieString,
             $uid,
             $csrf,

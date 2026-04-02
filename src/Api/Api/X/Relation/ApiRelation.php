@@ -18,11 +18,17 @@
 namespace Bhp\Api\Api\X\Relation;
 
 use Bhp\Request\Request;
-use Bhp\Sign\Sign;
 use Bhp\User\User;
 
 class ApiRelation
 {
+    public const ACTION_FOLLOW = 1;
+    public const ACTION_UNFOLLOW = 2;
+
+    public const SOURCE_DEFAULT = 11;
+    public const SOURCE_CREATOR_INCENTIVE = 192;
+    public const SOURCE_ACTIVITY_PAGE = 222;
+
     /**
      * 关注列表
      * @param int $pn
@@ -104,6 +110,28 @@ class ApiRelation
      */
     public static function modify(int $uid): array
     {
+        return self::act($uid, self::ACTION_UNFOLLOW, self::SOURCE_DEFAULT);
+    }
+
+    /**
+     * 关注
+     * @param int $uid
+     * @param int $source
+     * @return array
+     */
+    public static function follow(int $uid, int $source = self::SOURCE_ACTIVITY_PAGE): array
+    {
+        return self::act($uid, self::ACTION_FOLLOW, $source);
+    }
+
+    /**
+     * @param int $uid
+     * @param int $act
+     * @param int $source
+     * @return array
+     */
+    protected static function act(int $uid, int $act, int $source): array
+    {
         $user = User::parseCookie();
         //
         $url = 'https://api.bilibili.com/x/relation/modify';
@@ -113,8 +141,8 @@ class ApiRelation
         ];
         $payload = [
             'fid' => $uid,
-            'act' => 2,
-            're_src' => 11,
+            'act' => $act,
+            're_src' => $source,
             'csrf' => $user['csrf'],
         ];
         //

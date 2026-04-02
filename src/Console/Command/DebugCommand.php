@@ -43,12 +43,14 @@ final class DebugCommand extends Command
             ->option('-p --plugin', '[默认会同时加载Login]测试插件')
             ->option('-P --plugins', '[默认会同时加载Login]测试插件列表')
             ->option('-r --reset-cache', '执行前清理当前 profile 缓存（默认保留登录态）')
+            ->option('--purge-auth', '清理缓存时同时清空登录态')
             ->usage(
                 '  $0 mode:debug --plugin TestPlugin' . PHP_EOL .
                 '  $0 m:d -p TestPlugin' . PHP_EOL .
                 '  $0 mode:debug --plugins TestPlugin,Test1Plugin' . PHP_EOL .
                 '  $0 m:d -P TestPlugin,Test1Plugin' . PHP_EOL .
-                '  $0 m:d -p TestPlugin --reset-cache'
+                '  $0 m:d -p TestPlugin --reset-cache' . PHP_EOL .
+                '  $0 m:d -p TestPlugin --reset-cache --purge-auth'
             );
     }
 
@@ -73,9 +75,9 @@ final class DebugCommand extends Command
             AppTerminator::fail('发生错误，未加载插件');
         }
 
-        if ((bool)($this->values()['reset-cache'] ?? false)) {
-            Log::info('调试模式: 进入前清理缓存（保留登录态）');
-            (new ProfileCacheResetService())->reset();
+        if ((bool)($this->values()['reset-cache'] ?? false) || (bool)($this->values()['purge-auth'] ?? false)) {
+            Log::info('调试模式: 进入前清理缓存');
+            (new ProfileCacheResetService())->reset((bool)($this->values()['purge-auth'] ?? false));
         }
         $pp = [];
         if ($single !== '') {
@@ -95,6 +97,9 @@ final class DebugCommand extends Command
 
         $selected = [];
         foreach (Plugin::getPlugins() as $plugin) {
+            if (($plugin['mode'] ?? 'app') === 'script') {
+                continue;
+            }
             if (in_array((string)$plugin['hook'], $pp, true)) {
                 $selected[] = $plugin;
             }

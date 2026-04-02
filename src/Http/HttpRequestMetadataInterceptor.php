@@ -15,6 +15,7 @@ final class HttpRequestMetadataInterceptor implements HttpClientInterceptor
         $context->attributes['sink_enabled'] = $context->options->sink !== null && trim($context->options->sink) !== '';
         $context->attributes['follow_redirects'] = $context->options->followRedirects;
         $context->attributes['timeout_ms'] = round($context->options->timeout * 1000, 2);
+        $context->attributes['quiet'] = $context->options->quiet;
 
         return $context;
     }

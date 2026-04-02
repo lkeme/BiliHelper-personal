@@ -31,7 +31,7 @@ final class ProfileInspectionResult
     /**
      * @return array<string, string>
      */
-    public function toArray(): array
+    public function diagnostics(): array
     {
         return [
             'profile' => $this->profile,
@@ -44,25 +44,6 @@ final class ProfileInspectionResult
             'log_writable' => $this->formatBool($this->logWritable),
             'cache_dir' => $this->formatBool($this->cacheDir),
             'cache_writable' => $this->formatBool($this->cacheWritable),
-        ];
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    public function toDisplayArray(): array
-    {
-        return [
-            'profile' => $this->profile,
-            'status' => $this->isHealthy() ? 'OK' : 'WARN',
-            'cfg' => $this->formatBool($this->configDir),
-            'ini' => $this->formatBool($this->userIni),
-            'device' => $this->formatBool($this->deviceDefault),
-            'ovr' => $this->deviceOverride === 'none' ? '-' : $this->deviceOverride,
-            'log' => $this->formatBool($this->logDir),
-            'log_w' => $this->formatBool($this->logWritable),
-            'cache' => $this->formatBool($this->cacheDir),
-            'cache_w' => $this->formatBool($this->cacheWritable),
         ];
     }
 

@@ -18,11 +18,9 @@
 use Bhp\Api\Api\X\Relation\ApiRelation;
 use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
-use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
-use Bhp\Scheduler\TaskResult;
 
-class BatchUnfollow extends BasePlugin implements PluginTaskInterface
+class BatchUnfollow extends BasePlugin
 {
     /**
      * 插件信息
@@ -35,7 +33,8 @@ class BatchUnfollow extends BasePlugin implements PluginTaskInterface
         'desc' => '批量取消关注', // 插件描述
         'author' => 'Lkeme',// 作者
         'priority' => 1116, // 插件优先级
-        'cycle' => '5-10(分钟)', // 运行周期
+        'cycle' => 'manual', // 运行周期
+        'mode' => 'script',
     ];
 
     /**
@@ -48,25 +47,29 @@ class BatchUnfollow extends BasePlugin implements PluginTaskInterface
      */
     public function __construct(Plugin &$plugin)
     {
-        $this->bootPlugin($plugin, true);
+        $this->bootPlugin($plugin, false);
     }
 
-    public function runOnce(): TaskResult
+    /**
+     * @param array<string, mixed> $options
+     * @param string[] $argv
+     */
+    public function execute(array $options = [], array $argv = []): void
     {
         if (!$this->enabled('batch_unfollow')) {
-            return TaskResult::keepSchedule();
+            Log::info('批量取关: 插件已关闭');
+            return;
         }
 
+        $this->fetchFollows();
         if (empty($this->wait_unfollows)) {
-            $this->fetchFollows();
-            if (empty($this->wait_unfollows)) {
-                return TaskResult::after(mt_rand(60, 120) * 60);
-            }
-        } else {
+            Log::info('批量取关: 没有待处理关注');
+            return;
+        }
+
+        while (!empty($this->wait_unfollows)) {
             $this->unfollow();
         }
-
-        return TaskResult::after(mt_rand(5, 10) * 60);
     }
 
     /**

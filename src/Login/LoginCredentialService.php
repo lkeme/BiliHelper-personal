@@ -38,7 +38,7 @@ class LoginCredentialService
 
         return [
             'username' => $username,
-            'password' => $this->encryptPassword($password),
+            'password' => $modeId === 1 ? $this->encryptPassword($password) : $password,
         ];
     }
 

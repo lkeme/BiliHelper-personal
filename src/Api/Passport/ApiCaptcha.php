@@ -17,6 +17,7 @@
 
 namespace Bhp\Api\Passport;
 
+use Bhp\Api\Support\ApiJson;
 use Bhp\Config\Config;
 use Bhp\Request\Request;
 use Bhp\Sign\Sign;
@@ -65,10 +66,43 @@ class ApiCaptcha
      */
     public static function fetch(string $challenge): array
     {
-        $url = Config::getInstance()->get('login_captcha.url') . '/fetch';
+        $url = rtrim((string)Config::getInstance()->get('login_captcha.url'), '/') . '/fetch';
         $payload = [
             'challenge' => $challenge,
         ];
-        return Request::getJson(true, 'other', $url, $payload);
+        $raw = self::fetchRaw($url, $payload, 3);
+        if (!is_string($raw) || trim($raw) === '') {
+            return [
+                'code' => -500,
+                'message' => 'captcha.fetch 请求失败',
+                'data' => [],
+            ];
+        }
+
+        return ApiJson::decode($raw, 'captcha.fetch');
+    }
+
+    /**
+     * @param array<string, string> $payload
+     */
+    protected static function fetchRaw(string $url, array $payload, int $timeoutSeconds): string
+    {
+        $query = http_build_query($payload);
+        $target = str_contains($url, '?') ? $url . '&' . $query : $url . '?' . $query;
+        $context = stream_context_create([
+            'http' => [
+                'method' => 'GET',
+                'timeout' => $timeoutSeconds,
+                'ignore_errors' => true,
+                'header' => "Accept: application/json\r\nUser-Agent: BiliHelper-personal/captcha-fetch\r\n",
+            ],
+        ]);
+
+        $raw = @file_get_contents($target, false, $context);
+        if (!is_string($raw)) {
+            return '';
+        }
+
+        return $raw;
     }
 }

@@ -15,6 +15,10 @@
  *  |_____/ |_| |_____| |_| |_| |_| |_____| |_____| |_|     |_____| |_|  \_\
  */
 
+require_once __DIR__ . '/MainSiteArchiveService.php';
+require_once __DIR__ . '/MainSiteRecordStore.php';
+require_once __DIR__ . '/MainSiteRuntimeState.php';
+
 use Bhp\Api\Video\ApiCoin;
 use Bhp\Api\Video\ApiShare;
 use Bhp\Api\Video\ApiWatch;
@@ -372,7 +376,7 @@ class MainSite extends BasePlugin implements PluginTaskInterface
         $data['play_type'] = 0;
         $data['start_ts'] = time();
         //
-        $response = ApiWatch::heartbeat($aid, $cid, $duration, $data);
+        $response = ApiWatch::heartbeat($aid, $cid, $duration, '', $data);
         if ($response['code']) {
             Log::warning("主站任务: $aid 观看失败 {$response['code']} -> {$response['message']}");
             $this->scheduleAfter(60.0);

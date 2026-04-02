@@ -17,7 +17,8 @@
 
 namespace Bhp\Api\Passport;
 
-use Bhp\Request\Request;
+use Bhp\Api\Support\ApiJson;
+use Bhp\Log\Log;
 use Bhp\Sign\Sign;
 
 class ApiOauth2
@@ -49,7 +50,9 @@ class ApiOauth2
             'access_key' => $token,
         ];
         // {"code":0,"message":"0","ttl":1,"data":{"mid":"<user mid>","access_token":"<current token>","expires_in":9787360,"refresh":true}}
-        return Request::getJson(true, 'app', $url, Sign::common($payload));
+        return ApiJson::get('app', $url, Sign::common($payload), [
+            'Accept-Encoding' => 'identity',
+        ], 'oauth2.info.new');
     }
 
     /**
@@ -66,7 +69,15 @@ class ApiOauth2
             'refresh_token' => $r_token,
         ];
         // {"message":"user not login","ts":1593111694,"code":-101}
-        return Request::postJson(true, 'app', $url, Sign::login($payload));
+        $response = ApiJson::post('app', $url, Sign::login($payload), [
+            'Accept-Encoding' => 'identity',
+        ], 'oauth2.refresh_token.new');
+        if (!self::isValidRefreshResponse($response)) {
+            Log::warning('新登录令牌刷新接口响应异常，已自动回退旧刷新接口');
+            return self::tokenRefresh($token, $r_token);
+        }
+
+        return $response;
     }
 
     /**
@@ -83,7 +94,9 @@ class ApiOauth2
             'refresh_token' => $r_token,
         ];
         // {"message":"user not login","ts":1593111694,"code":-101}
-        return Request::postJson(true, 'app', $url, Sign::common($payload));
+        return ApiJson::post('app', $url, Sign::common($payload), [
+            'Accept-Encoding' => 'identity',
+        ], 'oauth2.refresh_token.legacy');
     }
 
     /**
@@ -97,7 +110,9 @@ class ApiOauth2
         $payload = [
             'access_key' => $token,
         ];
-        return Request::getJson(true, 'app', $url, Sign::common($payload));
+        return ApiJson::get('app', $url, Sign::common($payload), [
+            'Accept-Encoding' => 'identity',
+        ], 'oauth2.myinfo');
     }
 
     /**
@@ -109,7 +124,26 @@ class ApiOauth2
         // $url = 'https://passport.bilibili.com/api/oauth2/getKey';
         $url = 'https://passport.bilibili.com/x/passport-login/web/key';
         $payload = [];
-        return Request::getJson(true, 'app', $url, Sign::login($payload));
+        return ApiJson::get('app', $url, Sign::login($payload), [
+            'Accept-Encoding' => 'identity',
+        ], 'oauth2.get_key');
+    }
+
+    /**
+     * 登录用户统计
+     * @param string $token
+     * @return array<string, mixed>
+     */
+    public static function navStat(string $token): array
+    {
+        $url = 'https://api.bilibili.com/x/web-interface/nav/stat';
+        $payload = [
+            'access_key' => $token,
+        ];
+
+        return ApiJson::get('pc', $url, $payload, [
+            'Accept-Encoding' => 'identity',
+        ], 'oauth2.nav_stat');
     }
 
     /**
@@ -125,6 +159,18 @@ class ApiOauth2
             'gourl' => 'https%3A%2F%2Faccount.bilibili.com%2Faccount%2Fhome'
         ];
         return Request::headers('app', $url, Sign::common($payload));
+    }
+
+    /**
+     * @param array<string, mixed> $response
+     */
+    protected static function isValidRefreshResponse(array $response): bool
+    {
+        if (($response['code'] ?? -1) !== 0) {
+            return false;
+        }
+
+        return isset($response['data']) && is_array($response['data']);
     }
 
 }

@@ -17,6 +17,7 @@
 
 namespace Bhp\Api\Passport;
 
+use Bhp\Api\Support\ApiJson;
 use Bhp\Request\Request;
 use Bhp\Sign\Sign;
 
@@ -45,7 +46,9 @@ class ApiLogin
             'subid' => 1,
             'cookies' => ''
         ];
-        return Request::postJson(true, 'app', $url, Sign::login($payload));
+        return ApiJson::post('app', $url, Sign::login($payload), [
+            'Accept-Encoding' => 'identity',
+        ], 'login.password');
     }
 
     /**
@@ -77,7 +80,9 @@ class ApiLogin
             'statistics' => $captcha['statistics'],
             'code' => $code,
         ];
-        return Request::postJson(true, 'app', $url, Sign::login($payload));
+        return ApiJson::post('app', $url, Sign::login($payload), [
+            'Accept-Encoding' => 'identity',
+        ], 'login.sms');
     }
 
 }

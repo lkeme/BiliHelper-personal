@@ -31,6 +31,7 @@ final class LoginFlowController
      * @param callable(string):(?array<string, string>) $fetchCaptchaResult
      * @param callable(float):void $scheduleAfter
      * @param callable():void $clearPendingFlow
+     * @param callable(array<string, mixed>):void $finalizePendingFlow
      * @param callable(string, string, string):void $accountLogin
      * @param callable(string, string, string, string, string):(?array<string, mixed>) $sendSms
      * @param callable(string):string $promptCode
@@ -42,6 +43,7 @@ final class LoginFlowController
         callable $fetchCaptchaResult,
         callable $scheduleAfter,
         callable $clearPendingFlow,
+        callable $finalizePendingFlow,
         callable $accountLogin,
         callable $sendSms,
         callable $promptCode,
@@ -56,8 +58,8 @@ final class LoginFlowController
                     return;
                 }
 
-                $clearPendingFlow();
                 $accountLogin($captcha['validate'], $captcha['challenge'], '账密模式(行为验证码)');
+                $finalizePendingFlow($flow);
                 return;
             case 'sms_captcha':
                 $captcha = $fetchCaptchaResult((string) $flow['challenge']);
@@ -66,7 +68,6 @@ final class LoginFlowController
                     return;
                 }
 
-                $clearPendingFlow();
                 $payload = $sendSms(
                     (string) $flow['phone'],
                     (string) $flow['cid'],
@@ -75,6 +76,7 @@ final class LoginFlowController
                     (string) $flow['recaptcha_token'],
                 );
                 if ($payload === null) {
+                    $finalizePendingFlow($flow);
                     return;
                 }
 
@@ -84,6 +86,7 @@ final class LoginFlowController
                 }
 
                 $completeSmsLogin($payload, $code);
+                $finalizePendingFlow($flow);
                 return;
             case 'qrcode_poll':
                 if ((int) ($flow['expires_at'] ?? 0) < time()) {

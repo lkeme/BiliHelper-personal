@@ -17,6 +17,7 @@
 
 namespace Bhp\Api\Video;
 
+use Bhp\Api\Support\ApiJson;
 use Bhp\Request\Request;
 use Bhp\Runtime\Runtime;
 use Bhp\Sign\Sign;
@@ -25,13 +26,32 @@ use Bhp\User\User;
 class ApiCoin
 {
     /**
+     * 查询稿件投币数
+     * @return array<string, mixed>
+     */
+    public static function coins(string $aid = '', string $bvid = ''): array
+    {
+        $url = 'https://api.bilibili.com/x/web-interface/archive/coins';
+        $payload = [
+            'aid' => $aid,
+            'bvid' => $bvid,
+        ];
+        $headers = [
+            'origin' => 'https://www.bilibili.com',
+            'referer' => $bvid !== '' ? "https://www.bilibili.com/video/{$bvid}" : "https://www.bilibili.com/video/av{$aid}",
+        ];
+
+        return ApiJson::get('pc', $url, $payload, $headers, 'video.coins');
+    }
+
+    /**
      * 投币Web
      * @param string $aid
      * @param int $multiply
      * @param int $select_like
      * @return array
      */
-    public static function webCoin(string $aid, int $multiply = 1, int $select_like = 0): array
+    public static function webCoin(string $aid, int $multiply = 1, int $select_like = 0, string $bvid = ''): array
     {
         $user = User::parseCookie();
         //
@@ -39,6 +59,7 @@ class ApiCoin
         //
         $payload = [
             'aid' => $aid,
+            'bvid' => $bvid,
             'multiply' => $multiply, // 投币*1
             'select_like' => $select_like,// 默认不点赞
             'cross_domain' => 'true',
@@ -46,7 +67,7 @@ class ApiCoin
         ];
         $headers = [
             'origin' => 'https://www.bilibili.com',
-            'Referer' => "https://www.bilibili.com/video/av$aid",
+            'Referer' => $bvid !== '' ? "https://www.bilibili.com/video/{$bvid}" : "https://www.bilibili.com/video/av$aid",
         ];
         // {"code":34005,"message":"超过投币上限啦~","ttl":1,"data":{"like":false}}
         // {"code":0,"message":"0","ttl":1,"data":{"like":false}}

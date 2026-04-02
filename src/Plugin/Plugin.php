@@ -18,6 +18,7 @@
 namespace Bhp\Plugin;
 
 use Bhp\Config\Config;
+use Bhp\Console\Console;
 use Bhp\Log\Log;
 use Bhp\Login\LoginBuiltinBootstrapper;
 use Bhp\Plugin\Contract\PluginTaskInterface;
@@ -205,27 +206,29 @@ class Plugin extends SingleTon
 
     protected function detector(): void
     {
-        (new LoginBuiltinBootstrapper())->ensureRegistered($this);
+        if ($this->runtimeMode() !== 'script' && $this->runtimeMode() !== 'restore') {
+            (new LoginBuiltinBootstrapper())->ensureRegistered($this);
+        }
 
         $plugins = $this->getActivePlugins();
         foreach ($plugins as $plugin) {
-            $hook = (string)$plugin['name'];
-            $this->_registry[$hook] = [
-                'hook' => $hook,
-                'name' => $plugin['name'],
-                'class_name' => $plugin['class_name'] ?? $plugin['name'],
-                'path' => $plugin['path'],
-                'status' => 'discovered',
-                'error' => '',
-            ];
-
             if (!is_file((string)$plugin['path'])) {
+                $hook = (string)$plugin['name'];
+                $this->_registry[$hook] = [
+                    'hook' => $hook,
+                    'name' => $plugin['name'],
+                    'class_name' => $plugin['class_name'] ?? $plugin['name'],
+                    'path' => $plugin['path'],
+                    'status' => 'missing',
+                    'error' => '插件入口文件不存在',
+                ];
                 $this->_registry[$hook]['status'] = 'missing';
                 $this->_registry[$hook]['error'] = '插件入口文件不存在';
                 continue;
             }
 
             try {
+                $hook = (string)$plugin['name'];
                 $class = (string)($plugin['class_name'] ?? $plugin['name']);
                 if (!class_exists($class, true)) {
                     include_once($plugin['path']);
@@ -253,8 +256,32 @@ class Plugin extends SingleTon
                     continue;
                 }
 
+                if (!$this->shouldLoadPluginForRuntimeMode($manifest)) {
+                    continue;
+                }
+
+                $this->_registry[$hook] = [
+                    'hook' => $hook,
+                    'name' => $plugin['name'],
+                    'class_name' => $plugin['class_name'] ?? $plugin['name'],
+                    'path' => $plugin['path'],
+                    'status' => 'discovered',
+                    'error' => '',
+                ];
+
                 new $class($this);
             } catch (Throwable $throwable) {
+                $hook = (string)$plugin['name'];
+                if (!isset($this->_registry[$hook])) {
+                    $this->_registry[$hook] = [
+                        'hook' => $hook,
+                        'name' => $plugin['name'],
+                        'class_name' => $plugin['class_name'] ?? $plugin['name'],
+                        'path' => $plugin['path'],
+                        'status' => 'failed',
+                        'error' => '',
+                    ];
+                }
                 $this->_registry[$hook]['status'] = 'failed';
                 $this->_registry[$hook]['error'] = $throwable->getMessage();
                 Log::warning("插件 {$hook} 装配失败: {$throwable->getMessage()}");
@@ -284,6 +311,17 @@ class Plugin extends SingleTon
 
     protected function preloadPlugins(): void
     {
+        if (!in_array($this->runtimeMode(), ['app', 'debug'], true)) {
+            return;
+        }
+
+        $visiblePlugins = array_values(array_filter(
+            $this->_plugins,
+            static fn(array $plugin): bool => (($plugin['mode'] ?? 'app') !== 'script')
+        ));
+        if ($visiblePlugins === []) {
+            return;
+        }
         $rows = array_map(function (array $plugin): array {
             return [
                 'name' => (string)($plugin['name'] ?? ''),
@@ -294,7 +332,7 @@ class Plugin extends SingleTon
                 'end' => (string)($plugin['end'] ?? ''),
                 'enable' => $this->resolveEnableMark((string)($plugin['hook'] ?? ''), $plugin),
             ];
-        }, array_values($this->_plugins));
+        }, $visiblePlugins);
 
         $th_list = AsciiTable::array2table($rows, '预加载插件列表');
         foreach ($th_list as $item) {
@@ -364,5 +402,26 @@ class Plugin extends SingleTon
         $compact = str_replace('_', '', $snake);
 
         return array_values(array_unique([$snake, $compact]));
+    }
+
+    /**
+     * @param array<string, mixed> $manifest
+     */
+    protected function shouldLoadPluginForRuntimeMode(array $manifest): bool
+    {
+        $pluginMode = (string)($manifest['mode'] ?? 'app');
+        $runtimeMode = $this->runtimeMode();
+
+        return match ($runtimeMode) {
+            'script' => $pluginMode === 'script',
+            'app', 'debug' => $pluginMode !== 'script',
+            'restore' => false,
+            default => $pluginMode !== 'script',
+        };
+    }
+
+    protected function runtimeMode(): string
+    {
+        return Console::getInstance()->mode();
     }
 }

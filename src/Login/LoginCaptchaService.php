@@ -47,20 +47,36 @@ class LoginCaptchaService
     }
 
     /**
-     * @return array<string, string>|null
+     * @return array{state:string,data:array<string, string>,message:string}
      */
-    public function fetchCaptchaResult(string $challenge, int $expiresAt): ?array
+    public function pollCaptchaResult(string $challenge, int $expiresAt): array
     {
         if ($expiresAt < time()) {
             throw new LoginException('验证码识别超时', 300);
         }
 
         $response = $this->requestCaptchaFetch($challenge);
-        if (($response['code'] ?? null) == 10000) {
-            return $response['data'];
+        if (($response['code'] ?? null) == 10000 && is_array($response['data'] ?? null)) {
+            return [
+                'state' => 'resolved',
+                'data' => $response['data'],
+                'message' => (string)($response['message'] ?? ''),
+            ];
         }
 
-        return null;
+        if (($response['code'] ?? null) == 10001) {
+            return [
+                'state' => 'pending',
+                'data' => [],
+                'message' => (string)($response['message'] ?? ''),
+            ];
+        }
+
+        return [
+            'state' => 'error',
+            'data' => [],
+            'message' => (string)($response['message'] ?? ''),
+        ];
     }
 
     /**

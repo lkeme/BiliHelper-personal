@@ -6,6 +6,8 @@ use Bhp\Api\Passport\ApiOauth2;
 use Bhp\Api\Response\LoginTokenBundle;
 use Bhp\Log\Log;
 use Bhp\Runtime\AppContext;
+use Bhp\Util\Exceptions\LoginException;
+use Bhp\Util\Exceptions\NoLoginException;
 
 class LoginTokenLifecycleService
 {
@@ -32,7 +34,9 @@ class LoginTokenLifecycleService
         }
 
         $token = $this->context->auth('access_token');
-        $this->myInfo($token);
+        if (!$this->myInfo($token)) {
+            throw new NoLoginException('登录信息校验失败');
+        }
         $patchCookie();
 
         return true;
@@ -41,6 +45,7 @@ class LoginTokenLifecycleService
     public function validateToken(string $token): bool
     {
         $response = $this->requestTokenInfo($token);
+        $this->guardInfrastructureFailure($response, '检查令牌');
         if (isset($response['code']) && $response['code']) {
             Log::error('检查令牌失败', ['msg' => $response['message']]);
             return false;
@@ -54,6 +59,7 @@ class LoginTokenLifecycleService
     public function refreshToken(string $token, string $refreshToken): bool
     {
         $response = $this->requestTokenRefresh($token, $refreshToken);
+        $this->guardInfrastructureFailure($response, '刷新令牌');
         if (isset($response['code']) && $response['code']) {
             Log::error('重新生成令牌失败', ['msg' => $response['message']]);
             return false;
@@ -69,6 +75,7 @@ class LoginTokenLifecycleService
     public function myInfo(string $token): bool
     {
         $response = $this->requestMyInfo($token);
+        $this->guardInfrastructureFailure($response, '获取登录信息');
         if (isset($response['code']) && $response['code']) {
             Log::error('获取登录信息失败', ['msg' => $response['message']]);
             return false;
@@ -115,6 +122,20 @@ class LoginTokenLifecycleService
     protected function requestMyInfo(string $token): array
     {
         return ApiOauth2::myInfo($token);
+    }
+
+    /**
+     * @param array<string, mixed> $response
+     */
+    protected function guardInfrastructureFailure(array $response, string $label): void
+    {
+        $code = (int)($response['code'] ?? 0);
+        if ($code !== -500) {
+            return;
+        }
+
+        $message = trim((string)($response['message'] ?? ''));
+        throw new LoginException("{$label}请求失败: {$message}", 600);
     }
 
     /**

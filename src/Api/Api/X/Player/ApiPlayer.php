@@ -21,12 +21,16 @@ use Bhp\Request\Request;
 
 class ApiPlayer
 {
-    public static function pageList(string $aid): array
+    public static function pageList(string $aid = '', string $bvid = ''): array
     {
         $url = 'https://api.bilibili.com/x/player/pagelist';
-        $payload = [
-            'aid' => $aid,
-        ];
+        $payload = [];
+        if ($aid !== '') {
+            $payload['aid'] = $aid;
+        }
+        if ($bvid !== '') {
+            $payload['bvid'] = $bvid;
+        }
         // {"code":-404,"message":"啥都木有","ttl":1}
         // {"code":0,"message":"0","ttl":1,"data":[{"cid":123,"page":1,"from":"vupload","part":"","duration":2055,"vid":"","weblink":"","dimension":{"width":480,"height":360,"rotate":0}}]}
         return Request::getJson(true, 'other', $url, $payload);

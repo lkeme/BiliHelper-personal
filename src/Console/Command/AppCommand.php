@@ -21,6 +21,7 @@ use Bhp\Console\Cli\Command;
 use Bhp\Console\Cli\Interactor;
 use Bhp\Log\Log;
 use Bhp\Plugin\Plugin;
+use Bhp\Profile\ProfileCacheResetService;
 use Bhp\Scheduler\Scheduler;
 
 class AppCommand extends Command
@@ -38,12 +39,16 @@ class AppCommand extends Command
         parent::__construct('mode:app', $this->desc);
         //
         $this
+            ->option('-r --reset-cache', '执行前清理当前 profile 缓存（默认保留登录态）')
+            ->option('-p --purge-auth', '清理缓存时同时清空登录态')
             ->usage(
                 '  $0 profile mode:app  完整命令' . PHP_EOL .
                 '  $0 profile m:a       完整命令(缩写)' . PHP_EOL .
                 '  $0 profile           省略动作命令' . PHP_EOL .
                 '  $0 mode:app          省略 profile 命令' . PHP_EOL .
-                '  $0 m:a               省略 profile 命令(缩写)'
+                '  $0 m:a               省略 profile 命令(缩写)' . PHP_EOL .
+                '  $0 m:a --reset-cache' . PHP_EOL .
+                '  $0 m:a --reset-cache --purge-auth'
             );
     }
 
@@ -61,9 +66,16 @@ class AppCommand extends Command
     public function execute(): void
     {
         Log::info("执行 $this->desc");
+        if ((bool)($this->values()['reset-cache'] ?? false) || (bool)($this->values()['purge-auth'] ?? false)) {
+            Log::info('主要模式: 进入前清理缓存');
+            (new ProfileCacheResetService())->reset((bool)($this->values()['purge-auth'] ?? false));
+        }
 
         $scheduler = Scheduler::getInstance();
-        $scheduler->registerPlugins(array_values(Plugin::getPlugins()));
+        $scheduler->registerPlugins(array_values(array_filter(
+            Plugin::getPlugins(),
+            static fn(array $plugin): bool => (($plugin['mode'] ?? 'app') !== 'script')
+        )));
         $scheduler->run();
     }
 }

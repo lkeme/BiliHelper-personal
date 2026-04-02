@@ -19,10 +19,7 @@ namespace Bhp\Console;
 
 use Bhp\Console\Cli\Application;
 use Bhp\Console\Command\AppCommand;
-use Bhp\Console\Command\DoctorCommand;
 use Bhp\Console\Command\DebugCommand;
-use Bhp\Console\Command\ProfilesCommand;
-use Bhp\Console\Command\RestoreCommand;
 use Bhp\Console\Command\ScriptCommand;
 use Bhp\Env\Env;
 use Bhp\Util\DesignPattern\SingleTon;
@@ -38,14 +35,8 @@ class Console extends SingleTon
         'm:a',
         'mode:debug',
         'm:d',
-        'mode:restore',
-        'm:r',
         'mode:script',
         'm:s',
-        'mode:doctor',
-        'm:o',
-        'mode:profiles',
-        'm:p',
     ];
 
     /**
@@ -92,6 +83,7 @@ LOGO;
     {
         $argv = $argv ?? $_SERVER['argv'];
         self::getInstance()->argv = $argv;
+        self::getInstance()->assertNoUnknownCommandToken($argv);
 
         $filename = $default;
         $first = (string)($argv[1] ?? '');
@@ -129,18 +121,71 @@ LOGO;
         $this->app = new Application($env->app_name, $env->app_version);
         $this->app
             ->add(new AppCommand(), 'm:a', true) // 模式1
-            ->add(new ScriptCommand(), 'm:s') // 模式2
-            ->add(new RestoreCommand(), 'm:r')  // 模式3
-            ->add(new DebugCommand(), 'm:d')  // 模式4
-            ->add(new DoctorCommand(), 'm:o')  // 模式5
-            ->add(new ProfilesCommand(), 'm:p')  // 模式6
+            ->add(new DebugCommand(), 'm:d')  // 模式2
+            ->add(new ScriptCommand(), 'm:s') // 模式3
             ->logo($this->logo)
             ->handle($this->transArgv($this->argv));
+    }
+
+    /**
+     * @return string[]
+     */
+    public function argv(): array
+    {
+        return array_values(array_map('strval', $this->argv));
+    }
+
+    public function mode(): string
+    {
+        foreach ($this->argv() as $token) {
+            $token = trim((string)$token);
+            if ($token === '' || str_starts_with($token, '-')) {
+                continue;
+            }
+
+            if (!self::isCommandToken($token)) {
+                continue;
+            }
+
+            return match ($token) {
+                'mode:debug', 'm:d' => 'debug',
+                'mode:script', 'm:s' => 'script',
+                'mode:app', 'm:a' => 'app',
+                default => 'app',
+            };
+        }
+
+        return 'app';
     }
 
     private static function isCommandToken(string $token): bool
     {
         return in_array($token, self::COMMAND_TOKENS, true);
+    }
+
+    /**
+     * @param string[] $argv
+     */
+    private function assertNoUnknownCommandToken(array $argv): void
+    {
+        foreach (array_slice($argv, 1) as $token) {
+            $token = trim((string)$token);
+            if (!self::looksLikeCommandToken($token)) {
+                continue;
+            }
+
+            if (self::isCommandToken($token)) {
+                return;
+            }
+
+            fwrite(STDERR, "未找到可执行命令: {$token}" . PHP_EOL);
+            exit(1);
+        }
+    }
+
+    private static function looksLikeCommandToken(string $token): bool
+    {
+        return preg_match('/^(?:m|mode):/i', $token) === 1;
     }
 
     private function shouldStripProfileToken(string $token): bool

@@ -13,6 +13,10 @@ final class HttpRequestLogInterceptor implements HttpClientInterceptor
 
     public function afterResponse(HttpRequestContext $context, HttpResponse $response): void
     {
+        if (($context->attributes['quiet'] ?? false) === true) {
+            return;
+        }
+
         $transport = $this->transportSummary($context);
         Log::debug(
             sprintf('[AMP#%s] %s %s %d %.2fms%s', $context->requestId, strtoupper($context->method), $context->url, $response->getStatusCode(), $response->getDurationMs(), $transport),
@@ -47,6 +51,10 @@ final class HttpRequestLogInterceptor implements HttpClientInterceptor
 
     public function afterFailure(HttpRequestContext $context, \Throwable $exception): void
     {
+        if (($context->attributes['quiet'] ?? false) === true) {
+            return;
+        }
+
         $transport = $this->transportSummary($context);
         Log::warning(
             sprintf('[AMP#%s] %s %s failed: %s%s', $context->requestId, strtoupper($context->method), $context->url, $exception->getMessage(), $transport),

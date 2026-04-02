@@ -71,7 +71,8 @@ final class Application
     {
         [$command, $tokens] = $this->resolveCommand($argv);
         if ($command === null) {
-            throw new RuntimeException('未找到可执行命令');
+            fwrite(STDERR, "未找到可执行命令" . PHP_EOL);
+            exit(1);
         }
 
         if ($this->shouldShowHelp($tokens)) {
@@ -96,6 +97,7 @@ final class Application
     private function resolveCommand(array $argv): array
     {
         $tokens = array_values(array_map('strval', array_slice($argv, 1)));
+        $unknownCommandToken = null;
         foreach ($tokens as $index => $token) {
             if ($token === '' || str_starts_with($token, '-')) {
                 continue;
@@ -103,12 +105,20 @@ final class Application
 
             $resolved = $this->commands[$token] ?? $this->resolveAlias($token);
             if ($resolved === null) {
+                if ($this->looksLikeCommandToken($token)) {
+                    $unknownCommandToken = $token;
+                    break;
+                }
                 continue;
             }
 
             unset($tokens[$index]);
 
             return [$resolved, array_values($tokens)];
+        }
+
+        if ($unknownCommandToken !== null) {
+            return [null, [$unknownCommandToken]];
         }
 
         return [$this->defaultCommand !== null ? ($this->commands[$this->defaultCommand] ?? null) : null, $tokens];
@@ -257,5 +267,10 @@ final class Application
         $normalized = str_replace('<eol/>', PHP_EOL, $text);
 
         return preg_replace('/<[^>]+>/', '', $normalized) ?? $normalized;
+    }
+
+    private function looksLikeCommandToken(string $token): bool
+    {
+        return preg_match('/^(?:m|mode):/i', $token) === 1;
     }
 }

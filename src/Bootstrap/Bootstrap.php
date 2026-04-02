@@ -86,6 +86,8 @@ class Bootstrap extends SingleTon
         Device::getInstance();
         // 运行时上下文
         Runtime::getInstance();
+        // 当前 profile 启动自检
+        (new StartupSelfCheck())->run();
         // 请求中心
         Request::getInstance();
         // 过滤词
