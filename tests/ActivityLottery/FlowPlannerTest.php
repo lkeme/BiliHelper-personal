@@ -28,19 +28,20 @@ Assert::true(
     is_array($nodes),
     'ActivityFlow::nodes 应返回节点数组。'
 );
+/* @var object|null $firstNode */
 $firstNode = $nodes[0] ?? null;
 Assert::true(
-    $firstNode !== null && method_exists($firstNode, 'type'),
-    '首节点应提供 type 方法。'
+    $firstNode !== null && isset($firstNode->type),
+    '首节点应公开 type 属性。'
 );
 Assert::same(
     'load_activity_snapshot',
-    $firstNode->type(),
+    $firstNode->type,
     '节点序列头部应为 load_activity_snapshot。'
 );
 $hasRefresh = false;
 foreach ($nodes as $node) {
-    if (method_exists($node, 'type') && $node->type() === 'refresh_draw_times') {
+    if (isset($node->type) && $node->type === 'refresh_draw_times') {
         $hasRefresh = true;
         break;
     }

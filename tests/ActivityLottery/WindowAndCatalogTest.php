@@ -25,7 +25,7 @@ $catalogLoader = new ActivityCatalogLoader(
     activityLotteryFixturePath('catalog.remote.json')
 );
 $catalog = $catalogLoader->load();
-Assert::same(true, is_array($catalog), '目录加载结果应为数组。');
+Assert::true(is_array($catalog), '目录加载结果应为数组。');
 Assert::same(
     3,
     count($catalog),
