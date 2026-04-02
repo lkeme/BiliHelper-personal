@@ -1,9 +1,14 @@
 {
   "items": [
     {
-      "id": "remote-item",
+      "id": "shared-activity",
       "title": "remote-newer-title",
       "updatedAt": "2026-04-02T08:00:00+00:00"
+    },
+    {
+      "id": "remote-only",
+      "title": "remote-only-title",
+      "updatedAt": "2026-04-01T16:00:00+00:00"
     }
   ]
 }
