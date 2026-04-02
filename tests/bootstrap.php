@@ -25,7 +25,7 @@ if (is_file($vendorAutoload)) {
 if (!defined('ACTIVITY_LOTTERY_INTERNAL_AUTOLOAD')) {
     define('ACTIVITY_LOTTERY_INTERNAL_AUTOLOAD', true);
     spl_autoload_register(function (string $class) use ($root): void {
-        $prefix = 'ActivityLottery\\Internal\\';
+        $prefix = 'Bhp\\Plugin\\ActivityLottery\\Internal\\';
         if (strpos($class, $prefix) !== 0) {
             return;
         }

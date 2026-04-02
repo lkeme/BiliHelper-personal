@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-if (!class_exists('Assert')) {
+namespace Tests\Support;
+
+if (!class_exists(Assert::class)) {
     class Assert
     {
         public static function true(bool $condition, string $message = ''): void
