@@ -3,13 +3,17 @@
 namespace Bhp\Plugin\ActivityLottery\Internal;
 
 use Bhp\Api\Api\X\Player\ApiPlayer;
-use Bhp\Api\Video\ApiWatch;
 use Bhp\Automation\Watch\VideoWatchService;
 use Bhp\Automation\Watch\VideoWatchSession;
 
 final class EraVideoWatchService
 {
-    private ?VideoWatchService $watchService = null;
+    private VideoWatchService $watchService;
+
+    public function __construct(?VideoWatchService $watchService = null)
+    {
+        $this->watchService = $watchService ?? new VideoWatchService();
+    }
 
     /**
      * @param array<string, mixed> $archive
@@ -192,35 +196,6 @@ final class EraVideoWatchService
 
     private function watchService(): VideoWatchService
     {
-        return $this->watchService ??= new VideoWatchService(
-            startHandler: static function (VideoWatchSession $session): bool {
-                $response = ApiWatch::video($session->archiveId, $session->cid, $session->bvid, [
-                    'session' => $session->sessionId,
-                ]);
-                if (($response['code'] ?? -1) !== 0) {
-                    return false;
-                }
-
-                $response = ApiWatch::heartbeat(
-                    $session->archiveId,
-                    $session->cid,
-                    $session->duration,
-                    $session->bvid,
-                    ['session' => $session->sessionId]
-                );
-                return ($response['code'] ?? -1) === 0;
-            },
-            finishHandler: static function (VideoWatchSession $session, int $watchedSeconds): bool {
-                $duration = max(1, $session->duration);
-                $playedTime = $watchedSeconds >= $duration ? max(0, $duration - 1) : $watchedSeconds;
-                $response = ApiWatch::heartbeat($session->archiveId, $session->cid, $duration, $session->bvid, [
-                    'played_time' => $playedTime,
-                    'play_type' => 0,
-                    'start_ts' => time(),
-                    'session' => $session->sessionId,
-                ]);
-                return ($response['code'] ?? -1) === 0;
-            },
-        );
+        return $this->watchService;
     }
 }

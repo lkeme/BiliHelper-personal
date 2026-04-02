@@ -2,21 +2,27 @@
 
 namespace Bhp\Automation\Watch;
 
+use Bhp\Api\Video\ApiWatch;
+
 final class VideoWatchService
 {
-    private ?\Closure $startHandler;
-    private ?\Closure $finishHandler;
+    private \Closure $videoAction;
+    private \Closure $heartbeatAction;
 
     /**
-     * @param null|callable(VideoWatchSession):bool $startHandler
-     * @param null|callable(VideoWatchSession, int):bool $finishHandler
+     * @param null|callable(string, string, string, array<string, mixed>):array<string, mixed> $videoAction
+     * @param null|callable(string, string, int, string, array<string, mixed>):array<string, mixed> $heartbeatAction
      */
     public function __construct(
-        ?callable $startHandler = null,
-        ?callable $finishHandler = null,
+        ?callable $videoAction = null,
+        ?callable $heartbeatAction = null,
     ) {
-        $this->startHandler = $startHandler !== null ? \Closure::fromCallable($startHandler) : null;
-        $this->finishHandler = $finishHandler !== null ? \Closure::fromCallable($finishHandler) : null;
+        $this->videoAction = $videoAction !== null
+            ? \Closure::fromCallable($videoAction)
+            : static fn (string $aid, string $cid, string $bvid, array $options): array => ApiWatch::video($aid, $cid, $bvid, $options);
+        $this->heartbeatAction = $heartbeatAction !== null
+            ? \Closure::fromCallable($heartbeatAction)
+            : static fn (string $aid, string $cid, int $progress, string $bvid, array $options): array => ApiWatch::heartbeat($aid, $cid, $progress, $bvid, $options);
     }
 
     /**
@@ -25,8 +31,19 @@ final class VideoWatchService
     public function start(string $archiveId, string $cid, array $context = []): VideoWatchSession
     {
         $session = VideoWatchSession::start($archiveId, $cid, $context);
-        if ($this->startHandler !== null && !($this->startHandler)($session)) {
+        $videoResponse = ($this->videoAction)($session->archiveId, $session->cid, $session->bvid, [
+            'session' => $session->sessionId,
+        ]);
+        if (($videoResponse['code'] ?? -1) !== 0) {
             throw new \RuntimeException('视频观看初始化失败');
+        }
+
+        $progress = max(1, $session->duration);
+        $heartbeatResponse = ($this->heartbeatAction)($session->archiveId, $session->cid, $progress, $session->bvid, [
+            'session' => $session->sessionId,
+        ]);
+        if (($heartbeatResponse['code'] ?? -1) !== 0) {
+            throw new \RuntimeException('视频观看首拍心跳失败');
         }
 
         return $session;
@@ -38,10 +55,14 @@ final class VideoWatchService
             return false;
         }
 
-        if ($this->finishHandler === null) {
-            return true;
-        }
-
-        return (bool)($this->finishHandler)($session, $watchedSeconds);
+        $duration = max(1, $session->duration);
+        $playedTime = $watchedSeconds >= $duration ? max(0, $duration - 1) : $watchedSeconds;
+        $response = ($this->heartbeatAction)($session->archiveId, $session->cid, $duration, $session->bvid, [
+            'played_time' => $playedTime,
+            'play_type' => 0,
+            'start_ts' => time(),
+            'session' => $session->sessionId,
+        ]);
+        return ($response['code'] ?? -1) === 0;
     }
 }
