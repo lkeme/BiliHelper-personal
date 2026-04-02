@@ -21,8 +21,27 @@ $catalogLoader = new ActivityCatalogLoader(
     activityLotteryFixturePath('catalog.remote.json')
 );
 $catalog = $catalogLoader->load();
+$items = $catalog['items'] ?? [];
+Assert::same(
+    3,
+    count($items),
+    '本地与远端所有条目应当合并后保留本地独有、远端独有以及共享条目。'
+);
+$ids = array_column($items, 'id');
+Assert::true(in_array('shared-activity', $ids, true), '合并结果中应包含共享活动。');
+Assert::true(in_array('local-only', $ids, true), '合并结果中应包含本地独有活动。');
+Assert::true(in_array('remote-only', $ids, true), '合并结果中应包含远端独有活动。');
+
+$sharedItem = null;
+foreach ($items as $item) {
+    if (($item['id'] ?? null) === 'shared-activity') {
+        $sharedItem = $item;
+        break;
+    }
+}
+Assert::true($sharedItem !== null, '共享活动应当可定位。');
 Assert::same(
     'remote-newer-title',
-    $catalog['items'][0]['title'] ?? null,
-    '远端目录中新标题应覆盖本地的旧标题。'
+    $sharedItem['title'] ?? null,
+    '共享活动的标题应用较新的远端版本。'
 );
