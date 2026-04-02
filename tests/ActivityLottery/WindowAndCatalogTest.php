@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-require __DIR__ . '/../bootstrap.php';
+require_once __DIR__ . '/../bootstrap.php';
 
 // 窗口时间判断
 $window = new ActivityLotteryWindow('06:00:00', '23:00:00');
@@ -21,27 +21,31 @@ $catalogLoader = new ActivityCatalogLoader(
     activityLotteryFixturePath('catalog.remote.json')
 );
 $catalog = $catalogLoader->load();
-$items = $catalog['items'] ?? [];
+if (method_exists($catalog, 'count')) {
+    $entryCount = $catalog->count();
+} elseif (is_countable($catalog)) {
+    $entryCount = count($catalog);
+} else {
+    $entryCount = 0;
+}
 Assert::same(
     3,
-    count($items),
+    $entryCount,
     '本地与远端所有条目应当合并后保留本地独有、远端独有以及共享条目。'
 );
-$ids = array_column($items, 'id');
-Assert::true(in_array('shared-activity', $ids, true), '合并结果中应包含共享活动。');
-Assert::true(in_array('local-only', $ids, true), '合并结果中应包含本地独有活动。');
-Assert::true(in_array('remote-only', $ids, true), '合并结果中应包含远端独有活动。');
+Assert::true($catalog->has('shared-activity'), '合并结果中应包含共享活动。');
+Assert::true($catalog->has('local-only'), '合并结果中应包含本地独有活动。');
+Assert::true($catalog->has('remote-only'), '合并结果中应包含远端独有活动。');
 
-$sharedItem = null;
-foreach ($items as $item) {
-    if (($item['id'] ?? null) === 'shared-activity') {
-        $sharedItem = $item;
-        break;
-    }
-}
+$sharedItem = $catalog->get('shared-activity');
 Assert::true($sharedItem !== null, '共享活动应当可定位。');
 Assert::same(
     'remote-newer-title',
-    $sharedItem['title'] ?? null,
+    $sharedItem->title(),
     '共享活动的标题应用较新的远端版本。'
+);
+Assert::same(
+    'shared-activity',
+    $sharedItem->id(),
+    '共享活动的唯一键应能定位。'
 );
