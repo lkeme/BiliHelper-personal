@@ -2,13 +2,16 @@
 
 namespace Bhp\Plugin\ActivityLottery\Internal\Catalog;
 
-final class RemoteCatalogSource extends LocalCatalogSource
+final class RemoteCatalogSource implements CatalogSourceInterface
 {
+    private CatalogSourceInterface $reader;
+
     public function __construct(
         string $path,
         private readonly bool $enabled = false,
+        ?CatalogSourceInterface $reader = null,
     ) {
-        parent::__construct($path);
+        $this->reader = $reader ?? new LocalCatalogSource($path);
     }
 
     /**
@@ -20,6 +23,6 @@ final class RemoteCatalogSource extends LocalCatalogSource
             return [];
         }
 
-        return parent::load();
+        return $this->reader->load();
     }
 }

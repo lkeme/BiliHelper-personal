@@ -2,7 +2,7 @@
 
 namespace Bhp\Plugin\ActivityLottery\Internal\Catalog;
 
-class LocalCatalogSource implements CatalogSourceInterface
+final class LocalCatalogSource implements CatalogSourceInterface
 {
     public function __construct(private readonly string $path)
     {
@@ -35,7 +35,7 @@ class LocalCatalogSource implements CatalogSourceInterface
             return [];
         }
 
-        $items = $decoded['items'] ?? [];
+        $items = $decoded['items'] ?? $decoded['data'] ?? [];
         if (!is_array($items)) {
             return [];
         }

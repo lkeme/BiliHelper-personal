@@ -87,6 +87,18 @@ Assert::same(
     '远端默认关闭时，目录应只包含本地条目。'
 );
 
+$generatedCatalog = (new LocalCatalogSource(activityLotteryFixturePath('catalog.generated.json')))->load();
+Assert::same(
+    2,
+    count($generatedCatalog),
+    'LocalCatalogSource 应兼容真实生成格式（data 根节点）。'
+);
+Assert::same(
+    'generated-shared',
+    $generatedCatalog[0]->id(),
+    'data 根节点目录条目应正常解析唯一键。'
+);
+
 /** @var ActivityCatalogItem[] $catalog */
 $catalogLoader = new ActivityCatalogLoader([
     new LocalCatalogSource(activityLotteryFixturePath('catalog.local.json')),
