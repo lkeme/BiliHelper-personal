@@ -9,80 +9,92 @@ use RuntimeException;
 final class ActivityFlowPlanner
 {
     /**
-     * @return array<string, array{type: string, lane: string, supported: bool, default_status: string}>
+     * @return array<string, array{type: string, default_lane: string, allowed_lanes: array<int, string>, supported: bool, default_status: string}>
      */
     public static function capabilityContracts(): array
     {
         return [
             EraActivityTask::CAPABILITY_FOLLOW => [
                 'type' => 'era_task_follow',
-                'lane' => 'follow',
+                'default_lane' => 'follow',
+                'allowed_lanes' => ['follow'],
                 'supported' => true,
                 'default_status' => ActivityNodeStatus::PENDING,
             ],
             'unfollow' => [
                 'type' => 'era_task_unfollow',
-                'lane' => 'unfollow',
+                'default_lane' => 'unfollow',
+                'allowed_lanes' => ['unfollow'],
                 'supported' => true,
                 'default_status' => ActivityNodeStatus::PENDING,
             ],
             'task_status' => [
                 'type' => 'era_task_status',
-                'lane' => 'task_status',
+                'default_lane' => 'task_status',
+                'allowed_lanes' => ['task_status'],
                 'supported' => true,
                 'default_status' => ActivityNodeStatus::PENDING,
             ],
             EraActivityTask::CAPABILITY_SHARE => [
                 'type' => 'era_task_share',
-                'lane' => 'task_status',
+                'default_lane' => 'task_status',
+                'allowed_lanes' => ['task_status'],
                 'supported' => true,
                 'default_status' => ActivityNodeStatus::PENDING,
             ],
             EraActivityTask::CAPABILITY_WATCH_VIDEO_FIXED => [
                 'type' => 'era_task_watch_video_fixed',
-                'lane' => 'task_status',
+                'default_lane' => 'task_status',
+                'allowed_lanes' => ['task_status', 'watch_video'],
                 'supported' => true,
                 'default_status' => ActivityNodeStatus::PENDING,
             ],
             EraActivityTask::CAPABILITY_WATCH_VIDEO_TOPIC => [
                 'type' => 'era_task_watch_video_topic',
-                'lane' => 'task_status',
+                'default_lane' => 'task_status',
+                'allowed_lanes' => ['task_status', 'watch_video'],
                 'supported' => true,
                 'default_status' => ActivityNodeStatus::PENDING,
             ],
             EraActivityTask::CAPABILITY_WATCH_LIVE => [
                 'type' => 'era_task_watch_live',
-                'lane' => 'task_status',
+                'default_lane' => 'task_status',
+                'allowed_lanes' => ['task_status', 'watch_live_init', 'watch_live'],
                 'supported' => true,
                 'default_status' => ActivityNodeStatus::PENDING,
             ],
             EraActivityTask::CAPABILITY_MANUAL => [
                 'type' => 'era_task_skipped',
-                'lane' => 'task_status',
+                'default_lane' => 'task_status',
+                'allowed_lanes' => ['task_status'],
                 'supported' => false,
                 'default_status' => ActivityNodeStatus::SKIPPED,
             ],
             EraActivityTask::CAPABILITY_COIN_TOPIC => [
                 'type' => 'era_task_skipped',
-                'lane' => 'task_status',
+                'default_lane' => 'task_status',
+                'allowed_lanes' => ['task_status'],
                 'supported' => false,
                 'default_status' => ActivityNodeStatus::SKIPPED,
             ],
             EraActivityTask::CAPABILITY_LIKE_TOPIC => [
                 'type' => 'era_task_skipped',
-                'lane' => 'task_status',
+                'default_lane' => 'task_status',
+                'allowed_lanes' => ['task_status'],
                 'supported' => false,
                 'default_status' => ActivityNodeStatus::SKIPPED,
             ],
             EraActivityTask::CAPABILITY_COMMENT_TOPIC => [
                 'type' => 'era_task_skipped',
-                'lane' => 'task_status',
+                'default_lane' => 'task_status',
+                'allowed_lanes' => ['task_status'],
                 'supported' => false,
                 'default_status' => ActivityNodeStatus::SKIPPED,
             ],
             EraActivityTask::CAPABILITY_UNKNOWN => [
                 'type' => 'era_task_skipped',
-                'lane' => 'task_status',
+                'default_lane' => 'task_status',
+                'allowed_lanes' => ['task_status'],
                 'supported' => false,
                 'default_status' => ActivityNodeStatus::SKIPPED,
             ],
@@ -90,24 +102,25 @@ final class ActivityFlowPlanner
     }
 
     /**
-     * @return array<string, array{lane: string, default_status: string}>
+     * @return array<string, array{default_lane: string, allowed_lanes: array<int, string>, default_status: string}>
      */
     public static function nodeTypeContracts(): array
     {
         $contracts = [
-            'load_activity_snapshot' => ['lane' => 'page_fetch', 'default_status' => ActivityNodeStatus::PENDING],
-            'validate_activity_window' => ['lane' => 'task_status', 'default_status' => ActivityNodeStatus::PENDING],
-            'parse_era_page' => ['lane' => 'page_fetch', 'default_status' => ActivityNodeStatus::PENDING],
-            'refresh_draw_times' => ['lane' => 'draw_refresh', 'default_status' => ActivityNodeStatus::PENDING],
-            'execute_draw' => ['lane' => 'draw_execute', 'default_status' => ActivityNodeStatus::PENDING],
-            'claim_reward' => ['lane' => 'claim_reward', 'default_status' => ActivityNodeStatus::PENDING],
-            'finalize_flow' => ['lane' => 'task_status', 'default_status' => ActivityNodeStatus::PENDING],
-            'era_task_skipped' => ['lane' => 'task_status', 'default_status' => ActivityNodeStatus::SKIPPED],
+            'load_activity_snapshot' => ['default_lane' => 'page_fetch', 'allowed_lanes' => ['page_fetch'], 'default_status' => ActivityNodeStatus::PENDING],
+            'validate_activity_window' => ['default_lane' => 'task_status', 'allowed_lanes' => ['task_status'], 'default_status' => ActivityNodeStatus::PENDING],
+            'parse_era_page' => ['default_lane' => 'page_fetch', 'allowed_lanes' => ['page_fetch'], 'default_status' => ActivityNodeStatus::PENDING],
+            'refresh_draw_times' => ['default_lane' => 'draw_refresh', 'allowed_lanes' => ['draw_refresh'], 'default_status' => ActivityNodeStatus::PENDING],
+            'execute_draw' => ['default_lane' => 'draw_execute', 'allowed_lanes' => ['draw_execute'], 'default_status' => ActivityNodeStatus::PENDING],
+            'claim_reward' => ['default_lane' => 'claim_reward', 'allowed_lanes' => ['claim_reward'], 'default_status' => ActivityNodeStatus::PENDING],
+            'finalize_flow' => ['default_lane' => 'task_status', 'allowed_lanes' => ['task_status'], 'default_status' => ActivityNodeStatus::PENDING],
+            'era_task_skipped' => ['default_lane' => 'task_status', 'allowed_lanes' => ['task_status'], 'default_status' => ActivityNodeStatus::SKIPPED],
         ];
 
         foreach (self::capabilityContracts() as $contract) {
             $contracts[$contract['type']] = [
-                'lane' => $contract['lane'],
+                'default_lane' => $contract['default_lane'],
+                'allowed_lanes' => $contract['allowed_lanes'],
                 'default_status' => $contract['default_status'],
             ];
         }
@@ -131,11 +144,11 @@ final class ActivityFlowPlanner
      */
     private function fixedPrefixNodes(): array
     {
-        return [
-            new ActivityNode('load_activity_snapshot', ['lane' => 'page_fetch']),
-            new ActivityNode('validate_activity_window', ['lane' => 'task_status']),
-            new ActivityNode('parse_era_page', ['lane' => 'page_fetch']),
-        ];
+        return array_map(fn (string $type): ActivityNode => $this->nodeByContract($type), [
+            'load_activity_snapshot',
+            'validate_activity_window',
+            'parse_era_page',
+        ]);
     }
 
     /**
@@ -143,12 +156,12 @@ final class ActivityFlowPlanner
      */
     private function fixedTailNodes(): array
     {
-        return [
-            new ActivityNode('refresh_draw_times', ['lane' => 'draw_refresh']),
-            new ActivityNode('execute_draw', ['lane' => 'draw_execute']),
-            new ActivityNode('claim_reward', ['lane' => 'claim_reward']),
-            new ActivityNode('finalize_flow', ['lane' => 'task_status']),
-        ];
+        return array_map(fn (string $type): ActivityNode => $this->nodeByContract($type), [
+            'refresh_draw_times',
+            'execute_draw',
+            'claim_reward',
+            'finalize_flow',
+        ]);
     }
 
     /**
@@ -160,14 +173,11 @@ final class ActivityFlowPlanner
         $nodes = [];
         foreach ($tasks as $task) {
             $normalizedTask = $this->normalizeTask($task);
-            if ($normalizedTask === null) {
-                continue;
-            }
             if ($normalizedTask['task_id'] === '') {
                 $nodes[] = new ActivityNode(
                     'era_task_skipped',
                     [
-                        'lane' => 'task_status',
+                        'lane' => $this->defaultLaneForNodeType('era_task_skipped'),
                         'capability' => $normalizedTask['capability'],
                         'reason' => 'missing_task_id',
                     ],
@@ -182,7 +192,7 @@ final class ActivityFlowPlanner
                 $nodes[] = new ActivityNode(
                     'era_task_skipped',
                     [
-                        'lane' => 'task_status',
+                        'lane' => $this->defaultLaneForNodeType('era_task_skipped'),
                         'task_id' => $normalizedTask['task_id'],
                         'capability' => $capability,
                         'reason' => sprintf('unsupported capability: %s', $capability === '' ? '(empty)' : $capability),
@@ -215,7 +225,7 @@ final class ActivityFlowPlanner
             return null;
         }
 
-        return ['type' => $contract['type'], 'lane' => $contract['lane']];
+        return ['type' => $contract['type'], 'lane' => $contract['default_lane']];
     }
 
     /**
@@ -239,9 +249,9 @@ final class ActivityFlowPlanner
     }
 
     /**
-     * @return array{task_id: string, capability: string}|null
+     * @return array{task_id: string, capability: string}
      */
-    private function normalizeTask(mixed $task): ?array
+    private function normalizeTask(mixed $task): array
     {
         if (is_array($task)) {
             return [
@@ -257,11 +267,7 @@ final class ActivityFlowPlanner
             ];
         }
 
-        if (is_object($task)) {
-            throw new RuntimeException(sprintf('非法任务对象类型: %s', get_debug_type($task)));
-        }
-
-        return null;
+        throw new RuntimeException(sprintf('非法任务类型: %s', get_debug_type($task)));
     }
 
     /**
@@ -291,5 +297,26 @@ final class ActivityFlowPlanner
         }
 
         return '';
+    }
+
+    private function nodeByContract(string $type): ActivityNode
+    {
+        $contracts = self::nodeTypeContracts();
+        if (!isset($contracts[$type])) {
+            throw new RuntimeException(sprintf('未知 node type 契约: %s', $type));
+        }
+
+        $contract = $contracts[$type];
+        return new ActivityNode($type, ['lane' => $contract['default_lane']], $contract['default_status']);
+    }
+
+    private function defaultLaneForNodeType(string $type): string
+    {
+        $contracts = self::nodeTypeContracts();
+        if (!isset($contracts[$type])) {
+            throw new RuntimeException(sprintf('未知 node type 契约: %s', $type));
+        }
+
+        return $contracts[$type]['default_lane'];
     }
 }

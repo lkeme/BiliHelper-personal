@@ -42,6 +42,14 @@ Assert::same(
     $firstNode->type(),
     '节点序列头部应为 load_activity_snapshot。'
 );
+$nodeTypeContracts = ActivityFlowPlanner::nodeTypeContracts();
+$fixedNodeTypes = ['load_activity_snapshot', 'validate_activity_window', 'parse_era_page', 'refresh_draw_times', 'execute_draw', 'claim_reward', 'finalize_flow'];
+foreach ($fixedNodeTypes as $fixedNodeType) {
+    Assert::true(
+        isset($nodeTypeContracts[$fixedNodeType]['default_lane']),
+        sprintf('node type=%s 契约应定义 default_lane。', $fixedNodeType),
+    );
+}
 
 $refreshNodeIndex = -1;
 $hasRefresh = false;
@@ -231,9 +239,25 @@ try {
         '2026-04-02',
     );
 } catch (\RuntimeException $e) {
-    $invalidObjectTaskThrown = str_contains($e->getMessage(), '非法任务对象类型');
+    $invalidObjectTaskThrown = str_contains($e->getMessage(), '非法任务类型');
 }
 Assert::true($invalidObjectTaskThrown, '非数组且非 EraActivityTask 的任务对象应显式失败，不可静默丢弃。');
+
+$invalidScalarTaskThrown = false;
+try {
+    $planner->plan(
+        $catalogItem,
+        (object)[
+            'tasks' => [
+                'bad-scalar',
+            ],
+        ],
+        '2026-04-02',
+    );
+} catch (\RuntimeException $e) {
+    $invalidScalarTaskThrown = str_contains($e->getMessage(), '非法任务类型');
+}
+Assert::true($invalidScalarTaskThrown, 'tasks 中存在标量杂质项时必须显式失败。');
 
 $invalidArrayTaskIdThrown = false;
 try {

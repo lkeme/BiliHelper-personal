@@ -88,6 +88,9 @@ final class ActivityLaneLimiter
             'draw_refresh' => 8,
             'draw_execute' => 10,
             'claim_reward' => 15,
+            'watch_video' => 30,
+            'watch_live_init' => 15,
+            'watch_live' => 60,
         ];
     }
 

@@ -104,19 +104,32 @@ final class ActivityFlowPool
         if (!isset($contracts[$node->type()])) {
             throw new RuntimeException(sprintf('未知 node type: %s', $node->type()));
         }
-        $defaultLane = $contracts[$node->type()]['lane'];
+        $contract = $contracts[$node->type()];
+        $defaultLane = $contract['default_lane'];
 
-        $payloadLane = trim((string)($node->payload()['lane'] ?? ''));
-        if ($payloadLane !== '' && $payloadLane !== $defaultLane) {
+        $payloadLaneRaw = $node->payload()['lane'] ?? null;
+        if ($payloadLaneRaw !== null && !is_scalar($payloadLaneRaw)) {
             throw new RuntimeException(sprintf(
                 'lane 与 node type 契约冲突: node_type=%s expected=%s actual=%s',
                 $node->type(),
                 $defaultLane,
-                $payloadLane,
+                get_debug_type($payloadLaneRaw),
             ));
         }
+        $payloadLane = trim((string)($payloadLaneRaw ?? ''));
+        if ($payloadLane === '') {
+            return $defaultLane;
+        }
+        if (in_array($payloadLane, $contract['allowed_lanes'], true)) {
+            return $payloadLane;
+        }
 
-        return $defaultLane;
+        throw new RuntimeException(sprintf(
+            'lane 与 node type 契约冲突: node_type=%s expected=%s actual=%s',
+            $node->type(),
+            implode('|', $contract['allowed_lanes']),
+            $payloadLane,
+        ));
     }
 
     /**

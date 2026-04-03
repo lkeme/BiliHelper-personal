@@ -134,6 +134,23 @@ try {
 Assert::true($unknownNodeTypeWithLaneThrown, '未知 node type 即使显式携带 lane 也应触发异常。');
 
 $planner = new ActivityFlowPlanner();
+$nodeContracts = ActivityFlowPlanner::nodeTypeContracts();
+$fixedContractFlow = $planner->plan(ActivityCatalogItem::fromArray([
+    'id' => 'fixed-contract-check',
+    'activity_id' => 'fixed-contract-check',
+    'title' => 'fixed-contract-check',
+    'update_time' => '2026-04-02T08:00:00+00:00',
+]), null, '2026-04-02');
+$fixedContractNodeTypes = ['load_activity_snapshot', 'validate_activity_window', 'parse_era_page', 'refresh_draw_times', 'execute_draw', 'claim_reward', 'finalize_flow'];
+foreach ($fixedContractFlow->nodes() as $node) {
+    if (!in_array($node->type(), $fixedContractNodeTypes, true)) {
+        continue;
+    }
+
+    $contractLane = (string)($nodeContracts[$node->type()]['default_lane'] ?? '');
+    Assert::same($contractLane, (string)($node->payload()['lane'] ?? ''), sprintf('固定节点 lane 应由契约导出: %s', $node->type()));
+}
+
 $plannerCatalog = ActivityCatalogItem::fromArray([
     'id' => 'planner-pool-integration',
     'activity_id' => 'planner-pool-integration',
@@ -203,6 +220,29 @@ $singlePickDedupBatch = $singlePickDedupPool->pick(
 );
 Assert::same(1, count($singlePickDedupBatch), '单次 pick 内重复 flow_id 只能入选一次。');
 Assert::same($singlePickFlow->id(), $singlePickDedupBatch[0]->id(), '单次 pick 去重后应保留目标 flow。');
+
+$allowedDynamicLaneFlow = buildFlowWithType('allowed-dynamic-lane', 'era_task_watch_video_fixed', ['lane' => 'watch_video']);
+$allowedDynamicLanePool = new ActivityFlowPool(
+    new ActivityFlowBudget(1, 6, 3000),
+    new ActivityFlowPicker(),
+    new ActivityLaneLimiter(['watch_video' => 0, 'task_status' => 0]),
+);
+$allowedDynamicLaneBatch = $allowedDynamicLanePool->pick([$allowedDynamicLaneFlow], 100, $defaultTickStartedAtMs + 1_500);
+Assert::same(1, count($allowedDynamicLaneBatch), 'node type 显式指定允许的 lane 应通过。');
+
+$disallowedDynamicLaneFlow = buildFlowWithType('disallowed-dynamic-lane', 'era_task_watch_video_fixed', ['lane' => 'follow']);
+$disallowedDynamicLanePool = new ActivityFlowPool(
+    new ActivityFlowBudget(1, 6, 3000),
+    new ActivityFlowPicker(),
+    new ActivityLaneLimiter(['watch_video' => 0, 'task_status' => 0, 'follow' => 0]),
+);
+$disallowedDynamicLaneThrown = false;
+try {
+    $disallowedDynamicLanePool->pick([$disallowedDynamicLaneFlow], 100, $defaultTickStartedAtMs + 1_700);
+} catch (\RuntimeException $e) {
+    $disallowedDynamicLaneThrown = str_contains($e->getMessage(), 'lane') && str_contains($e->getMessage(), 'era_task_watch_video_fixed');
+}
+Assert::true($disallowedDynamicLaneThrown, 'node type 显式指定不允许的 lane 必须 fail fast。');
 
 $conflictLaneFlow = buildFlowWithType('conflict-lane', 'execute_draw', ['lane' => 'task_status']);
 $conflictLanePool = new ActivityFlowPool(
