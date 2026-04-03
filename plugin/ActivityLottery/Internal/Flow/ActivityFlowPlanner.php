@@ -3,7 +3,9 @@
 namespace Bhp\Plugin\ActivityLottery\Internal\Flow;
 
 use Bhp\Plugin\ActivityLottery\Internal\Catalog\ActivityCatalogItem;
-use Bhp\Plugin\ActivityLottery\Internal\EraActivityTask;
+use Bhp\Plugin\ActivityLottery\Internal\Page\EraPageSnapshot;
+use Bhp\Plugin\ActivityLottery\Internal\Page\EraTaskCapabilityResolver;
+use Bhp\Plugin\ActivityLottery\Internal\Page\EraTaskSnapshot;
 use RuntimeException;
 
 final class ActivityFlowPlanner
@@ -14,13 +16,13 @@ final class ActivityFlowPlanner
      * @var array<string, int>
      */
     private const DYNAMIC_CAPABILITY_PRIORITY = [
-        'claim_reward' => 100,
-        EraActivityTask::CAPABILITY_SHARE => 200,
-        EraActivityTask::CAPABILITY_FOLLOW => 300,
+        EraTaskCapabilityResolver::CAPABILITY_CLAIM_REWARD => 100,
+        EraTaskCapabilityResolver::CAPABILITY_SHARE => 200,
+        EraTaskCapabilityResolver::CAPABILITY_FOLLOW => 300,
         'unfollow' => 350,
-        EraActivityTask::CAPABILITY_WATCH_VIDEO_FIXED => 400,
-        EraActivityTask::CAPABILITY_WATCH_VIDEO_TOPIC => 400,
-        EraActivityTask::CAPABILITY_WATCH_LIVE => 500,
+        EraTaskCapabilityResolver::CAPABILITY_WATCH_VIDEO_FIXED => 400,
+        EraTaskCapabilityResolver::CAPABILITY_WATCH_VIDEO_TOPIC => 400,
+        EraTaskCapabilityResolver::CAPABILITY_WATCH_LIVE => 500,
     ];
 
     /**
@@ -29,14 +31,14 @@ final class ActivityFlowPlanner
     public static function capabilityContracts(): array
     {
         return [
-            'claim_reward' => [
-                'type' => 'claim_reward',
+            EraTaskCapabilityResolver::CAPABILITY_CLAIM_REWARD => [
+                'type' => 'era_task_claim_reward',
                 'default_lane' => 'claim_reward',
                 'allowed_lanes' => ['claim_reward'],
                 'supported' => true,
                 'default_status' => ActivityNodeStatus::PENDING,
             ],
-            EraActivityTask::CAPABILITY_FOLLOW => [
+            EraTaskCapabilityResolver::CAPABILITY_FOLLOW => [
                 'type' => 'era_task_follow',
                 'default_lane' => 'follow',
                 'allowed_lanes' => ['follow'],
@@ -57,63 +59,63 @@ final class ActivityFlowPlanner
                 'supported' => true,
                 'default_status' => ActivityNodeStatus::PENDING,
             ],
-            EraActivityTask::CAPABILITY_SHARE => [
+            EraTaskCapabilityResolver::CAPABILITY_SHARE => [
                 'type' => 'era_task_share',
                 'default_lane' => 'task_status',
                 'allowed_lanes' => ['task_status'],
                 'supported' => true,
                 'default_status' => ActivityNodeStatus::PENDING,
             ],
-            EraActivityTask::CAPABILITY_WATCH_VIDEO_FIXED => [
+            EraTaskCapabilityResolver::CAPABILITY_WATCH_VIDEO_FIXED => [
                 'type' => 'era_task_watch_video_fixed',
                 'default_lane' => 'task_status',
                 'allowed_lanes' => ['task_status', 'watch_video'],
                 'supported' => true,
                 'default_status' => ActivityNodeStatus::PENDING,
             ],
-            EraActivityTask::CAPABILITY_WATCH_VIDEO_TOPIC => [
+            EraTaskCapabilityResolver::CAPABILITY_WATCH_VIDEO_TOPIC => [
                 'type' => 'era_task_watch_video_topic',
                 'default_lane' => 'task_status',
                 'allowed_lanes' => ['task_status', 'watch_video'],
                 'supported' => true,
                 'default_status' => ActivityNodeStatus::PENDING,
             ],
-            EraActivityTask::CAPABILITY_WATCH_LIVE => [
+            EraTaskCapabilityResolver::CAPABILITY_WATCH_LIVE => [
                 'type' => 'era_task_watch_live',
                 'default_lane' => 'task_status',
                 'allowed_lanes' => ['task_status', 'watch_live_init', 'watch_live'],
                 'supported' => true,
                 'default_status' => ActivityNodeStatus::PENDING,
             ],
-            EraActivityTask::CAPABILITY_MANUAL => [
+            EraTaskCapabilityResolver::CAPABILITY_MANUAL => [
                 'type' => 'era_task_skipped',
                 'default_lane' => 'task_status',
                 'allowed_lanes' => ['task_status'],
                 'supported' => false,
                 'default_status' => ActivityNodeStatus::SKIPPED,
             ],
-            EraActivityTask::CAPABILITY_COIN_TOPIC => [
+            EraTaskCapabilityResolver::CAPABILITY_COIN_TOPIC => [
                 'type' => 'era_task_skipped',
                 'default_lane' => 'task_status',
                 'allowed_lanes' => ['task_status'],
                 'supported' => false,
                 'default_status' => ActivityNodeStatus::SKIPPED,
             ],
-            EraActivityTask::CAPABILITY_LIKE_TOPIC => [
+            EraTaskCapabilityResolver::CAPABILITY_LIKE_TOPIC => [
                 'type' => 'era_task_skipped',
                 'default_lane' => 'task_status',
                 'allowed_lanes' => ['task_status'],
                 'supported' => false,
                 'default_status' => ActivityNodeStatus::SKIPPED,
             ],
-            EraActivityTask::CAPABILITY_COMMENT_TOPIC => [
+            EraTaskCapabilityResolver::CAPABILITY_COMMENT_TOPIC => [
                 'type' => 'era_task_skipped',
                 'default_lane' => 'task_status',
                 'allowed_lanes' => ['task_status'],
                 'supported' => false,
                 'default_status' => ActivityNodeStatus::SKIPPED,
             ],
-            EraActivityTask::CAPABILITY_UNKNOWN => [
+            EraTaskCapabilityResolver::CAPABILITY_UNKNOWN => [
                 'type' => 'era_task_skipped',
                 'default_lane' => 'task_status',
                 'allowed_lanes' => ['task_status'],
@@ -134,7 +136,9 @@ final class ActivityFlowPlanner
             'parse_era_page' => ['default_lane' => 'page_fetch', 'allowed_lanes' => ['page_fetch'], 'default_status' => ActivityNodeStatus::PENDING],
             'refresh_draw_times' => ['default_lane' => 'draw_refresh', 'allowed_lanes' => ['draw_refresh'], 'default_status' => ActivityNodeStatus::PENDING],
             'execute_draw' => ['default_lane' => 'draw_execute', 'allowed_lanes' => ['draw_execute'], 'default_status' => ActivityNodeStatus::PENDING],
-            'claim_reward' => ['default_lane' => 'claim_reward', 'allowed_lanes' => ['claim_reward'], 'default_status' => ActivityNodeStatus::PENDING],
+            'record_draw_result' => ['default_lane' => 'task_status', 'allowed_lanes' => ['task_status'], 'default_status' => ActivityNodeStatus::PENDING],
+            'notify_draw_result' => ['default_lane' => 'task_status', 'allowed_lanes' => ['task_status'], 'default_status' => ActivityNodeStatus::PENDING],
+            'final_claim_reward' => ['default_lane' => 'claim_reward', 'allowed_lanes' => ['claim_reward'], 'default_status' => ActivityNodeStatus::PENDING],
             'finalize_flow' => ['default_lane' => 'task_status', 'allowed_lanes' => ['task_status'], 'default_status' => ActivityNodeStatus::PENDING],
             'era_task_skipped' => ['default_lane' => 'task_status', 'allowed_lanes' => ['task_status'], 'default_status' => ActivityNodeStatus::SKIPPED],
         ];
@@ -150,7 +154,7 @@ final class ActivityFlowPlanner
         return $contracts;
     }
 
-    public function plan(ActivityCatalogItem $item, mixed $pageSnapshot, string $bizDate): ActivityFlow
+    public function plan(ActivityCatalogItem $item, ?EraPageSnapshot $pageSnapshot, string $bizDate): ActivityFlow
     {
         $nodes = array_merge(
             $this->fixedPrefixNodes(),
@@ -181,7 +185,9 @@ final class ActivityFlowPlanner
         return array_map(fn (string $type): ActivityNode => $this->nodeByContract($type), [
             'refresh_draw_times',
             'execute_draw',
-            'claim_reward',
+            'record_draw_result',
+            'notify_draw_result',
+            'final_claim_reward',
             'finalize_flow',
         ]);
     }
@@ -189,11 +195,14 @@ final class ActivityFlowPlanner
     /**
      * @return ActivityNode[]
      */
-    private function dynamicEraNodes(mixed $pageSnapshot): array
+    private function dynamicEraNodes(?EraPageSnapshot $pageSnapshot): array
     {
-        $tasks = $this->extractTasks($pageSnapshot);
+        if ($pageSnapshot === null) {
+            return [];
+        }
+
         $sortableTasks = [];
-        foreach ($tasks as $index => $task) {
+        foreach ($pageSnapshot->tasks() as $index => $task) {
             $normalizedTask = $this->normalizeTask($task);
             $sortableTasks[] = [
                 'task' => $normalizedTask,
@@ -275,100 +284,14 @@ final class ActivityFlowPlanner
     }
 
     /**
-     * @return array<int, mixed>
-     */
-    private function extractTasks(mixed $pageSnapshot): array
-    {
-        if ($pageSnapshot === null) {
-            return [];
-        }
-
-        if (is_array($pageSnapshot)) {
-            if (!array_key_exists('tasks', $pageSnapshot)) {
-                return [];
-            }
-
-            if (!is_array($pageSnapshot['tasks'])) {
-                throw new RuntimeException(sprintf(
-                    'snapshot.tasks 必须为数组，当前为: %s',
-                    get_debug_type($pageSnapshot['tasks']),
-                ));
-            }
-
-            return array_values($pageSnapshot['tasks']);
-        }
-
-        if (is_object($pageSnapshot)) {
-            if (!$pageSnapshot instanceof \stdClass && !$pageSnapshot instanceof \Bhp\Plugin\ActivityLottery\Internal\EraActivityPage) {
-                throw new RuntimeException(sprintf('未知 snapshot 对象类型: %s', get_debug_type($pageSnapshot)));
-            }
-
-            if (!property_exists($pageSnapshot, 'tasks')) {
-                return [];
-            }
-
-            if (!is_array($pageSnapshot->tasks)) {
-                throw new RuntimeException(sprintf(
-                    'snapshot.tasks 必须为数组，当前为: %s',
-                    get_debug_type($pageSnapshot->tasks),
-                ));
-            }
-
-            return array_values($pageSnapshot->tasks);
-        }
-
-        throw new RuntimeException(sprintf('非法 snapshot 类型: %s', get_debug_type($pageSnapshot)));
-    }
-
-    /**
      * @return array{task_id: string, capability: string}
      */
-    private function normalizeTask(mixed $task): array
+    private function normalizeTask(EraTaskSnapshot $task): array
     {
-        if (is_array($task)) {
-            return [
-                'task_id' => $this->normalizeArrayTaskField($task, ['task_id', 'taskId'], 'task_id'),
-                'capability' => $this->normalizeArrayTaskField($task, ['capability'], 'capability'),
-            ];
-        }
-
-        if ($task instanceof EraActivityTask) {
-            return [
-                'task_id' => trim($task->taskId),
-                'capability' => trim($task->capability),
-            ];
-        }
-
-        throw new RuntimeException(sprintf('非法任务类型: %s', get_debug_type($task)));
-    }
-
-    /**
-     * @param array<string, mixed> $task
-     * @param string[] $keys
-     */
-    private function normalizeArrayTaskField(array $task, array $keys, string $fieldName): string
-    {
-        foreach ($keys as $key) {
-            if (!array_key_exists($key, $task)) {
-                continue;
-            }
-
-            $value = $task[$key];
-            if ($value === null) {
-                return '';
-            }
-            if (!is_scalar($value)) {
-                throw new RuntimeException(sprintf(
-                    '非法任务字段类型: %s=%s',
-                    $fieldName,
-                    get_debug_type($value),
-                ));
-            }
-
-            return trim((string)$value);
-        }
-
-        return '';
+        return [
+            'task_id' => trim($task->taskId()),
+            'capability' => trim($task->capability()),
+        ];
     }
 
     private function nodeByContract(string $type): ActivityNode
@@ -397,3 +320,4 @@ final class ActivityFlowPlanner
         return self::DYNAMIC_CAPABILITY_PRIORITY[$capability] ?? 1_000;
     }
 }
+

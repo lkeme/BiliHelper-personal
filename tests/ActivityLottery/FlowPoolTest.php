@@ -14,6 +14,7 @@ use Bhp\Plugin\ActivityLottery\Internal\Pool\ActivityFlowBudget;
 use Bhp\Plugin\ActivityLottery\Internal\Pool\ActivityFlowPicker;
 use Bhp\Plugin\ActivityLottery\Internal\Pool\ActivityFlowPool;
 use Bhp\Plugin\ActivityLottery\Internal\Pool\ActivityLaneLimiter;
+use Bhp\Plugin\ActivityLottery\Internal\Page\EraPageSnapshot;
 
 $budget = new ActivityFlowBudget(4, 6, 3000);
 Assert::same(4, $budget->maxFlowsPerTick(), '预算应暴露 max_flows_per_tick。');
@@ -150,7 +151,7 @@ $fixedContractFlow = $planner->plan(ActivityCatalogItem::fromArray([
     'title' => 'fixed-contract-check',
     'update_time' => '2026-04-02T08:00:00+00:00',
 ]), null, '2026-04-02');
-$fixedContractNodeTypes = ['load_activity_snapshot', 'validate_activity_window', 'parse_era_page', 'refresh_draw_times', 'execute_draw', 'claim_reward', 'finalize_flow'];
+$fixedContractNodeTypes = ['load_activity_snapshot', 'validate_activity_window', 'parse_era_page', 'refresh_draw_times', 'execute_draw', 'record_draw_result', 'notify_draw_result', 'final_claim_reward', 'finalize_flow'];
 foreach ($fixedContractFlow->nodes() as $node) {
     if (!in_array($node->type(), $fixedContractNodeTypes, true)) {
         continue;
@@ -168,11 +169,17 @@ $plannerCatalog = ActivityCatalogItem::fromArray([
 ]);
 $dynamicFlow = $planner->plan(
     $plannerCatalog,
-    (object)[
+    EraPageSnapshot::fromArray([
+        'title' => 'dynamic-flow',
+        'page_id' => 'dynamic-page',
+        'activity_id' => 'planner-pool-integration',
+        'lottery_id' => 'dynamic-lottery',
+        'start_time' => 0,
+        'end_time' => 0,
         'tasks' => [
-            ['task_id' => 'follow-1', 'capability' => 'follow'],
+            ['task_id' => 'follow-1', 'task_name' => '关注', 'capability' => 'follow', 'task_status' => 1, 'task_award_type' => 0],
         ],
-    ],
+    ]),
     '2026-04-02',
 );
 $followNodeIndex = findNodeIndexByType($dynamicFlow, 'era_task_follow');
@@ -189,11 +196,17 @@ Assert::same($readyFollowFlow->id(), $dynamicBatch[0]->id(), '动态 follow flow
 
 $unsupportedFlow = $planner->plan(
     $plannerCatalog,
-    (object)[
+    EraPageSnapshot::fromArray([
+        'title' => 'unsupported-flow',
+        'page_id' => 'unsupported-page',
+        'activity_id' => 'planner-pool-integration',
+        'lottery_id' => 'unsupported-lottery',
+        'start_time' => 0,
+        'end_time' => 0,
         'tasks' => [
-            ['task_id' => 'unsupported-1', 'capability' => 'coin_topic'],
+            ['task_id' => 'unsupported-1', 'task_name' => '投币', 'capability' => 'coin_topic', 'task_status' => 1, 'task_award_type' => 0],
         ],
-    ],
+    ]),
     '2026-04-02',
 );
 $skippedNodeIndex = findNodeIndexByType($unsupportedFlow, 'era_task_skipped');
@@ -310,7 +323,7 @@ function buildFlow(string $activityId, string $lane, int $nextRunAt = 0): Activi
     $nodeType = match ($lane) {
         'draw_execute' => 'execute_draw',
         'draw_refresh' => 'refresh_draw_times',
-        'claim_reward' => 'claim_reward',
+        'claim_reward' => 'final_claim_reward',
         default => 'validate_activity_window',
     };
 
