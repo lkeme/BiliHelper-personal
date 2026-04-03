@@ -418,6 +418,244 @@ Assert::true(str_contains((string)$liveWaitingLog['message'], '房间 2233'), '�
 Assert::true(str_contains((string)$liveWaitingLog['message'], '120/240 秒'), '直播 waiting 日志应包含累计观看秒数。');
 Assert::true(str_contains((string)$liveWaitingLog['message'], '30 秒后继续'), '直播 waiting 日志应包含等待秒数。');
 
+$drawRefreshLogs = [];
+$drawRefreshRuntime = buildBusinessRuntime(
+    $scope . '_draw_refresh',
+    $now,
+    [
+        'id' => 'draw-refresh-activity',
+        'activity_id' => 'draw-refresh-activity',
+        'lottery_id' => 'draw-refresh-lottery',
+        'title' => '抽奖刷新日志活动',
+        'url' => 'https://www.bilibili.com/blackboard/era/draw-refresh.html',
+        'update_time' => '2026-04-03 08:00:00',
+    ],
+    [
+        new ActivityNode('refresh_draw_times', ['lane' => 'draw_refresh']),
+    ],
+    [],
+    [
+        new class implements NodeRunnerInterface {
+            public function type(): string
+            {
+                return 'refresh_draw_times';
+            }
+
+            public function run(ActivityFlow $flow, ActivityNode $node, int $now): ActivityNodeResult
+            {
+                return new ActivityNodeResult(true, '刷新抽奖次数成功', [
+                    'node_status' => ActivityNodeStatus::SUCCEEDED,
+                    'context_patch' => [
+                        'draw_times_remaining' => 3,
+                    ],
+                ], $now);
+            }
+        },
+    ],
+    $drawRefreshLogs,
+);
+$drawRefreshRuntime->tick();
+$drawRefreshLog = findRuntimeLog($drawRefreshLogs, 'node.result');
+Assert::true($drawRefreshLog !== null, '刷新抽奖次数节点应记录 node.result 日志。');
+Assert::true(str_contains((string)$drawRefreshLog['message'], '当前可抽 3 次'), '刷新抽奖次数日志应包含剩余次数。');
+
+$drawExecuteLogs = [];
+$drawExecuteRuntime = buildBusinessRuntime(
+    $scope . '_draw_execute',
+    $now,
+    [
+        'id' => 'draw-execute-activity',
+        'activity_id' => 'draw-execute-activity',
+        'lottery_id' => 'draw-execute-lottery',
+        'title' => '抽奖执行日志活动',
+        'url' => 'https://www.bilibili.com/blackboard/era/draw-execute.html',
+        'update_time' => '2026-04-03 08:00:00',
+    ],
+    [
+        new ActivityNode('execute_draw', ['lane' => 'draw_execute']),
+    ],
+    [],
+    [
+        new class implements NodeRunnerInterface {
+            public function type(): string
+            {
+                return 'execute_draw';
+            }
+
+            public function run(ActivityFlow $flow, ActivityNode $node, int $now): ActivityNodeResult
+            {
+                return new ActivityNodeResult(true, '执行抽奖成功', [
+                    'node_status' => ActivityNodeStatus::WAITING,
+                    'next_run_at' => $now + 5,
+                    'context_patch' => [
+                        'draw_times_remaining' => 2,
+                        'last_draw_result' => [
+                            'gift_id' => 0,
+                            'gift_name' => '未中奖',
+                        ],
+                    ],
+                ], $now);
+            }
+        },
+    ],
+    $drawExecuteLogs,
+);
+$drawExecuteRuntime->tick();
+$drawExecuteLog = findRuntimeLog($drawExecuteLogs, 'node.result');
+Assert::true($drawExecuteLog !== null, '执行抽奖节点应记录 node.result 日志。');
+Assert::true(str_contains((string)$drawExecuteLog['message'], '本次结果：未中奖'), '抽奖执行日志应包含本次结果。');
+Assert::true(str_contains((string)$drawExecuteLog['message'], '剩余 2 次'), '抽奖执行日志应包含剩余次数。');
+Assert::true(str_contains((string)$drawExecuteLog['message'], '5 秒后继续'), '抽奖执行日志应包含等待秒数。');
+
+$drawSummaryLogs = [];
+$drawSummaryRuntime = buildBusinessRuntime(
+    $scope . '_draw_summary',
+    $now,
+    [
+        'id' => 'draw-summary-activity',
+        'activity_id' => 'draw-summary-activity',
+        'lottery_id' => 'draw-summary-lottery',
+        'title' => '抽奖汇总日志活动',
+        'url' => 'https://www.bilibili.com/blackboard/era/draw-summary.html',
+        'update_time' => '2026-04-03 08:00:00',
+    ],
+    [
+        new ActivityNode('record_draw_result', ['lane' => 'task_status']),
+    ],
+    [],
+    [
+        new class implements NodeRunnerInterface {
+            public function type(): string
+            {
+                return 'record_draw_result';
+            }
+
+            public function run(ActivityFlow $flow, ActivityNode $node, int $now): ActivityNodeResult
+            {
+                return new ActivityNodeResult(true, '抽奖结果记录完成', [
+                    'node_status' => ActivityNodeStatus::SUCCEEDED,
+                    'context_patch' => [
+                        'draw_summary' => [
+                            'total_count' => 3,
+                            'win_count' => 1,
+                            'wins' => [
+                                ['gift_id' => 1001, 'gift_name' => '测试奖品'],
+                            ],
+                        ],
+                    ],
+                ], $now);
+            }
+        },
+    ],
+    $drawSummaryLogs,
+);
+$drawSummaryRuntime->tick();
+$drawSummaryLog = findRuntimeLog($drawSummaryLogs, 'node.result');
+Assert::true($drawSummaryLog !== null, '抽奖汇总节点应记录 node.result 日志。');
+Assert::true(str_contains((string)$drawSummaryLog['message'], '累计抽奖 3 次'), '抽奖汇总日志应包含总抽奖次数。');
+Assert::true(str_contains((string)$drawSummaryLog['message'], '命中 1 次'), '抽奖汇总日志应包含中奖次数。');
+Assert::true(str_contains((string)$drawSummaryLog['message'], '测试奖品'), '抽奖汇总日志应包含奖品名称。');
+
+$throttleLogs = [];
+$throttleNow = $now;
+$throttleStore = new ActivityFlowStore($scope . '_throttle');
+$throttleFlow = ActivityFlowFactory::create(
+    ActivityCatalogItem::fromArray([
+        'id' => 'throttle-activity',
+        'activity_id' => 'throttle-activity',
+        'lottery_id' => 'throttle-lottery',
+        'title' => '节流日志活动',
+        'url' => 'https://www.bilibili.com/blackboard/era/throttle.html',
+        'update_time' => '2026-04-03 08:00:00',
+    ]),
+    '2026-04-03',
+    [
+        new ActivityNode('era_task_watch_video_topic', ['lane' => 'task_status', 'task_id' => 'task-video']),
+    ],
+);
+$throttleRow = $throttleFlow->toArray();
+$throttleRow['context'] = [
+    'era_page_snapshot' => [
+        'activity_id' => 'throttle-activity',
+        'page_id' => 'throttle-page',
+        'lottery_id' => 'throttle-lottery',
+        'start_time' => 0,
+        'end_time' => 0,
+        'tasks' => [
+            [
+                'task_id' => 'task-video',
+                'task_name' => '每日累计观看当期活动视频',
+                'capability' => 'watch_video_topic',
+                'support_level' => 'now',
+                'required_watch_seconds' => 60,
+                'topic_id' => 'topic-throttle',
+                'task_status' => 1,
+                'task_award_type' => 0,
+            ],
+        ],
+    ],
+];
+$throttleStore->save([ActivityFlow::fromArray($throttleRow)]);
+$throttleRuntime = new ActivityLotteryRuntime(
+    new ActivityCatalogLoader([]),
+    $throttleStore,
+    [
+        new class implements NodeRunnerInterface {
+            public function type(): string
+            {
+                return 'era_task_watch_video_topic';
+            }
+
+            public function run(ActivityFlow $flow, ActivityNode $node, int $now): ActivityNodeResult
+            {
+                return new ActivityNodeResult(true, '视频观看继续推进', [
+                    'node_status' => ActivityNodeStatus::WAITING,
+                    'next_run_at' => $now + 5,
+                    'context_patch' => [
+                        'era_task_runtime' => [
+                            'task-video' => [
+                                'local_watch_seconds' => 35,
+                                'topic_archives' => [
+                                    ['aid' => '9001', 'bvid' => 'BV1Topic9001', 'title' => '话题稿件 1'],
+                                ],
+                                'topic_archive_index' => 0,
+                            ],
+                        ],
+                    ],
+                ], $now);
+            }
+        },
+    ],
+    new ActivityFlowPlanner(),
+    new ActivityFlowPool(new ActivityFlowBudget(1, 1, 3000)),
+    new ActivityLotteryClock(static function () use (&$throttleNow): int {
+        return $throttleNow;
+    }),
+    new ActivityLotteryWindow('06:00:00', '23:00:00'),
+    '06:00:00',
+    '23:00:00',
+    static function (string $level, string $message, array $context = []) use (&$throttleLogs): void {
+        $throttleLogs[] = [
+            'level' => $level,
+            'message' => $message,
+            'context' => $context,
+        ];
+    },
+);
+$throttleRuntime->tick();
+$throttleNow += 5;
+$throttleRuntime->tick();
+Assert::same(1, count(array_values(array_filter(
+    $throttleLogs,
+    static fn (array $log): bool => ($log['context']['event'] ?? '') === 'node.execute'
+))),
+    '相同 waiting 状态短时间重复推进时不应重复输出 node.execute 日志。');
+Assert::same(1, count(array_values(array_filter(
+    $throttleLogs,
+    static fn (array $log): bool => ($log['context']['event'] ?? '') === 'node.result'
+))),
+    '相同 waiting 状态短时间重复推进时不应重复输出 node.result 日志。');
+
 /**
  * @param array<int, array{level: string, message: string, context: array<string, mixed>}> $logs
  * @return array{level: string, message: string, context: array<string, mixed>}|null

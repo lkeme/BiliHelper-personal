@@ -40,6 +40,8 @@ final class ActivityLotteryRuntime
     /** @var array<string, NodeRunnerInterface> */
     private array $runnerMap = [];
     private \Closure $logger;
+    /** @var array<string, array{fingerprint: string, logged_at: int}> */
+    private array $waitingLogState = [];
 
     public function __construct(
         private readonly ActivityCatalogLoader $catalogLoader,
@@ -130,13 +132,23 @@ final class ActivityLotteryRuntime
             $startedAt = microtime(true);
             $currentNode = $flow->nodes()[$flow->currentNodeIndex()];
             [$executeMessage, $executeContext] = $this->buildNodeExecuteLog($flow, $currentNode);
-            $this->log('info', $executeMessage, array_replace([
+            $executeLogContext = array_replace([
                 'event' => 'node.execute',
                 'biz_date' => $bizDate,
                 'flow_id' => $flow->id(),
                 'node_type' => $currentNode->type(),
                 'node_index' => $flow->currentNodeIndex(),
-            ], $executeContext));
+            ], $executeContext);
+            if ($this->shouldEmitLifecycleLog(
+                'node.execute',
+                $flow->id(),
+                $currentNode->type(),
+                $currentNode->status(),
+                $executeLogContext,
+                $now,
+            )) {
+                $this->log('info', $executeMessage, $executeLogContext);
+            }
             $updated = $this->executeFlow($flow, $now);
             $flows[$updated->id()] = $updated;
             $this->flowPool->noteStepExecuted($tickStartedAtMs, $flow->id(), (microtime(true) - $startedAt) * 1000);
@@ -146,7 +158,7 @@ final class ActivityLotteryRuntime
             $updatedNode = $updated->nodes()[$updatedNodeIndex];
             $result = $executedNode->result();
             [$resultMessage, $resultContext] = $this->buildNodeResultLog($flow, $currentNode, $updated, $executedNode);
-            $this->log('info', $resultMessage, array_replace([
+            $resultLogContext = array_replace([
                 'event' => 'node.result',
                 'biz_date' => $bizDate,
                 'flow_id' => $updated->id(),
@@ -157,7 +169,17 @@ final class ActivityLotteryRuntime
                 'current_node_index' => $updated->currentNodeIndex(),
                 'next_node_type' => $updatedNode->type(),
                 'node_message' => $result?->message() ?? '',
-            ], $resultContext));
+            ], $resultContext);
+            if ($this->shouldEmitLifecycleLog(
+                'node.result',
+                $updated->id(),
+                $currentNode->type(),
+                $executedNode->status(),
+                $resultLogContext,
+                $now,
+            )) {
+                $this->log('info', $resultMessage, $resultLogContext);
+            }
         }
 
         $this->flowStore->save(array_values($flows));
@@ -420,6 +442,24 @@ final class ActivityLotteryRuntime
             'activity_title' => trim((string)($activity['title'] ?? '')),
             'activity_id' => trim((string)($activity['activity_id'] ?? '')),
         ];
+        $stateSource = $afterFlow ?? $flow;
+        $stateContext = $stateSource->context()->toArray();
+        $context['wait_delay_seconds'] = $this->resolveWaitDelaySeconds($stateSource);
+        $context['draw_times_remaining'] = max(0, (int)($stateContext['draw_times_remaining'] ?? 0));
+        $lastDraw = $stateContext['last_draw_result'] ?? null;
+        if (is_array($lastDraw)) {
+            $context['last_draw_gift_name'] = trim((string)($lastDraw['gift_name'] ?? ''));
+            $context['last_draw_gift_id'] = (int)($lastDraw['gift_id'] ?? 0);
+        }
+        $drawSummary = $stateContext['draw_summary'] ?? null;
+        if (is_array($drawSummary)) {
+            $context['draw_total_count'] = max(0, (int)($drawSummary['total_count'] ?? 0));
+            $context['draw_win_count'] = max(0, (int)($drawSummary['win_count'] ?? 0));
+            $context['draw_win_names'] = array_values(array_filter(array_map(
+                static fn (mixed $win): string => is_array($win) ? trim((string)($win['gift_name'] ?? '')) : '',
+                is_array($drawSummary['wins'] ?? null) ? $drawSummary['wins'] : [],
+            )));
+        }
 
         $taskId = trim((string)($node->payload()['task_id'] ?? ''));
         if ($taskId === '') {
@@ -434,8 +474,7 @@ final class ActivityLotteryRuntime
             $context['display_target_seconds'] = $this->resolveDisplayTargetSeconds($task);
         }
 
-        $stateSource = $afterFlow ?? $flow;
-        $runtimeMap = $stateSource->context()->toArray()['era_task_runtime'] ?? [];
+        $runtimeMap = $stateContext['era_task_runtime'] ?? [];
         $state = is_array($runtimeMap[$taskId] ?? null) ? $runtimeMap[$taskId] : [];
         $context['local_watch_seconds'] = max(0, (int)($state['local_watch_seconds'] ?? 0));
 
@@ -458,8 +497,6 @@ final class ActivityLotteryRuntime
                 $context['target_uid'] = (string)$targetUids[$completedCount];
             }
         }
-        $context['wait_delay_seconds'] = $this->resolveWaitDelaySeconds($stateSource);
-
         return $context;
     }
 
@@ -519,6 +556,9 @@ final class ActivityLotteryRuntime
             'era_task_follow' => $this->buildFollowResultMessage($afterNode, $context, $fallback, $delay),
             'era_task_watch_video_fixed', 'era_task_watch_video_topic' => $this->buildWatchVideoResultMessage($afterNode, $context, $fallback, $delay),
             'era_task_watch_live' => $this->buildWatchLiveResultMessage($afterNode, $context, $fallback, $delay),
+            'refresh_draw_times' => $this->buildRefreshDrawResultMessage($afterNode, $context, $fallback),
+            'execute_draw' => $this->buildExecuteDrawResultMessage($afterNode, $context, $fallback, $delay),
+            'record_draw_result' => $this->buildRecordDrawResultMessage($afterNode, $context, $fallback),
             default => $fallback,
         };
     }
@@ -613,6 +653,73 @@ final class ActivityLotteryRuntime
     /**
      * @param array<string, mixed> $context
      */
+    private function buildRefreshDrawResultMessage(
+        \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode $afterNode,
+        array $context,
+        string $fallback,
+    ): string {
+        $remaining = max(0, (int)($context['draw_times_remaining'] ?? 0));
+        if ($afterNode->status() === ActivityNodeStatus::SUCCEEDED) {
+            return sprintf('当前可抽 %d 次', $remaining);
+        }
+        if ($afterNode->status() === ActivityNodeStatus::SKIPPED) {
+            return '当前无可用抽奖次数';
+        }
+
+        return $fallback;
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private function buildExecuteDrawResultMessage(
+        \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode $afterNode,
+        array $context,
+        string $fallback,
+        string $delay,
+    ): string {
+        $remaining = max(0, (int)($context['draw_times_remaining'] ?? 0));
+        $resultName = trim((string)($context['last_draw_gift_name'] ?? ''));
+        $resultLabel = $resultName !== '' ? $resultName : '未知结果';
+
+        if ($afterNode->status() === ActivityNodeStatus::WAITING) {
+            return sprintf('本次结果：%s，剩余 %d 次%s', $resultLabel, $remaining, $delay);
+        }
+        if ($afterNode->status() === ActivityNodeStatus::SUCCEEDED) {
+            return sprintf('本次结果：%s，剩余 %d 次', $resultLabel, $remaining);
+        }
+        if ($afterNode->status() === ActivityNodeStatus::SKIPPED) {
+            return '抽奖次数已耗尽';
+        }
+
+        return $fallback;
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private function buildRecordDrawResultMessage(
+        \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode $afterNode,
+        array $context,
+        string $fallback,
+    ): string {
+        if ($afterNode->status() !== ActivityNodeStatus::SUCCEEDED) {
+            return $fallback;
+        }
+
+        $total = max(0, (int)($context['draw_total_count'] ?? 0));
+        $winCount = max(0, (int)($context['draw_win_count'] ?? 0));
+        $wins = is_array($context['draw_win_names'] ?? null) ? $context['draw_win_names'] : [];
+        if ($winCount <= 0) {
+            return sprintf('累计抽奖 %d 次，未命中', $total);
+        }
+
+        return sprintf('累计抽奖 %d 次，命中 %d 次，奖品：%s', $total, $winCount, implode(' / ', $wins));
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
     private function archiveLabel(array $context): string
     {
         $bvid = trim((string)($context['archive_bvid'] ?? ''));
@@ -702,5 +809,56 @@ final class ActivityLotteryRuntime
     private function log(string $level, string $message, array $context = []): void
     {
         ($this->logger)($level, $message, $context);
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private function shouldEmitLifecycleLog(
+        string $event,
+        string $flowId,
+        string $nodeType,
+        string $nodeStatus,
+        array $context,
+        int $now,
+    ): bool {
+        if ($nodeStatus !== ActivityNodeStatus::WAITING) {
+            return true;
+        }
+
+        $fingerprint = sha1(json_encode([
+            'event' => $event,
+            'node_type' => $nodeType,
+            'task_id' => $context['task_id'] ?? '',
+            'task_name' => $context['task_name'] ?? '',
+            'target_uid' => $context['target_uid'] ?? '',
+            'follow_completed_count' => $context['follow_completed_count'] ?? 0,
+            'follow_total_count' => $context['follow_total_count'] ?? 0,
+            'archive_bvid' => $context['archive_bvid'] ?? '',
+            'archive_aid' => $context['archive_aid'] ?? '',
+            'room_id' => $context['room_id'] ?? 0,
+            'local_watch_seconds' => $context['local_watch_seconds'] ?? 0,
+            'display_target_seconds' => $context['display_target_seconds'] ?? 0,
+            'draw_times_remaining' => $context['draw_times_remaining'] ?? 0,
+            'last_draw_gift_name' => $context['last_draw_gift_name'] ?? '',
+            'wait_delay_seconds' => $context['wait_delay_seconds'] ?? 0,
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+
+        $key = $flowId . '|' . $event . '|' . $nodeType;
+        $previous = $this->waitingLogState[$key] ?? null;
+        if (is_array($previous)) {
+            $sameFingerprint = ($previous['fingerprint'] ?? '') === $fingerprint;
+            $withinCooldown = ($now - (int)($previous['logged_at'] ?? 0)) < 60;
+            if ($sameFingerprint && $withinCooldown) {
+                return false;
+            }
+        }
+
+        $this->waitingLogState[$key] = [
+            'fingerprint' => $fingerprint,
+            'logged_at' => $now,
+        ];
+
+        return true;
     }
 }
