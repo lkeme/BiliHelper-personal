@@ -68,7 +68,6 @@ final class ActivityFlowPlanner
                     'lane' => $mapped['lane'],
                     'task_id' => $normalizedTask['task_id'],
                     'capability' => $capability,
-                    'task_status' => $normalizedTask['task_status'],
                 ],
             );
         }
@@ -124,7 +123,7 @@ final class ActivityFlowPlanner
     }
 
     /**
-     * @return array{task_id: string, capability: string, task_status: int}|null
+     * @return array{task_id: string, capability: string}|null
      */
     private function normalizeTask(mixed $task): ?array
     {
@@ -132,7 +131,6 @@ final class ActivityFlowPlanner
             return [
                 'task_id' => trim((string)($task['task_id'] ?? $task['taskId'] ?? '')),
                 'capability' => trim((string)($task['capability'] ?? '')),
-                'task_status' => (int)($task['task_status'] ?? $task['taskStatus'] ?? 0),
             ];
         }
 
@@ -140,15 +138,6 @@ final class ActivityFlowPlanner
             return [
                 'task_id' => trim($task->taskId),
                 'capability' => trim($task->capability),
-                'task_status' => (int)$task->taskStatus,
-            ];
-        }
-
-        if (is_object($task)) {
-            return [
-                'task_id' => trim((string)($task->task_id ?? $task->taskId ?? '')),
-                'capability' => trim((string)($task->capability ?? '')),
-                'task_status' => (int)($task->task_status ?? $task->taskStatus ?? 0),
             ];
         }
 
