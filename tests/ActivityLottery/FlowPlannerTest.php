@@ -215,21 +215,22 @@ $objectSkippedNodes = array_values(array_filter(
 Assert::same(1, count($objectSkippedNodes), 'manual_only 应生成 skipped 节点。');
 Assert::same(ActivityNodeStatus::SKIPPED, $objectSkippedNodes[0]->status(), 'manual_only 对应节点状态应为 skipped。');
 
-$flowWithGenericObjectTask = $planner->plan(
-    $catalogItem,
-    (object)[
-        'tasks' => [
-            (object)[
-                'task_id' => 'generic-follow',
-                'capability' => EraActivityTask::CAPABILITY_FOLLOW,
-                'task_status' => 1,
+$invalidObjectTaskThrown = false;
+try {
+    $planner->plan(
+        $catalogItem,
+        (object)[
+            'tasks' => [
+                (object)[
+                    'task_id' => 'generic-follow',
+                    'capability' => EraActivityTask::CAPABILITY_FOLLOW,
+                    'task_status' => 1,
+                ],
             ],
         ],
-    ],
-    '2026-04-02',
-);
-$genericDynamicNodes = array_values(array_filter(
-    $flowWithGenericObjectTask->nodes(),
-    static fn (ActivityNode $node): bool => str_starts_with($node->type(), 'era_task_'),
-));
-Assert::same(0, count($genericDynamicNodes), '非 EraActivityTask 的 object 任务不应生成动态节点。');
+        '2026-04-02',
+    );
+} catch (\RuntimeException $e) {
+    $invalidObjectTaskThrown = str_contains($e->getMessage(), '非法任务对象类型');
+}
+Assert::true($invalidObjectTaskThrown, '非数组且非 EraActivityTask 的任务对象应显式失败，不可静默丢弃。');

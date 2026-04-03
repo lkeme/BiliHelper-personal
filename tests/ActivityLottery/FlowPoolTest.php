@@ -8,6 +8,7 @@ use Tests\Support\Assert;
 use Bhp\Plugin\ActivityLottery\Internal\Catalog\ActivityCatalogItem;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlow;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlowFactory;
+use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlowPlanner;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode;
 use Bhp\Plugin\ActivityLottery\Internal\Pool\ActivityFlowBudget;
 use Bhp\Plugin\ActivityLottery\Internal\Pool\ActivityFlowPicker;
@@ -83,14 +84,12 @@ $sameTickPool = new ActivityFlowPool(
 $sameTickFlowA = buildFlow('same-tick-a', 'task_status');
 $sameTickFlowB = buildFlow('same-tick-b', 'task_status');
 $sameTickFlowC = buildFlow('same-tick-c', 'task_status');
+$sameTickFlowD = buildFlow('same-tick-d', 'task_status');
 $sameTickStartedAtMs = (int)(microtime(true) * 1000);
-$sameTickBatch1 = $sameTickPool->pick([$sameTickFlowA, $sameTickFlowB, $sameTickFlowC], 100, $sameTickStartedAtMs);
+$sameTickBatch1 = $sameTickPool->pick([$sameTickFlowA, $sameTickFlowB, $sameTickFlowC, $sameTickFlowD], 100, $sameTickStartedAtMs);
 Assert::same(2, count($sameTickBatch1), '同一 tick 第一轮应按预算选出 flow。');
-$sameTickBatch2 = $sameTickPool->pick([$sameTickFlowA, $sameTickFlowB, $sameTickFlowC], 100, $sameTickStartedAtMs);
-Assert::same(1, count($sameTickBatch2), '同一 tick 第二轮只应选出未被本 tick 选中过的 flow。');
-Assert::same($sameTickFlowC->id(), $sameTickBatch2[0]->id(), '同一 tick 第二轮应选出剩余 flow。');
-$sameTickBatch3 = $sameTickPool->pick([$sameTickFlowA, $sameTickFlowB, $sameTickFlowC], 100, $sameTickStartedAtMs);
-Assert::same(0, count($sameTickBatch3), '同一 tick 内 flow 不应重复入选。');
+$sameTickBatch2 = $sameTickPool->pick([$sameTickFlowA, $sameTickFlowB, $sameTickFlowC, $sameTickFlowD], 100, $sameTickStartedAtMs);
+Assert::same(0, count($sameTickBatch2), '同一 tick 第二轮不应再次透支预算。');
 
 $unknownLanePool = new ActivityFlowPool(
     new ActivityFlowBudget(2, 6, 3000),
@@ -133,6 +132,55 @@ try {
 }
 Assert::true($unknownNodeTypeWithLaneThrown, '未知 node type 即使显式携带 lane 也应触发异常。');
 
+$planner = new ActivityFlowPlanner();
+$plannerCatalog = ActivityCatalogItem::fromArray([
+    'id' => 'planner-pool-integration',
+    'activity_id' => 'planner-pool-integration',
+    'title' => 'planner-pool-integration',
+    'update_time' => '2026-04-02T08:00:00+00:00',
+]);
+$dynamicFlow = $planner->plan(
+    $plannerCatalog,
+    (object)[
+        'tasks' => [
+            ['task_id' => 'follow-1', 'capability' => 'follow'],
+        ],
+    ],
+    '2026-04-02',
+);
+$followNodeIndex = findNodeIndexByType($dynamicFlow, 'era_task_follow');
+Assert::true($followNodeIndex >= 0, 'planner 应产出 era_task_follow 动态节点。');
+$readyFollowFlow = moveFlowToNodeIndex($dynamicFlow, $followNodeIndex);
+$dynamicPool = new ActivityFlowPool(
+    new ActivityFlowBudget(1, 6, 3000),
+    new ActivityFlowPicker(),
+    new ActivityLaneLimiter(['follow' => 0, 'task_status' => 0]),
+);
+$dynamicBatch = $dynamicPool->pick([$readyFollowFlow], 100);
+Assert::same(1, count($dynamicBatch), 'planner 产出的 era_task_follow 节点应可被 pool 正常选中。');
+Assert::same($readyFollowFlow->id(), $dynamicBatch[0]->id(), '动态 follow flow 应成功进入调度结果。');
+
+$unsupportedFlow = $planner->plan(
+    $plannerCatalog,
+    (object)[
+        'tasks' => [
+            ['task_id' => 'unsupported-1', 'capability' => 'coin_topic'],
+        ],
+    ],
+    '2026-04-02',
+);
+$skippedNodeIndex = findNodeIndexByType($unsupportedFlow, 'era_task_skipped');
+Assert::true($skippedNodeIndex >= 0, 'unsupported capability 应生成 skipped 动态节点。');
+$readySkippedFlow = moveFlowToNodeIndex($unsupportedFlow, $skippedNodeIndex);
+$skippedPool = new ActivityFlowPool(
+    new ActivityFlowBudget(1, 6, 3000),
+    new ActivityFlowPicker(),
+    new ActivityLaneLimiter(['task_status' => 0]),
+);
+$skippedBatch = $skippedPool->pick([$readySkippedFlow], 100);
+Assert::same(1, count($skippedBatch), 'skipped 节点进入 flow 后应可被 pool 接受而非因映射不一致报错。');
+Assert::same($readySkippedFlow->id(), $skippedBatch[0]->id(), '含 skipped 节点的 flow 应可完成调度选择。');
+
 /**
  * @return ActivityFlow
  */
@@ -169,6 +217,25 @@ function buildFlowWithType(string $activityId, string $nodeType, array $payload,
 
     $row = $flow->toArray();
     $row['next_run_at'] = $nextRunAt;
+
+    return ActivityFlow::fromArray($row);
+}
+
+function findNodeIndexByType(ActivityFlow $flow, string $nodeType): int
+{
+    foreach ($flow->nodes() as $index => $node) {
+        if ($node->type() === $nodeType) {
+            return (int)$index;
+        }
+    }
+
+    return -1;
+}
+
+function moveFlowToNodeIndex(ActivityFlow $flow, int $nodeIndex): ActivityFlow
+{
+    $row = $flow->toArray();
+    $row['current_node_index'] = $nodeIndex;
 
     return ActivityFlow::fromArray($row);
 }

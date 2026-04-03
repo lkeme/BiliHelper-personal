@@ -4,9 +4,117 @@ namespace Bhp\Plugin\ActivityLottery\Internal\Flow;
 
 use Bhp\Plugin\ActivityLottery\Internal\Catalog\ActivityCatalogItem;
 use Bhp\Plugin\ActivityLottery\Internal\EraActivityTask;
+use RuntimeException;
 
 final class ActivityFlowPlanner
 {
+    /**
+     * @return array<string, array{type: string, lane: string, supported: bool, default_status: string}>
+     */
+    public static function capabilityContracts(): array
+    {
+        return [
+            EraActivityTask::CAPABILITY_FOLLOW => [
+                'type' => 'era_task_follow',
+                'lane' => 'follow',
+                'supported' => true,
+                'default_status' => ActivityNodeStatus::PENDING,
+            ],
+            'unfollow' => [
+                'type' => 'era_task_unfollow',
+                'lane' => 'unfollow',
+                'supported' => true,
+                'default_status' => ActivityNodeStatus::PENDING,
+            ],
+            'task_status' => [
+                'type' => 'era_task_status',
+                'lane' => 'task_status',
+                'supported' => true,
+                'default_status' => ActivityNodeStatus::PENDING,
+            ],
+            EraActivityTask::CAPABILITY_SHARE => [
+                'type' => 'era_task_share',
+                'lane' => 'task_status',
+                'supported' => true,
+                'default_status' => ActivityNodeStatus::PENDING,
+            ],
+            EraActivityTask::CAPABILITY_WATCH_VIDEO_FIXED => [
+                'type' => 'era_task_watch_video_fixed',
+                'lane' => 'task_status',
+                'supported' => true,
+                'default_status' => ActivityNodeStatus::PENDING,
+            ],
+            EraActivityTask::CAPABILITY_WATCH_VIDEO_TOPIC => [
+                'type' => 'era_task_watch_video_topic',
+                'lane' => 'task_status',
+                'supported' => true,
+                'default_status' => ActivityNodeStatus::PENDING,
+            ],
+            EraActivityTask::CAPABILITY_WATCH_LIVE => [
+                'type' => 'era_task_watch_live',
+                'lane' => 'task_status',
+                'supported' => true,
+                'default_status' => ActivityNodeStatus::PENDING,
+            ],
+            EraActivityTask::CAPABILITY_MANUAL => [
+                'type' => 'era_task_skipped',
+                'lane' => 'task_status',
+                'supported' => false,
+                'default_status' => ActivityNodeStatus::SKIPPED,
+            ],
+            EraActivityTask::CAPABILITY_COIN_TOPIC => [
+                'type' => 'era_task_skipped',
+                'lane' => 'task_status',
+                'supported' => false,
+                'default_status' => ActivityNodeStatus::SKIPPED,
+            ],
+            EraActivityTask::CAPABILITY_LIKE_TOPIC => [
+                'type' => 'era_task_skipped',
+                'lane' => 'task_status',
+                'supported' => false,
+                'default_status' => ActivityNodeStatus::SKIPPED,
+            ],
+            EraActivityTask::CAPABILITY_COMMENT_TOPIC => [
+                'type' => 'era_task_skipped',
+                'lane' => 'task_status',
+                'supported' => false,
+                'default_status' => ActivityNodeStatus::SKIPPED,
+            ],
+            EraActivityTask::CAPABILITY_UNKNOWN => [
+                'type' => 'era_task_skipped',
+                'lane' => 'task_status',
+                'supported' => false,
+                'default_status' => ActivityNodeStatus::SKIPPED,
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, array{lane: string, default_status: string}>
+     */
+    public static function nodeTypeContracts(): array
+    {
+        $contracts = [
+            'load_activity_snapshot' => ['lane' => 'page_fetch', 'default_status' => ActivityNodeStatus::PENDING],
+            'validate_activity_window' => ['lane' => 'task_status', 'default_status' => ActivityNodeStatus::PENDING],
+            'parse_era_page' => ['lane' => 'page_fetch', 'default_status' => ActivityNodeStatus::PENDING],
+            'refresh_draw_times' => ['lane' => 'draw_refresh', 'default_status' => ActivityNodeStatus::PENDING],
+            'execute_draw' => ['lane' => 'draw_execute', 'default_status' => ActivityNodeStatus::PENDING],
+            'claim_reward' => ['lane' => 'claim_reward', 'default_status' => ActivityNodeStatus::PENDING],
+            'finalize_flow' => ['lane' => 'task_status', 'default_status' => ActivityNodeStatus::PENDING],
+            'era_task_skipped' => ['lane' => 'task_status', 'default_status' => ActivityNodeStatus::SKIPPED],
+        ];
+
+        foreach (self::capabilityContracts() as $contract) {
+            $contracts[$contract['type']] = [
+                'lane' => $contract['lane'],
+                'default_status' => $contract['default_status'],
+            ];
+        }
+
+        return $contracts;
+    }
+
     public function plan(ActivityCatalogItem $item, mixed $pageSnapshot, string $bizDate): ActivityFlow
     {
         $nodes = array_merge(
@@ -98,33 +206,16 @@ final class ActivityFlowPlanner
     }
 
     /**
-     * @return array<int, array<string, string>>
-     */
-    private function mapTable(): array
-    {
-        return [
-            ['capability' => 'follow', 'type' => 'era_task_follow', 'lane' => 'follow'],
-            ['capability' => 'unfollow', 'type' => 'era_task_unfollow', 'lane' => 'unfollow'],
-            ['capability' => 'task_status', 'type' => 'era_task_status', 'lane' => 'task_status'],
-            ['capability' => 'share', 'type' => 'era_task_share', 'lane' => 'task_status'],
-            ['capability' => 'watch_video_fixed', 'type' => 'era_task_watch_video_fixed', 'lane' => 'task_status'],
-            ['capability' => 'watch_video_topic', 'type' => 'era_task_watch_video_topic', 'lane' => 'task_status'],
-            ['capability' => 'watch_live', 'type' => 'era_task_watch_live', 'lane' => 'task_status'],
-        ];
-    }
-
-    /**
      * @return array{type: string, lane: string}|null
      */
     private function mapCapability(string $capability): ?array
     {
-        foreach ($this->mapTable() as $item) {
-            if ($item['capability'] === $capability) {
-                return ['type' => $item['type'], 'lane' => $item['lane']];
-            }
+        $contract = self::capabilityContracts()[$capability] ?? null;
+        if ($contract === null || $contract['supported'] === false) {
+            return null;
         }
 
-        return null;
+        return ['type' => $contract['type'], 'lane' => $contract['lane']];
     }
 
     /**
@@ -164,6 +255,10 @@ final class ActivityFlowPlanner
                 'task_id' => trim($task->taskId),
                 'capability' => trim($task->capability),
             ];
+        }
+
+        if (is_object($task)) {
+            throw new RuntimeException(sprintf('非法任务对象类型: %s', get_debug_type($task)));
         }
 
         return null;

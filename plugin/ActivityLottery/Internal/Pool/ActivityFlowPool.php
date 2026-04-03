@@ -3,6 +3,7 @@
 namespace Bhp\Plugin\ActivityLottery\Internal\Pool;
 
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlow;
+use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlowPlanner;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlowStatus;
 use RuntimeException;
 
@@ -13,6 +14,8 @@ final class ActivityFlowPool
      * @var array<string, true>
      */
     private array $pickedFlowIdsInTick = [];
+    private int $selectedFlowCountInTick = 0;
+    private int $selectedStepCountInTick = 0;
 
     public function __construct(
         private readonly ActivityFlowBudget $budget,
@@ -44,7 +47,13 @@ final class ActivityFlowPool
             return [];
         }
 
-        $pickLimit = $this->budget->maxFlowSelectionsPerTick();
+        $remainingFlowCount = $this->budget->maxFlowsPerTick() - $this->selectedFlowCountInTick;
+        $remainingStepCount = $this->budget->maxStepsPerTick() - $this->selectedStepCountInTick;
+        $pickLimit = min($remainingFlowCount, $remainingStepCount);
+        if ($pickLimit <= 0) {
+            return [];
+        }
+
         $selected = [];
         $scanLimit = count($eligible);
         $scanned = 0;
@@ -64,6 +73,8 @@ final class ActivityFlowPool
             $this->laneLimiter->reserve($lane, $now);
             $selected[] = $flow;
             $this->pickedFlowIdsInTick[$flow->id()] = true;
+            $this->selectedFlowCountInTick++;
+            $this->selectedStepCountInTick++;
         }
 
         return $selected;
@@ -89,14 +100,11 @@ final class ActivityFlowPool
     private function resolveLane(ActivityFlow $flow): string
     {
         $node = $flow->nodes()[$flow->currentNodeIndex()];
-        $defaultLane = match ($node->type()) {
-            'load_activity_snapshot', 'parse_era_page' => 'page_fetch',
-            'refresh_draw_times' => 'draw_refresh',
-            'execute_draw' => 'draw_execute',
-            'claim_reward' => 'claim_reward',
-            'validate_activity_window', 'finalize_flow' => 'task_status',
-            default => throw new RuntimeException(sprintf('未知 node type: %s', $node->type())),
-        };
+        $contracts = ActivityFlowPlanner::nodeTypeContracts();
+        if (!isset($contracts[$node->type()])) {
+            throw new RuntimeException(sprintf('未知 node type: %s', $node->type()));
+        }
+        $defaultLane = $contracts[$node->type()]['lane'];
 
         $payloadLane = trim((string)($node->payload()['lane'] ?? ''));
         if ($payloadLane !== '') {
@@ -114,5 +122,7 @@ final class ActivityFlowPool
 
         $this->activeTickStartedAtMs = $tickStartedAtMs;
         $this->pickedFlowIdsInTick = [];
+        $this->selectedFlowCountInTick = 0;
+        $this->selectedStepCountInTick = 0;
     }
 }
