@@ -23,8 +23,11 @@ final class ExecuteDrawNodeRunner implements NodeRunnerInterface
     public function run(ActivityFlow $flow, ActivityNode $node, int $now): ActivityNodeResult
     {
         $payload = $node->payload();
-        $remaining = (int)($payload['draw_times_remaining'] ?? 0);
-        $drawResults = $this->normalizeDrawResults($payload['draw_results'] ?? []);
+        $flowContext = $flow->context()->toArray();
+        $remaining = (int)$this->resolveStateValue($flowContext, $payload, 'draw_times_remaining', 0);
+        $drawResults = $this->normalizeDrawResults(
+            $this->resolveStateValue($flowContext, $payload, 'draw_results', []),
+        );
 
         if ($remaining <= 0) {
             return new ActivityNodeResult(true, '抽奖次数已耗尽', [
@@ -71,6 +74,23 @@ final class ExecuteDrawNodeRunner implements NodeRunnerInterface
     }
 
     /**
+     * @param array<string, mixed> $flowContext
+     * @param array<string, mixed> $nodePayload
+     */
+    private function resolveStateValue(array $flowContext, array $nodePayload, string $key, mixed $default): mixed
+    {
+        if (array_key_exists($key, $flowContext)) {
+            return $flowContext[$key];
+        }
+
+        if (array_key_exists($key, $nodePayload)) {
+            return $nodePayload[$key];
+        }
+
+        return $default;
+    }
+
+    /**
      * @return array<int, array<string, mixed>>
      */
     private function normalizeDrawResults(mixed $value): array
@@ -89,4 +109,3 @@ final class ExecuteDrawNodeRunner implements NodeRunnerInterface
         return $normalized;
     }
 }
-

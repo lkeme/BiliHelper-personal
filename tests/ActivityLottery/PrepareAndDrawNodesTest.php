@@ -31,12 +31,38 @@ $task = EraTaskSnapshot::fromArray([
     'task_id' => 'task-share',
     'task_name' => '分享活动',
     'capability' => 'share',
+    'support_level' => 'now',
+    'counter' => '1/1',
+    'jump_link' => 'https://example.com/topic?topic_id=2001',
+    'topic_id' => '2001',
+    'award_name' => '抽奖次数',
+    'required_watch_seconds' => 120,
+    'target_uids' => ['12345'],
+    'target_video_ids' => ['BV1xx411c7mD'],
+    'target_room_ids' => ['9999'],
+    'target_area_id' => 55,
+    'target_parent_area_id' => 9,
+    'checkpoints' => [['watch_seconds' => 60]],
+    'btn_behavior' => ['SHARE'],
     'task_status' => 1,
     'task_award_type' => 0,
 ]);
 Assert::same('task-share', $task->taskId(), '任务快照应保留 task_id。');
 Assert::same('share', $task->capability(), '任务快照应保留 capability。');
+Assert::same('now', $task->supportLevel(), '任务快照应保留 support_level。');
 Assert::same(1, $task->taskStatus(), '任务快照应保留 task_status。');
+Assert::same('1/1', $task->counter(), '任务快照应保留 counter。');
+Assert::same('https://example.com/topic?topic_id=2001', $task->jumpLink(), '任务快照应保留 jump_link。');
+Assert::same('2001', $task->topicId(), '任务快照应保留 topic_id。');
+Assert::same('抽奖次数', $task->awardName(), '任务快照应保留 award_name。');
+Assert::same(120, $task->requiredWatchSeconds(), '任务快照应保留 required_watch_seconds。');
+Assert::same(['12345'], $task->targetUids(), '任务快照应保留 target_uids。');
+Assert::same(['BV1xx411c7mD'], $task->targetVideoIds(), '任务快照应保留 target_video_ids。');
+Assert::same(['9999'], $task->targetRoomIds(), '任务快照应保留 target_room_ids。');
+Assert::same(55, $task->targetAreaId(), '任务快照应保留 target_area_id。');
+Assert::same(9, $task->targetParentAreaId(), '任务快照应保留 target_parent_area_id。');
+Assert::same([['watch_seconds' => 60]], $task->checkpoints(), '任务快照应保留 checkpoints。');
+Assert::same(['SHARE'], $task->btnBehavior(), '任务快照应保留 btn_behavior。');
 
 $pageSnapshot = EraPageSnapshot::fromArray([
     'title' => 'ERA 活动页',
@@ -84,6 +110,20 @@ Assert::same('manual_only', $resolver->resolve([
     'task_status' => 1,
     'task_award_type' => 0,
 ]), '能力解析器应识别人工任务。');
+Assert::same('later', $resolver->resolveSupportLevel([
+    'task_name' => '关注主播',
+    'btn_behavior' => [],
+    'capability' => 'follow',
+    'task_status' => 1,
+    'task_award_type' => 0,
+]), '缺少 follow 目标时 support_level 应为 later。');
+Assert::same('manual', $resolver->resolveSupportLevel([
+    'task_name' => '投稿视频',
+    'btn_behavior' => [],
+    'capability' => 'manual_only',
+    'task_status' => 1,
+    'task_award_type' => 0,
+]), '人工任务 support_level 应为 manual。');
 
 $html = <<<'HTML'
 <html>
@@ -93,7 +133,7 @@ $html = <<<'HTML'
 window.__initialState = {
   "EraTasklist": [{
     "tasklist": [
-      {"taskId":"t-share","taskName":"分享活动","taskStatus":1,"taskAwardType":0,"btnBehavior":[]},
+      {"taskId":"t-share","taskName":"分享活动","taskStatus":1,"taskAwardType":0,"counter":"1/1","jumpLink":"https://www.bilibili.com/video/BV1xx411c7mD?topic_id=3001","topicID":"3001","awardName":"抽奖次数","checkpoints":[{"watch_seconds":30}],"btnBehavior":["SHARE"],"targetVideoIds":["BV1xx411c7mD"]},
       {"taskId":"t-claim","taskName":"领取奖励","taskStatus":2,"taskAwardType":1,"btnBehavior":[]}
     ]
   }],
@@ -112,6 +152,13 @@ Assert::same('activity-from-state', $parsedPage->activityId(), '页面解析应�
 Assert::same('lottery-from-state', $parsedPage->lotteryId(), '页面解析应提取 lottery_id。');
 Assert::same(2, count($parsedPage->tasks()), '页面解析应提取任务快照。');
 Assert::same('claim_reward', $parsedPage->tasks()[1]->capability(), '页面解析任务应包含 capability。');
+Assert::same('now', $parsedPage->tasks()[0]->supportLevel(), '页面解析任务应包含 support_level。');
+Assert::same('1/1', $parsedPage->tasks()[0]->counter(), '页面解析任务应保留 counter。');
+Assert::same('https://www.bilibili.com/video/BV1xx411c7mD?topic_id=3001', $parsedPage->tasks()[0]->jumpLink(), '页面解析任务应保留 jump_link。');
+Assert::same('3001', $parsedPage->tasks()[0]->topicId(), '页面解析任务应保留 topic_id。');
+Assert::same('抽奖次数', $parsedPage->tasks()[0]->awardName(), '页面解析任务应保留 award_name。');
+Assert::same([['watch_seconds' => 30]], $parsedPage->tasks()[0]->checkpoints(), '页面解析任务应保留 checkpoints。');
+Assert::same(['SHARE'], $parsedPage->tasks()[0]->btnBehavior(), '页面解析任务应保留 btn_behavior。');
 
 $notices = [];
 $activityGateway = new ActivityLotteryGateway(
@@ -191,6 +238,47 @@ $futureValidate = $validateRunner->run(
 Assert::same(ActivityNodeStatus::WAITING, (string)($futureValidate->payload()['node_status'] ?? ''), '未开始活动应返回 waiting。');
 Assert::true((int)($futureValidate->payload()['next_run_at'] ?? 0) > time(), '未开始活动应返回下一次执行时间。');
 
+$expiredFlow = buildFlowWithActivity([
+    'id' => 'expired-flow',
+    'activity_id' => 'act-expired',
+    'lottery_id' => 'lottery-expired',
+    'title' => '已结束活动',
+    'url' => 'https://www.bilibili.com/blackboard/era/expired.html',
+    'start_time' => 0,
+    'end_time' => time() - 3600,
+], 'validate_activity_window');
+$expiredValidate = $validateRunner->run(
+    $expiredFlow,
+    new ActivityNode('validate_activity_window', ['lane' => 'task_status']),
+    time()
+);
+Assert::same(ActivityNodeStatus::SKIPPED, (string)($expiredValidate->payload()['node_status'] ?? ''), '已结束活动应返回 skipped。');
+Assert::same(ActivityFlowStatus::EXPIRED, (string)($expiredValidate->payload()['flow_status'] ?? ''), '已结束活动应显式返回 flow_status=expired。');
+
+$invalidStableFlow = buildFlowWithActivity([
+    'id' => 'invalid-stable-flow',
+    'activity_id' => 'act-for-invalid',
+    'lottery_id' => 'lottery-for-invalid',
+    'title' => '缺少稳定标识活动',
+    'url' => 'https://www.bilibili.com/blackboard/era/invalid.html',
+    'start_time' => 0,
+    'end_time' => 0,
+], 'validate_activity_window');
+$invalidStableRow = $invalidStableFlow->toArray();
+$invalidStableRow['activity'] = [
+    'id' => 'invalid-stable-flow',
+    'title' => '缺少稳定标识活动',
+    'start_time' => 0,
+    'end_time' => 0,
+];
+$invalidStableValidate = $validateRunner->run(
+    ActivityFlow::fromArray($invalidStableRow),
+    new ActivityNode('validate_activity_window', ['lane' => 'task_status']),
+    time()
+);
+Assert::false($invalidStableValidate->ok(), '缺少稳定标识应校验失败。');
+Assert::same(ActivityFlowStatus::FAILED, (string)($invalidStableValidate->payload()['flow_status'] ?? ''), '缺少稳定标识应显式返回 flow_status=failed。');
+
 $parseRunner = new ParseEraPageNodeRunner($parser);
 $parseNode = new ActivityNode('parse_era_page', [
     'lane' => 'page_fetch',
@@ -209,42 +297,58 @@ Assert::true($refreshResult->ok(), '刷新抽奖次数节点应执行成功。')
 Assert::same(ActivityNodeStatus::SUCCEEDED, (string)($refreshResult->payload()['node_status'] ?? ''), '刷新抽奖次数节点应返回 succeeded。');
 Assert::same(2, (int)($refreshResult->payload()['context_patch']['draw_times_remaining'] ?? 0), '刷新抽奖次数节点应写入剩余次数。');
 
+$drawFlow = applyContextPatchToFlow($flow, $refreshResult->payload());
 $executeRunner = new ExecuteDrawNodeRunner($drawGateway);
-$firstDrawResult = $executeRunner->run($flow, new ActivityNode('execute_draw', [
+$firstDrawResult = $executeRunner->run($drawFlow, new ActivityNode('execute_draw', [
     'lane' => 'draw_execute',
-    'draw_times_remaining' => 2,
 ]), time());
 Assert::true($firstDrawResult->ok(), '首次执行抽奖节点应成功。');
 Assert::same(ActivityNodeStatus::WAITING, (string)($firstDrawResult->payload()['node_status'] ?? ''), '剩余次数大于 0 时抽奖节点应返回 waiting。');
 Assert::same(1, (int)($firstDrawResult->payload()['context_patch']['draw_times_remaining'] ?? -1), '首次抽奖后剩余次数应减一。');
 
-$secondDrawResult = $executeRunner->run($flow, new ActivityNode('execute_draw', [
+$drawFlow = applyContextPatchToFlow($drawFlow, $firstDrawResult->payload());
+$secondDrawResult = $executeRunner->run($drawFlow, new ActivityNode('execute_draw', [
     'lane' => 'draw_execute',
-    'draw_times_remaining' => 1,
-    'draw_results' => (array)($firstDrawResult->payload()['context_patch']['draw_results'] ?? []),
 ]), time());
 Assert::true($secondDrawResult->ok(), '第二次执行抽奖节点应成功。');
 Assert::same(ActivityNodeStatus::SUCCEEDED, (string)($secondDrawResult->payload()['node_status'] ?? ''), '最后一次抽奖后节点应返回 succeeded。');
 Assert::same(0, (int)($secondDrawResult->payload()['context_patch']['draw_times_remaining'] ?? -1), '抽奖次数耗尽后应归零。');
 
+$drawFlow = applyContextPatchToFlow($drawFlow, $secondDrawResult->payload());
 $recordRunner = new RecordDrawResultNodeRunner();
-$recordResult = $recordRunner->run($flow, new ActivityNode('record_draw_result', [
+$recordResult = $recordRunner->run($drawFlow, new ActivityNode('record_draw_result', [
     'lane' => 'task_status',
-    'draw_results' => (array)($secondDrawResult->payload()['context_patch']['draw_results'] ?? []),
 ]), time());
 Assert::true($recordResult->ok(), '记录抽奖结果节点应执行成功。');
 Assert::same(ActivityNodeStatus::SUCCEEDED, (string)($recordResult->payload()['node_status'] ?? ''), '记录抽奖结果节点应返回 succeeded。');
 Assert::same(1, (int)($recordResult->payload()['context_patch']['draw_summary']['win_count'] ?? 0), '记录节点应统计中奖次数。');
 
+$drawFlow = applyContextPatchToFlow($drawFlow, $recordResult->payload());
 $notifyRunner = new NotifyDrawResultNodeRunner($activityGateway);
-$notifyResult = $notifyRunner->run($flow, new ActivityNode('notify_draw_result', [
+$notifyResult = $notifyRunner->run($drawFlow, new ActivityNode('notify_draw_result', [
     'lane' => 'task_status',
-    'draw_summary' => (array)($recordResult->payload()['context_patch']['draw_summary'] ?? []),
 ]), time());
 Assert::true($notifyResult->ok(), '通知节点应执行成功。');
 Assert::same(ActivityNodeStatus::SUCCEEDED, (string)($notifyResult->payload()['node_status'] ?? ''), '通知节点应返回 succeeded。');
 Assert::same(1, count($notices), '中奖时应触发一次通知。');
 Assert::same('activity_lottery', (string)($notices[0]['channel'] ?? ''), '通知通道应为 activity_lottery。');
+
+$expiredDrawEvents = [];
+$expiredDrawGateway = new DrawGateway(
+    static function (array $payload) use (&$expiredDrawEvents): array {
+        $expiredDrawEvents[] = ['type' => 'refresh', 'payload' => $payload];
+        return ['code' => 0, 'data' => ['times' => 1], 'message' => 'ok'];
+    },
+    static function (array $payload) use (&$expiredDrawEvents): array {
+        $expiredDrawEvents[] = ['type' => 'draw', 'payload' => $payload];
+        return ['code' => 0, 'data' => [['gift_id' => 0, 'gift_name' => '未中奖']], 'message' => 'ok'];
+    },
+);
+$expiredRefreshRunner = new RefreshDrawTimesNodeRunner($expiredDrawGateway);
+if ((string)($expiredValidate->payload()['flow_status'] ?? '') !== ActivityFlowStatus::EXPIRED) {
+    $expiredRefreshRunner->run($expiredFlow, new ActivityNode('refresh_draw_times', ['lane' => 'draw_refresh']), time());
+}
+Assert::same(0, count($expiredDrawEvents), '已结束活动校验返回 expired 后，不应继续进入 draw 段。');
 
 $finalizeRunner = new FinalizeFlowNodeRunner();
 $finalizeResult = $finalizeRunner->run($flow, new ActivityNode('finalize_flow', ['lane' => 'task_status']), time());
@@ -270,3 +374,24 @@ function buildFlowWithActivity(array $activity, string $nodeType): ActivityFlow
     return ActivityFlow::fromArray($row);
 }
 
+/**
+ * @param array<string, mixed> $nodeResultPayload
+ */
+function applyContextPatchToFlow(ActivityFlow $flow, array $nodeResultPayload): ActivityFlow
+{
+    $patch = is_array($nodeResultPayload['context_patch'] ?? null)
+        ? $nodeResultPayload['context_patch']
+        : [];
+
+    if ($patch === []) {
+        return $flow;
+    }
+
+    $row = $flow->toArray();
+    $row['context'] = array_replace(
+        is_array($row['context'] ?? null) ? $row['context'] : [],
+        $patch,
+    );
+
+    return ActivityFlow::fromArray($row);
+}

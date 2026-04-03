@@ -3,6 +3,7 @@
 namespace Bhp\Plugin\ActivityLottery\Internal\Node;
 
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlow;
+use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlowStatus;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNodeResult;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNodeStatus;
@@ -24,6 +25,7 @@ final class ValidateActivityNodeRunner implements NodeRunnerInterface
         if (!$hasStableKey) {
             return new ActivityNodeResult(false, '活动缺少稳定标识', [
                 'node_status' => ActivityNodeStatus::FAILED,
+                'flow_status' => ActivityFlowStatus::FAILED,
             ], $now);
         }
 
@@ -33,6 +35,7 @@ final class ValidateActivityNodeRunner implements NodeRunnerInterface
         if ($endTime > 0 && $endTime <= $now) {
             return new ActivityNodeResult(true, '活动已结束，跳过执行', [
                 'node_status' => ActivityNodeStatus::SKIPPED,
+                'flow_status' => ActivityFlowStatus::EXPIRED,
             ], $now);
         }
 
@@ -48,4 +51,3 @@ final class ValidateActivityNodeRunner implements NodeRunnerInterface
         ], $now);
     }
 }
-

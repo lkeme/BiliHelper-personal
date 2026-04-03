@@ -67,21 +67,213 @@ final class EraPageParser
                         continue;
                     }
 
+                    $taskName = trim((string)($task['taskName'] ?? $task['task_name'] ?? ''));
+                    $jumpLink = trim((string)($task['jumpLink'] ?? $task['jump_link'] ?? ''));
+                    $topicId = trim((string)($task['topicID'] ?? $task['topicId'] ?? $task['topic_id'] ?? ''));
+                    if ($topicId === '') {
+                        $topicId = $this->extractTopicIdFromLink($jumpLink);
+                    }
+                    $targetUids = $this->extractTargetUids($jumpLink, $task);
+                    $targetVideoIds = $this->extractTargetVideoIds($jumpLink, $task);
+                    $targetRoomIds = $this->extractTargetRoomIds($task);
+                    $liveAreaTarget = $this->extractLiveAreaTarget($jumpLink, $task);
+
                     $taskRow = [
                         'task_id' => trim((string)($task['taskId'] ?? $task['task_id'] ?? '')),
-                        'task_name' => trim((string)($task['taskName'] ?? $task['task_name'] ?? '')),
+                        'task_name' => $taskName,
                         'task_status' => (int)($task['taskStatus'] ?? $task['task_status'] ?? 0),
                         'task_award_type' => (int)($task['taskAwardType'] ?? $task['task_award_type'] ?? 0),
-                        'topic_id' => trim((string)($task['topicID'] ?? $task['topic_id'] ?? '')),
-                        'btn_behavior' => is_array($task['btnBehavior'] ?? null) ? $task['btnBehavior'] : [],
+                        'counter' => trim((string)($task['counter'] ?? '')),
+                        'jump_link' => $jumpLink,
+                        'topic_id' => $topicId,
+                        'award_name' => trim((string)($task['awardName'] ?? $task['award_name'] ?? '')),
+                        'required_watch_seconds' => $this->extractRequiredWatchSeconds($taskName, $task),
+                        'target_uids' => $targetUids,
+                        'target_video_ids' => $targetVideoIds,
+                        'target_room_ids' => $targetRoomIds,
+                        'target_area_id' => $liveAreaTarget['area_id'],
+                        'target_parent_area_id' => $liveAreaTarget['parent_area_id'],
+                        'checkpoints' => $this->normalizeCheckpointList($task['checkpoints'] ?? []),
+                        'btn_behavior' => $this->normalizeBehavior($task['btnBehavior'] ?? $task['btn_behavior'] ?? []),
                     ];
-                    $taskRow['capability'] = $this->capabilityResolver->resolve($taskRow);
+                    $capability = $this->capabilityResolver->resolve($taskRow);
+                    $taskRow['capability'] = $capability;
+                    $taskRow['support_level'] = $this->capabilityResolver->resolveSupportLevel($taskRow, $capability);
                     $tasks[] = $taskRow;
                 }
             }
         }
 
         return $tasks;
+    }
+
+    private function extractRequiredWatchSeconds(string $taskName, array $task): int
+    {
+        $explicit = (int)($task['requiredWatchSeconds'] ?? $task['required_watch_seconds'] ?? 0);
+        if ($explicit > 0) {
+            return $explicit;
+        }
+
+        if (preg_match('/(\d+)\s*分钟/u', $taskName, $matches) === 1) {
+            return max(0, (int)$matches[1]) * 60;
+        }
+        if (preg_match('/(\d+)\s*秒/u', $taskName, $matches) === 1) {
+            return max(0, (int)$matches[1]);
+        }
+
+        return 0;
+    }
+
+    private function extractTopicIdFromLink(string $jumpLink): string
+    {
+        $query = parse_url(html_entity_decode($jumpLink, ENT_QUOTES | ENT_HTML5), PHP_URL_QUERY);
+        if (!is_string($query) || $query === '') {
+            return '';
+        }
+
+        parse_str($query, $params);
+        if (!is_array($params)) {
+            return '';
+        }
+
+        $topicId = trim((string)($params['topic_id'] ?? ''));
+        return $topicId;
+    }
+
+    /**
+     * @param array<string, mixed> $task
+     * @return string[]
+     */
+    private function extractTargetUids(string $jumpLink, array $task): array
+    {
+        $targetUids = $this->normalizeStringList($task['target_uids'] ?? $task['targetUids'] ?? []);
+        if ($targetUids !== []) {
+            return $targetUids;
+        }
+
+        if (preg_match_all('~space\.bilibili\.com/(\d+)~', $jumpLink, $matches) !== false) {
+            return $this->normalizeStringList($matches[1] ?? []);
+        }
+
+        return [];
+    }
+
+    /**
+     * @param array<string, mixed> $task
+     * @return string[]
+     */
+    private function extractTargetVideoIds(string $jumpLink, array $task): array
+    {
+        $targetVideoIds = $this->normalizeStringList($task['target_video_ids'] ?? $task['targetVideoIds'] ?? []);
+        if ($targetVideoIds !== []) {
+            return $targetVideoIds;
+        }
+
+        if (preg_match('~/(BV[0-9A-Za-z]+)~', $jumpLink, $matches) === 1) {
+            return [$matches[1]];
+        }
+
+        return [];
+    }
+
+    /**
+     * @param array<string, mixed> $task
+     * @return string[]
+     */
+    private function extractTargetRoomIds(array $task): array
+    {
+        return $this->normalizeStringList($task['target_room_ids'] ?? $task['targetRoomIds'] ?? []);
+    }
+
+    /**
+     * @param array<string, mixed> $task
+     * @return array{area_id: int, parent_area_id: int}
+     */
+    private function extractLiveAreaTarget(string $jumpLink, array $task): array
+    {
+        $explicitAreaId = (int)($task['target_area_id'] ?? $task['targetAreaId'] ?? 0);
+        $explicitParentAreaId = (int)($task['target_parent_area_id'] ?? $task['targetParentAreaId'] ?? 0);
+        if ($explicitAreaId > 0 || $explicitParentAreaId > 0) {
+            return [
+                'area_id' => max(0, $explicitAreaId),
+                'parent_area_id' => max(0, $explicitParentAreaId),
+            ];
+        }
+
+        $query = parse_url(html_entity_decode($jumpLink, ENT_QUOTES | ENT_HTML5), PHP_URL_QUERY);
+        if (!is_string($query) || $query === '') {
+            return ['area_id' => 0, 'parent_area_id' => 0];
+        }
+
+        parse_str($query, $params);
+        if (!is_array($params)) {
+            return ['area_id' => 0, 'parent_area_id' => 0];
+        }
+
+        $areaId = (int)($params['areaId'] ?? $params['second_area_id'] ?? $params['area_id'] ?? 0);
+        $parentAreaId = (int)($params['parentAreaId'] ?? $params['parent_area_id'] ?? 0);
+        if ($parentAreaId <= 0 && isset($params['second_area_id'])) {
+            $parentAreaId = (int)($params['area_id'] ?? 0);
+        }
+
+        return [
+            'area_id' => max(0, $areaId),
+            'parent_area_id' => max(0, $parentAreaId),
+        ];
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function normalizeCheckpointList(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $checkpoints = [];
+        foreach ($value as $item) {
+            if (is_array($item)) {
+                $checkpoints[] = $item;
+            }
+        }
+
+        return $checkpoints;
+    }
+
+    /**
+     * @return string[]
+     */
+    private function normalizeBehavior(mixed $value): array
+    {
+        $normalized = $this->normalizeStringList($value);
+        return array_values(array_unique(array_map(static fn (string $label): string => strtoupper($label), $normalized)));
+    }
+
+    /**
+     * @return string[]
+     */
+    private function normalizeStringList(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $normalized = [];
+        foreach ($value as $item) {
+            if (!is_string($item) && !is_int($item)) {
+                continue;
+            }
+
+            $label = trim((string)$item);
+            if ($label === '') {
+                continue;
+            }
+
+            $normalized[] = $label;
+        }
+
+        return array_values(array_unique($normalized));
     }
 
     /**
@@ -181,4 +373,3 @@ final class EraPageParser
         return null;
     }
 }
-

@@ -4,6 +4,10 @@ namespace Bhp\Plugin\ActivityLottery\Internal\Page;
 
 final class EraTaskCapabilityResolver
 {
+    public const SUPPORT_NOW = 'now';
+    public const SUPPORT_LATER = 'later';
+    public const SUPPORT_MANUAL = 'manual';
+
     public const CAPABILITY_CLAIM_REWARD = 'claim_reward';
     public const CAPABILITY_SHARE = 'share';
     public const CAPABILITY_FOLLOW = 'follow';
@@ -29,7 +33,7 @@ final class EraTaskCapabilityResolver
         $taskName = trim((string)($task['task_name'] ?? $task['taskName'] ?? ''));
         $taskStatus = (int)($task['task_status'] ?? $task['taskStatus'] ?? 0);
         $taskAwardType = (int)($task['task_award_type'] ?? $task['taskAwardType'] ?? 0);
-        $topicId = trim((string)($task['topic_id'] ?? $task['topicId'] ?? ''));
+        $topicId = trim((string)($task['topic_id'] ?? $task['topicId'] ?? $task['topicID'] ?? ''));
         $btnBehavior = $this->normalizeBehavior($task['btn_behavior'] ?? $task['btnBehavior'] ?? []);
 
         if ($taskAwardType === 1 && $taskStatus === 2) {
@@ -79,6 +83,58 @@ final class EraTaskCapabilityResolver
     }
 
     /**
+     * @param array<string, mixed> $task
+     */
+    public function resolveSupportLevel(array $task, ?string $capability = null): string
+    {
+        $capability ??= $this->resolve($task);
+
+        if (in_array($capability, [
+            self::CAPABILITY_MANUAL,
+            self::CAPABILITY_COIN_TOPIC,
+            self::CAPABILITY_LIKE_TOPIC,
+            self::CAPABILITY_COMMENT_TOPIC,
+        ], true)) {
+            return self::SUPPORT_MANUAL;
+        }
+
+        if (in_array($capability, [
+            self::CAPABILITY_CLAIM_REWARD,
+            self::CAPABILITY_SHARE,
+        ], true)) {
+            return self::SUPPORT_NOW;
+        }
+
+        $topicId = trim((string)($task['topic_id'] ?? $task['topicId'] ?? $task['topicID'] ?? ''));
+        $targetUids = $this->normalizeBehavior($task['target_uids'] ?? $task['targetUids'] ?? []);
+        $targetVideoIds = $this->normalizeBehavior($task['target_video_ids'] ?? $task['targetVideoIds'] ?? []);
+        $targetRoomIds = $this->normalizeBehavior($task['target_room_ids'] ?? $task['targetRoomIds'] ?? []);
+        $targetAreaId = (int)($task['target_area_id'] ?? $task['targetAreaId'] ?? 0);
+
+        if ($capability === self::CAPABILITY_FOLLOW) {
+            return $targetUids !== [] ? self::SUPPORT_NOW : self::SUPPORT_LATER;
+        }
+
+        if ($capability === self::CAPABILITY_WATCH_VIDEO_FIXED) {
+            return $targetVideoIds !== [] ? self::SUPPORT_NOW : self::SUPPORT_LATER;
+        }
+
+        if ($capability === self::CAPABILITY_WATCH_VIDEO_TOPIC) {
+            return ($targetVideoIds !== [] || $topicId !== '')
+                ? self::SUPPORT_NOW
+                : self::SUPPORT_LATER;
+        }
+
+        if ($capability === self::CAPABILITY_WATCH_LIVE) {
+            return ($targetRoomIds !== [] || $targetAreaId > 0)
+                ? self::SUPPORT_NOW
+                : self::SUPPORT_LATER;
+        }
+
+        return self::SUPPORT_LATER;
+    }
+
+    /**
      * @return string[]
      */
     private function normalizeBehavior(mixed $value): array
@@ -104,4 +160,3 @@ final class EraTaskCapabilityResolver
         return array_values(array_unique($normalized));
     }
 }
-

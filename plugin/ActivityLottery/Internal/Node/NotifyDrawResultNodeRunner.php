@@ -23,8 +23,11 @@ final class NotifyDrawResultNodeRunner implements NodeRunnerInterface
 
     public function run(ActivityFlow $flow, ActivityNode $node, int $now): ActivityNodeResult
     {
-        $summary = is_array($node->payload()['draw_summary'] ?? null)
-            ? $node->payload()['draw_summary']
+        $payload = $node->payload();
+        $flowContext = $flow->context()->toArray();
+        $summaryValue = $this->resolveStateValue($flowContext, $payload, 'draw_summary', []);
+        $summary = is_array($summaryValue)
+            ? $summaryValue
             : [];
         $wins = is_array($summary['wins'] ?? null) ? $summary['wins'] : [];
         $winCount = (int)($summary['win_count'] ?? count($wins));
@@ -66,5 +69,21 @@ final class NotifyDrawResultNodeRunner implements NodeRunnerInterface
             ],
         ], $now);
     }
-}
 
+    /**
+     * @param array<string, mixed> $flowContext
+     * @param array<string, mixed> $nodePayload
+     */
+    private function resolveStateValue(array $flowContext, array $nodePayload, string $key, mixed $default): mixed
+    {
+        if (array_key_exists($key, $flowContext)) {
+            return $flowContext[$key];
+        }
+
+        if (array_key_exists($key, $nodePayload)) {
+            return $nodePayload[$key];
+        }
+
+        return $default;
+    }
+}
