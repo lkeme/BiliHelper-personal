@@ -406,3 +406,85 @@ Assert::true(
     str_contains($bizDateMismatchMessage, '2026-04-10') && str_contains($bizDateMismatchMessage, '2026-04-09'),
     '桶键与 flow biz_date 不一致异常应包含请求日期与行内日期。'
 );
+
+$invalidFlowIdArrayThrown = false;
+try {
+    ActivityFlow::fromArray(array_merge($flow->toArray(), [
+        'flow_id' => [],
+    ]));
+} catch (\RuntimeException) {
+    $invalidFlowIdArrayThrown = true;
+}
+Assert::true($invalidFlowIdArrayThrown, 'flow_id 为数组时应严格失败。');
+
+$invalidNodeTypeArrayThrown = false;
+try {
+    ActivityNode::fromArray([
+        'type' => [],
+        'status' => ActivityNodeStatus::PENDING,
+    ]);
+} catch (\RuntimeException) {
+    $invalidNodeTypeArrayThrown = true;
+}
+Assert::true($invalidNodeTypeArrayThrown, 'node type 为数组时应严格失败。');
+
+$invalidNodeResultMessageScalarThrown = false;
+try {
+    ActivityNode::fromArray([
+        'type' => 'node-with-invalid-result-message',
+        'status' => ActivityNodeStatus::PENDING,
+        'result' => [
+            'ok' => true,
+            'message' => 123,
+            'payload' => [],
+        ],
+    ]);
+} catch (\RuntimeException) {
+    $invalidNodeResultMessageScalarThrown = true;
+}
+Assert::true($invalidNodeResultMessageScalarThrown, 'node result.message 非 string 时应严格失败。');
+
+$invalidCreatedAtScalarThrown = false;
+try {
+    ActivityFlow::fromArray(array_merge($flow->toArray(), [
+        'created_at' => 'oops',
+    ]));
+} catch (\RuntimeException) {
+    $invalidCreatedAtScalarThrown = true;
+}
+Assert::true($invalidCreatedAtScalarThrown, 'flow created_at 为坏标量时应严格失败。');
+
+$duplicateFlowIdOnLoadThrown = false;
+$duplicateFlowIdOnLoadMessage = '';
+$duplicateLoadFlow = ActivityFlowFactory::create($catalogItem, '2026-04-11', [new ActivityNode('dup-load')])->toArray();
+Cache::set('activity_flow_day:2026-04-11', [
+    $duplicateLoadFlow,
+    $duplicateLoadFlow,
+], 'ActivityLottery');
+try {
+    $store->load('2026-04-11');
+} catch (\RuntimeException $exception) {
+    $duplicateFlowIdOnLoadThrown = true;
+    $duplicateFlowIdOnLoadMessage = $exception->getMessage();
+}
+Assert::true($duplicateFlowIdOnLoadThrown, '同日桶内重复 flow_id 时 load 应严格失败。');
+Assert::true(str_contains($duplicateFlowIdOnLoadMessage, 'flow_id'), '重复 flow_id 异常应包含 flow_id 关键字。');
+
+$duplicateFlowIdOnSaveThrown = false;
+$duplicateFlowIdOnSaveMessage = '';
+$duplicateSaveSeed = ActivityFlowFactory::create($catalogItem, '2026-04-12', [new ActivityNode('seed')]);
+$duplicateSaveFlowA = ActivityFlow::fromArray(array_merge($duplicateSaveSeed->toArray(), [
+    'flow_id' => 'flow-dup-save',
+]));
+$duplicateSaveFlowB = ActivityFlow::fromArray(array_merge($duplicateSaveSeed->toArray(), [
+    'flow_id' => 'flow-dup-save',
+    'status' => ActivityFlowStatus::RUNNING,
+]));
+try {
+    $store->save([$duplicateSaveFlowA, $duplicateSaveFlowB]);
+} catch (\RuntimeException $exception) {
+    $duplicateFlowIdOnSaveThrown = true;
+    $duplicateFlowIdOnSaveMessage = $exception->getMessage();
+}
+Assert::true($duplicateFlowIdOnSaveThrown, 'save 入参同日重复 flow_id 时应严格失败。');
+Assert::true(str_contains($duplicateFlowIdOnSaveMessage, 'flow_id'), 'save 重复 flow_id 异常应包含 flow_id 关键字。');

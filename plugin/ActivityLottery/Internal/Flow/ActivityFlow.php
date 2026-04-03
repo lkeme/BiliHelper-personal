@@ -108,18 +108,18 @@ final class ActivityFlow
         }
 
         return new self(
-            (string)($data['flow_id'] ?? ''),
-            (string)($data['biz_date'] ?? ''),
+            self::readRequiredStringField($data, 'flow_id'),
+            self::readRequiredStringField($data, 'biz_date'),
             $rawActivity,
-            (string)($data['status'] ?? ActivityFlowStatus::PENDING),
-            self::readIntField($data, 'current_node_index', 0),
+            self::readRequiredStringField($data, 'status'),
+            self::readRequiredIntField($data, 'current_node_index'),
             $nodes,
-            self::readIntField($data, 'next_run_at', 0),
-            self::readIntField($data, 'attempts', 0),
+            self::readRequiredIntField($data, 'next_run_at'),
+            self::readRequiredIntField($data, 'attempts'),
             $context,
             $logs,
-            self::readIntField($data, 'created_at', 0),
-            self::readIntField($data, 'updated_at', 0),
+            self::readRequiredIntField($data, 'created_at'),
+            self::readRequiredIntField($data, 'updated_at'),
         );
     }
 
@@ -286,10 +286,31 @@ final class ActivityFlow
     /**
      * @param array<string, mixed> $data
      */
-    private static function readIntField(array $data, string $field, int $default): int
+    private static function readRequiredStringField(array $data, string $field): string
     {
         if (!array_key_exists($field, $data)) {
-            return $default;
+            throw new RuntimeException(sprintf('ActivityFlow 缺少必填字段: %s', $field));
+        }
+
+        $value = $data[$field];
+        if (!is_string($value)) {
+            throw new RuntimeException(sprintf(
+                'ActivityFlow %s 必须为 string，实际类型: %s',
+                $field,
+                get_debug_type($value),
+            ));
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private static function readRequiredIntField(array $data, string $field): int
+    {
+        if (!array_key_exists($field, $data)) {
+            throw new RuntimeException(sprintf('ActivityFlow 缺少必填字段: %s', $field));
         }
 
         $value = $data[$field];

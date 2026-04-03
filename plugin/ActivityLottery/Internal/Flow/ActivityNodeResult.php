@@ -28,10 +28,10 @@ final class ActivityNodeResult
         }
 
         return new self(
-            self::readOk($data),
-            trim((string)($data['message'] ?? '')),
+            self::readRequiredOk($data),
+            self::readRequiredMessage($data),
             $payload,
-            (int)($data['created_at'] ?? 0),
+            self::readCreatedAt($data),
         );
     }
 
@@ -74,16 +74,56 @@ final class ActivityNodeResult
     /**
      * @param array<string, mixed> $data
      */
-    private static function readOk(array $data): bool
+    private static function readRequiredOk(array $data): bool
     {
         if (!array_key_exists('ok', $data)) {
-            return false;
+            throw new RuntimeException('ActivityNodeResult 缺少必填字段: ok');
         }
 
         $value = $data['ok'];
         if (!is_bool($value)) {
             throw new RuntimeException(sprintf(
                 'ActivityNodeResult ok 必须为 bool，实际类型: %s',
+                get_debug_type($value),
+            ));
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private static function readRequiredMessage(array $data): string
+    {
+        if (!array_key_exists('message', $data)) {
+            throw new RuntimeException('ActivityNodeResult 缺少必填字段: message');
+        }
+
+        $value = $data['message'];
+        if (!is_string($value)) {
+            throw new RuntimeException(sprintf(
+                'ActivityNodeResult message 必须为 string，实际类型: %s',
+                get_debug_type($value),
+            ));
+        }
+
+        return trim($value);
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private static function readCreatedAt(array $data): int
+    {
+        if (!array_key_exists('created_at', $data)) {
+            return 0;
+        }
+
+        $value = $data['created_at'];
+        if (!is_int($value)) {
+            throw new RuntimeException(sprintf(
+                'ActivityNodeResult created_at 必须为 int，实际类型: %s',
                 get_debug_type($value),
             ));
         }

@@ -62,12 +62,12 @@ final class ActivityNode
         }
 
         return new self(
-            (string)($data['type'] ?? ''),
+            self::readRequiredStringField($data, 'type'),
             $payload,
-            (string)($data['status'] ?? ActivityNodeStatus::PENDING),
+            self::readRequiredStringField($data, 'status'),
             $context,
             $result,
-            self::readAttempts($data),
+            self::readRequiredAttempts($data),
         );
     }
 
@@ -153,10 +153,31 @@ final class ActivityNode
     /**
      * @param array<string, mixed> $data
      */
-    private static function readAttempts(array $data): int
+    private static function readRequiredStringField(array $data, string $field): string
+    {
+        if (!array_key_exists($field, $data)) {
+            throw new RuntimeException(sprintf('ActivityNode 缺少必填字段: %s', $field));
+        }
+
+        $value = $data[$field];
+        if (!is_string($value)) {
+            throw new RuntimeException(sprintf(
+                'ActivityNode %s 必须为 string，实际类型: %s',
+                $field,
+                get_debug_type($value),
+            ));
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private static function readRequiredAttempts(array $data): int
     {
         if (!array_key_exists('attempts', $data)) {
-            return 0;
+            throw new RuntimeException('ActivityNode 缺少必填字段: attempts');
         }
 
         $value = $data['attempts'];
