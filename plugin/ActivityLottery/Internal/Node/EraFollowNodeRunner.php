@@ -2,7 +2,7 @@
 
 namespace Bhp\Plugin\ActivityLottery\Internal\Node;
 
-use Bhp\Api\Api\V1\Relation\ApiRelation;
+use Bhp\Api\Api\X\Relation\ApiRelation;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlow;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNodeResult;

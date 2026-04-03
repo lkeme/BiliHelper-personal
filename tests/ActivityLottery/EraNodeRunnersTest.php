@@ -20,6 +20,13 @@ use Bhp\Plugin\ActivityLottery\Internal\Node\EraWatchVideoNodeRunner;
 use Bhp\Plugin\ActivityLottery\Internal\Page\EraTaskCapabilityResolver;
 use Tests\Support\Assert;
 
+$followRunnerSource = file_get_contents(__DIR__ . '/../../plugin/ActivityLottery/Internal/Node/EraFollowNodeRunner.php');
+Assert::true(is_string($followRunnerSource), '应能读取 EraFollowNodeRunner 源码。');
+Assert::true(
+    str_contains($followRunnerSource, 'use Bhp\\Api\\Api\\X\\Relation\\ApiRelation;'),
+    'EraFollowNodeRunner 应引用 X\\Relation\\ApiRelation。',
+);
+
 $now = time();
 $flow = buildEraTaskFlow();
 
