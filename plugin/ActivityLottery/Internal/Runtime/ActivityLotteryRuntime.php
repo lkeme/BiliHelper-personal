@@ -2,6 +2,7 @@
 
 namespace Bhp\Plugin\ActivityLottery\Internal\Runtime;
 
+use Bhp\Log\Log;
 use Bhp\Plugin\ActivityLottery\Internal\Catalog\ActivityCatalogItem;
 use Bhp\Plugin\ActivityLottery\Internal\Catalog\ActivityCatalogLoader;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlow;
@@ -23,6 +24,8 @@ use Bhp\Plugin\ActivityLottery\Internal\Node\NotifyDrawResultNodeRunner;
 use Bhp\Plugin\ActivityLottery\Internal\Node\ParseEraPageNodeRunner;
 use Bhp\Plugin\ActivityLottery\Internal\Node\RecordDrawResultNodeRunner;
 use Bhp\Plugin\ActivityLottery\Internal\Node\RefreshDrawTimesNodeRunner;
+use Bhp\Plugin\ActivityLottery\Internal\Node\ResolvedActivityView;
+use Bhp\Plugin\ActivityLottery\Internal\Node\ResolvedEraTaskView;
 use Bhp\Plugin\ActivityLottery\Internal\Node\ValidateActivityNodeRunner;
 use Bhp\Plugin\ActivityLottery\Internal\Page\EraPageSnapshot;
 use Bhp\Plugin\ActivityLottery\Internal\Pool\ActivityFlowBudget;
@@ -34,6 +37,7 @@ final class ActivityLotteryRuntime
 {
     /** @var array<string, NodeRunnerInterface> */
     private array $runnerMap = [];
+    private \Closure $logger;
 
     public function __construct(
         private readonly ActivityCatalogLoader $catalogLoader,
@@ -45,7 +49,18 @@ final class ActivityLotteryRuntime
         private readonly ActivityLotteryWindow $window = new ActivityLotteryWindow('06:00:00', '23:00:00'),
         private readonly string $windowStartAt = '06:00:00',
         private readonly string $windowEndAt = '23:00:00',
+        ?callable $logger = null,
     ) {
+        $this->logger = $logger !== null
+            ? \Closure::fromCallable($logger)
+            : static function (string $level, string $message, array $context = []): void {
+                $context = array_replace(['caller' => 'ActivityLottery'], $context);
+                match (strtolower(trim($level))) {
+                    'warning' => Log::warning($message, $context),
+                    'debug' => Log::debug($message, $context),
+                    default => Log::info($message, $context),
+                };
+            };
         foreach (array_merge($this->defaultRunners(), $runners) as $runner) {
             if ($runner instanceof NodeRunnerInterface) {
                 $this->runnerMap[$runner->type()] = $runner;
@@ -61,35 +76,101 @@ final class ActivityLotteryRuntime
     public function tick(): TaskResult
     {
         $now = $this->clock->now();
+        $bizDate = $this->bizDate();
+        $this->log('debug', 'ActivityLottery 开始执行本轮 tick', [
+            'event' => 'tick.start',
+            'biz_date' => $bizDate,
+            'timestamp' => $now,
+        ]);
         if (!$this->window->contains($now)) {
-            return TaskResult::after($this->secondsUntilWindowStart($now));
+            $delay = $this->secondsUntilWindowStart($now);
+            $this->log('info', 'ActivityLottery 当前不在运行窗口内，跳过本轮', [
+                'event' => 'tick.outside_window',
+                'biz_date' => $bizDate,
+                'next_delay_seconds' => $delay,
+            ]);
+
+            return TaskResult::after($delay);
         }
 
-        $bizDate = $this->bizDate();
         $flows = [];
         foreach ($this->flowStore->load($bizDate) as $flow) {
             $flows[$flow->id()] = $flow;
         }
 
-        foreach ($this->catalogLoader->load() as $item) {
+        $catalog = $this->catalogLoader->load();
+        $this->log('debug', 'ActivityLottery 目录加载完成', [
+            'event' => 'catalog.loaded',
+            'biz_date' => $bizDate,
+            'catalog_count' => count($catalog),
+            'existing_flow_count' => count($flows),
+        ]);
+
+        $newFlowCount = 0;
+        foreach ($catalog as $item) {
             $planned = $this->planner->plan($item, null, $bizDate);
             if (!isset($flows[$planned->id()])) {
                 $flows[$planned->id()] = $planned;
+                $newFlowCount++;
             }
         }
 
         $tickStartedAtMs = (int)round(microtime(true) * 1000);
         $pickedFlows = $this->flowPool->pick(array_values($flows), $now, $tickStartedAtMs);
+        $this->log('debug', 'ActivityLottery 本轮调度完成 flow 选取', [
+            'event' => 'tick.pick',
+            'biz_date' => $bizDate,
+            'flow_count' => count($flows),
+            'new_flow_count' => $newFlowCount,
+            'picked_flow_count' => count($pickedFlows),
+        ]);
         foreach ($pickedFlows as $flow) {
             $startedAt = microtime(true);
+            $currentNode = $flow->nodes()[$flow->currentNodeIndex()];
+            [$executeMessage, $executeContext] = $this->buildNodeExecuteLog($flow, $currentNode);
+            $this->log('info', $executeMessage, array_replace([
+                'event' => 'node.execute',
+                'biz_date' => $bizDate,
+                'flow_id' => $flow->id(),
+                'node_type' => $currentNode->type(),
+                'node_index' => $flow->currentNodeIndex(),
+            ], $executeContext));
             $updated = $this->executeFlow($flow, $now);
             $flows[$updated->id()] = $updated;
             $this->flowPool->noteStepExecuted($tickStartedAtMs, $flow->id(), (microtime(true) - $startedAt) * 1000);
+            $executedNodeIndex = min($flow->currentNodeIndex(), count($updated->nodes()) - 1);
+            $executedNode = $updated->nodes()[$executedNodeIndex];
+            $updatedNodeIndex = min($updated->currentNodeIndex(), count($updated->nodes()) - 1);
+            $updatedNode = $updated->nodes()[$updatedNodeIndex];
+            $result = $executedNode->result();
+            [$resultMessage, $resultContext] = $this->buildNodeResultLog($flow, $currentNode, $updated, $executedNode);
+            $this->log('info', $resultMessage, array_replace([
+                'event' => 'node.result',
+                'biz_date' => $bizDate,
+                'flow_id' => $updated->id(),
+                'node_type' => $currentNode->type(),
+                'node_status' => $executedNode->status(),
+                'flow_status' => $updated->status(),
+                'next_run_at' => $updated->nextRunAt(),
+                'current_node_index' => $updated->currentNodeIndex(),
+                'next_node_type' => $updatedNode->type(),
+                'node_message' => $result?->message() ?? '',
+            ], $resultContext));
         }
 
         $this->flowStore->save(array_values($flows));
 
-        return TaskResult::after($this->resolveNextDelaySeconds(array_values($flows), $now));
+        $delay = $this->resolveNextDelaySeconds(array_values($flows), $now);
+        $this->log('debug', 'ActivityLottery 本轮执行完成', [
+            'event' => 'tick.finish',
+            'biz_date' => $bizDate,
+            'flow_count' => count($flows),
+            'new_flow_count' => $newFlowCount,
+            'picked_flow_count' => count($pickedFlows),
+            'next_delay_seconds' => $delay,
+        ]);
+
+        return TaskResult::after($delay);
     }
 
     /**
@@ -284,5 +365,122 @@ final class ActivityLotteryRuntime
             (int)($chunks[1] ?? 0),
             (int)($chunks[2] ?? 0),
         ];
+    }
+
+    /**
+     * @return array{0: string, 1: array<string, mixed>}
+     */
+    private function buildNodeExecuteLog(ActivityFlow $flow, \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode $node): array
+    {
+        $context = $this->buildNodeBusinessContext($flow, $node);
+        $activityTitle = $context['activity_title'] ?? '未命名活动';
+        $taskName = trim((string)($context['task_name'] ?? ''));
+        $label = $taskName !== '' ? sprintf('任务「%s」', $taskName) : sprintf('节点「%s」', $this->nodeLabel($node->type()));
+
+        return [
+            sprintf('活动「%s」开始执行%s', $activityTitle, $label),
+            $context,
+        ];
+    }
+
+    /**
+     * @return array{0: string, 1: array<string, mixed>}
+     */
+    private function buildNodeResultLog(
+        ActivityFlow $beforeFlow,
+        \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode $beforeNode,
+        ActivityFlow $afterFlow,
+        \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode $afterNode,
+    ): array {
+        $context = $this->buildNodeBusinessContext($beforeFlow, $beforeNode, $afterFlow);
+        $activityTitle = $context['activity_title'] ?? '未命名活动';
+        $taskName = trim((string)($context['task_name'] ?? ''));
+        $label = $taskName !== '' ? sprintf('任务「%s」', $taskName) : sprintf('节点「%s」', $this->nodeLabel($beforeNode->type()));
+        $message = trim((string)($afterNode->result()?->message() ?? '执行结束'));
+
+        return [
+            sprintf('活动「%s」%s结果: %s', $activityTitle, $label, $message),
+            $context,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildNodeBusinessContext(
+        ActivityFlow $flow,
+        \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode $node,
+        ?ActivityFlow $afterFlow = null,
+    ): array {
+        $activity = ResolvedActivityView::fromFlow($flow)->toActivityArray();
+        $context = [
+            'activity_title' => trim((string)($activity['title'] ?? '')),
+            'activity_id' => trim((string)($activity['activity_id'] ?? '')),
+        ];
+
+        $taskId = trim((string)($node->payload()['task_id'] ?? ''));
+        if ($taskId === '') {
+            return $context;
+        }
+
+        $context['task_id'] = $taskId;
+        $taskView = ResolvedEraTaskView::fromFlowAndNode($flow, $node);
+        $task = $taskView->task();
+        if ($task !== null) {
+            $context['task_name'] = $task->taskName();
+        }
+
+        $stateSource = $afterFlow ?? $flow;
+        $runtimeMap = $stateSource->context()->toArray()['era_task_runtime'] ?? [];
+        $state = is_array($runtimeMap[$taskId] ?? null) ? $runtimeMap[$taskId] : [];
+
+        if (is_array($state['watch_video_archive'] ?? null)) {
+            $archive = $state['watch_video_archive'];
+            $context['archive_aid'] = trim((string)($archive['aid'] ?? ''));
+            $context['archive_bvid'] = trim((string)($archive['bvid'] ?? ''));
+        }
+        if (is_array($state['live_session'] ?? null)) {
+            $liveSession = $state['live_session'];
+            $context['room_id'] = (int)($liveSession['room_id'] ?? 0);
+        }
+        if (isset($state['follow_target_index']) && $task !== null) {
+            $index = max(0, (int)$state['follow_target_index']);
+            $targetUids = $task->targetUids();
+            if (isset($targetUids[$index])) {
+                $context['target_uid'] = (string)$targetUids[$index];
+            }
+        }
+
+        return $context;
+    }
+
+    private function nodeLabel(string $nodeType): string
+    {
+        return match ($nodeType) {
+            'load_activity_snapshot' => '加载活动页',
+            'validate_activity_window' => '校验活动窗口',
+            'parse_era_page' => '解析活动任务页',
+            'refresh_draw_times' => '刷新抽奖次数',
+            'execute_draw' => '执行抽奖',
+            'record_draw_result' => '记录抽奖结果',
+            'notify_draw_result' => '通知抽奖结果',
+            'final_claim_reward' => '收尾领奖',
+            'finalize_flow' => '收尾活动流',
+            'era_task_follow' => '关注任务',
+            'era_task_share' => '分享任务',
+            'era_task_watch_video_fixed', 'era_task_watch_video_topic' => '观看视频任务',
+            'era_task_watch_live' => '观看直播任务',
+            'era_task_claim_reward' => '领奖任务',
+            'era_task_skipped' => '跳过任务',
+            default => $nodeType,
+        };
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private function log(string $level, string $message, array $context = []): void
+    {
+        ($this->logger)($level, $message, $context);
     }
 }
