@@ -3,10 +3,25 @@
 namespace Bhp\Plugin\ActivityLottery\Internal\Pool;
 
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlow;
+use InvalidArgumentException;
 
 final class ActivityFlowPicker
 {
     private int $cursor = 0;
+
+    public function cursor(): int
+    {
+        return $this->cursor;
+    }
+
+    public function restoreCursor(int $cursor): void
+    {
+        if ($cursor < 0) {
+            throw new InvalidArgumentException('cursor 必须大于等于 0');
+        }
+
+        $this->cursor = $cursor;
+    }
 
     /**
      * @param ActivityFlow[] $flows
@@ -33,4 +48,3 @@ final class ActivityFlowPicker
         return $picked;
     }
 }
-

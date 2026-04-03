@@ -32,6 +32,15 @@ $flowA = buildFlow('pool-a', 'task_status');
 $flowB = buildFlow('pool-b', 'task_status');
 $flowC = buildFlow('pool-c', 'task_status');
 
+$cursorPick1 = $picker->pick([$flowA, $flowB, $flowC], 2);
+Assert::same(2, count($cursorPick1), 'picker 首次选择应命中 limit。');
+Assert::same(2, $picker->cursor(), 'picker 游标应在选择后推进。');
+$picker->restoreCursor(1);
+Assert::same(1, $picker->cursor(), 'picker 应可从外部恢复游标。');
+$cursorPick2 = $picker->pick([$flowA, $flowB, $flowC], 2);
+Assert::same($flowB->id(), $cursorPick2[0]->id(), '恢复游标后应从指定位置继续选择。');
+Assert::same($flowC->id(), $cursorPick2[1]->id(), '恢复游标后后续选择顺序应可预测。');
+
 $batch1 = $pool->pick([$flowA, $flowB, $flowC], 100, $defaultTickStartedAtMs);
 Assert::same(3, count($batch1), '可推进 flow 小于预算时应全部入选。');
 
@@ -220,6 +229,41 @@ $singlePickDedupBatch = $singlePickDedupPool->pick(
 );
 Assert::same(1, count($singlePickDedupBatch), '单次 pick 内重复 flow_id 只能入选一次。');
 Assert::same($singlePickFlow->id(), $singlePickDedupBatch[0]->id(), '单次 pick 去重后应保留目标 flow。');
+
+$executionAccountingPool = new ActivityFlowPool(
+    new ActivityFlowBudget(5, 2, 100),
+    new ActivityFlowPicker(),
+    new ActivityLaneLimiter(['task_status' => 0]),
+);
+$executionTickStartedAtMs = $defaultTickStartedAtMs + 1_200;
+Assert::true($executionAccountingPool->canContinue($executionTickStartedAtMs, $executionTickStartedAtMs + 1.0), '新 tick 在预算内应允许继续。');
+$executionAccountingPool->noteStepExecuted($executionTickStartedAtMs, 'execution-a', 20.5);
+Assert::true($executionAccountingPool->canContinue($executionTickStartedAtMs, $executionTickStartedAtMs + 2.0), '执行一步后在预算内应允许继续。');
+$executionAccountingPool->noteStepExecuted($executionTickStartedAtMs, 'execution-a', 10.5);
+Assert::false($executionAccountingPool->canContinue($executionTickStartedAtMs, $executionTickStartedAtMs + 3.0), 'step 预算耗尽后应停止继续。');
+
+$runtimeBudgetPool = new ActivityFlowPool(
+    new ActivityFlowBudget(5, 10, 30),
+    new ActivityFlowPicker(),
+    new ActivityLaneLimiter(['task_status' => 0]),
+);
+$runtimeTickStartedAtMs = $defaultTickStartedAtMs + 1_400;
+$runtimeBudgetPool->noteStepExecuted($runtimeTickStartedAtMs, 'runtime-a', 12.0);
+$runtimeBudgetPool->noteStepExecuted($runtimeTickStartedAtMs, 'runtime-a', 19.5);
+Assert::false($runtimeBudgetPool->canContinue($runtimeTickStartedAtMs, $runtimeTickStartedAtMs + 5.0), 'runtime 预算耗尽后应停止继续。');
+
+$invalidFlowInputPool = new ActivityFlowPool(
+    new ActivityFlowBudget(2, 6, 3000),
+    new ActivityFlowPicker(),
+    new ActivityLaneLimiter(['task_status' => 0]),
+);
+$invalidFlowThrown = false;
+try {
+    $invalidFlowInputPool->pick([$flowA, 'not-a-flow'], 100, $defaultTickStartedAtMs + 1_900);
+} catch (\InvalidArgumentException $e) {
+    $invalidFlowThrown = str_contains($e->getMessage(), 'ActivityFlow');
+}
+Assert::true($invalidFlowThrown, 'pick 输入包含非法元素时必须 fail fast。');
 
 $allowedDynamicLaneFlow = buildFlowWithType('allowed-dynamic-lane', 'era_task_watch_video_fixed', ['lane' => 'watch_video']);
 $allowedDynamicLanePool = new ActivityFlowPool(

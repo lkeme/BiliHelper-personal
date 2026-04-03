@@ -5,6 +5,7 @@ namespace Bhp\Plugin\ActivityLottery\Internal\Pool;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlow;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlowPlanner;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlowStatus;
+use InvalidArgumentException;
 use RuntimeException;
 
 final class ActivityFlowPool
@@ -16,6 +17,8 @@ final class ActivityFlowPool
     private array $pickedFlowIdsInTick = [];
     private int $selectedFlowCountInTick = 0;
     private int $selectedStepCountInTick = 0;
+    private int $pendingReservedStepCountInTick = 0;
+    private float $accountedRuntimeMsInTick = 0.0;
 
     public function __construct(
         private readonly ActivityFlowBudget $budget,
@@ -30,16 +33,20 @@ final class ActivityFlowPool
      */
     public function pick(array $flows, int $now, int $tickStartedAtMs): array
     {
-        $nowMs = (int)(microtime(true) * 1000);
-        if (($nowMs - $tickStartedAtMs) >= $this->budget->maxRuntimeMsPerTick()) {
+        $this->assertValidFlows($flows);
+
+        $nowMs = microtime(true) * 1000;
+        if (!$this->canContinue($tickStartedAtMs, $nowMs)) {
             return [];
         }
 
-        $this->prepareTickState($tickStartedAtMs);
+        if ($flows === []) {
+            return [];
+        }
+
         $eligible = array_values(array_filter(
             $flows,
-            fn (mixed $flow): bool => $flow instanceof ActivityFlow
-                && $this->isFlowEligible($flow, $now)
+            fn (ActivityFlow $flow): bool => $this->isFlowEligible($flow, $now)
                 && !isset($this->pickedFlowIdsInTick[$flow->id()]),
         ));
         $eligible = $this->deduplicateFlowsById($eligible);
@@ -75,9 +82,54 @@ final class ActivityFlowPool
             $this->pickedFlowIdsInTick[$flow->id()] = true;
             $this->selectedFlowCountInTick++;
             $this->selectedStepCountInTick++;
+            $this->pendingReservedStepCountInTick++;
         }
 
         return $selected;
+    }
+
+    public function noteStepExecuted(int $tickStartedAtMs, string $flowId, float $elapsedMs): void
+    {
+        $flowId = trim($flowId);
+        if ($flowId === '') {
+            throw new InvalidArgumentException('flowId 不能为空');
+        }
+        if (!is_finite($elapsedMs) || $elapsedMs < 0) {
+            throw new InvalidArgumentException('elapsedMs 必须是大于等于 0 的有限数字');
+        }
+
+        $this->prepareTickState($tickStartedAtMs);
+        if (!isset($this->pickedFlowIdsInTick[$flowId])) {
+            $this->pickedFlowIdsInTick[$flowId] = true;
+            $this->selectedFlowCountInTick++;
+        }
+
+        if ($this->pendingReservedStepCountInTick > 0) {
+            $this->pendingReservedStepCountInTick--;
+        } else {
+            $this->selectedStepCountInTick++;
+        }
+        $this->accountedRuntimeMsInTick += $elapsedMs;
+    }
+
+    public function canContinue(int $tickStartedAtMs, float $nowMs): bool
+    {
+        $this->prepareTickState($tickStartedAtMs);
+
+        if (($nowMs - $tickStartedAtMs) >= $this->budget->maxRuntimeMsPerTick()) {
+            return false;
+        }
+        if ($this->accountedRuntimeMsInTick >= $this->budget->maxRuntimeMsPerTick()) {
+            return false;
+        }
+        if ($this->selectedFlowCountInTick >= $this->budget->maxFlowsPerTick()) {
+            return false;
+        }
+        if ($this->selectedStepCountInTick >= $this->budget->maxStepsPerTick()) {
+            return false;
+        }
+
+        return true;
     }
 
     private function isFlowEligible(ActivityFlow $flow, int $now): bool
@@ -163,5 +215,26 @@ final class ActivityFlowPool
         $this->pickedFlowIdsInTick = [];
         $this->selectedFlowCountInTick = 0;
         $this->selectedStepCountInTick = 0;
+        $this->pendingReservedStepCountInTick = 0;
+        $this->accountedRuntimeMsInTick = 0.0;
+    }
+
+    /**
+     * @param mixed[] $flows
+     */
+    private function assertValidFlows(array $flows): void
+    {
+        foreach ($flows as $index => $flow) {
+            if ($flow instanceof ActivityFlow) {
+                continue;
+            }
+
+            throw new InvalidArgumentException(sprintf(
+                'flows[%d] 必须是 %s，实际为 %s',
+                $index,
+                ActivityFlow::class,
+                get_debug_type($flow),
+            ));
+        }
     }
 }
