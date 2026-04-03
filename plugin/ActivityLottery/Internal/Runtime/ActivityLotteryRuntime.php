@@ -14,6 +14,7 @@ use Bhp\Plugin\ActivityLottery\Internal\Node\EraClaimRewardNodeRunner;
 use Bhp\Plugin\ActivityLottery\Internal\Node\EraFollowNodeRunner;
 use Bhp\Plugin\ActivityLottery\Internal\Node\EraShareNodeRunner;
 use Bhp\Plugin\ActivityLottery\Internal\Node\EraWatchLiveNodeRunner;
+use Bhp\Plugin\ActivityLottery\Internal\Node\EraWatchProgress;
 use Bhp\Plugin\ActivityLottery\Internal\Node\EraWatchVideoNodeRunner;
 use Bhp\Plugin\ActivityLottery\Internal\Node\ExecuteDrawNodeRunner;
 use Bhp\Plugin\ActivityLottery\Internal\Node\FinalClaimRewardNodeRunner;
@@ -28,6 +29,7 @@ use Bhp\Plugin\ActivityLottery\Internal\Node\ResolvedActivityView;
 use Bhp\Plugin\ActivityLottery\Internal\Node\ResolvedEraTaskView;
 use Bhp\Plugin\ActivityLottery\Internal\Node\ValidateActivityNodeRunner;
 use Bhp\Plugin\ActivityLottery\Internal\Page\EraPageSnapshot;
+use Bhp\Plugin\ActivityLottery\Internal\Page\EraTaskSnapshot;
 use Bhp\Plugin\ActivityLottery\Internal\Pool\ActivityFlowBudget;
 use Bhp\Plugin\ActivityLottery\Internal\Pool\ActivityFlowPool;
 use Bhp\Scheduler\TaskResult;
@@ -376,9 +378,10 @@ final class ActivityLotteryRuntime
         $activityTitle = $context['activity_title'] ?? '未命名活动';
         $taskName = trim((string)($context['task_name'] ?? ''));
         $label = $taskName !== '' ? sprintf('任务「%s」', $taskName) : sprintf('节点「%s」', $this->nodeLabel($node->type()));
+        $suffix = $this->buildNodeExecuteSuffix($context, $node->type());
 
         return [
-            sprintf('活动「%s」开始执行%s', $activityTitle, $label),
+            sprintf('活动「%s」开始执行%s%s', $activityTitle, $label, $suffix),
             $context,
         ];
     }
@@ -396,7 +399,7 @@ final class ActivityLotteryRuntime
         $activityTitle = $context['activity_title'] ?? '未命名活动';
         $taskName = trim((string)($context['task_name'] ?? ''));
         $label = $taskName !== '' ? sprintf('任务「%s」', $taskName) : sprintf('节点「%s」', $this->nodeLabel($beforeNode->type()));
-        $message = trim((string)($afterNode->result()?->message() ?? '执行结束'));
+        $message = $this->buildDetailedNodeResultMessage($beforeNode->type(), $afterNode, $context);
 
         return [
             sprintf('活动「%s」%s结果: %s', $activityTitle, $label, $message),
@@ -428,28 +431,34 @@ final class ActivityLotteryRuntime
         $task = $taskView->task();
         if ($task !== null) {
             $context['task_name'] = $task->taskName();
+            $context['display_target_seconds'] = $this->resolveDisplayTargetSeconds($task);
         }
 
         $stateSource = $afterFlow ?? $flow;
         $runtimeMap = $stateSource->context()->toArray()['era_task_runtime'] ?? [];
         $state = is_array($runtimeMap[$taskId] ?? null) ? $runtimeMap[$taskId] : [];
+        $context['local_watch_seconds'] = max(0, (int)($state['local_watch_seconds'] ?? 0));
 
-        if (is_array($state['watch_video_archive'] ?? null)) {
-            $archive = $state['watch_video_archive'];
+        $archive = $this->resolveCurrentArchive($task, $state);
+        if (is_array($archive)) {
             $context['archive_aid'] = trim((string)($archive['aid'] ?? ''));
             $context['archive_bvid'] = trim((string)($archive['bvid'] ?? ''));
         }
         if (is_array($state['live_session'] ?? null)) {
             $liveSession = $state['live_session'];
             $context['room_id'] = (int)($liveSession['room_id'] ?? 0);
+            $context['heartbeat_interval'] = max(0, (int)($liveSession['heartbeat_interval'] ?? 0));
         }
-        if (isset($state['follow_target_index']) && $task !== null) {
-            $index = max(0, (int)$state['follow_target_index']);
+        if ($task !== null) {
             $targetUids = $task->targetUids();
-            if (isset($targetUids[$index])) {
-                $context['target_uid'] = (string)$targetUids[$index];
+            $completedCount = min(count($targetUids), max(0, (int)($state['follow_target_index'] ?? 0)));
+            $context['follow_total_count'] = count($targetUids);
+            $context['follow_completed_count'] = $completedCount;
+            if (isset($targetUids[$completedCount])) {
+                $context['target_uid'] = (string)$targetUids[$completedCount];
             }
         }
+        $context['wait_delay_seconds'] = $this->resolveWaitDelaySeconds($stateSource);
 
         return $context;
     }
@@ -474,6 +483,217 @@ final class ActivityLotteryRuntime
             'era_task_skipped' => '跳过任务',
             default => $nodeType,
         };
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private function buildNodeExecuteSuffix(array $context, string $nodeType): string
+    {
+        return match ($nodeType) {
+            'era_task_follow' => ($context['target_uid'] ?? '') !== ''
+                ? sprintf(' [目标UID=%s]', (string)$context['target_uid'])
+                : '',
+            'era_task_watch_video_fixed', 'era_task_watch_video_topic' => ($archiveLabel = $this->archiveLabel($context)) !== ''
+                ? sprintf(' [稿件=%s]', $archiveLabel)
+                : '',
+            'era_task_watch_live' => (int)($context['room_id'] ?? 0) > 0
+                ? sprintf(' [房间=%d]', (int)$context['room_id'])
+                : '',
+            default => '',
+        };
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private function buildDetailedNodeResultMessage(
+        string $nodeType,
+        \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode $afterNode,
+        array $context,
+    ): string {
+        $fallback = trim((string)($afterNode->result()?->message() ?? '执行结束'));
+        $delay = $this->formatDelaySuffix((int)($context['wait_delay_seconds'] ?? 0));
+
+        return match ($nodeType) {
+            'era_task_follow' => $this->buildFollowResultMessage($afterNode, $context, $fallback, $delay),
+            'era_task_watch_video_fixed', 'era_task_watch_video_topic' => $this->buildWatchVideoResultMessage($afterNode, $context, $fallback, $delay),
+            'era_task_watch_live' => $this->buildWatchLiveResultMessage($afterNode, $context, $fallback, $delay),
+            default => $fallback,
+        };
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private function buildFollowResultMessage(
+        \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode $afterNode,
+        array $context,
+        string $fallback,
+        string $delay,
+    ): string {
+        $completed = max(0, (int)($context['follow_completed_count'] ?? 0));
+        $total = max(0, (int)($context['follow_total_count'] ?? 0));
+        $nextTargetUid = trim((string)($context['target_uid'] ?? ''));
+
+        if ($afterNode->status() === ActivityNodeStatus::WAITING && $total > 0) {
+            $suffix = $nextTargetUid !== '' ? sprintf('，下一目标 UID=%s', $nextTargetUid) : '';
+            return sprintf('已完成 %d/%d%s%s', $completed, $total, $suffix, $delay);
+        }
+
+        if ($afterNode->status() === ActivityNodeStatus::SUCCEEDED && $total > 0) {
+            return sprintf('%s，已完成 %d/%d', $fallback, $completed, $total);
+        }
+
+        return $fallback;
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private function buildWatchVideoResultMessage(
+        \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode $afterNode,
+        array $context,
+        string $fallback,
+        string $delay,
+    ): string {
+        $currentSeconds = max(0, (int)($context['local_watch_seconds'] ?? 0));
+        $targetSeconds = max(0, (int)($context['display_target_seconds'] ?? 0));
+        $progress = $targetSeconds > 0
+            ? sprintf('%d/%d 秒', $currentSeconds, $targetSeconds)
+            : sprintf('%d 秒', $currentSeconds);
+        $archiveLabel = $this->archiveLabel($context);
+        $archivePrefix = $archiveLabel !== '' ? sprintf('稿件 %s，', $archiveLabel) : '';
+
+        if ($afterNode->status() === ActivityNodeStatus::WAITING) {
+            if ($archivePrefix === '' && $currentSeconds <= 0) {
+                return $fallback . $delay;
+            }
+            return sprintf('%s当前累计 %s%s', $archivePrefix, $progress, $delay);
+        }
+
+        if ($afterNode->status() === ActivityNodeStatus::SUCCEEDED) {
+            return sprintf('%s，累计 %s', $fallback, $progress);
+        }
+
+        return $fallback;
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private function buildWatchLiveResultMessage(
+        \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode $afterNode,
+        array $context,
+        string $fallback,
+        string $delay,
+    ): string {
+        $roomId = max(0, (int)($context['room_id'] ?? 0));
+        $currentSeconds = max(0, (int)($context['local_watch_seconds'] ?? 0));
+        $targetSeconds = max(0, (int)($context['display_target_seconds'] ?? 0));
+        $progress = $targetSeconds > 0
+            ? sprintf('%d/%d 秒', $currentSeconds, $targetSeconds)
+            : sprintf('%d 秒', $currentSeconds);
+        $roomPrefix = $roomId > 0 ? sprintf('房间 %d，', $roomId) : '';
+
+        if ($afterNode->status() === ActivityNodeStatus::WAITING) {
+            if ($roomPrefix === '' && $currentSeconds <= 0) {
+                return $fallback . $delay;
+            }
+            return sprintf('%s当前累计 %s%s', $roomPrefix, $progress, $delay);
+        }
+
+        if ($afterNode->status() === ActivityNodeStatus::SUCCEEDED) {
+            return sprintf('%s，累计 %s', $fallback, $progress);
+        }
+
+        return $fallback;
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private function archiveLabel(array $context): string
+    {
+        $bvid = trim((string)($context['archive_bvid'] ?? ''));
+        if ($bvid !== '') {
+            return $bvid;
+        }
+
+        $aid = trim((string)($context['archive_aid'] ?? ''));
+        return $aid !== '' ? 'aid=' . $aid : '';
+    }
+
+    private function resolveWaitDelaySeconds(ActivityFlow $flow): int
+    {
+        $nextRunAt = $flow->nextRunAt();
+        if ($nextRunAt <= 0) {
+            return 0;
+        }
+
+        return max(0, $nextRunAt - $flow->updatedAt());
+    }
+
+    private function formatDelaySuffix(int $delaySeconds): string
+    {
+        if ($delaySeconds <= 0) {
+            return '';
+        }
+
+        if ($delaySeconds % 3600 === 0 && $delaySeconds >= 3600) {
+            return sprintf('，%d 小时后继续', (int)($delaySeconds / 3600));
+        }
+        if ($delaySeconds % 60 === 0 && $delaySeconds >= 60) {
+            return sprintf('，%d 分钟后继续', (int)($delaySeconds / 60));
+        }
+
+        return sprintf('，%d 秒后继续', $delaySeconds);
+    }
+
+    private function resolveDisplayTargetSeconds(?EraTaskSnapshot $task = null): int
+    {
+        if ($task === null) {
+            return 0;
+        }
+
+        $thresholds = EraWatchProgress::thresholds($task);
+        if ($thresholds !== []) {
+            return max($thresholds);
+        }
+
+        return max(0, $task->requiredWatchSeconds());
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     * @return array<string, mixed>|null
+     */
+    private function resolveCurrentArchive(?EraTaskSnapshot $task, array $state): ?array
+    {
+        if (is_array($state['watch_video_archive'] ?? null)) {
+            return $state['watch_video_archive'];
+        }
+        if (is_array($state['topic_archives'] ?? null)) {
+            $archives = $state['topic_archives'];
+            $index = max(0, (int)($state['topic_archive_index'] ?? 0));
+            if (isset($archives[$index]) && is_array($archives[$index])) {
+                return $archives[$index];
+            }
+        }
+        if ($task !== null) {
+            $archives = $task->targetArchives();
+            if ($archives !== []) {
+                $index = max(0, (int)($state['fixed_archive_index'] ?? 0));
+                if (isset($archives[$index]) && is_array($archives[$index])) {
+                    return $archives[$index];
+                }
+                if (isset($archives[0]) && is_array($archives[0])) {
+                    return $archives[0];
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
