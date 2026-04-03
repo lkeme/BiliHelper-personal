@@ -8,6 +8,19 @@
 
 [comment]: <> (</details>)
 
+## Unreleased
+
+### Changed
+
+- 重构 `ActivityLottery` 为基于 flow/runtime 的活动流引擎
+- 插件运行窗口调整为 `06:00:00 ~ 23:00:00`
+- `watch_video` / `watch_live` 统一复用 `src/Automation/Watch/*`
+
+### Fixed
+
+- 修复活动页 `lottery_id`、时间窗和页面级 follow/video/live 目标在新链路中的状态传递
+- 清理 `ActivityLottery` 旧队列式实现与旧活动页模型，避免新入口继续回落到旧路径
+
 ## v2.5.1.250904 alpha (2025-09-04)
 
 ### Added

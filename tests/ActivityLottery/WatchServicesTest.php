@@ -8,8 +8,8 @@ use Bhp\Automation\Watch\LiveWatchService;
 use Bhp\Automation\Watch\LiveWatchSession;
 use Bhp\Automation\Watch\VideoWatchService;
 use Bhp\Automation\Watch\VideoWatchSession;
-use Bhp\Plugin\ActivityLottery\Internal\EraLiveWatchService;
-use Bhp\Plugin\ActivityLottery\Internal\EraVideoWatchService;
+use Bhp\Plugin\ActivityLottery\Internal\Gateway\WatchLiveGateway;
+use Bhp\Plugin\ActivityLottery\Internal\Gateway\WatchVideoGateway;
 use Tests\Support\Assert;
 
 $video = VideoWatchSession::start('aid:1', 'cid:2');
@@ -180,103 +180,56 @@ try {
 }
 Assert::true($heartbeatFailed, '直播 heartbeat 失败路径应抛异常。');
 
-$eraVideoCalls = [];
-$eraVideoService = new EraVideoWatchService(new VideoWatchService(
-    videoAction: static function (string $aid, string $cid, string $bvid, array $options) use (&$eraVideoCalls): array {
-        $eraVideoCalls[] = ['video', $aid, $cid, $bvid, $options];
-        return ['code' => 0];
+$videoGatewayCalls = [];
+$videoGateway = new WatchVideoGateway(
+    static fn (array $archive): ?array => $archive === [] ? null : $archive,
+    static fn (string $topicId, int $limit = 20): array => [
+        ['aid' => '123', 'bvid' => 'BV1topicx123', 'title' => 'topic archive'],
+    ],
+    static function (array $archive, string $sessionId) use (&$videoGatewayCalls): bool {
+        $videoGatewayCalls[] = ['start', $archive, $sessionId];
+        return true;
     },
-    heartbeatAction: static function (string $aid, string $cid, int $progress, string $bvid, array $options) use (&$eraVideoCalls): array {
-        $eraVideoCalls[] = ['heartbeat', $aid, $cid, $progress, $bvid, $options];
-        return ['code' => 0];
+    static function (array $archive, int $watchedSeconds, string $sessionId) use (&$videoGatewayCalls): bool {
+        $videoGatewayCalls[] = ['finish', $archive, $watchedSeconds, $sessionId];
+        return true;
     },
-));
-Assert::true($eraVideoService->start(['aid' => '1', 'cid' => '2', 'duration' => 100], 'session-era'));
-Assert::true($eraVideoService->finish(['aid' => '1', 'cid' => '2', 'duration' => 100], null, 10, 'session-era'));
-Assert::same(3, count($eraVideoCalls), 'EraVideoWatchService 应委托公共 VideoWatchService。');
+);
+Assert::same(['aid' => '1', 'cid' => '2', 'duration' => 100], $videoGateway->normalizeArchive(['aid' => '1', 'cid' => '2', 'duration' => 100]));
+Assert::true($videoGateway->start(['aid' => '1', 'cid' => '2', 'duration' => 100], 'gateway-session'));
+Assert::true($videoGateway->finish(['aid' => '1', 'cid' => '2', 'duration' => 100], 20, 'gateway-session'));
+Assert::same(2, count($videoGatewayCalls), 'WatchVideoGateway 应代理 start/finish。');
+Assert::same(1, count($videoGateway->fetchTopicArchives('topic-1')), 'WatchVideoGateway 应暴露 topic archive 获取能力。');
 
-$eraVideoTypeError = new EraVideoWatchService(new VideoWatchService(
-    videoAction: static function (...$args): array {
-        throw new \TypeError('bad dependency');
-    },
-));
-$typeErrorThrown = false;
-try {
-    $eraVideoTypeError->start(['aid' => '1', 'cid' => '2', 'duration' => 100], 'session-era');
-} catch (\TypeError) {
-    $typeErrorThrown = true;
-}
-Assert::true($typeErrorThrown, 'EraVideoWatchService::start 不应吞掉 TypeError。');
-
-$eraLiveCalls = [];
-$eraLiveEnterCalls = [];
-$eraLiveShared = new LiveWatchService(
-    roomEntryAction: static function (...$args) use (&$eraLiveCalls): void {
-        $eraLiveCalls[] = ['roomEntryAction', ...$args];
-    },
-    enterAction: static function (...$args) use (&$eraLiveEnterCalls): array {
-        $eraLiveEnterCalls[] = $args;
+$liveGatewayCalls = [];
+$liveGateway = new WatchLiveGateway(
+    static function (array $roomIds, int $areaId = 0, int $parentAreaId = 0) use (&$liveGatewayCalls): ?array {
+        $liveGatewayCalls[] = ['start', $roomIds, $areaId, $parentAreaId];
         return [
-            'code' => 0,
-            'data' => [
-                'secret_key' => 'a',
-                'secret_rule' => [1],
-                'heartbeat_interval' => 60,
-                'timestamp' => 111,
-            ],
+            'room_id' => 9,
+            'ruid' => 123,
+            'parent_area_id' => 456,
+            'area_id' => 789,
+            'heartbeat_interval' => 60,
         ];
     },
-    heartbeatAction: static function (array $session, string $userAgent, int $interval) use (&$eraLiveCalls): array {
-        $eraLiveCalls[] = ['heartbeat', $session, $userAgent, $interval];
-        return ['code' => 0, 'data' => ['timestamp' => 222]];
+    static function (array $session) use (&$liveGatewayCalls): array {
+        $liveGatewayCalls[] = ['heartbeat', $session];
+        return array_replace($session, ['seq_id' => (int)($session['seq_id'] ?? 0) + 1]);
     },
-    userAgentResolver: static fn (): string => 'ua',
-    buvidFactory: static fn (): string => 'buvid',
-    uuidFactory: static fn (): string => 'uuid',
 );
-$eraLiveService = new EraLiveWatchService(
-    $eraLiveShared,
-    roomResolver: static fn (int $roomId): ?array => [
-        'room_id' => $roomId,
-        'ruid' => 123,
-        'parent_area_id' => 456,
-        'area_id' => 789,
-        'room_title' => '测试直播间',
-        'room_uname' => '测试UP主',
-        'pick_source' => 'room',
-    ],
-    areaRoomPicker: static fn (int $areaId, int $parentAreaId): ?array => null,
-);
-$startedLive = $eraLiveService->start(['9']);
-Assert::same(9, (int)($startedLive['room_id'] ?? 0));
-Assert::same('测试直播间', (string)($startedLive['room_title'] ?? ''));
-Assert::same('测试UP主', (string)($startedLive['room_uname'] ?? ''));
-Assert::same('room', (string)($startedLive['room_pick_source'] ?? ''));
-Assert::same(1, count($eraLiveEnterCalls), 'EraLiveWatchService::start 应委托到公共 LiveWatchService::start。');
-Assert::same(9, (int)($eraLiveEnterCalls[0][0] ?? 0));
-Assert::same(123, (int)($eraLiveEnterCalls[0][1] ?? 0));
-Assert::same(456, (int)($eraLiveEnterCalls[0][2] ?? 0));
-Assert::same(789, (int)($eraLiveEnterCalls[0][3] ?? 0));
-$afterHeartbeat = $eraLiveService->heartbeat([
+$gatewaySession = $liveGateway->start(['9'], 789, 456);
+Assert::same(9, (int)($gatewaySession['room_id'] ?? 0));
+$afterGatewayHeartbeat = $liveGateway->heartbeat([
     'room_id' => 9,
     'ruid' => 1,
     'parent_area_id' => 2,
     'area_id' => 3,
     'seq_id' => 4,
     'heartbeat_interval' => 60,
-    'ets' => 100,
-    'secret_key' => 'old',
-    'secret_rule' => [0],
-    'live_buvid' => 'buvid-era',
-    'live_uuid' => 'uuid-era',
-    'last_heartbeat_at' => microtime(true) - 3,
 ]);
-Assert::same(5, (int)$afterHeartbeat['seq_id']);
-$eraLiveHeartbeatCalls = array_values(array_filter(
-    $eraLiveCalls,
-    static fn (array $call): bool => ($call[0] ?? '') === 'heartbeat',
-));
-Assert::same(1, count($eraLiveHeartbeatCalls), 'EraLiveWatchService 的 heartbeat 应委托公共 LiveWatchService。');
+Assert::same(5, (int)($afterGatewayHeartbeat['seq_id'] ?? 0));
+Assert::same(2, count($liveGatewayCalls), 'WatchLiveGateway 应代理 start/heartbeat。');
 
 $liveStartCalls = [];
 $liveStartBoundaryService = new LiveWatchService(
