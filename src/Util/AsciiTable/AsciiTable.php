@@ -66,6 +66,11 @@ class AsciiTable
     protected mixed $formatter;
 
     /**
+     * @var string|null
+     */
+    protected ?string $title;
+
+    /**
      * @param array $data
      */
     public function __construct(array $data = [])
@@ -74,6 +79,7 @@ class AsciiTable
             ->setIndentation('')
             ->setKeysAlignment(self::AlignCenter)
             ->setValuesAlignment(self::AlignLeft)
+            ->setTitle(null)
             ->setFormatter(null);
     }
 
@@ -95,10 +101,22 @@ class AsciiTable
             $this->setData($data);
 
         $data = $this->prepare();
+        $this->expandWidthsForTitle();
 
         $i = $this->indentation;
 
+        if ($this->keys === []) {
+            return $this->renderTitleOnlyTable($i);
+        }
+
         $table = $i . $this->line('┌', '─', '┬', '┐') . PHP_EOL;
+
+        if ($this->title !== null && $this->title !== '') {
+            $table .= $i . $this->fullWidthRow($this->title, self::AlignCenter) . PHP_EOL;
+            if ($this->displayHeader || $data !== []) {
+                $table .= $i . $this->line('├', '─', '┬', '┤') . PHP_EOL;
+            }
+        }
 
         if ($this->displayHeader) {
             //绘制table header
@@ -113,6 +131,18 @@ class AsciiTable
         $table .= $i . $this->line('└', '─', '┴', '┘') . PHP_EOL;
 
         return $table;
+    }
+
+    /**
+     * @param string|null $title
+     * @return $this
+     */
+    public function setTitle(?string $title): static
+    {
+        $title = trim((string)$title);
+        $this->title = $title !== '' ? $title : null;
+
+        return $this;
     }
 
     /**
@@ -201,6 +231,17 @@ class AsciiTable
             $line .= '│';
         }
         return $line;
+    }
+
+    /**
+     * @param int $alignment
+     * @return string
+     */
+    protected function fullWidthRow(string $value, int $alignment): string
+    {
+        $innerWidth = max(2, $this->innerWidth());
+
+        return '│ ' . $this->mbStrPad($value, $innerWidth - 2, ' ', $alignment) . ' │';
     }
 
     /**
@@ -353,12 +394,9 @@ class AsciiTable
     public static function array2table(array $data, ?string $title = null, bool $print = false): array
     {
         $renderer = new self($data);
+        $renderer->setTitle($title);
         $table = rtrim($renderer->getTable());
         $th_list = $table === '' ? [] : (preg_split('/\R/u', $table) ?: []);
-
-        if ($title !== null && $title !== '') {
-            $th_list = self::injectTitleIntoTopBorder($th_list, $title);
-        }
 
         if ($print) {
             foreach ($th_list as $value) {
@@ -392,50 +430,46 @@ class AsciiTable
     }
 
     /**
-     * @param array<int, string> $lines
-     * @return array<int, string>
+     * @return void
      */
-    protected static function injectTitleIntoTopBorder(array $lines, string $title): array
+    protected function expandWidthsForTitle(): void
     {
-        if ($lines === []) {
-            return [$title];
+        if ($this->title === null || $this->title === '' || $this->keys === []) {
+            return;
         }
 
-        $title = trim($title);
-        if ($title === '') {
-            return $lines;
+        $requiredInnerWidth = self::displayWidth($this->title) + 2;
+        $currentInnerWidth = $this->innerWidth();
+        if ($requiredInnerWidth <= $currentInnerWidth) {
+            return;
         }
 
-        $top = $lines[0];
-        $innerWidth = max(0, self::displayWidth($top) - 2);
-        if ($innerWidth === 0) {
-            return $lines;
+        $lastKey = end($this->keys);
+        if ($lastKey === false) {
+            return;
         }
 
-        $titleCell = ' ' . $title . ' ';
-        if (self::displayWidth($titleCell) > $innerWidth) {
-            $lines[0] = '┌' . self::padDisplay($title, $innerWidth, STR_PAD_BOTH) . '┐';
-            return $lines;
-        }
-
-        $lines[0] = '┌' . self::padDisplayWithChar($titleCell, $innerWidth, '─', STR_PAD_BOTH) . '┐';
-        return $lines;
+        $this->widths[$lastKey] = ($this->widths[$lastKey] ?? 0) + ($requiredInnerWidth - $currentInnerWidth);
     }
 
-    protected static function padDisplayWithChar(string $value, int $width, string $padChar, int $alignment): string
+    protected function innerWidth(): int
     {
-        $visible = self::displayWidth($value);
-        $padding = max(0, $width - $visible);
-        if ($alignment === STR_PAD_LEFT) {
-            return str_repeat($padChar, $padding) . $value;
+        if ($this->keys === []) {
+            return $this->title === null ? 0 : self::displayWidth($this->title) + 2;
         }
 
-        if ($alignment === STR_PAD_BOTH) {
-            $left = intdiv($padding, 2);
-            $right = $padding - $left;
-            return str_repeat($padChar, $left) . $value . str_repeat($padChar, $right);
+        return array_sum($this->widths) + count($this->keys) * 3 - 1;
+    }
+
+    protected function renderTitleOnlyTable(string $indentation): string
+    {
+        if ($this->title === null || $this->title === '') {
+            return '';
         }
 
-        return $value . str_repeat($padChar, $padding);
+        $width = self::displayWidth($this->title) + 2;
+        return $indentation . '┌' . str_repeat('─', $width) . '┐' . PHP_EOL
+            . $indentation . '│ ' . $this->title . ' │' . PHP_EOL
+            . $indentation . '└' . str_repeat('─', $width) . '┘' . PHP_EOL;
     }
 }
