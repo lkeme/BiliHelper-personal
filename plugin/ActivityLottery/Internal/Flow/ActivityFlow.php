@@ -258,8 +258,8 @@ final class ActivityFlow
         if ($currentNodeIndex < 0) {
             throw new RuntimeException('ActivityFlow current_node_index 不能为负数');
         }
-        if ($nodes === [] && $currentNodeIndex !== 0) {
-            throw new RuntimeException('ActivityFlow nodes 为空时 current_node_index 必须为 0');
+        if ($nodes === []) {
+            throw new RuntimeException('ActivityFlow nodes 至少包含一个节点');
         }
         foreach ($nodes as $index => $node) {
             if (!$node instanceof ActivityNode) {
@@ -269,7 +269,7 @@ final class ActivityFlow
                 ));
             }
         }
-        if ($nodes !== [] && $currentNodeIndex >= count($nodes)) {
+        if ($currentNodeIndex >= count($nodes)) {
             throw new RuntimeException('ActivityFlow current_node_index 越界');
         }
         foreach ($logs as $index => $log) {

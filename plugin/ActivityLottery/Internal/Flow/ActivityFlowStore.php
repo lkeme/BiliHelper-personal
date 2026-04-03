@@ -109,7 +109,7 @@ final class ActivityFlowStore
      */
     public function load(string $bizDate): array
     {
-        $normalizedBizDate = trim($bizDate);
+        $normalizedBizDate = ActivityFlow::normalizeBizDate($bizDate);
         $rows = Cache::get($this->cacheKey($normalizedBizDate), $this->scope);
         if ($rows === false) {
             return [];

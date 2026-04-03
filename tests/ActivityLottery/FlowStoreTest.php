@@ -104,6 +104,9 @@ try {
     ActivityNode::fromArray([
         'type' => 'x',
         'status' => 'invalid-status',
+        'payload' => [],
+        'context' => [],
+        'attempts' => 0,
     ]);
 } catch (\RuntimeException) {
     $invalidNodeStatusThrown = true;
@@ -158,6 +161,17 @@ try {
     $emptyNodesIndexThrown = true;
 }
 Assert::true($emptyNodesIndexThrown, 'nodes 为空时 current_node_index>0 应被拒绝。');
+
+$emptyNodesInvariantThrown = false;
+try {
+    ActivityFlow::fromArray(array_merge($flow->toArray(), [
+        'nodes' => [],
+        'current_node_index' => 0,
+    ]));
+} catch (\RuntimeException) {
+    $emptyNodesInvariantThrown = true;
+}
+Assert::true($emptyNodesInvariantThrown, 'flow nodes 为空时应被拒绝。');
 
 $goodRow = ActivityFlowFactory::create($catalogItem, '2026-04-04', [new ActivityNode('ok')])->toArray();
 Cache::set('activity_flow_day:2026-04-04', [
@@ -216,6 +230,9 @@ try {
     ActivityNode::fromArray([
         'type' => 'node-with-invalid-result',
         'status' => ActivityNodeStatus::PENDING,
+        'payload' => [],
+        'context' => [],
+        'attempts' => 0,
         'result' => 'invalid-result',
     ]);
 } catch (\RuntimeException) {
@@ -335,6 +352,8 @@ try {
         'type' => 'node-with-invalid-payload',
         'status' => ActivityNodeStatus::PENDING,
         'payload' => 'invalid-payload',
+        'context' => [],
+        'attempts' => 0,
     ]);
 } catch (\RuntimeException) {
     $invalidNodePayloadThrown = true;
@@ -346,6 +365,9 @@ try {
     ActivityNode::fromArray([
         'type' => 'node-with-invalid-result-payload',
         'status' => ActivityNodeStatus::PENDING,
+        'payload' => [],
+        'context' => [],
+        'attempts' => 0,
         'result' => [
             'ok' => true,
             'payload' => 'invalid-result-payload',
@@ -381,6 +403,9 @@ try {
     ActivityNode::fromArray([
         'type' => 'node-with-invalid-result-ok',
         'status' => ActivityNodeStatus::PENDING,
+        'payload' => [],
+        'context' => [],
+        'attempts' => 0,
         'result' => [
             'ok' => 'false',
             'payload' => [],
@@ -422,6 +447,9 @@ try {
     ActivityNode::fromArray([
         'type' => [],
         'status' => ActivityNodeStatus::PENDING,
+        'payload' => [],
+        'context' => [],
+        'attempts' => 0,
     ]);
 } catch (\RuntimeException) {
     $invalidNodeTypeArrayThrown = true;
@@ -433,6 +461,9 @@ try {
     ActivityNode::fromArray([
         'type' => 'node-with-invalid-result-message',
         'status' => ActivityNodeStatus::PENDING,
+        'payload' => [],
+        'context' => [],
+        'attempts' => 0,
         'result' => [
             'ok' => true,
             'message' => 123,
@@ -687,3 +718,11 @@ try {
     $emptyNodesFactoryThrown = true;
 }
 Assert::true($emptyNodesFactoryThrown, '工厂创建不应接受空节点流。');
+
+$invalidBizDateOnLoadThrown = false;
+try {
+    $store->load('2026/04/02');
+} catch (\RuntimeException) {
+    $invalidBizDateOnLoadThrown = true;
+}
+Assert::true($invalidBizDateOnLoadThrown, 'load 非法格式 biz_date 时应直接抛出异常。');
