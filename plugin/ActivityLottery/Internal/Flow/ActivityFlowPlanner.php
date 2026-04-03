@@ -9,11 +9,33 @@ use RuntimeException;
 final class ActivityFlowPlanner
 {
     /**
+     * capability 越小优先级越高；未识别能力统一放到最后。
+     *
+     * @var array<string, int>
+     */
+    private const DYNAMIC_CAPABILITY_PRIORITY = [
+        'claim_reward' => 100,
+        EraActivityTask::CAPABILITY_SHARE => 200,
+        EraActivityTask::CAPABILITY_FOLLOW => 300,
+        'unfollow' => 350,
+        EraActivityTask::CAPABILITY_WATCH_VIDEO_FIXED => 400,
+        EraActivityTask::CAPABILITY_WATCH_VIDEO_TOPIC => 400,
+        EraActivityTask::CAPABILITY_WATCH_LIVE => 500,
+    ];
+
+    /**
      * @return array<string, array{type: string, default_lane: string, allowed_lanes: array<int, string>, supported: bool, default_status: string}>
      */
     public static function capabilityContracts(): array
     {
         return [
+            'claim_reward' => [
+                'type' => 'claim_reward',
+                'default_lane' => 'claim_reward',
+                'allowed_lanes' => ['claim_reward'],
+                'supported' => true,
+                'default_status' => ActivityNodeStatus::PENDING,
+            ],
             EraActivityTask::CAPABILITY_FOLLOW => [
                 'type' => 'era_task_follow',
                 'default_lane' => 'follow',
@@ -170,9 +192,33 @@ final class ActivityFlowPlanner
     private function dynamicEraNodes(mixed $pageSnapshot): array
     {
         $tasks = $this->extractTasks($pageSnapshot);
-        $nodes = [];
-        foreach ($tasks as $task) {
+        $sortableTasks = [];
+        foreach ($tasks as $index => $task) {
             $normalizedTask = $this->normalizeTask($task);
+            $sortableTasks[] = [
+                'task' => $normalizedTask,
+                'index' => (int)$index,
+                'priority' => $this->dynamicTaskPriority($normalizedTask['capability']),
+            ];
+        }
+        usort($sortableTasks, static function (array $left, array $right): int {
+            return [
+                $left['priority'],
+                $left['task']['task_id'],
+                $left['task']['capability'],
+                $left['index'],
+            ] <=> [
+                $right['priority'],
+                $right['task']['task_id'],
+                $right['task']['capability'],
+                $right['index'],
+            ];
+        });
+
+        $nodes = [];
+        foreach ($sortableTasks as $item) {
+            /** @var array{task_id: string, capability: string} $normalizedTask */
+            $normalizedTask = $item['task'];
             if ($normalizedTask['task_id'] === '') {
                 $nodes[] = new ActivityNode(
                     'era_task_skipped',
@@ -237,15 +283,41 @@ final class ActivityFlowPlanner
             return [];
         }
 
-        if (is_array($pageSnapshot) && is_array($pageSnapshot['tasks'] ?? null)) {
+        if (is_array($pageSnapshot)) {
+            if (!array_key_exists('tasks', $pageSnapshot)) {
+                return [];
+            }
+
+            if (!is_array($pageSnapshot['tasks'])) {
+                throw new RuntimeException(sprintf(
+                    'snapshot.tasks 必须为数组，当前为: %s',
+                    get_debug_type($pageSnapshot['tasks']),
+                ));
+            }
+
             return array_values($pageSnapshot['tasks']);
         }
 
-        if (is_object($pageSnapshot) && is_array($pageSnapshot->tasks ?? null)) {
+        if (is_object($pageSnapshot)) {
+            if (!$pageSnapshot instanceof \stdClass && !$pageSnapshot instanceof \Bhp\Plugin\ActivityLottery\Internal\EraActivityPage) {
+                throw new RuntimeException(sprintf('未知 snapshot 对象类型: %s', get_debug_type($pageSnapshot)));
+            }
+
+            if (!property_exists($pageSnapshot, 'tasks')) {
+                return [];
+            }
+
+            if (!is_array($pageSnapshot->tasks)) {
+                throw new RuntimeException(sprintf(
+                    'snapshot.tasks 必须为数组，当前为: %s',
+                    get_debug_type($pageSnapshot->tasks),
+                ));
+            }
+
             return array_values($pageSnapshot->tasks);
         }
 
-        return [];
+        throw new RuntimeException(sprintf('非法 snapshot 类型: %s', get_debug_type($pageSnapshot)));
     }
 
     /**
@@ -318,5 +390,10 @@ final class ActivityFlowPlanner
         }
 
         return $contracts[$type]['default_lane'];
+    }
+
+    private function dynamicTaskPriority(string $capability): int
+    {
+        return self::DYNAMIC_CAPABILITY_PRIORITY[$capability] ?? 1_000;
     }
 }

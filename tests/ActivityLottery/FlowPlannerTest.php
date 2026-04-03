@@ -122,23 +122,23 @@ $skippedNodes = array_values(array_filter(
     static fn (ActivityNode $node): bool => $node->type() === 'era_task_skipped',
 ));
 Assert::same(2, count($skippedNodes), '当前输入中 unknown 能力与空 task_id 都应生成 skipped 节点。');
+$unsupportedSkippedNodes = array_values(array_filter(
+    $skippedNodes,
+    static fn (ActivityNode $node): bool => (string)($node->payload()['task_id'] ?? '') === 't-unknown',
+));
+Assert::same(1, count($unsupportedSkippedNodes), 'unknown 能力应生成携带 task_id 的 skipped 节点。');
 Assert::same(
     ActivityNodeStatus::SKIPPED,
-    $skippedNodes[0]->status(),
+    $unsupportedSkippedNodes[0]->status(),
     '不支持能力生成的节点状态应为 skipped。'
 );
 Assert::true(
-    trim((string)($skippedNodes[0]->payload()['reason'] ?? '')) !== '',
+    trim((string)($unsupportedSkippedNodes[0]->payload()['reason'] ?? '')) !== '',
     '不支持能力生成的 skipped 节点应携带 reason。'
 );
 Assert::same(
-    't-unknown',
-    (string)($skippedNodes[0]->payload()['task_id'] ?? ''),
-    '不支持能力生成的 skipped 节点应保留 task_id。'
-);
-Assert::same(
     'unknown',
-    (string)($skippedNodes[0]->payload()['capability'] ?? ''),
+    (string)($unsupportedSkippedNodes[0]->payload()['capability'] ?? ''),
     '不支持能力生成的 skipped 节点应保留 capability。'
 );
 $missingTaskIdNodes = array_values(array_filter(
@@ -290,3 +290,79 @@ try {
     $invalidArrayCapabilityThrown = str_contains($e->getMessage(), 'capability');
 }
 Assert::true($invalidArrayCapabilityThrown, '数组任务 capability 为不可接受类型时必须显式失败。');
+
+$invalidTasksContainerThrown = false;
+try {
+    $planner->plan(
+        $catalogItem,
+        ['tasks' => 'not-an-array'],
+        '2026-04-02',
+    );
+} catch (\RuntimeException $e) {
+    $invalidTasksContainerThrown = str_contains($e->getMessage(), 'tasks') && str_contains($e->getMessage(), '数组');
+}
+Assert::true($invalidTasksContainerThrown, 'tasks 键存在但不是数组时必须显式失败。');
+
+$unknownSnapshotObjectThrown = false;
+try {
+    $planner->plan(
+        $catalogItem,
+        new class {
+            /** @var array<int, array<string, string>> */
+            public array $tasks = [
+                ['task_id' => 'x1', 'capability' => EraActivityTask::CAPABILITY_FOLLOW],
+            ];
+        },
+        '2026-04-02',
+    );
+} catch (\RuntimeException $e) {
+    $unknownSnapshotObjectThrown = str_contains($e->getMessage(), 'snapshot') && str_contains($e->getMessage(), '对象类型');
+}
+Assert::true($unknownSnapshotObjectThrown, '未知 snapshot 对象类型时必须显式失败。');
+
+$stableOrderSnapshotA = (object)[
+    'tasks' => [
+        ['task_id' => 'a-live', 'capability' => EraActivityTask::CAPABILITY_WATCH_LIVE],
+        ['task_id' => 'a-follow', 'capability' => EraActivityTask::CAPABILITY_FOLLOW],
+        ['task_id' => 'a-share', 'capability' => EraActivityTask::CAPABILITY_SHARE],
+        ['task_id' => 'a-unsupported', 'capability' => EraActivityTask::CAPABILITY_MANUAL],
+        ['task_id' => 'a-video-topic', 'capability' => EraActivityTask::CAPABILITY_WATCH_VIDEO_TOPIC],
+        ['task_id' => 'a-video-fixed', 'capability' => EraActivityTask::CAPABILITY_WATCH_VIDEO_FIXED],
+    ],
+];
+$stableOrderSnapshotB = (object)[
+    'tasks' => [
+        ['task_id' => 'a-video-fixed', 'capability' => EraActivityTask::CAPABILITY_WATCH_VIDEO_FIXED],
+        ['task_id' => 'a-unsupported', 'capability' => EraActivityTask::CAPABILITY_MANUAL],
+        ['task_id' => 'a-share', 'capability' => EraActivityTask::CAPABILITY_SHARE],
+        ['task_id' => 'a-live', 'capability' => EraActivityTask::CAPABILITY_WATCH_LIVE],
+        ['task_id' => 'a-video-topic', 'capability' => EraActivityTask::CAPABILITY_WATCH_VIDEO_TOPIC],
+        ['task_id' => 'a-follow', 'capability' => EraActivityTask::CAPABILITY_FOLLOW],
+    ],
+];
+
+$stableOrderFlowA = $planner->plan($catalogItem, $stableOrderSnapshotA, '2026-04-02');
+$stableOrderFlowB = $planner->plan($catalogItem, $stableOrderSnapshotB, '2026-04-02');
+$stableOrderDynamicA = array_values(array_filter(
+    $stableOrderFlowA->nodes(),
+    static fn (ActivityNode $node): bool => str_starts_with($node->type(), 'era_task_'),
+));
+$stableOrderDynamicB = array_values(array_filter(
+    $stableOrderFlowB->nodes(),
+    static fn (ActivityNode $node): bool => str_starts_with($node->type(), 'era_task_'),
+));
+$stableOrderTypeSequenceA = array_map(
+    static fn (ActivityNode $node): string => $node->type(),
+    $stableOrderDynamicA,
+);
+$stableOrderTypeSequenceB = array_map(
+    static fn (ActivityNode $node): string => $node->type(),
+    $stableOrderDynamicB,
+);
+Assert::same($stableOrderTypeSequenceA, $stableOrderTypeSequenceB, '同一任务集合乱序输入时，动态 ERA 节点顺序必须稳定。');
+
+Assert::same(
+    ['era_task_share', 'era_task_follow', 'era_task_watch_video_fixed', 'era_task_watch_video_topic', 'era_task_watch_live', 'era_task_skipped'],
+    $stableOrderTypeSequenceA,
+    '动态 ERA 节点应按 share/follow/watch_video/watch_live/unsupported 的稳定优先级排序。',
+);
