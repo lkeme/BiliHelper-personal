@@ -36,6 +36,13 @@ final class ActivityFlowStore
         foreach ($grouped as $bizDate => $items) {
             $existingRows = Cache::get($this->cacheKey((string)$bizDate), $this->scope);
             $mergedById = [];
+            if ($existingRows !== false && !is_array($existingRows)) {
+                throw new RuntimeException(sprintf(
+                    'ActivityFlowStore::save 读取历史数据失败 biz_date=%s：顶层容器非法',
+                    (string)$bizDate,
+                ));
+            }
+
             if (is_array($existingRows)) {
                 foreach ($existingRows as $index => $row) {
                     if (!is_array($row)) {
@@ -75,8 +82,14 @@ final class ActivityFlowStore
     public function load(string $bizDate): array
     {
         $rows = Cache::get($this->cacheKey($bizDate), $this->scope);
-        if (!is_array($rows)) {
+        if ($rows === false) {
             return [];
+        }
+        if (!is_array($rows)) {
+            throw new RuntimeException(sprintf(
+                'ActivityFlowStore::load 解析失败 biz_date=%s：顶层容器非法',
+                $bizDate,
+            ));
         }
 
         $flows = [];

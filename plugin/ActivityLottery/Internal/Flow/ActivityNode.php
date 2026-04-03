@@ -56,10 +56,14 @@ final class ActivityNode
         if (!is_array($context)) {
             throw new RuntimeException('ActivityNode context 必须为数组');
         }
+        $payload = $data['payload'] ?? [];
+        if (!is_array($payload)) {
+            throw new RuntimeException('ActivityNode payload 必须为数组');
+        }
 
         return new self(
             (string)($data['type'] ?? ''),
-            is_array($data['payload'] ?? null) ? $data['payload'] : [],
+            $payload,
             (string)($data['status'] ?? ActivityNodeStatus::PENDING),
             $context,
             $result,

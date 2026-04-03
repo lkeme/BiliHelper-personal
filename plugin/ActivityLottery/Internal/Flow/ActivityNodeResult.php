@@ -2,6 +2,8 @@
 
 namespace Bhp\Plugin\ActivityLottery\Internal\Flow;
 
+use RuntimeException;
+
 final class ActivityNodeResult
 {
     /**
@@ -20,10 +22,15 @@ final class ActivityNodeResult
      */
     public static function fromArray(array $data): self
     {
+        $payload = $data['payload'] ?? [];
+        if (!is_array($payload)) {
+            throw new RuntimeException('ActivityNodeResult payload 必须为数组');
+        }
+
         return new self(
             (bool)($data['ok'] ?? false),
             trim((string)($data['message'] ?? '')),
-            is_array($data['payload'] ?? null) ? $data['payload'] : [],
+            $payload,
             (int)($data['created_at'] ?? 0),
         );
     }

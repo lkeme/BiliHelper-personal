@@ -256,3 +256,102 @@ Assert::same('2026-04-05', $canonicalFlow->bizDate(), '构造边界应 canonical
 Assert::same(ActivityFlowStatus::PENDING, $canonicalFlow->status(), '构造边界应 canonicalize flow status。');
 Assert::same('canonical-node', $canonicalFlow->nodes()[0]->type(), '构造边界应 canonicalize node type。');
 Assert::same(ActivityNodeStatus::WAITING, $canonicalFlow->nodes()[0]->status(), '构造边界应 canonicalize node status。');
+
+Cache::set('activity_flow_day:2026-04-06', 'broken-container', 'ActivityLottery');
+$brokenContainerLoadThrown = false;
+try {
+    $store->load('2026-04-06');
+} catch (\RuntimeException) {
+    $brokenContainerLoadThrown = true;
+}
+Assert::true($brokenContainerLoadThrown, '顶层缓存容器为字符串时 load 应严格失败。');
+
+Cache::set('activity_flow_day:2026-04-07', 123, 'ActivityLottery');
+$brokenContainerSaveThrown = false;
+try {
+    $store->save([
+        ActivityFlowFactory::create($catalogItem, '2026-04-07', [new ActivityNode('noop-save')]),
+    ]);
+} catch (\RuntimeException) {
+    $brokenContainerSaveThrown = true;
+}
+Assert::true($brokenContainerSaveThrown, '顶层缓存容器为数字时 save 应严格失败。');
+
+$invalidCtorNodesThrown = false;
+try {
+    new ActivityFlow(
+        'flow-invalid-nodes',
+        '2026-04-08',
+        ['id' => 'act-ctor'],
+        ActivityFlowStatus::PENDING,
+        0,
+        ['not-node'],
+        0,
+        0,
+        new \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlowContext(),
+        [],
+        time(),
+        time(),
+    );
+} catch (\RuntimeException) {
+    $invalidCtorNodesThrown = true;
+}
+Assert::true($invalidCtorNodesThrown, '构造函数应拒绝非 ActivityNode 的 nodes 项。');
+
+$invalidCtorLogsThrown = false;
+try {
+    new ActivityFlow(
+        'flow-invalid-logs',
+        '2026-04-08',
+        ['id' => 'act-ctor'],
+        ActivityFlowStatus::PENDING,
+        0,
+        [new ActivityNode('ok-node')],
+        0,
+        0,
+        new \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlowContext(),
+        ['bad-log'],
+        time(),
+        time(),
+    );
+} catch (\RuntimeException) {
+    $invalidCtorLogsThrown = true;
+}
+Assert::true($invalidCtorLogsThrown, '构造函数应拒绝非数组的 logs 项。');
+
+$invalidFlowActivityThrown = false;
+try {
+    ActivityFlow::fromArray(array_merge($flow->toArray(), [
+        'activity' => 'invalid-activity',
+    ]));
+} catch (\RuntimeException) {
+    $invalidFlowActivityThrown = true;
+}
+Assert::true($invalidFlowActivityThrown, 'flow activity 非数组时应严格失败。');
+
+$invalidNodePayloadThrown = false;
+try {
+    ActivityNode::fromArray([
+        'type' => 'node-with-invalid-payload',
+        'status' => ActivityNodeStatus::PENDING,
+        'payload' => 'invalid-payload',
+    ]);
+} catch (\RuntimeException) {
+    $invalidNodePayloadThrown = true;
+}
+Assert::true($invalidNodePayloadThrown, 'node payload 非数组时应严格失败。');
+
+$invalidNodeResultPayloadThrown = false;
+try {
+    ActivityNode::fromArray([
+        'type' => 'node-with-invalid-result-payload',
+        'status' => ActivityNodeStatus::PENDING,
+        'result' => [
+            'ok' => true,
+            'payload' => 'invalid-result-payload',
+        ],
+    ]);
+} catch (\RuntimeException) {
+    $invalidNodeResultPayloadThrown = true;
+}
+Assert::true($invalidNodeResultPayloadThrown, 'node result.payload 非数组时应严格失败。');

@@ -54,6 +54,7 @@ final class ActivityFlow
             $this->status,
             $this->currentNodeIndex,
             $this->nodes,
+            $this->logs,
             $this->attempts,
         );
     }
@@ -63,6 +64,11 @@ final class ActivityFlow
      */
     public static function fromArray(array $data): self
     {
+        $rawActivity = $data['activity'] ?? [];
+        if (!is_array($rawActivity)) {
+            throw new RuntimeException('ActivityFlow activity 必须为数组');
+        }
+
         $rawNodes = $data['nodes'] ?? [];
         if (!is_array($rawNodes)) {
             throw new RuntimeException('ActivityFlow nodes 必须为数组');
@@ -104,7 +110,7 @@ final class ActivityFlow
         return new self(
             (string)($data['flow_id'] ?? ''),
             (string)($data['biz_date'] ?? ''),
-            is_array($data['activity'] ?? null) ? $data['activity'] : [],
+            $rawActivity,
             (string)($data['status'] ?? ActivityFlowStatus::PENDING),
             (int)($data['current_node_index'] ?? 0),
             $nodes,
@@ -235,6 +241,7 @@ final class ActivityFlow
         string $status,
         int $currentNodeIndex,
         array $nodes,
+        array $logs,
         int $attempts,
     ): void {
         if (trim($flowId) === '') {
@@ -255,8 +262,24 @@ final class ActivityFlow
         if ($nodes === [] && $currentNodeIndex !== 0) {
             throw new RuntimeException('ActivityFlow nodes 为空时 current_node_index 必须为 0');
         }
+        foreach ($nodes as $index => $node) {
+            if (!$node instanceof ActivityNode) {
+                throw new RuntimeException(sprintf(
+                    'ActivityFlow nodes[%d] 必须为 ActivityNode',
+                    (int)$index,
+                ));
+            }
+        }
         if ($nodes !== [] && $currentNodeIndex >= count($nodes)) {
             throw new RuntimeException('ActivityFlow current_node_index 越界');
+        }
+        foreach ($logs as $index => $log) {
+            if (!is_array($log)) {
+                throw new RuntimeException(sprintf(
+                    'ActivityFlow logs[%d] 必须为数组',
+                    (int)$index,
+                ));
+            }
         }
     }
 }
