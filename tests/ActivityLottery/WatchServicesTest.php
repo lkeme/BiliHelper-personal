@@ -304,6 +304,59 @@ try {
 Assert::true($liveStartBoundaryFailed, 'start 在会话边界非法时应快速失败。');
 Assert::same(0, count($liveStartCalls), 'start 边界校验失败时不应触发外部 action。');
 
+$liveStartIdentityCalls = [];
+$liveStartIdentityBoundaryService = new LiveWatchService(
+    roomEntryAction: static function (int $roomId) use (&$liveStartIdentityCalls): void {
+        $liveStartIdentityCalls[] = ['roomEntryAction', $roomId];
+    },
+    enterAction: static function (...$args) use (&$liveStartIdentityCalls): array {
+        $liveStartIdentityCalls[] = ['enter', ...$args];
+        return ['code' => 0, 'data' => []];
+    },
+    userAgentResolver: static fn (): string => 'ua-test',
+);
+$liveStartIdentityBoundaryFailed = false;
+try {
+    $liveStartIdentityBoundaryService->start(1, [
+        'ruid' => 1,
+        'parent_area_id' => 2,
+        'area_id' => 3,
+        'live_buvid' => '',
+        'live_uuid' => '',
+    ]);
+} catch (\RuntimeException) {
+    $liveStartIdentityBoundaryFailed = true;
+}
+Assert::true($liveStartIdentityBoundaryFailed, 'start 在 live_buvid/live_uuid 非法时应快速失败。');
+Assert::same(0, count($liveStartIdentityCalls), 'start 身份边界校验失败时不应触发外部 action。');
+
+$liveStartMissingSecretService = new LiveWatchService(
+    roomEntryAction: static function (...$args): void {
+    },
+    enterAction: static fn (...$args): array => [
+        'code' => 0,
+        'data' => [
+            'secret_key' => 'k1',
+            'heartbeat_interval' => 60,
+            'timestamp' => 1234,
+        ],
+    ],
+    userAgentResolver: static fn (): string => 'ua-test',
+    buvidFactory: static fn (): string => 'buvid-test',
+    uuidFactory: static fn (): string => 'uuid-test',
+);
+$liveStartMissingSecretFailed = false;
+try {
+    $liveStartMissingSecretService->start(1, [
+        'ruid' => 1,
+        'parent_area_id' => 2,
+        'area_id' => 3,
+    ]);
+} catch (\RuntimeException) {
+    $liveStartMissingSecretFailed = true;
+}
+Assert::true($liveStartMissingSecretFailed, 'start 在 code=0 但缺少 secret_rule 时应快速失败。');
+
 $liveHeartbeatBoundaryCalls = [];
 $liveHeartbeatBoundaryService = new LiveWatchService(
     heartbeatAction: static function (...$args) use (&$liveHeartbeatBoundaryCalls): array {
@@ -330,3 +383,30 @@ try {
 }
 Assert::true($liveHeartbeatBoundaryFailed, 'heartbeat 在会话边界非法时应快速失败。');
 Assert::same(0, count($liveHeartbeatBoundaryCalls), 'heartbeat 边界校验失败时不应触发外部 action。');
+
+$liveHeartbeatRoomBoundaryCalls = [];
+$liveHeartbeatRoomBoundaryService = new LiveWatchService(
+    heartbeatAction: static function (...$args) use (&$liveHeartbeatRoomBoundaryCalls): array {
+        $liveHeartbeatRoomBoundaryCalls[] = $args;
+        return ['code' => 0, 'data' => []];
+    },
+    userAgentResolver: static fn (): string => 'ua-test',
+);
+$liveHeartbeatRoomBoundaryFailed = false;
+try {
+    $liveHeartbeatRoomBoundaryService->heartbeat(LiveWatchSession::start(0, [
+        'ruid' => 1,
+        'parent_area_id' => 2,
+        'area_id' => 3,
+        'heartbeat_interval' => 60,
+        'ets' => 100,
+        'secret_key' => 's1',
+        'secret_rule' => [0],
+        'live_buvid' => 'buvid-x',
+        'live_uuid' => 'uuid-x',
+    ]));
+} catch (\RuntimeException) {
+    $liveHeartbeatRoomBoundaryFailed = true;
+}
+Assert::true($liveHeartbeatRoomBoundaryFailed, 'heartbeat 在 room_id/ruid/area 非法时应快速失败。');
+Assert::same(0, count($liveHeartbeatRoomBoundaryCalls), 'heartbeat 房间边界校验失败时不应触发外部 action。');

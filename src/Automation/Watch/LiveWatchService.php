@@ -86,7 +86,7 @@ final class LiveWatchService
         $heartbeatInterval = max(30, (int)($data['heartbeat_interval'] ?? 60));
         $ets = (int)($data['timestamp'] ?? 0);
 
-        if ($secretKey === '' || !is_array($secretRule) || $ets <= 0) {
+        if ($secretKey === '' || !is_array($secretRule) || $secretRule === [] || $ets <= 0) {
             throw new \RuntimeException('x25Kn/E返回缺少必要会话字段');
         }
 
@@ -149,6 +149,8 @@ final class LiveWatchService
             || $session->ruid <= 0
             || $session->parentAreaId <= 0
             || $session->areaId <= 0
+            || trim($session->liveBuvid) === ''
+            || trim($session->liveUuid) === ''
         ) {
             throw new \RuntimeException('直播观看会话参数无效');
         }
@@ -157,6 +159,11 @@ final class LiveWatchService
     private function assertHeartbeatSessionBoundary(LiveWatchSession $session): void
     {
         if (
+            $session->roomId <= 0
+            || $session->ruid <= 0
+            || $session->parentAreaId <= 0
+            || $session->areaId <= 0
+            ||
             $session->ets <= 0
             || trim($session->secretKey) === ''
             || $session->secretRule === []
