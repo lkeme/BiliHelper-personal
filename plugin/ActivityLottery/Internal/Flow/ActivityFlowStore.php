@@ -19,6 +19,9 @@ final class ActivityFlowStore
 
     /**
      * @param ActivityFlow[] $flows
+     *
+     * 当前实现采用“整日 blob 读改写”，默认前提是单进程/单写者顺序写入；
+     * 不满足该前提时可能发生并发覆盖，后续若引入多写者需升级为 CAS/事务化策略。
      */
     public function save(array $flows): void
     {
@@ -64,6 +67,12 @@ final class ActivityFlowStore
                             $throwable->getMessage(),
                         ), 0, $throwable);
                     }
+                    $this->assertFlowBizDateMatchesBucket(
+                        $restored,
+                        (string)$bizDate,
+                        'save',
+                        (int)$index,
+                    );
                     $mergedById[$restored->id()] = $restored->toArray();
                 }
             }
@@ -81,14 +90,15 @@ final class ActivityFlowStore
      */
     public function load(string $bizDate): array
     {
-        $rows = Cache::get($this->cacheKey($bizDate), $this->scope);
+        $normalizedBizDate = trim($bizDate);
+        $rows = Cache::get($this->cacheKey($normalizedBizDate), $this->scope);
         if ($rows === false) {
             return [];
         }
         if (!is_array($rows)) {
             throw new RuntimeException(sprintf(
                 'ActivityFlowStore::load 解析失败 biz_date=%s：顶层容器非法',
-                $bizDate,
+                $normalizedBizDate,
             ));
         }
 
@@ -97,23 +107,25 @@ final class ActivityFlowStore
             if (!is_array($row)) {
                 throw new RuntimeException(sprintf(
                     'ActivityFlowStore::load 解析失败 biz_date=%s index=%d：行结构非法',
-                    $bizDate,
+                    $normalizedBizDate,
                     (int)$index,
                 ));
             }
 
             try {
-                $flows[] = ActivityFlow::fromArray($row);
+                $flow = ActivityFlow::fromArray($row);
             } catch (\Throwable $throwable) {
                 $flowId = trim((string)($row['flow_id'] ?? ''));
                 throw new RuntimeException(sprintf(
                     'ActivityFlowStore::load 解析失败 biz_date=%s index=%d flow_id=%s: %s',
-                    $bizDate,
+                    $normalizedBizDate,
                     (int)$index,
                     $flowId !== '' ? $flowId : '<empty>',
                     $throwable->getMessage(),
                 ), 0, $throwable);
             }
+            $this->assertFlowBizDateMatchesBucket($flow, $normalizedBizDate, 'load', (int)$index);
+            $flows[] = $flow;
         }
 
         return $flows;
@@ -122,5 +134,26 @@ final class ActivityFlowStore
     private function cacheKey(string $bizDate): string
     {
         return self::CACHE_KEY_PREFIX . trim($bizDate);
+    }
+
+    private function assertFlowBizDateMatchesBucket(
+        ActivityFlow $flow,
+        string $bucketBizDate,
+        string $operation,
+        int $index,
+    ): void {
+        $flowBizDate = $flow->bizDate();
+        if ($flowBizDate === $bucketBizDate) {
+            return;
+        }
+
+        throw new RuntimeException(sprintf(
+            'ActivityFlowStore::%s biz_date 不一致 bucket=%s index=%d flow_id=%s flow.biz_date=%s',
+            $operation,
+            $bucketBizDate,
+            $index,
+            $flow->id(),
+            $flowBizDate,
+        ));
     }
 }

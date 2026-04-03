@@ -28,7 +28,7 @@ final class ActivityNodeResult
         }
 
         return new self(
-            (bool)($data['ok'] ?? false),
+            self::readOk($data),
             trim((string)($data['message'] ?? '')),
             $payload,
             (int)($data['created_at'] ?? 0),
@@ -69,5 +69,25 @@ final class ActivityNodeResult
             'payload' => $this->payload,
             'created_at' => $this->createdAt,
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private static function readOk(array $data): bool
+    {
+        if (!array_key_exists('ok', $data)) {
+            return false;
+        }
+
+        $value = $data['ok'];
+        if (!is_bool($value)) {
+            throw new RuntimeException(sprintf(
+                'ActivityNodeResult ok 必须为 bool，实际类型: %s',
+                get_debug_type($value),
+            ));
+        }
+
+        return $value;
     }
 }

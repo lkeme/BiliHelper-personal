@@ -355,3 +355,54 @@ try {
     $invalidNodeResultPayloadThrown = true;
 }
 Assert::true($invalidNodeResultPayloadThrown, 'node result.payload 非数组时应严格失败。');
+
+$invalidFlowAttemptsScalarThrown = false;
+try {
+    ActivityFlow::fromArray(array_merge($flow->toArray(), [
+        'attempts' => 'oops',
+    ]));
+} catch (\RuntimeException) {
+    $invalidFlowAttemptsScalarThrown = true;
+}
+Assert::true($invalidFlowAttemptsScalarThrown, 'flow attempts 为坏标量时应严格失败。');
+
+$invalidCurrentNodeIndexScalarThrown = false;
+try {
+    ActivityFlow::fromArray(array_merge($flow->toArray(), [
+        'current_node_index' => 'oops',
+    ]));
+} catch (\RuntimeException) {
+    $invalidCurrentNodeIndexScalarThrown = true;
+}
+Assert::true($invalidCurrentNodeIndexScalarThrown, 'flow current_node_index 为坏标量时应严格失败。');
+
+$invalidNodeResultOkScalarThrown = false;
+try {
+    ActivityNode::fromArray([
+        'type' => 'node-with-invalid-result-ok',
+        'status' => ActivityNodeStatus::PENDING,
+        'result' => [
+            'ok' => 'false',
+            'payload' => [],
+        ],
+    ]);
+} catch (\RuntimeException) {
+    $invalidNodeResultOkScalarThrown = true;
+}
+Assert::true($invalidNodeResultOkScalarThrown, 'node result.ok 非 bool 时应严格失败。');
+
+$bizDateMismatchThrown = false;
+$bizDateMismatchMessage = '';
+$mismatchRow = ActivityFlowFactory::create($catalogItem, '2026-04-09', [new ActivityNode('noop-mismatch')])->toArray();
+Cache::set('activity_flow_day:2026-04-10', [$mismatchRow], 'ActivityLottery');
+try {
+    $store->load('2026-04-10');
+} catch (\RuntimeException $exception) {
+    $bizDateMismatchThrown = true;
+    $bizDateMismatchMessage = $exception->getMessage();
+}
+Assert::true($bizDateMismatchThrown, '桶键与 flow biz_date 不一致时 load 应严格失败。');
+Assert::true(
+    str_contains($bizDateMismatchMessage, '2026-04-10') && str_contains($bizDateMismatchMessage, '2026-04-09'),
+    '桶键与 flow biz_date 不一致异常应包含请求日期与行内日期。'
+);

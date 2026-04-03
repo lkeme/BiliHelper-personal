@@ -112,14 +112,14 @@ final class ActivityFlow
             (string)($data['biz_date'] ?? ''),
             $rawActivity,
             (string)($data['status'] ?? ActivityFlowStatus::PENDING),
-            (int)($data['current_node_index'] ?? 0),
+            self::readIntField($data, 'current_node_index', 0),
             $nodes,
-            (int)($data['next_run_at'] ?? 0),
-            (int)($data['attempts'] ?? 0),
+            self::readIntField($data, 'next_run_at', 0),
+            self::readIntField($data, 'attempts', 0),
             $context,
             $logs,
-            (int)($data['created_at'] ?? 0),
-            (int)($data['updated_at'] ?? 0),
+            self::readIntField($data, 'created_at', 0),
+            self::readIntField($data, 'updated_at', 0),
         );
     }
 
@@ -281,5 +281,26 @@ final class ActivityFlow
                 ));
             }
         }
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private static function readIntField(array $data, string $field, int $default): int
+    {
+        if (!array_key_exists($field, $data)) {
+            return $default;
+        }
+
+        $value = $data[$field];
+        if (!is_int($value)) {
+            throw new RuntimeException(sprintf(
+                'ActivityFlow %s 必须为 int，实际类型: %s',
+                $field,
+                get_debug_type($value),
+            ));
+        }
+
+        return $value;
     }
 }

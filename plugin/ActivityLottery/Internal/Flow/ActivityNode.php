@@ -67,7 +67,7 @@ final class ActivityNode
             (string)($data['status'] ?? ActivityNodeStatus::PENDING),
             $context,
             $result,
-            (int)($data['attempts'] ?? 0),
+            self::readAttempts($data),
         );
     }
 
@@ -148,5 +148,25 @@ final class ActivityNode
         if ($attempts < 0) {
             throw new RuntimeException('ActivityNode attempts 不能为负数');
         }
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private static function readAttempts(array $data): int
+    {
+        if (!array_key_exists('attempts', $data)) {
+            return 0;
+        }
+
+        $value = $data['attempts'];
+        if (!is_int($value)) {
+            throw new RuntimeException(sprintf(
+                'ActivityNode attempts 必须为 int，实际类型: %s',
+                get_debug_type($value),
+            ));
+        }
+
+        return $value;
     }
 }
