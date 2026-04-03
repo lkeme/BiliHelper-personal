@@ -22,7 +22,8 @@ final class RefreshDrawTimesNodeRunner implements NodeRunnerInterface
 
     public function run(ActivityFlow $flow, ActivityNode $node, int $now): ActivityNodeResult
     {
-        $response = $this->drawGateway->refreshTimes($flow->activity());
+        $activity = ResolvedActivityView::fromFlow($flow)->toActivityArray();
+        $response = $this->drawGateway->refreshTimes($activity);
         $code = (int)($response['code'] ?? -1);
         if ($code !== 0) {
             return new ActivityNodeResult(false, '刷新抽奖次数失败', [
@@ -55,4 +56,3 @@ final class RefreshDrawTimesNodeRunner implements NodeRunnerInterface
         ], $now);
     }
 }
-

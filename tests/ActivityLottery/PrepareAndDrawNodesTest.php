@@ -291,6 +291,167 @@ Assert::true($parseResult->ok(), '页面解析节点应执行成功。');
 Assert::same(ActivityNodeStatus::SUCCEEDED, (string)($parseResult->payload()['node_status'] ?? ''), '页面解析节点应返回 succeeded。');
 Assert::same(2, count((array)($parseResult->payload()['context_patch']['era_page_snapshot']['tasks'] ?? [])), '页面解析节点应返回任务快照。');
 
+$pageLevelTargetsHtml = <<<'HTML'
+<html>
+<body>
+<script>
+window.__initialState = {
+  "H5FollowNew": [{
+    "uid":"90001",
+    "uname":"主播A",
+    "addLotteryTimes":true,
+    "followUidList":[{"uid":"90002","uname":"主播B"}]
+  }],
+  "PcSlidePlayer": [{
+    "videoIds":"BV1ab411c7m1,BV2ab411c7m2",
+    "videosDetail":[]
+  }],
+  "H5SlideVideos": [{
+    "aids":"12345,67890",
+    "videoList":[]
+  }],
+  "EraLiveNonRevenuePlayer": [{
+    "roomsConfig":[{"roomId":"2233"}]
+  }],
+  "EraTasklist": [{
+    "tasklist":[
+      {"taskId":"t-follow-page","taskName":"关注主播A","taskStatus":1,"taskAwardType":0,"btnBehavior":[]},
+      {"taskId":"t-video-page","taskName":"观看视频1分钟","taskStatus":1,"taskAwardType":0,"btnBehavior":[]},
+      {"taskId":"t-live-page","taskName":"观看直播10秒","taskStatus":1,"taskAwardType":0,"btnBehavior":[]}
+    ]
+  }],
+  "EraLottery": [{"config":{"activity_id":"activity-page-targets","lottery_id":"lottery-page-targets"}}]
+};
+window.__BILIACT_PAGEINFO__ = {"title":"页面目标测试","page_id":"page-targets"};
+</script>
+</body>
+</html>
+HTML;
+$pageLevelParsed = $parser->parse($pageLevelTargetsHtml);
+Assert::true($pageLevelParsed instanceof EraPageSnapshot, '页面级目标 HTML 应可被解析。');
+$pageLevelFollowTask = findTaskById($pageLevelParsed, 't-follow-page');
+Assert::same(['90001'], $pageLevelFollowTask->targetUids(), '页面级 H5FollowNew 目标应归并到任务 target_uids。');
+Assert::same('now', $pageLevelFollowTask->supportLevel(), '页面级 follow 目标可执行时 support_level 应为 now。');
+$pageLevelVideoTask = findTaskById($pageLevelParsed, 't-video-page');
+Assert::true($pageLevelVideoTask->targetVideoIds() !== [], '页面级 PcSlidePlayer/H5SlideVideos 目标应归并到任务 target_video_ids。');
+$pageLevelLiveTask = findTaskById($pageLevelParsed, 't-live-page');
+Assert::same(['2233'], $pageLevelLiveTask->targetRoomIds(), '页面级 EraLiveNonRevenuePlayer 房间应归并到任务 target_room_ids。');
+Assert::same('now', $pageLevelLiveTask->supportLevel(), '页面级直播目标可执行时 support_level 应为 now。');
+
+$urlOnlyFlow = buildFlowWithActivity([
+    'id' => 'url-only-flow',
+    'title' => '仅 URL 活动',
+    'url' => 'https://www.bilibili.com/blackboard/era/url-only.html',
+], 'refresh_draw_times');
+$urlOnlyFlow = applyContextPatchToFlow($urlOnlyFlow, [
+    'context_patch' => [
+        'era_page_snapshot' => [
+            'activity_id' => 'act-from-context',
+            'page_id' => 'page-from-context',
+            'lottery_id' => 'lottery-from-context',
+            'start_time' => 0,
+            'end_time' => 0,
+            'tasks' => [],
+        ],
+    ],
+]);
+$contextSidEvents = [];
+$contextSidDrawGateway = new DrawGateway(
+    static function (array $payload) use (&$contextSidEvents): array {
+        $contextSidEvents[] = ['type' => 'refresh', 'payload' => $payload];
+        return ['code' => 0, 'data' => ['times' => 1], 'message' => 'ok'];
+    },
+    static fn (array $payload): array => ['code' => 0, 'data' => [['gift_id' => 0, 'gift_name' => '未中奖']], 'message' => 'ok'],
+);
+$contextSidRefreshRunner = new RefreshDrawTimesNodeRunner($contextSidDrawGateway);
+$contextSidRefreshResult = $contextSidRefreshRunner->run(
+    $urlOnlyFlow,
+    new ActivityNode('refresh_draw_times', ['lane' => 'draw_refresh']),
+    time()
+);
+Assert::true($contextSidRefreshResult->ok(), 'lottery_id 仅来自 context 时刷新抽奖次数应成功。');
+Assert::same(
+    'lottery-from-context',
+    (string)($contextSidEvents[0]['payload']['sid'] ?? ''),
+    'lottery_id 缺失时应优先使用 era_page_snapshot.lottery_id 作为 sid。',
+);
+
+$validateFromContextFlow = buildFlowWithActivity([
+    'id' => 'validate-from-context-flow',
+    'title' => '时间窗来自 context',
+    'url' => 'https://www.bilibili.com/blackboard/era/validate-context.html',
+    'start_time' => 0,
+    'end_time' => 0,
+], 'validate_activity_window');
+$futureStart = time() + 1800;
+$validateFromContextWaitingFlow = applyContextPatchToFlow($validateFromContextFlow, [
+    'context_patch' => [
+        'era_page_snapshot' => [
+            'activity_id' => 'ctx-act-waiting',
+            'page_id' => 'ctx-page-waiting',
+            'lottery_id' => 'ctx-lottery-waiting',
+            'start_time' => $futureStart,
+            'end_time' => 0,
+            'tasks' => [],
+        ],
+    ],
+]);
+$validateFromContextWaiting = $validateRunner->run(
+    $validateFromContextWaitingFlow,
+    new ActivityNode('validate_activity_window', ['lane' => 'task_status']),
+    time()
+);
+Assert::same(ActivityNodeStatus::WAITING, (string)($validateFromContextWaiting->payload()['node_status'] ?? ''), 'catalog 仅 URL 时，validate 应读取 context.start_time 并返回 waiting。');
+Assert::same($futureStart, (int)($validateFromContextWaiting->payload()['next_run_at'] ?? 0), 'waiting 场景应将 next_run_at 设为 context.start_time。');
+
+$validateFromContextExpiredFlow = applyContextPatchToFlow($validateFromContextFlow, [
+    'context_patch' => [
+        'era_page_snapshot' => [
+            'activity_id' => 'ctx-act-expired',
+            'page_id' => 'ctx-page-expired',
+            'lottery_id' => 'ctx-lottery-expired',
+            'start_time' => 0,
+            'end_time' => time() - 1800,
+            'tasks' => [],
+        ],
+    ],
+]);
+$validateFromContextExpired = $validateRunner->run(
+    $validateFromContextExpiredFlow,
+    new ActivityNode('validate_activity_window', ['lane' => 'task_status']),
+    time()
+);
+Assert::same(ActivityNodeStatus::SKIPPED, (string)($validateFromContextExpired->payload()['node_status'] ?? ''), 'catalog 仅 URL 时，validate 应读取 context.end_time 并返回 skipped。');
+Assert::same(ActivityFlowStatus::EXPIRED, (string)($validateFromContextExpired->payload()['flow_status'] ?? ''), 'context end_time 过期时应显式返回 flow_status=expired。');
+
+$contextOnlyExecuteEvents = [];
+$contextOnlyExecuteGateway = new DrawGateway(
+    static fn (array $payload): array => ['code' => 0, 'data' => ['times' => 1], 'message' => 'ok'],
+    static function (array $payload) use (&$contextOnlyExecuteEvents): array {
+        $contextOnlyExecuteEvents[] = ['type' => 'draw', 'payload' => $payload];
+        return ['code' => 0, 'data' => [['gift_id' => 0, 'gift_name' => '未中奖']], 'message' => 'ok'];
+    },
+);
+$contextOnlyExecuteFlow = buildFlowWithActivity([
+    'id' => 'context-only-execute-flow',
+    'activity_id' => 'ctx-only-execute',
+    'lottery_id' => 'ctx-only-lottery',
+    'title' => '仅 context 传递抽奖状态',
+    'url' => 'https://www.bilibili.com/blackboard/era/context-only-execute.html',
+], 'execute_draw');
+$contextOnlyExecuteRunner = new ExecuteDrawNodeRunner($contextOnlyExecuteGateway);
+$contextOnlyExecuteResult = $contextOnlyExecuteRunner->run(
+    $contextOnlyExecuteFlow,
+    new ActivityNode('execute_draw', [
+        'lane' => 'draw_execute',
+        'draw_times_remaining' => 1,
+        'draw_results' => [['gift_id' => 0, 'gift_name' => 'payload 注入']],
+    ]),
+    time()
+);
+Assert::same(ActivityNodeStatus::SKIPPED, (string)($contextOnlyExecuteResult->payload()['node_status'] ?? ''), 'execute_draw 应只消费 flow context，不应回退读取 node payload 里的抽奖状态。');
+Assert::same(0, count($contextOnlyExecuteEvents), '未通过 context 写入次数时不应触发 draw 请求。');
+
 $refreshRunner = new RefreshDrawTimesNodeRunner($drawGateway);
 $refreshResult = $refreshRunner->run($flow, new ActivityNode('refresh_draw_times', ['lane' => 'draw_refresh']), time());
 Assert::true($refreshResult->ok(), '刷新抽奖次数节点应执行成功。');
@@ -394,4 +555,15 @@ function applyContextPatchToFlow(ActivityFlow $flow, array $nodeResultPayload): 
     );
 
     return ActivityFlow::fromArray($row);
+}
+
+function findTaskById(EraPageSnapshot $snapshot, string $taskId): EraTaskSnapshot
+{
+    foreach ($snapshot->tasks() as $task) {
+        if ($task->taskId() === $taskId) {
+            return $task;
+        }
+    }
+
+    throw new RuntimeException('找不到任务: ' . $taskId);
 }

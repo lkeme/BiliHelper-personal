@@ -17,20 +17,16 @@ final class ValidateActivityNodeRunner implements NodeRunnerInterface
 
     public function run(ActivityFlow $flow, ActivityNode $node, int $now): ActivityNodeResult
     {
-        $activity = $flow->activity();
-        $hasStableKey = trim((string)($activity['activity_id'] ?? '')) !== ''
-            || trim((string)($activity['page_id'] ?? '')) !== ''
-            || trim((string)($activity['lottery_id'] ?? '')) !== ''
-            || trim((string)($activity['url'] ?? '')) !== '';
-        if (!$hasStableKey) {
+        $activityView = ResolvedActivityView::fromFlow($flow);
+        if (!$activityView->hasStableKey()) {
             return new ActivityNodeResult(false, '活动缺少稳定标识', [
                 'node_status' => ActivityNodeStatus::FAILED,
                 'flow_status' => ActivityFlowStatus::FAILED,
             ], $now);
         }
 
-        $startTime = (int)($activity['start_time'] ?? 0);
-        $endTime = (int)($activity['end_time'] ?? 0);
+        $startTime = $activityView->startTime();
+        $endTime = $activityView->endTime();
 
         if ($endTime > 0 && $endTime <= $now) {
             return new ActivityNodeResult(true, '活动已结束，跳过执行', [

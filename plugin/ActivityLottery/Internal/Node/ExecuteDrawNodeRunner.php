@@ -22,11 +22,10 @@ final class ExecuteDrawNodeRunner implements NodeRunnerInterface
 
     public function run(ActivityFlow $flow, ActivityNode $node, int $now): ActivityNodeResult
     {
-        $payload = $node->payload();
         $flowContext = $flow->context()->toArray();
-        $remaining = (int)$this->resolveStateValue($flowContext, $payload, 'draw_times_remaining', 0);
+        $remaining = (int)$this->resolveStateValue($flowContext, 'draw_times_remaining', 0);
         $drawResults = $this->normalizeDrawResults(
-            $this->resolveStateValue($flowContext, $payload, 'draw_results', []),
+            $this->resolveStateValue($flowContext, 'draw_results', []),
         );
 
         if ($remaining <= 0) {
@@ -39,7 +38,8 @@ final class ExecuteDrawNodeRunner implements NodeRunnerInterface
             ], $now);
         }
 
-        $response = $this->drawGateway->drawOnce($flow->activity());
+        $activity = ResolvedActivityView::fromFlow($flow)->toActivityArray();
+        $response = $this->drawGateway->drawOnce($activity);
         $code = (int)($response['code'] ?? -1);
         if ($code !== 0) {
             return new ActivityNodeResult(false, '执行抽奖失败', [
@@ -75,16 +75,11 @@ final class ExecuteDrawNodeRunner implements NodeRunnerInterface
 
     /**
      * @param array<string, mixed> $flowContext
-     * @param array<string, mixed> $nodePayload
      */
-    private function resolveStateValue(array $flowContext, array $nodePayload, string $key, mixed $default): mixed
+    private function resolveStateValue(array $flowContext, string $key, mixed $default): mixed
     {
         if (array_key_exists($key, $flowContext)) {
             return $flowContext[$key];
-        }
-
-        if (array_key_exists($key, $nodePayload)) {
-            return $nodePayload[$key];
         }
 
         return $default;

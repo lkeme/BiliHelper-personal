@@ -8,6 +8,7 @@ final class EraTaskSnapshot
      * @param string[] $targetUids
      * @param string[] $targetVideoIds
      * @param string[] $targetRoomIds
+     * @param array<int, array<string, mixed>> $targetArchives
      * @param array<int, array<string, mixed>> $checkpoints
      * @param string[] $btnBehavior
      */
@@ -24,6 +25,7 @@ final class EraTaskSnapshot
         private readonly array $targetUids,
         private readonly array $targetVideoIds,
         private readonly array $targetRoomIds,
+        private readonly array $targetArchives,
         private readonly int $targetAreaId,
         private readonly int $targetParentAreaId,
         private readonly array $checkpoints,
@@ -51,6 +53,7 @@ final class EraTaskSnapshot
             self::normalizeStringArray($data['target_uids'] ?? $data['targetUids'] ?? []),
             self::normalizeStringArray($data['target_video_ids'] ?? $data['targetVideoIds'] ?? []),
             self::normalizeStringArray($data['target_room_ids'] ?? $data['targetRoomIds'] ?? []),
+            self::normalizeArchiveList($data['target_archives'] ?? $data['targetArchives'] ?? []),
             (int)($data['target_area_id'] ?? $data['targetAreaId'] ?? 0),
             (int)($data['target_parent_area_id'] ?? $data['targetParentAreaId'] ?? 0),
             self::normalizeCheckpointList($data['checkpoints'] ?? []),
@@ -129,6 +132,14 @@ final class EraTaskSnapshot
         return $this->targetRoomIds;
     }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function targetArchives(): array
+    {
+        return $this->targetArchives;
+    }
+
     public function targetAreaId(): int
     {
         return $this->targetAreaId;
@@ -183,6 +194,7 @@ final class EraTaskSnapshot
             'target_uids' => $this->targetUids,
             'target_video_ids' => $this->targetVideoIds,
             'target_room_ids' => $this->targetRoomIds,
+            'target_archives' => $this->targetArchives,
             'target_area_id' => $this->targetAreaId,
             'target_parent_area_id' => $this->targetParentAreaId,
             'checkpoints' => $this->checkpoints,
@@ -235,5 +247,24 @@ final class EraTaskSnapshot
         }
 
         return $checkpoints;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private static function normalizeArchiveList(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $archives = [];
+        foreach ($value as $item) {
+            if (is_array($item)) {
+                $archives[] = $item;
+            }
+        }
+
+        return $archives;
     }
 }

@@ -56,6 +56,11 @@ final class EraPageParser
     private function extractTasks(array $state): array
     {
         $tasks = [];
+        $pageFollowTargets = $this->collectFollowTargets($state);
+        $pageVideoIds = $this->collectVideoIds($state);
+        $pageVideoArchives = $this->collectVideoArchives($state);
+        $pageLiveRoomIds = $this->collectLiveRoomIds($state);
+
         foreach (['EraTasklist', 'EraTasklistPc'] as $componentKey) {
             foreach (($state[$componentKey] ?? []) as $component) {
                 if (!is_array($component)) {
@@ -73,9 +78,11 @@ final class EraPageParser
                     if ($topicId === '') {
                         $topicId = $this->extractTopicIdFromLink($jumpLink);
                     }
-                    $targetUids = $this->extractTargetUids($jumpLink, $task);
-                    $targetVideoIds = $this->extractTargetVideoIds($jumpLink, $task);
-                    $targetRoomIds = $this->extractTargetRoomIds($task);
+
+                    $targetUids = $this->extractTargetUids($taskName, $jumpLink, $task, $pageFollowTargets);
+                    $targetVideoIds = $this->extractTargetVideoIds($taskName, $jumpLink, $task, $pageVideoIds);
+                    $targetArchives = $this->extractTargetArchives($taskName, $task, $pageVideoArchives);
+                    $targetRoomIds = $this->extractTargetRoomIds($taskName, $task, $pageLiveRoomIds);
                     $liveAreaTarget = $this->extractLiveAreaTarget($jumpLink, $task);
 
                     $taskRow = [
@@ -91,6 +98,7 @@ final class EraPageParser
                         'target_uids' => $targetUids,
                         'target_video_ids' => $targetVideoIds,
                         'target_room_ids' => $targetRoomIds,
+                        'target_archives' => $targetArchives,
                         'target_area_id' => $liveAreaTarget['area_id'],
                         'target_parent_area_id' => $liveAreaTarget['parent_area_id'],
                         'checkpoints' => $this->normalizeCheckpointList($task['checkpoints'] ?? []),
@@ -124,6 +132,168 @@ final class EraPageParser
         return 0;
     }
 
+    /**
+     * @return array<int, array{uid: string, uname: string, add_lottery_times: bool}>
+     */
+    private function collectFollowTargets(array $state): array
+    {
+        $targets = [];
+        foreach (['H5FollowNew', 'PcFollowNew'] as $key) {
+            foreach (($state[$key] ?? []) as $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+
+                $uid = trim((string)($item['uid'] ?? ''));
+                $uname = trim((string)($item['uname'] ?? ''));
+                if ($uid !== '') {
+                    $targets[] = [
+                        'uid' => $uid,
+                        'uname' => $uname,
+                        'add_lottery_times' => (bool)($item['addLotteryTimes'] ?? false),
+                    ];
+                }
+
+                foreach (($item['followUidList'] ?? []) as $follow) {
+                    if (!is_array($follow)) {
+                        continue;
+                    }
+
+                    $followUid = trim((string)($follow['uid'] ?? ''));
+                    if ($followUid === '') {
+                        continue;
+                    }
+
+                    $targets[] = [
+                        'uid' => $followUid,
+                        'uname' => trim((string)($follow['uname'] ?? '')),
+                        'add_lottery_times' => false,
+                    ];
+                }
+            }
+        }
+
+        return $this->deduplicateFollowTargets($targets);
+    }
+
+    /**
+     * @return string[]
+     */
+    private function collectVideoIds(array $state): array
+    {
+        $videoIds = [];
+
+        foreach (($state['PcSlidePlayer'] ?? []) as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $raw = trim((string)($item['videoIds'] ?? ''));
+            if ($raw !== '') {
+                $videoIds = array_merge($videoIds, preg_split('/\s*,\s*/', $raw, -1, PREG_SPLIT_NO_EMPTY) ?: []);
+            }
+        }
+
+        foreach (($state['H5SlideVideos'] ?? []) as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $raw = trim((string)($item['aids'] ?? ''));
+            if ($raw !== '') {
+                $videoIds = array_merge($videoIds, preg_split('/\s*,\s*/', $raw, -1, PREG_SPLIT_NO_EMPTY) ?: []);
+            }
+        }
+
+        return $this->normalizeStringList($videoIds);
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function collectVideoArchives(array $state): array
+    {
+        $archives = [];
+
+        foreach (($state['H5SlideVideos'] ?? []) as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            foreach (($item['videoList'] ?? []) as $video) {
+                if (!is_array($video)) {
+                    continue;
+                }
+                $aid = trim((string)($video['aid'] ?? ''));
+                $cid = trim((string)($video['cid'] ?? ''));
+                if ($aid === '' || $cid === '') {
+                    continue;
+                }
+                $archives[] = [
+                    'aid' => $aid,
+                    'cid' => $cid,
+                    'duration' => (int)($video['duration'] ?? 0),
+                    'bvid' => trim((string)($video['bvid'] ?? '')),
+                    'title' => trim((string)($video['title'] ?? '')),
+                ];
+            }
+        }
+
+        foreach (($state['PcSlidePlayer'] ?? []) as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $videoIds = preg_split('/\s*,\s*/', (string)($item['videoIds'] ?? ''), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+            foreach (($item['videosDetail'] ?? []) as $index => $video) {
+                if (!is_array($video)) {
+                    continue;
+                }
+                $videoId = trim((string)($videoIds[$index] ?? ''));
+                $aid = trim((string)($video['aid'] ?? ''));
+                $bvid = '';
+                if ($videoId !== '') {
+                    if (ctype_digit($videoId) && $aid === '') {
+                        $aid = $videoId;
+                    }
+                    if (str_starts_with(strtoupper($videoId), 'BV')) {
+                        $bvid = $videoId;
+                    }
+                }
+                if ($aid === '' && $bvid === '') {
+                    continue;
+                }
+                $archives[] = [
+                    'aid' => $aid,
+                    'bvid' => $bvid,
+                    'title' => trim((string)($video['title'] ?? '')),
+                ];
+            }
+        }
+
+        return $this->deduplicateArchives($archives);
+    }
+
+    /**
+     * @return string[]
+     */
+    private function collectLiveRoomIds(array $state): array
+    {
+        $roomIds = [];
+        foreach (($state['EraLiveNonRevenuePlayer'] ?? []) as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            foreach (($item['roomsConfig'] ?? []) as $room) {
+                if (!is_array($room)) {
+                    continue;
+                }
+                $roomId = trim((string)($room['roomId'] ?? ''));
+                if ($roomId !== '') {
+                    $roomIds[] = $roomId;
+                }
+            }
+        }
+
+        return $this->normalizeStringList($roomIds);
+    }
+
     private function extractTopicIdFromLink(string $jumpLink): string
     {
         $query = parse_url(html_entity_decode($jumpLink, ENT_QUOTES | ENT_HTML5), PHP_URL_QUERY);
@@ -136,23 +306,27 @@ final class EraPageParser
             return '';
         }
 
-        $topicId = trim((string)($params['topic_id'] ?? ''));
-        return $topicId;
+        return trim((string)($params['topic_id'] ?? ''));
     }
 
     /**
      * @param array<string, mixed> $task
+     * @param array<int, array{uid: string, uname: string, add_lottery_times: bool}> $pageFollowTargets
      * @return string[]
      */
-    private function extractTargetUids(string $jumpLink, array $task): array
+    private function extractTargetUids(string $taskName, string $jumpLink, array $task, array $pageFollowTargets): array
     {
         $targetUids = $this->normalizeStringList($task['target_uids'] ?? $task['targetUids'] ?? []);
         if ($targetUids !== []) {
             return $targetUids;
         }
 
-        if (preg_match_all('~space\.bilibili\.com/(\d+)~', $jumpLink, $matches) !== false) {
+        if (preg_match_all('~space\.bilibili\.com/(\d+)~', $jumpLink, $matches) === 1) {
             return $this->normalizeStringList($matches[1] ?? []);
+        }
+
+        if (str_contains($taskName, '关注')) {
+            return $this->matchFollowTargetUids($taskName, $pageFollowTargets);
         }
 
         return [];
@@ -162,7 +336,7 @@ final class EraPageParser
      * @param array<string, mixed> $task
      * @return string[]
      */
-    private function extractTargetVideoIds(string $jumpLink, array $task): array
+    private function extractTargetVideoIds(string $taskName, string $jumpLink, array $task, array $pageVideoIds): array
     {
         $targetVideoIds = $this->normalizeStringList($task['target_video_ids'] ?? $task['targetVideoIds'] ?? []);
         if ($targetVideoIds !== []) {
@@ -173,6 +347,29 @@ final class EraPageParser
             return [$matches[1]];
         }
 
+        if (str_contains($taskName, '观看') && !str_contains($taskName, '直播')) {
+            return $pageVideoIds;
+        }
+
+        return [];
+    }
+
+    /**
+     * @param array<string, mixed> $task
+     * @param array<int, array<string, mixed>> $pageVideoArchives
+     * @return array<int, array<string, mixed>>
+     */
+    private function extractTargetArchives(string $taskName, array $task, array $pageVideoArchives): array
+    {
+        $targetArchives = $this->normalizeArchiveList($task['target_archives'] ?? $task['targetArchives'] ?? []);
+        if ($targetArchives !== []) {
+            return $targetArchives;
+        }
+
+        if (str_contains($taskName, '观看') && !str_contains($taskName, '直播')) {
+            return $pageVideoArchives;
+        }
+
         return [];
     }
 
@@ -180,9 +377,18 @@ final class EraPageParser
      * @param array<string, mixed> $task
      * @return string[]
      */
-    private function extractTargetRoomIds(array $task): array
+    private function extractTargetRoomIds(string $taskName, array $task, array $pageLiveRoomIds): array
     {
-        return $this->normalizeStringList($task['target_room_ids'] ?? $task['targetRoomIds'] ?? []);
+        $roomIds = $this->normalizeStringList($task['target_room_ids'] ?? $task['targetRoomIds'] ?? []);
+        if ($roomIds !== []) {
+            return $roomIds;
+        }
+
+        if (str_contains($taskName, '直播')) {
+            return $pageLiveRoomIds;
+        }
+
+        return [];
     }
 
     /**
@@ -242,6 +448,25 @@ final class EraPageParser
     }
 
     /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function normalizeArchiveList(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $archives = [];
+        foreach ($value as $item) {
+            if (is_array($item)) {
+                $archives[] = $item;
+            }
+        }
+
+        return $archives;
+    }
+
+    /**
      * @return string[]
      */
     private function normalizeBehavior(mixed $value): array
@@ -274,6 +499,92 @@ final class EraPageParser
         }
 
         return array_values(array_unique($normalized));
+    }
+
+    /**
+     * @param array<int, array{uid: string, uname: string, add_lottery_times: bool}> $targets
+     * @return string[]
+     */
+    private function matchFollowTargetUids(string $taskName, array $targets): array
+    {
+        $matched = [];
+        foreach ($targets as $target) {
+            $name = trim((string)($target['uname'] ?? ''));
+            if ($name !== '' && str_contains($taskName, $name)) {
+                $matched[] = (string)($target['uid'] ?? '');
+            }
+        }
+
+        $matched = $this->normalizeStringList($matched);
+        if ($matched !== []) {
+            return $matched;
+        }
+
+        $lotteryTargets = array_values(array_filter(
+            $targets,
+            static fn (array $target): bool => (bool)($target['add_lottery_times'] ?? false)
+        ));
+        if (count($lotteryTargets) === 1) {
+            return [(string)$lotteryTargets[0]['uid']];
+        }
+        if (count($targets) === 1) {
+            return [(string)$targets[0]['uid']];
+        }
+
+        return [];
+    }
+
+    /**
+     * @param array<int, array{uid: string, uname: string, add_lottery_times: bool}> $targets
+     * @return array<int, array{uid: string, uname: string, add_lottery_times: bool}>
+     */
+    private function deduplicateFollowTargets(array $targets): array
+    {
+        $unique = [];
+        foreach ($targets as $target) {
+            $uid = trim((string)($target['uid'] ?? ''));
+            if ($uid === '') {
+                continue;
+            }
+
+            if (!isset($unique[$uid])) {
+                $unique[$uid] = [
+                    'uid' => $uid,
+                    'uname' => trim((string)($target['uname'] ?? '')),
+                    'add_lottery_times' => (bool)($target['add_lottery_times'] ?? false),
+                ];
+                continue;
+            }
+
+            if (($target['add_lottery_times'] ?? false) && !$unique[$uid]['add_lottery_times']) {
+                $unique[$uid]['add_lottery_times'] = true;
+                $unique[$uid]['uname'] = trim((string)($target['uname'] ?? $unique[$uid]['uname']));
+            }
+        }
+
+        return array_values($unique);
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $archives
+     * @return array<int, array<string, mixed>>
+     */
+    private function deduplicateArchives(array $archives): array
+    {
+        $unique = [];
+        foreach ($archives as $archive) {
+            $aid = trim((string)($archive['aid'] ?? ''));
+            $bvid = trim((string)($archive['bvid'] ?? ''));
+            $key = $aid !== '' ? 'aid:' . $aid : ($bvid !== '' ? 'bvid:' . $bvid : '');
+            if ($key === '') {
+                continue;
+            }
+            if (!isset($unique[$key])) {
+                $unique[$key] = $archive;
+            }
+        }
+
+        return array_values($unique);
     }
 
     /**
