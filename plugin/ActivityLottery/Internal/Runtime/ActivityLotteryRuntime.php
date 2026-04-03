@@ -666,6 +666,16 @@ final class ActivityLotteryRuntime
         $archivePrefix = $archiveLabel !== '' ? sprintf('稿件 %s，', $archiveLabel) : '';
 
         if ($afterNode->status() === ActivityNodeStatus::WAITING) {
+            if (str_contains($fallback, '视频观看继续推进')) {
+                return sprintf('恢复推进，%s当前累计 %s%s', $archivePrefix, $progress, $delay);
+            }
+            if (str_contains($fallback, '视频观看已启动')) {
+                if ($currentSeconds > 0) {
+                    return sprintf('重新建链，%s当前累计 %s%s', $archivePrefix, $progress, $delay);
+                }
+
+                return sprintf('首次启动观看，%s当前累计 %s%s', $archivePrefix, $progress, $delay);
+            }
             if ($archivePrefix === '' && $currentSeconds <= 0) {
                 return $fallback . $delay;
             }
@@ -697,6 +707,16 @@ final class ActivityLotteryRuntime
         $roomPrefix = $roomId > 0 ? sprintf('房间 %d，', $roomId) : '';
 
         if ($afterNode->status() === ActivityNodeStatus::WAITING) {
+            if (str_contains($fallback, '直播观看继续推进')) {
+                return sprintf('恢复推进，%s当前累计 %s%s', $roomPrefix, $progress, $delay);
+            }
+            if (str_contains($fallback, '直播观看已启动')) {
+                if ($currentSeconds > 0) {
+                    return sprintf('重新接入直播间，%s当前累计 %s%s', $roomPrefix, $progress, $delay);
+                }
+
+                return sprintf('首次接入直播间，%s当前累计 %s%s', $roomPrefix, $progress, $delay);
+            }
             if ($roomPrefix === '' && $currentSeconds <= 0) {
                 return $fallback . $delay;
             }

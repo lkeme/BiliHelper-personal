@@ -355,6 +355,7 @@ $videoWaitingRuntime = buildBusinessRuntime(
 $videoWaitingRuntime->tick();
 $videoWaitingLog = findRuntimeLog($videoWaitingLogs, 'node.result');
 Assert::true($videoWaitingLog !== null, '视频 waiting 场景应记录 node.result 日志。');
+Assert::true(str_contains((string)$videoWaitingLog['message'], '恢复推进'), '视频 waiting 日志应区分为恢复推进。');
 Assert::true(str_contains((string)$videoWaitingLog['message'], '35/60 秒'), '视频 waiting 日志应包含累计观看秒数。');
 Assert::true(str_contains((string)$videoWaitingLog['message'], 'BV1Topic9001'), '视频 waiting 日志应包含当前稿件标识。');
 Assert::true(str_contains((string)$videoWaitingLog['message'], '5 秒后继续'), '视频 waiting 日志应包含等待秒数。');
@@ -422,6 +423,7 @@ $liveWaitingRuntime = buildBusinessRuntime(
 $liveWaitingRuntime->tick();
 $liveWaitingLog = findRuntimeLog($liveWaitingLogs, 'node.result');
 Assert::true($liveWaitingLog !== null, '直播 waiting 场景应记录 node.result 日志。');
+Assert::true(str_contains((string)$liveWaitingLog['message'], '恢复推进'), '直播 waiting 日志应区分为恢复推进。');
 Assert::true(str_contains((string)$liveWaitingLog['message'], '房间 2233'), '直播 waiting 日志应包含房间号。');
 Assert::true(str_contains((string)$liveWaitingLog['message'], '120/240 秒'), '直播 waiting 日志应包含累计观看秒数。');
 Assert::true(str_contains((string)$liveWaitingLog['message'], '30 秒后继续'), '直播 waiting 日志应包含等待秒数。');
@@ -683,6 +685,191 @@ Assert::same(1, count(array_values(array_filter(
     static fn (array $log): bool => ($log['context']['event'] ?? '') === 'flow.summary'
 ))),
     '相同 waiting 状态短时间重复推进时不应重复输出 flow.summary 日志。');
+
+$videoInitialLogs = [];
+$videoInitialRuntime = buildBusinessRuntime(
+    $scope . '_video_initial',
+    $now,
+    [
+        'id' => 'video-initial-activity',
+        'activity_id' => 'video-initial-activity',
+        'lottery_id' => 'video-initial-lottery',
+        'title' => '视频首次日志活动',
+        'url' => 'https://www.bilibili.com/blackboard/era/video-initial.html',
+        'update_time' => '2026-04-03 08:00:00',
+    ],
+    [
+        new ActivityNode('era_task_watch_video_topic', ['lane' => 'task_status', 'task_id' => 'task-video']),
+    ],
+    [
+        [
+            'task_id' => 'task-video',
+            'task_name' => '每日累计观看当期活动视频',
+            'capability' => 'watch_video_topic',
+            'support_level' => 'now',
+            'required_watch_seconds' => 60,
+            'topic_id' => 'topic-initial',
+            'task_status' => 1,
+            'task_award_type' => 0,
+        ],
+    ],
+    [
+        new class implements NodeRunnerInterface {
+            public function type(): string
+            {
+                return 'era_task_watch_video_topic';
+            }
+
+            public function run(ActivityFlow $flow, ActivityNode $node, int $now): ActivityNodeResult
+            {
+                return new ActivityNodeResult(true, '视频观看已启动', [
+                    'node_status' => ActivityNodeStatus::WAITING,
+                    'next_run_at' => $now + 30,
+                    'context_patch' => [
+                        'era_task_runtime' => [
+                            'task-video' => [
+                                'watch_video_archive' => [
+                                    'aid' => '8001',
+                                    'bvid' => 'BV1Initial8001',
+                                ],
+                                'watch_video_session' => 'session-initial',
+                                'watch_video_started_at' => $now,
+                            ],
+                        ],
+                    ],
+                ], $now);
+            }
+        },
+    ],
+    $videoInitialLogs,
+);
+$videoInitialRuntime->tick();
+$videoInitialLog = findRuntimeLog($videoInitialLogs, 'node.result');
+Assert::true($videoInitialLog !== null, '视频首次启动场景应记录 node.result 日志。');
+Assert::true(str_contains((string)$videoInitialLog['message'], '首次启动观看'), '视频首次启动日志应明确为首次启动观看。');
+
+$videoRestartLogs = [];
+$videoRestartRuntime = buildBusinessRuntime(
+    $scope . '_video_restart',
+    $now,
+    [
+        'id' => 'video-restart-activity',
+        'activity_id' => 'video-restart-activity',
+        'lottery_id' => 'video-restart-lottery',
+        'title' => '视频重建日志活动',
+        'url' => 'https://www.bilibili.com/blackboard/era/video-restart.html',
+        'update_time' => '2026-04-03 08:00:00',
+    ],
+    [
+        new ActivityNode('era_task_watch_video_topic', ['lane' => 'task_status', 'task_id' => 'task-video']),
+    ],
+    [
+        [
+            'task_id' => 'task-video',
+            'task_name' => '每日累计观看当期活动视频',
+            'capability' => 'watch_video_topic',
+            'support_level' => 'now',
+            'required_watch_seconds' => 60,
+            'topic_id' => 'topic-restart',
+            'task_status' => 1,
+            'task_award_type' => 0,
+        ],
+    ],
+    [
+        new class implements NodeRunnerInterface {
+            public function type(): string
+            {
+                return 'era_task_watch_video_topic';
+            }
+
+            public function run(ActivityFlow $flow, ActivityNode $node, int $now): ActivityNodeResult
+            {
+                return new ActivityNodeResult(true, '视频观看已启动', [
+                    'node_status' => ActivityNodeStatus::WAITING,
+                    'next_run_at' => $now + 30,
+                    'context_patch' => [
+                        'era_task_runtime' => [
+                            'task-video' => [
+                                'local_watch_seconds' => 35,
+                                'watch_video_archive' => [
+                                    'aid' => '8002',
+                                    'bvid' => 'BV1Restart8002',
+                                ],
+                                'watch_video_session' => 'session-restart',
+                                'watch_video_started_at' => $now,
+                            ],
+                        ],
+                    ],
+                ], $now);
+            }
+        },
+    ],
+    $videoRestartLogs,
+);
+$videoRestartRuntime->tick();
+$videoRestartLog = findRuntimeLog($videoRestartLogs, 'node.result');
+Assert::true($videoRestartLog !== null, '视频重建链路场景应记录 node.result 日志。');
+Assert::true(str_contains((string)$videoRestartLog['message'], '重新建链'), '视频重建链路日志应明确为重新建链。');
+
+$liveInitialLogs = [];
+$liveInitialRuntime = buildBusinessRuntime(
+    $scope . '_live_initial',
+    $now,
+    [
+        'id' => 'live-initial-activity',
+        'activity_id' => 'live-initial-activity',
+        'lottery_id' => 'live-initial-lottery',
+        'title' => '直播首次日志活动',
+        'url' => 'https://www.bilibili.com/blackboard/era/live-initial.html',
+        'update_time' => '2026-04-03 08:00:00',
+    ],
+    [
+        new ActivityNode('era_task_watch_live', ['lane' => 'task_status', 'task_id' => 'task-live']),
+    ],
+    [
+        [
+            'task_id' => 'task-live',
+            'task_name' => '每日观看直播',
+            'capability' => 'watch_live',
+            'support_level' => 'now',
+            'required_watch_seconds' => 240,
+            'target_room_ids' => ['2233'],
+            'task_status' => 1,
+            'task_award_type' => 0,
+        ],
+    ],
+    [
+        new class implements NodeRunnerInterface {
+            public function type(): string
+            {
+                return 'era_task_watch_live';
+            }
+
+            public function run(ActivityFlow $flow, ActivityNode $node, int $now): ActivityNodeResult
+            {
+                return new ActivityNodeResult(true, '直播观看已启动', [
+                    'node_status' => ActivityNodeStatus::WAITING,
+                    'next_run_at' => $now + 30,
+                    'context_patch' => [
+                        'era_task_runtime' => [
+                            'task-live' => [
+                                'live_session' => [
+                                    'room_id' => 2233,
+                                    'heartbeat_interval' => 30,
+                                ],
+                            ],
+                        ],
+                    ],
+                ], $now);
+            }
+        },
+    ],
+    $liveInitialLogs,
+);
+$liveInitialRuntime->tick();
+$liveInitialLog = findRuntimeLog($liveInitialLogs, 'node.result');
+Assert::true($liveInitialLog !== null, '直播首次启动场景应记录 node.result 日志。');
+Assert::true(str_contains((string)$liveInitialLog['message'], '首次接入直播间'), '直播首次日志应明确为首次接入直播间。');
 
 /**
  * @param array<int, array{level: string, message: string, context: array<string, mixed>}> $logs
