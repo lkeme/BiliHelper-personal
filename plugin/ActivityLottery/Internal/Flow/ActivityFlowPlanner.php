@@ -56,6 +56,15 @@ final class ActivityFlowPlanner
                 continue;
             }
             if ($normalizedTask['task_id'] === '') {
+                $nodes[] = new ActivityNode(
+                    'era_task_skipped',
+                    [
+                        'lane' => 'task_status',
+                        'capability' => $normalizedTask['capability'],
+                        'reason' => 'missing_task_id',
+                    ],
+                    ActivityNodeStatus::SKIPPED,
+                );
                 continue;
             }
 

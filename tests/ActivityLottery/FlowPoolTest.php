@@ -119,12 +119,33 @@ try {
 }
 Assert::true($unknownNodeTypeThrown, '未知 node type 应触发异常，不应静默归类。');
 
+$unknownNodeTypeWithLanePool = new ActivityFlowPool(
+    new ActivityFlowBudget(2, 6, 3000),
+    new ActivityFlowPicker(),
+    new ActivityLaneLimiter(['task_status' => 0]),
+);
+$unknownNodeTypeWithLaneFlow = buildFlowWithType('unknown-node-type-with-lane', 'mystery_node', ['lane' => 'task_status']);
+$unknownNodeTypeWithLaneThrown = false;
+try {
+    $unknownNodeTypeWithLanePool->pick([$unknownNodeTypeWithLaneFlow], 100);
+} catch (\RuntimeException $e) {
+    $unknownNodeTypeWithLaneThrown = str_contains($e->getMessage(), '未知 node type');
+}
+Assert::true($unknownNodeTypeWithLaneThrown, '未知 node type 即使显式携带 lane 也应触发异常。');
+
 /**
  * @return ActivityFlow
  */
 function buildFlow(string $activityId, string $lane, int $nextRunAt = 0): ActivityFlow
 {
-    return buildFlowWithType($activityId, 'test_node', ['lane' => $lane], $nextRunAt);
+    $nodeType = match ($lane) {
+        'draw_execute' => 'execute_draw',
+        'draw_refresh' => 'refresh_draw_times',
+        'claim_reward' => 'claim_reward',
+        default => 'validate_activity_window',
+    };
+
+    return buildFlowWithType($activityId, $nodeType, ['lane' => $lane], $nextRunAt);
 }
 
 /**

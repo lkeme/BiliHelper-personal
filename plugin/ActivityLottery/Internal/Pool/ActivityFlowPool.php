@@ -89,12 +89,7 @@ final class ActivityFlowPool
     private function resolveLane(ActivityFlow $flow): string
     {
         $node = $flow->nodes()[$flow->currentNodeIndex()];
-        $payloadLane = trim((string)($node->payload()['lane'] ?? ''));
-        if ($payloadLane !== '') {
-            return $payloadLane;
-        }
-
-        return match ($node->type()) {
+        $defaultLane = match ($node->type()) {
             'load_activity_snapshot', 'parse_era_page' => 'page_fetch',
             'refresh_draw_times' => 'draw_refresh',
             'execute_draw' => 'draw_execute',
@@ -102,6 +97,13 @@ final class ActivityFlowPool
             'validate_activity_window', 'finalize_flow' => 'task_status',
             default => throw new RuntimeException(sprintf('未知 node type: %s', $node->type())),
         };
+
+        $payloadLane = trim((string)($node->payload()['lane'] ?? ''));
+        if ($payloadLane !== '') {
+            return $payloadLane;
+        }
+
+        return $defaultLane;
     }
 
     private function prepareTickState(int $tickStartedAtMs): void

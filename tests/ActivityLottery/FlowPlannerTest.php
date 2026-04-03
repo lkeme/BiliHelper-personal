@@ -81,10 +81,14 @@ $dynamicTypes = array_map(
     static fn (ActivityNode $node): string => $node->type(),
     $dynamicNodes,
 );
-$dynamicTaskIds = array_map(
-    static fn (ActivityNode $node): string => (string)($node->payload()['task_id'] ?? ''),
-    $dynamicNodes,
-);
+$dynamicHasEmptyTaskId = false;
+foreach ($dynamicNodes as $dynamicNode) {
+    $payload = $dynamicNode->payload();
+    if (array_key_exists('task_id', $payload) && trim((string)$payload['task_id']) === '') {
+        $dynamicHasEmptyTaskId = true;
+        break;
+    }
+}
 Assert::true(
     in_array('era_task_watch_video_fixed', $dynamicTypes, true),
     '动态 ERA 能力应映射为 era_task_watch_video_fixed 节点。'
@@ -98,18 +102,8 @@ Assert::true(
     '动态 ERA 能力应映射为 era_task_watch_live 节点。'
 );
 Assert::false(
-    in_array('', $dynamicTaskIds, true),
-    'task_id 为空的任务不应生成动态节点。'
-);
-Assert::false(
-    in_array('', array_map(
-        static fn (ActivityNode $node): string => (string)($node->payload()['task_id'] ?? ''),
-        array_values(array_filter(
-            $dynamicNodes,
-            static fn (ActivityNode $node): bool => $node->type() === 'era_task_watch_video_topic',
-        )),
-    ), true),
-    'task_id 为空时，即使能力可识别也不应生成动态节点。'
+    $dynamicHasEmptyTaskId,
+    '动态节点若携带 task_id，则不能为无效空值。'
 );
 Assert::true(
     in_array('era_task_skipped', $dynamicTypes, true),
@@ -119,7 +113,7 @@ $skippedNodes = array_values(array_filter(
     $dynamicNodes,
     static fn (ActivityNode $node): bool => $node->type() === 'era_task_skipped',
 ));
-Assert::same(1, count($skippedNodes), '当前输入中仅 unknown 能力应生成 1 个 skipped 节点。');
+Assert::same(2, count($skippedNodes), '当前输入中 unknown 能力与空 task_id 都应生成 skipped 节点。');
 Assert::same(
     ActivityNodeStatus::SKIPPED,
     $skippedNodes[0]->status(),
@@ -138,6 +132,20 @@ Assert::same(
     'unknown',
     (string)($skippedNodes[0]->payload()['capability'] ?? ''),
     '不支持能力生成的 skipped 节点应保留 capability。'
+);
+$missingTaskIdNodes = array_values(array_filter(
+    $skippedNodes,
+    static fn (ActivityNode $node): bool => (string)($node->payload()['reason'] ?? '') === 'missing_task_id',
+));
+Assert::same(1, count($missingTaskIdNodes), '空 task_id 应生成 reason=missing_task_id 的 skipped 节点。');
+Assert::same(
+    EraActivityTask::CAPABILITY_WATCH_VIDEO_TOPIC,
+    (string)($missingTaskIdNodes[0]->payload()['capability'] ?? ''),
+    '空 task_id 的 skipped 节点应保留 capability。'
+);
+Assert::false(
+    array_key_exists('task_id', $missingTaskIdNodes[0]->payload()),
+    '空 task_id 的 skipped 节点不应带空 task_id。'
 );
 Assert::true(
     in_array('era_task_follow', $dynamicTypes, true),
