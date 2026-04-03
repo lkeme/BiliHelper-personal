@@ -4,9 +4,16 @@ namespace Bhp\Plugin\ActivityLottery\Internal\Pool;
 
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlow;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlowStatus;
+use RuntimeException;
 
 final class ActivityFlowPool
 {
+    private ?int $activeTickStartedAtMs = null;
+    /**
+     * @var array<string, true>
+     */
+    private array $pickedFlowIdsInTick = [];
+
     public function __construct(
         private readonly ActivityFlowBudget $budget,
         private readonly ActivityFlowPicker $picker = new ActivityFlowPicker(),
@@ -26,9 +33,12 @@ final class ActivityFlowPool
             return [];
         }
 
+        $this->prepareTickState($tickStartedAtMs);
         $eligible = array_values(array_filter(
             $flows,
-            fn (mixed $flow): bool => $flow instanceof ActivityFlow && $this->isFlowEligible($flow, $now),
+            fn (mixed $flow): bool => $flow instanceof ActivityFlow
+                && $this->isFlowEligible($flow, $now)
+                && !isset($this->pickedFlowIdsInTick[$flow->id()]),
         ));
         if ($eligible === []) {
             return [];
@@ -53,6 +63,7 @@ final class ActivityFlowPool
 
             $this->laneLimiter->reserve($lane, $now);
             $selected[] = $flow;
+            $this->pickedFlowIdsInTick[$flow->id()] = true;
         }
 
         return $selected;
@@ -88,7 +99,18 @@ final class ActivityFlowPool
             'refresh_draw_times' => 'draw_refresh',
             'execute_draw' => 'draw_execute',
             'claim_reward' => 'claim_reward',
-            default => 'task_status',
+            'validate_activity_window', 'finalize_flow' => 'task_status',
+            default => throw new RuntimeException(sprintf('未知 node type: %s', $node->type())),
         };
+    }
+
+    private function prepareTickState(int $tickStartedAtMs): void
+    {
+        if ($this->activeTickStartedAtMs === $tickStartedAtMs) {
+            return;
+        }
+
+        $this->activeTickStartedAtMs = $tickStartedAtMs;
+        $this->pickedFlowIdsInTick = [];
     }
 }

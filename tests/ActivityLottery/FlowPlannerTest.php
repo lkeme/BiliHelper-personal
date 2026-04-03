@@ -8,6 +8,7 @@ use Tests\Support\Assert;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlowPlanner;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlow;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode;
+use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNodeStatus;
 use Bhp\Plugin\ActivityLottery\Internal\Catalog\ActivityCatalogItem;
 use Bhp\Plugin\ActivityLottery\Internal\EraActivityPage;
 use Bhp\Plugin\ActivityLottery\Internal\EraActivityTask;
@@ -64,13 +65,79 @@ $dynamicSnapshot = (object)[
     'tasks' => [
         ['task_id' => 't-follow', 'capability' => 'follow'],
         ['task_id' => 't-unfollow', 'capability' => 'unfollow'],
+        ['task_id' => 't-watch-fixed', 'capability' => EraActivityTask::CAPABILITY_WATCH_VIDEO_FIXED],
+        ['task_id' => 't-watch-topic', 'capability' => EraActivityTask::CAPABILITY_WATCH_VIDEO_TOPIC],
+        ['task_id' => 't-watch-live', 'capability' => EraActivityTask::CAPABILITY_WATCH_LIVE],
         ['task_id' => 't-unknown', 'capability' => 'unknown'],
+        ['task_id' => '', 'capability' => EraActivityTask::CAPABILITY_WATCH_VIDEO_TOPIC],
     ],
 ];
 $flowWithDynamic = $planner->plan($catalogItem, $dynamicSnapshot, '2026-04-02');
+$dynamicNodes = array_values(array_filter(
+    $flowWithDynamic->nodes(),
+    static fn (ActivityNode $node): bool => str_starts_with($node->type(), 'era_task_'),
+));
 $dynamicTypes = array_map(
     static fn (ActivityNode $node): string => $node->type(),
-    $flowWithDynamic->nodes(),
+    $dynamicNodes,
+);
+$dynamicTaskIds = array_map(
+    static fn (ActivityNode $node): string => (string)($node->payload()['task_id'] ?? ''),
+    $dynamicNodes,
+);
+Assert::true(
+    in_array('era_task_watch_video_fixed', $dynamicTypes, true),
+    '动态 ERA 能力应映射为 era_task_watch_video_fixed 节点。'
+);
+Assert::true(
+    in_array('era_task_watch_video_topic', $dynamicTypes, true),
+    '动态 ERA 能力应映射为 era_task_watch_video_topic 节点。'
+);
+Assert::true(
+    in_array('era_task_watch_live', $dynamicTypes, true),
+    '动态 ERA 能力应映射为 era_task_watch_live 节点。'
+);
+Assert::false(
+    in_array('', $dynamicTaskIds, true),
+    'task_id 为空的任务不应生成动态节点。'
+);
+Assert::false(
+    in_array('', array_map(
+        static fn (ActivityNode $node): string => (string)($node->payload()['task_id'] ?? ''),
+        array_values(array_filter(
+            $dynamicNodes,
+            static fn (ActivityNode $node): bool => $node->type() === 'era_task_watch_video_topic',
+        )),
+    ), true),
+    'task_id 为空时，即使能力可识别也不应生成动态节点。'
+);
+Assert::true(
+    in_array('era_task_skipped', $dynamicTypes, true),
+    '不支持能力应生成 skipped 动态节点。'
+);
+$skippedNodes = array_values(array_filter(
+    $dynamicNodes,
+    static fn (ActivityNode $node): bool => $node->type() === 'era_task_skipped',
+));
+Assert::same(1, count($skippedNodes), '当前输入中仅 unknown 能力应生成 1 个 skipped 节点。');
+Assert::same(
+    ActivityNodeStatus::SKIPPED,
+    $skippedNodes[0]->status(),
+    '不支持能力生成的节点状态应为 skipped。'
+);
+Assert::true(
+    trim((string)($skippedNodes[0]->payload()['reason'] ?? '')) !== '',
+    '不支持能力生成的 skipped 节点应携带 reason。'
+);
+Assert::same(
+    't-unknown',
+    (string)($skippedNodes[0]->payload()['task_id'] ?? ''),
+    '不支持能力生成的 skipped 节点应保留 task_id。'
+);
+Assert::same(
+    'unknown',
+    (string)($skippedNodes[0]->payload()['capability'] ?? ''),
+    '不支持能力生成的 skipped 节点应保留 capability。'
 );
 Assert::true(
     in_array('era_task_follow', $dynamicTypes, true),
@@ -80,9 +147,18 @@ Assert::true(
     in_array('era_task_unfollow', $dynamicTypes, true),
     '动态 ERA 能力应映射为 era_task_unfollow 节点。'
 );
-Assert::false(
-    in_array('era_task_unknown', $dynamicTypes, true),
-    '未知能力不应生成节点。'
+
+$flowWithDynamicTypes = array_map(
+    static fn (ActivityNode $node): string => $node->type(),
+    $flowWithDynamic->nodes(),
+);
+Assert::true(
+    in_array('era_task_follow', $flowWithDynamicTypes, true),
+    '动态 ERA 能力应映射为 era_task_follow 节点。'
+);
+Assert::true(
+    in_array('era_task_unfollow', $flowWithDynamicTypes, true),
+    '动态 ERA 能力应映射为 era_task_unfollow 节点。'
 );
 
 $pageWithTaskObjects = EraActivityPage::fromArray([
@@ -112,14 +188,24 @@ $objectDynamicNodes = array_values(array_filter(
     $flowWithTaskObjects->nodes(),
     static fn (ActivityNode $node): bool => str_starts_with($node->type(), 'era_task_'),
 ));
-Assert::same(1, count($objectDynamicNodes), 'EraActivityTask 对象输入应生成可识别能力的动态节点。');
-Assert::same('era_task_follow', $objectDynamicNodes[0]->type(), '对象任务 capability=follow 应映射为 era_task_follow。');
-Assert::same('obj-follow', (string)($objectDynamicNodes[0]->payload()['task_id'] ?? ''), '动态节点应携带对象任务 task_id。');
-Assert::same('follow', (string)($objectDynamicNodes[0]->payload()['capability'] ?? ''), '动态节点应携带对象任务 capability。');
+Assert::same(2, count($objectDynamicNodes), 'EraActivityTask 对象输入应生成可识别能力节点与 unsupported skipped 节点。');
+$objectFollowNodes = array_values(array_filter(
+    $objectDynamicNodes,
+    static fn (ActivityNode $node): bool => $node->type() === 'era_task_follow',
+));
+Assert::same(1, count($objectFollowNodes), '对象任务 capability=follow 应映射为 era_task_follow。');
+Assert::same('obj-follow', (string)($objectFollowNodes[0]->payload()['task_id'] ?? ''), '动态节点应携带对象任务 task_id。');
+Assert::same('follow', (string)($objectFollowNodes[0]->payload()['capability'] ?? ''), '动态节点应携带对象任务 capability。');
 Assert::false(
-    array_key_exists('task_status', $objectDynamicNodes[0]->payload()),
+    array_key_exists('task_status', $objectFollowNodes[0]->payload()),
     '动态节点 payload 不应携带 task_status。'
 );
+$objectSkippedNodes = array_values(array_filter(
+    $objectDynamicNodes,
+    static fn (ActivityNode $node): bool => $node->type() === 'era_task_skipped',
+));
+Assert::same(1, count($objectSkippedNodes), 'manual_only 应生成 skipped 节点。');
+Assert::same(ActivityNodeStatus::SKIPPED, $objectSkippedNodes[0]->status(), 'manual_only 对应节点状态应为 skipped。');
 
 $flowWithGenericObjectTask = $planner->plan(
     $catalogItem,

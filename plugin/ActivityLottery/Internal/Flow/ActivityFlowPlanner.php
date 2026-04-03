@@ -55,10 +55,23 @@ final class ActivityFlowPlanner
             if ($normalizedTask === null) {
                 continue;
             }
+            if ($normalizedTask['task_id'] === '') {
+                continue;
+            }
 
             $capability = $normalizedTask['capability'];
             $mapped = $this->mapCapability($capability);
             if ($mapped === null) {
+                $nodes[] = new ActivityNode(
+                    'era_task_skipped',
+                    [
+                        'lane' => 'task_status',
+                        'task_id' => $normalizedTask['task_id'],
+                        'capability' => $capability,
+                        'reason' => sprintf('unsupported capability: %s', $capability === '' ? '(empty)' : $capability),
+                    ],
+                    ActivityNodeStatus::SKIPPED,
+                );
                 continue;
             }
 
@@ -85,6 +98,9 @@ final class ActivityFlowPlanner
             ['capability' => 'unfollow', 'type' => 'era_task_unfollow', 'lane' => 'unfollow'],
             ['capability' => 'task_status', 'type' => 'era_task_status', 'lane' => 'task_status'],
             ['capability' => 'share', 'type' => 'era_task_share', 'lane' => 'task_status'],
+            ['capability' => 'watch_video_fixed', 'type' => 'era_task_watch_video_fixed', 'lane' => 'task_status'],
+            ['capability' => 'watch_video_topic', 'type' => 'era_task_watch_video_topic', 'lane' => 'task_status'],
+            ['capability' => 'watch_live', 'type' => 'era_task_watch_live', 'lane' => 'task_status'],
         ];
     }
 

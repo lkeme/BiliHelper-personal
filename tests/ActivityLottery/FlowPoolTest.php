@@ -38,11 +38,12 @@ $limitedBudgetPool = new ActivityFlowPool(
     new ActivityFlowPicker(),
     new ActivityLaneLimiter(['task_status' => 0]),
 );
-$limitedBatch1 = $limitedBudgetPool->pick([$flowA, $flowB, $flowC], 100);
+$limitedTick1 = (int)(microtime(true) * 1000);
+$limitedBatch1 = $limitedBudgetPool->pick([$flowA, $flowB, $flowC], 100, $limitedTick1);
 Assert::same(2, count($limitedBatch1), '单轮入选 flow 不应超过 max_flows_per_tick。');
 Assert::same($flowA->id(), $limitedBatch1[0]->id(), '第一轮应从头开始挑选。');
 Assert::same($flowB->id(), $limitedBatch1[1]->id(), '第一轮应按顺序继续挑选。');
-$limitedBatch2 = $limitedBudgetPool->pick([$flowA, $flowB, $flowC], 100);
+$limitedBatch2 = $limitedBudgetPool->pick([$flowA, $flowB, $flowC], 100, $limitedTick1 + 1);
 Assert::same($flowC->id(), $limitedBatch2[0]->id(), '下一轮应从上轮游标后继续，保证公平推进。');
 Assert::same($flowA->id(), $limitedBatch2[1]->id(), '游标应环形前进，避免单流连续吃满预算。');
 
@@ -74,10 +75,62 @@ $futureFlow = buildFlow('pool-future', 'task_status', 999);
 $futureBatch = $pool->pick([$futureFlow], 100);
 Assert::same(0, count($futureBatch), 'next_run_at 未到期的 flow 不应入选。');
 
+$sameTickPool = new ActivityFlowPool(
+    new ActivityFlowBudget(2, 6, 3000),
+    new ActivityFlowPicker(),
+    new ActivityLaneLimiter(['task_status' => 0]),
+);
+$sameTickFlowA = buildFlow('same-tick-a', 'task_status');
+$sameTickFlowB = buildFlow('same-tick-b', 'task_status');
+$sameTickFlowC = buildFlow('same-tick-c', 'task_status');
+$sameTickStartedAtMs = (int)(microtime(true) * 1000);
+$sameTickBatch1 = $sameTickPool->pick([$sameTickFlowA, $sameTickFlowB, $sameTickFlowC], 100, $sameTickStartedAtMs);
+Assert::same(2, count($sameTickBatch1), '同一 tick 第一轮应按预算选出 flow。');
+$sameTickBatch2 = $sameTickPool->pick([$sameTickFlowA, $sameTickFlowB, $sameTickFlowC], 100, $sameTickStartedAtMs);
+Assert::same(1, count($sameTickBatch2), '同一 tick 第二轮只应选出未被本 tick 选中过的 flow。');
+Assert::same($sameTickFlowC->id(), $sameTickBatch2[0]->id(), '同一 tick 第二轮应选出剩余 flow。');
+$sameTickBatch3 = $sameTickPool->pick([$sameTickFlowA, $sameTickFlowB, $sameTickFlowC], 100, $sameTickStartedAtMs);
+Assert::same(0, count($sameTickBatch3), '同一 tick 内 flow 不应重复入选。');
+
+$unknownLanePool = new ActivityFlowPool(
+    new ActivityFlowBudget(2, 6, 3000),
+    new ActivityFlowPicker(),
+    new ActivityLaneLimiter(['task_status' => 0]),
+);
+$unknownLaneThrown = false;
+try {
+    $unknownLanePool->pick([buildFlow('unknown-lane', 'unknown_lane')], 100);
+} catch (\RuntimeException $e) {
+    $unknownLaneThrown = str_contains($e->getMessage(), '未知 lane');
+}
+Assert::true($unknownLaneThrown, '未知 lane 应触发异常，不应静默降级。');
+
+$unknownNodeTypePool = new ActivityFlowPool(
+    new ActivityFlowBudget(2, 6, 3000),
+    new ActivityFlowPicker(),
+    new ActivityLaneLimiter(['task_status' => 0]),
+);
+$unknownNodeTypeFlow = buildFlowWithType('unknown-node-type', 'mystery_node', []);
+$unknownNodeTypeThrown = false;
+try {
+    $unknownNodeTypePool->pick([$unknownNodeTypeFlow], 100);
+} catch (\RuntimeException $e) {
+    $unknownNodeTypeThrown = str_contains($e->getMessage(), '未知 node type');
+}
+Assert::true($unknownNodeTypeThrown, '未知 node type 应触发异常，不应静默归类。');
+
 /**
  * @return ActivityFlow
  */
 function buildFlow(string $activityId, string $lane, int $nextRunAt = 0): ActivityFlow
+{
+    return buildFlowWithType($activityId, 'test_node', ['lane' => $lane], $nextRunAt);
+}
+
+/**
+ * @return ActivityFlow
+ */
+function buildFlowWithType(string $activityId, string $nodeType, array $payload, int $nextRunAt = 0): ActivityFlow
 {
     $catalog = ActivityCatalogItem::fromArray([
         'id' => $activityId,
@@ -86,7 +139,7 @@ function buildFlow(string $activityId, string $lane, int $nextRunAt = 0): Activi
         'update_time' => '2026-04-02T08:00:00+00:00',
     ]);
     $flow = ActivityFlowFactory::create($catalog, '2026-04-02', [
-        new ActivityNode('test_node', ['lane' => $lane]),
+        new ActivityNode($nodeType, $payload),
     ]);
 
     if ($nextRunAt <= 0) {
