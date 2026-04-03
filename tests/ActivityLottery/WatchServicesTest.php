@@ -46,13 +46,25 @@ Assert::false($videoService->finish($videoStarted, 0));
 $videoStartFail = new VideoWatchService(
     videoAction: static fn (...$args): array => ['code' => -1, 'message' => 'fail'],
 );
-$startFailed = false;
+$videoStartFailMessage = '';
 try {
     $videoStartFail->start('aid:1', 'cid:2', ['duration' => 10]);
-} catch (\RuntimeException) {
-    $startFailed = true;
+} catch (\RuntimeException $exception) {
+    $videoStartFailMessage = $exception->getMessage();
 }
-Assert::true($startFailed, '视频 start 失败路径应抛异常。');
+Assert::same('视频观看初始化失败 -1 -> fail', $videoStartFailMessage);
+
+$videoFirstHeartbeatFail = new VideoWatchService(
+    videoAction: static fn (...$args): array => ['code' => 0],
+    heartbeatAction: static fn (...$args): array => ['code' => -2, 'message' => 'hb fail'],
+);
+$videoHeartbeatFailMessage = '';
+try {
+    $videoFirstHeartbeatFail->start('aid:1', 'cid:2', ['duration' => 10]);
+} catch (\RuntimeException $exception) {
+    $videoHeartbeatFailMessage = $exception->getMessage();
+}
+Assert::same('视频观看首拍心跳失败 -2 -> hb fail', $videoHeartbeatFailMessage);
 
 $videoInvalidContextFailed = false;
 try {
@@ -61,6 +73,27 @@ try {
     $videoInvalidContextFailed = true;
 }
 Assert::true($videoInvalidContextFailed, '视频 start 在 duration 非法时应快速失败。');
+
+$videoFinishCalls = [];
+$videoFinishService = new VideoWatchService(
+    heartbeatAction: static function (string $aid, string $cid, int $progress, string $bvid, array $options) use (&$videoFinishCalls): array {
+        $videoFinishCalls[] = [$aid, $cid, $progress, $bvid, $options];
+        return ['code' => 0];
+    },
+);
+Assert::false(
+    $videoFinishService->finish(VideoWatchSession::start('', 'cid:2', ['duration' => 100]), 10),
+    'finish 在 archiveId 非法时应快速失败。',
+);
+Assert::false(
+    $videoFinishService->finish(VideoWatchSession::start('aid:1', '', ['duration' => 100]), 10),
+    'finish 在 cid 非法时应快速失败。',
+);
+Assert::false(
+    $videoFinishService->finish(VideoWatchSession::start('aid:1', 'cid:2', ['duration' => 0]), 10),
+    'finish 在 duration 非法时应快速失败。',
+);
+Assert::same(0, count($videoFinishCalls), 'finish 非法 session 不应触发 heartbeat action。');
 
 $live = LiveWatchSession::start(12345);
 Assert::same(12345, $live->roomId);
@@ -234,6 +267,8 @@ $afterHeartbeat = $eraLiveService->heartbeat([
     'ets' => 100,
     'secret_key' => 'old',
     'secret_rule' => [0],
+    'live_buvid' => 'buvid-era',
+    'live_uuid' => 'uuid-era',
     'last_heartbeat_at' => microtime(true) - 3,
 ]);
 Assert::same(5, (int)$afterHeartbeat['seq_id']);
@@ -242,3 +277,56 @@ $eraLiveHeartbeatCalls = array_values(array_filter(
     static fn (array $call): bool => ($call[0] ?? '') === 'heartbeat',
 ));
 Assert::same(1, count($eraLiveHeartbeatCalls), 'EraLiveWatchService 的 heartbeat 应委托公共 LiveWatchService。');
+
+$liveStartCalls = [];
+$liveStartBoundaryService = new LiveWatchService(
+    roomEntryAction: static function (int $roomId) use (&$liveStartCalls): void {
+        $liveStartCalls[] = ['roomEntryAction', $roomId];
+    },
+    enterAction: static function (...$args) use (&$liveStartCalls): array {
+        $liveStartCalls[] = ['enter', ...$args];
+        return ['code' => 0, 'data' => []];
+    },
+    userAgentResolver: static fn (): string => 'ua-test',
+    buvidFactory: static fn (): string => 'buvid-test',
+    uuidFactory: static fn (): string => 'uuid-test',
+);
+$liveStartBoundaryFailed = false;
+try {
+    $liveStartBoundaryService->start(0, [
+        'ruid' => 0,
+        'parent_area_id' => 2,
+        'area_id' => 3,
+    ]);
+} catch (\RuntimeException) {
+    $liveStartBoundaryFailed = true;
+}
+Assert::true($liveStartBoundaryFailed, 'start 在会话边界非法时应快速失败。');
+Assert::same(0, count($liveStartCalls), 'start 边界校验失败时不应触发外部 action。');
+
+$liveHeartbeatBoundaryCalls = [];
+$liveHeartbeatBoundaryService = new LiveWatchService(
+    heartbeatAction: static function (...$args) use (&$liveHeartbeatBoundaryCalls): array {
+        $liveHeartbeatBoundaryCalls[] = $args;
+        return ['code' => 0, 'data' => []];
+    },
+    userAgentResolver: static fn (): string => 'ua-test',
+);
+$liveHeartbeatBoundaryFailed = false;
+try {
+    $liveHeartbeatBoundaryService->heartbeat(LiveWatchSession::start(1, [
+        'ruid' => 1,
+        'parent_area_id' => 2,
+        'area_id' => 3,
+        'heartbeat_interval' => 60,
+        'ets' => 0,
+        'secret_key' => '',
+        'secret_rule' => [],
+        'live_buvid' => '',
+        'live_uuid' => '',
+    ]));
+} catch (\RuntimeException) {
+    $liveHeartbeatBoundaryFailed = true;
+}
+Assert::true($liveHeartbeatBoundaryFailed, 'heartbeat 在会话边界非法时应快速失败。');
+Assert::same(0, count($liveHeartbeatBoundaryCalls), 'heartbeat 边界校验失败时不应触发外部 action。');

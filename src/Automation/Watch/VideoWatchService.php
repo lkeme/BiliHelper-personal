@@ -43,7 +43,9 @@ final class VideoWatchService
             'session' => $session->sessionId,
         ]);
         if (($videoResponse['code'] ?? -1) !== 0) {
-            throw new \RuntimeException('视频观看初始化失败');
+            $code = (int)($videoResponse['code'] ?? -1);
+            $message = trim((string)($videoResponse['message'] ?? $videoResponse['msg'] ?? ''));
+            throw new \RuntimeException("视频观看初始化失败 {$code} -> {$message}");
         }
 
         $progress = max(1, $session->duration);
@@ -51,7 +53,9 @@ final class VideoWatchService
             'session' => $session->sessionId,
         ]);
         if (($heartbeatResponse['code'] ?? -1) !== 0) {
-            throw new \RuntimeException('视频观看首拍心跳失败');
+            $code = (int)($heartbeatResponse['code'] ?? -1);
+            $message = trim((string)($heartbeatResponse['message'] ?? $heartbeatResponse['msg'] ?? ''));
+            throw new \RuntimeException("视频观看首拍心跳失败 {$code} -> {$message}");
         }
 
         return $session;
@@ -59,7 +63,12 @@ final class VideoWatchService
 
     public function finish(VideoWatchSession $session, int $watchedSeconds): bool
     {
-        if ($watchedSeconds <= 0) {
+        if (
+            $watchedSeconds <= 0
+            || trim($session->archiveId) === ''
+            || trim($session->cid) === ''
+            || $session->duration <= 0
+        ) {
             return false;
         }
 

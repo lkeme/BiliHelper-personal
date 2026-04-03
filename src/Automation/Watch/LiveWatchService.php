@@ -64,6 +64,7 @@ final class LiveWatchService
             'live_buvid' => ($this->buvidFactory)(),
             'live_uuid' => ($this->uuidFactory)(),
         ], $context));
+        $this->assertStartSessionBoundary($session);
         ($this->roomEntryAction)($session->roomId);
         $response = ($this->enterAction)(
             $session->roomId,
@@ -100,6 +101,7 @@ final class LiveWatchService
 
     public function heartbeat(LiveWatchSession $session): LiveWatchSession
     {
+        $this->assertHeartbeatSessionBoundary($session);
         $now = microtime(true);
         $lastHeartbeatAt = max(0.0, $session->lastHeartbeatAt);
         $elapsedSeconds = $lastHeartbeatAt > 0
@@ -138,5 +140,30 @@ final class LiveWatchService
         }
 
         return $session->with($nextContext);
+    }
+
+    private function assertStartSessionBoundary(LiveWatchSession $session): void
+    {
+        if (
+            $session->roomId <= 0
+            || $session->ruid <= 0
+            || $session->parentAreaId <= 0
+            || $session->areaId <= 0
+        ) {
+            throw new \RuntimeException('直播观看会话参数无效');
+        }
+    }
+
+    private function assertHeartbeatSessionBoundary(LiveWatchSession $session): void
+    {
+        if (
+            $session->ets <= 0
+            || trim($session->secretKey) === ''
+            || $session->secretRule === []
+            || trim($session->liveBuvid) === ''
+            || trim($session->liveUuid) === ''
+        ) {
+            throw new \RuntimeException('直播观看心跳会话无效');
+        }
     }
 }
