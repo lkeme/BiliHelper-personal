@@ -6,25 +6,48 @@ use RuntimeException;
 
 final class ActivityFlow
 {
+    private readonly string $flowId;
+    private readonly string $bizDate;
+    private readonly string $status;
+    /**
+     * @var array<string, mixed>
+     */
+    private readonly array $activity;
+    /**
+     * @var ActivityNode[]
+     */
+    private readonly array $nodes;
+    /**
+     * @var array<int, array<string, mixed>>
+     */
+    private readonly array $logs;
+
     /**
      * @param array<string, mixed> $activity
      * @param ActivityNode[] $nodes
      * @param array<int, array<string, mixed>> $logs
      */
     public function __construct(
-        private readonly string $flowId,
-        private readonly string $bizDate,
-        private readonly array $activity,
-        private readonly string $status,
+        string $flowId,
+        string $bizDate,
+        array $activity,
+        string $status,
         private readonly int $currentNodeIndex,
-        private readonly array $nodes,
+        array $nodes,
         private readonly int $nextRunAt,
         private readonly int $attempts,
         private readonly ActivityFlowContext $context,
-        private readonly array $logs,
+        array $logs,
         private readonly int $createdAt,
         private readonly int $updatedAt,
     ) {
+        $this->flowId = trim($flowId);
+        $this->bizDate = trim($bizDate);
+        $this->activity = $activity;
+        $this->status = trim($status);
+        $this->nodes = $nodes;
+        $this->logs = $logs;
+
         self::assertValid(
             $this->flowId,
             $this->bizDate,
@@ -40,28 +63,55 @@ final class ActivityFlow
      */
     public static function fromArray(array $data): self
     {
-        $nodes = [];
-        foreach (($data['nodes'] ?? []) as $node) {
-            if (is_array($node)) {
-                $nodes[] = ActivityNode::fromArray($node);
-            }
+        $rawNodes = $data['nodes'] ?? [];
+        if (!is_array($rawNodes)) {
+            throw new RuntimeException('ActivityFlow nodes 必须为数组');
         }
 
-        $context = ActivityFlowContext::fromArray(
-            is_array($data['context'] ?? null) ? $data['context'] : []
-        );
+        $nodes = [];
+        foreach ($rawNodes as $index => $node) {
+            if (!is_array($node)) {
+                throw new RuntimeException(sprintf(
+                    'ActivityFlow nodes[%d] 必须为数组',
+                    (int)$index,
+                ));
+            }
+            $nodes[] = ActivityNode::fromArray($node);
+        }
+
+        $rawContext = $data['context'] ?? [];
+        if (!is_array($rawContext)) {
+            throw new RuntimeException('ActivityFlow context 必须为数组');
+        }
+        $context = ActivityFlowContext::fromArray($rawContext);
+
+        $rawLogs = $data['logs'] ?? [];
+        if (!is_array($rawLogs)) {
+            throw new RuntimeException('ActivityFlow logs 必须为数组');
+        }
+
+        $logs = [];
+        foreach ($rawLogs as $index => $log) {
+            if (!is_array($log)) {
+                throw new RuntimeException(sprintf(
+                    'ActivityFlow logs[%d] 必须为数组',
+                    (int)$index,
+                ));
+            }
+            $logs[] = $log;
+        }
 
         return new self(
-            trim((string)($data['flow_id'] ?? '')),
-            trim((string)($data['biz_date'] ?? '')),
+            (string)($data['flow_id'] ?? ''),
+            (string)($data['biz_date'] ?? ''),
             is_array($data['activity'] ?? null) ? $data['activity'] : [],
-            trim((string)($data['status'] ?? ActivityFlowStatus::PENDING)),
+            (string)($data['status'] ?? ActivityFlowStatus::PENDING),
             (int)($data['current_node_index'] ?? 0),
             $nodes,
             (int)($data['next_run_at'] ?? 0),
             (int)($data['attempts'] ?? 0),
             $context,
-            is_array($data['logs'] ?? null) ? $data['logs'] : [],
+            $logs,
             (int)($data['created_at'] ?? 0),
             (int)($data['updated_at'] ?? 0),
         );

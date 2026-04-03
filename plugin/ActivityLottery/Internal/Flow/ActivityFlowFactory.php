@@ -3,6 +3,7 @@
 namespace Bhp\Plugin\ActivityLottery\Internal\Flow;
 
 use Bhp\Plugin\ActivityLottery\Internal\Catalog\ActivityCatalogItem;
+use RuntimeException;
 
 final class ActivityFlowFactory
 {
@@ -13,7 +14,8 @@ final class ActivityFlowFactory
     {
         $now = time();
         $activity = $item->toArray();
-        $flowId = self::buildFlowId($activity['id'] ?? '', $bizDate);
+        $stableKey = self::resolveStableActivityKey($activity);
+        $flowId = self::buildFlowId($stableKey, $bizDate);
 
         return new ActivityFlow(
             $flowId,
@@ -31,9 +33,24 @@ final class ActivityFlowFactory
         );
     }
 
-    private static function buildFlowId(string $activityId, string $bizDate): string
+    /**
+     * @param array<string, mixed> $activity
+     */
+    private static function resolveStableActivityKey(array $activity): string
     {
-        $raw = trim($activityId) . '|' . trim($bizDate);
+        foreach (['activity_id', 'page_id', 'lottery_id', 'url'] as $field) {
+            $value = trim((string)($activity[$field] ?? ''));
+            if ($value !== '') {
+                return $field . ':' . $value;
+            }
+        }
+
+        throw new RuntimeException('ActivityFlowFactory 缺少稳定唯一键，无法生成 flow');
+    }
+
+    private static function buildFlowId(string $stableActivityKey, string $bizDate): string
+    {
+        $raw = trim($stableActivityKey) . '|' . trim($bizDate);
 
         return substr(sha1($raw), 0, 24);
     }

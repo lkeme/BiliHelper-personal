@@ -177,3 +177,82 @@ Assert::true(
     str_contains($mixedRowsMessage, '2026-04-04') && str_contains($mixedRowsMessage, 'index=1'),
     '严格失败异常信息应包含 biz_date 与索引定位信息。'
 );
+
+$nodesContainInvalidEntryThrown = false;
+try {
+    ActivityFlow::fromArray(array_merge($flow->toArray(), [
+        'nodes' => [
+            $flow->nodes()[0]->toArray(),
+            'not-an-array-node',
+        ],
+    ]));
+} catch (\RuntimeException) {
+    $nodesContainInvalidEntryThrown = true;
+}
+Assert::true($nodesContainInvalidEntryThrown, 'nodes 中混入非数组项时应严格失败。');
+
+$invalidFlowContextThrown = false;
+try {
+    ActivityFlow::fromArray(array_merge($flow->toArray(), [
+        'context' => 'invalid-context',
+    ]));
+} catch (\RuntimeException) {
+    $invalidFlowContextThrown = true;
+}
+Assert::true($invalidFlowContextThrown, 'flow context 非数组时应严格失败。');
+
+$invalidFlowLogsThrown = false;
+try {
+    ActivityFlow::fromArray(array_merge($flow->toArray(), [
+        'logs' => 'invalid-logs',
+    ]));
+} catch (\RuntimeException) {
+    $invalidFlowLogsThrown = true;
+}
+Assert::true($invalidFlowLogsThrown, 'flow logs 非数组时应严格失败。');
+
+$invalidNodeResultThrown = false;
+try {
+    ActivityNode::fromArray([
+        'type' => 'node-with-invalid-result',
+        'status' => ActivityNodeStatus::PENDING,
+        'result' => 'invalid-result',
+    ]);
+} catch (\RuntimeException) {
+    $invalidNodeResultThrown = true;
+}
+Assert::true($invalidNodeResultThrown, 'node result 非法 shape 时应严格失败。');
+
+$missingCatalogStableIdThrown = false;
+try {
+    $catalogWithoutStableId = ActivityCatalogItem::fromArray([
+        'title' => 'no-stable-id',
+        'update_time' => '2026-04-02T00:00:00+08:00',
+    ]);
+    ActivityFlowFactory::create($catalogWithoutStableId, '2026-04-02', [
+        new ActivityNode('noop'),
+    ]);
+} catch (\RuntimeException) {
+    $missingCatalogStableIdThrown = true;
+}
+Assert::true($missingCatalogStableIdThrown, 'catalog item 无稳定唯一键时不允许生成 flow。');
+
+$canonicalFlow = new ActivityFlow(
+    '  flow-canonical-1  ',
+    ' 2026-04-05 ',
+    ['id' => 'act-canonical'],
+    '  pending  ',
+    0,
+    [new ActivityNode('  canonical-node  ', [], ' waiting ')],
+    0,
+    0,
+    new \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlowContext(),
+    [],
+    time(),
+    time(),
+);
+Assert::same('flow-canonical-1', $canonicalFlow->id(), '构造边界应 canonicalize flow_id。');
+Assert::same('2026-04-05', $canonicalFlow->bizDate(), '构造边界应 canonicalize biz_date。');
+Assert::same(ActivityFlowStatus::PENDING, $canonicalFlow->status(), '构造边界应 canonicalize flow status。');
+Assert::same('canonical-node', $canonicalFlow->nodes()[0]->type(), '构造边界应 canonicalize node type。');
+Assert::same(ActivityNodeStatus::WAITING, $canonicalFlow->nodes()[0]->status(), '构造边界应 canonicalize node status。');

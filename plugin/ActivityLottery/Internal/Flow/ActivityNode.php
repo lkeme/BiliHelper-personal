@@ -6,17 +6,34 @@ use RuntimeException;
 
 final class ActivityNode
 {
+    private readonly string $type;
+    private readonly string $status;
+
+    /**
+     * @var array<string, mixed>
+     */
+    private readonly array $payload;
+    /**
+     * @var array<string, mixed>
+     */
+    private readonly array $context;
+
     /**
      * @param array<string, mixed> $payload
      */
     public function __construct(
-        private readonly string $type,
-        private readonly array $payload = [],
-        private readonly string $status = ActivityNodeStatus::PENDING,
-        private readonly array $context = [],
+        string $type,
+        array $payload = [],
+        string $status = ActivityNodeStatus::PENDING,
+        array $context = [],
         private readonly ?ActivityNodeResult $result = null,
         private readonly int $attempts = 0,
     ) {
+        $this->type = trim($type);
+        $this->payload = $payload;
+        $this->status = trim($status);
+        $this->context = $context;
+
         self::assertValid($this->type, $this->status, $this->attempts);
     }
 
@@ -26,15 +43,25 @@ final class ActivityNode
     public static function fromArray(array $data): self
     {
         $result = null;
-        if (is_array($data['result'] ?? null)) {
-            $result = ActivityNodeResult::fromArray($data['result']);
+        if (array_key_exists('result', $data)) {
+            if ($data['result'] !== null && !is_array($data['result'])) {
+                throw new RuntimeException('ActivityNode result 必须为数组或 null');
+            }
+            if (is_array($data['result'])) {
+                $result = ActivityNodeResult::fromArray($data['result']);
+            }
+        }
+
+        $context = $data['context'] ?? [];
+        if (!is_array($context)) {
+            throw new RuntimeException('ActivityNode context 必须为数组');
         }
 
         return new self(
-            trim((string)($data['type'] ?? '')),
+            (string)($data['type'] ?? ''),
             is_array($data['payload'] ?? null) ? $data['payload'] : [],
-            trim((string)($data['status'] ?? ActivityNodeStatus::PENDING)),
-            is_array($data['context'] ?? null) ? $data['context'] : [],
+            (string)($data['status'] ?? ActivityNodeStatus::PENDING),
+            $context,
             $result,
             (int)($data['attempts'] ?? 0),
         );
