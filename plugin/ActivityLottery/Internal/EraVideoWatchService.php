@@ -137,7 +137,7 @@ final class EraVideoWatchService
                     'session_id' => $session ?? '',
                 ],
             );
-        } catch (\Throwable) {
+        } catch (\RuntimeException) {
             return false;
         }
 

@@ -75,7 +75,8 @@ final class LiveWatchService
             ($this->userAgentResolver)(),
         );
         if (($response['code'] ?? 0) !== 0) {
-            throw new \RuntimeException("x25Kn/E失败 {$response['code']} -> {$response['message']}");
+            $message = (string)($response['message'] ?? $response['msg'] ?? '');
+            throw new \RuntimeException("x25Kn/E失败 {$response['code']} -> {$message}");
         }
 
         $data = is_array($response['data'] ?? null) ? $response['data'] : [];
@@ -115,7 +116,8 @@ final class LiveWatchService
             $session->heartbeatInterval,
         );
         if (($response['code'] ?? 0) !== 0) {
-            throw new \RuntimeException("x25Kn/X失败 {$response['code']} -> {$response['message']}");
+            $message = (string)($response['message'] ?? $response['msg'] ?? '');
+            throw new \RuntimeException("x25Kn/X失败 {$response['code']} -> {$message}");
         }
 
         $data = is_array($response['data'] ?? null) ? $response['data'] : [];

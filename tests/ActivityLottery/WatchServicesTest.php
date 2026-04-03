@@ -54,6 +54,14 @@ try {
 }
 Assert::true($startFailed, '视频 start 失败路径应抛异常。');
 
+$videoInvalidContextFailed = false;
+try {
+    $videoService->start('aid:1', 'cid:2', ['duration' => 0]);
+} catch (\RuntimeException) {
+    $videoInvalidContextFailed = true;
+}
+Assert::true($videoInvalidContextFailed, '视频 start 在 duration 非法时应快速失败。');
+
 $live = LiveWatchSession::start(12345);
 Assert::same(12345, $live->roomId);
 
@@ -154,11 +162,27 @@ Assert::true($eraVideoService->start(['aid' => '1', 'cid' => '2', 'duration' => 
 Assert::true($eraVideoService->finish(['aid' => '1', 'cid' => '2', 'duration' => 100], null, 10, 'session-era'));
 Assert::same(3, count($eraVideoCalls), 'EraVideoWatchService 应委托公共 VideoWatchService。');
 
-$eraLiveCalls = [];
-$eraLiveShared = new LiveWatchService(
-    roomEntryAction: static function (...$args): void {
+$eraVideoTypeError = new EraVideoWatchService(new VideoWatchService(
+    videoAction: static function (...$args): array {
+        throw new \TypeError('bad dependency');
     },
-    enterAction: static function (...$args): array {
+));
+$typeErrorThrown = false;
+try {
+    $eraVideoTypeError->start(['aid' => '1', 'cid' => '2', 'duration' => 100], 'session-era');
+} catch (\TypeError) {
+    $typeErrorThrown = true;
+}
+Assert::true($typeErrorThrown, 'EraVideoWatchService::start 不应吞掉 TypeError。');
+
+$eraLiveCalls = [];
+$eraLiveEnterCalls = [];
+$eraLiveShared = new LiveWatchService(
+    roomEntryAction: static function (...$args) use (&$eraLiveCalls): void {
+        $eraLiveCalls[] = ['roomEntryAction', ...$args];
+    },
+    enterAction: static function (...$args) use (&$eraLiveEnterCalls): array {
+        $eraLiveEnterCalls[] = $args;
         return [
             'code' => 0,
             'data' => [
@@ -177,7 +201,29 @@ $eraLiveShared = new LiveWatchService(
     buvidFactory: static fn (): string => 'buvid',
     uuidFactory: static fn (): string => 'uuid',
 );
-$eraLiveService = new EraLiveWatchService($eraLiveShared);
+$eraLiveService = new EraLiveWatchService(
+    $eraLiveShared,
+    roomResolver: static fn (int $roomId): ?array => [
+        'room_id' => $roomId,
+        'ruid' => 123,
+        'parent_area_id' => 456,
+        'area_id' => 789,
+        'room_title' => '测试直播间',
+        'room_uname' => '测试UP主',
+        'pick_source' => 'room',
+    ],
+    areaRoomPicker: static fn (int $areaId, int $parentAreaId): ?array => null,
+);
+$startedLive = $eraLiveService->start(['9']);
+Assert::same(9, (int)($startedLive['room_id'] ?? 0));
+Assert::same('测试直播间', (string)($startedLive['room_title'] ?? ''));
+Assert::same('测试UP主', (string)($startedLive['room_uname'] ?? ''));
+Assert::same('room', (string)($startedLive['room_pick_source'] ?? ''));
+Assert::same(1, count($eraLiveEnterCalls), 'EraLiveWatchService::start 应委托到公共 LiveWatchService::start。');
+Assert::same(9, (int)($eraLiveEnterCalls[0][0] ?? 0));
+Assert::same(123, (int)($eraLiveEnterCalls[0][1] ?? 0));
+Assert::same(456, (int)($eraLiveEnterCalls[0][2] ?? 0));
+Assert::same(789, (int)($eraLiveEnterCalls[0][3] ?? 0));
 $afterHeartbeat = $eraLiveService->heartbeat([
     'room_id' => 9,
     'ruid' => 1,
@@ -191,4 +237,8 @@ $afterHeartbeat = $eraLiveService->heartbeat([
     'last_heartbeat_at' => microtime(true) - 3,
 ]);
 Assert::same(5, (int)$afterHeartbeat['seq_id']);
-Assert::same(1, count($eraLiveCalls), 'EraLiveWatchService 的 heartbeat 应委托公共 LiveWatchService。');
+$eraLiveHeartbeatCalls = array_values(array_filter(
+    $eraLiveCalls,
+    static fn (array $call): bool => ($call[0] ?? '') === 'heartbeat',
+));
+Assert::same(1, count($eraLiveHeartbeatCalls), 'EraLiveWatchService 的 heartbeat 应委托公共 LiveWatchService。');

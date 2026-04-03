@@ -30,7 +30,15 @@ final class VideoWatchService
      */
     public function start(string $archiveId, string $cid, array $context = []): VideoWatchSession
     {
+        if (trim($archiveId) === '' || trim($cid) === '') {
+            throw new \RuntimeException('视频观看参数无效');
+        }
+
         $session = VideoWatchSession::start($archiveId, $cid, $context);
+        if ($session->duration <= 0) {
+            throw new \RuntimeException('视频时长无效');
+        }
+
         $videoResponse = ($this->videoAction)($session->archiveId, $session->cid, $session->bvid, [
             'session' => $session->sessionId,
         ]);

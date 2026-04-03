@@ -16,10 +16,37 @@ final class EraLiveWatchService
     /** @var array<string, string> */
     private array $areaWebIds = [];
     private LiveWatchService $watchService;
+    /** @var \Closure(int):(?array<string, int|string>) */
+    private \Closure $roomResolver;
+    /** @var \Closure(int, int):(?array<string, int|string>) */
+    private \Closure $areaRoomPicker;
 
-    public function __construct(?LiveWatchService $watchService = null)
+    /**
+     * @param null|callable(int):(?array<string, int|string>) $roomResolver
+     * @param null|callable(int, int):(?array<string, int|string>) $areaRoomPicker
+     */
+    public function __construct(
+        ?LiveWatchService $watchService = null,
+        ?callable $roomResolver = null,
+        ?callable $areaRoomPicker = null,
+    )
     {
         $this->watchService = $watchService ?? new LiveWatchService();
+        $this->roomResolver = $roomResolver !== null
+            ? \Closure::fromCallable($roomResolver)
+            : function (int $roomId): ?array {
+                return $this->resolveLiveRoom($roomId);
+            };
+        $this->areaRoomPicker = $areaRoomPicker !== null
+            ? \Closure::fromCallable($areaRoomPicker)
+            : function (int $areaId, int $parentAreaId): ?array {
+                $areaRoom = $this->pickAreaLiveRoom($areaId, $parentAreaId);
+                if ($areaRoom !== null) {
+                    return $areaRoom;
+                }
+
+                return $this->pickRecommendedAreaLiveRoom($areaId, $parentAreaId);
+            };
     }
 
     /**
@@ -70,45 +97,17 @@ final class EraLiveWatchService
                 continue;
             }
 
-            $response = ApiIndex::getInfoByRoom($roomId);
-            if (($response['code'] ?? 0) !== 0) {
-                continue;
+            $room = ($this->roomResolver)($roomId);
+            if ($room !== null) {
+                return $room;
             }
-
-            $roomInfo = is_array($response['data']['room_info'] ?? null) ? $response['data']['room_info'] : [];
-            if ((int)($roomInfo['live_status'] ?? 0) !== 1) {
-                continue;
-            }
-
-            $actualRoomId = (int)($roomInfo['room_id'] ?? $roomId);
-            $ruid = (int)($roomInfo['uid'] ?? 0);
-            $roomParentAreaId = (int)($roomInfo['parent_area_id'] ?? 0);
-            $roomAreaId = (int)($roomInfo['area_id'] ?? 0);
-            if ($actualRoomId <= 0 || $ruid <= 0 || $roomParentAreaId <= 0 || $roomAreaId <= 0) {
-                continue;
-            }
-
-            return [
-                'room_id' => $actualRoomId,
-                'ruid' => $ruid,
-                'parent_area_id' => $roomParentAreaId,
-                'area_id' => $roomAreaId,
-                'room_title' => trim((string)($roomInfo['title'] ?? '')),
-                'room_uname' => trim((string)($response['data']['anchor_info']['base_info']['uname'] ?? '')),
-                'pick_source' => 'room',
-            ];
         }
 
         if ($areaId <= 0) {
             return null;
         }
 
-        $areaRoom = $this->pickAreaLiveRoom($areaId, $parentAreaId);
-        if ($areaRoom !== null) {
-            return $areaRoom;
-        }
-
-        return $this->pickRecommendedAreaLiveRoom($areaId, $parentAreaId);
+        return ($this->areaRoomPicker)($areaId, $parentAreaId);
     }
 
     /**
