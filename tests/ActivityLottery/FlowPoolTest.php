@@ -53,6 +53,23 @@ $laneBatch = $pool->pick([$drawFlow, $statusFlow], 105);
 Assert::same(1, count($laneBatch), '被车道限速阻塞的 flow 本轮不应入选。');
 Assert::same($statusFlow->id(), $laneBatch[0]->id(), '未阻塞车道的 flow 应可正常入选。');
 
+$blockedFirstLimiter = new ActivityLaneLimiter(['draw_execute' => 10, 'task_status' => 0]);
+$blockedFirstLimiter->reserve('draw_execute', 100);
+$blockedFirstPool = new ActivityFlowPool(
+    new ActivityFlowBudget(2, 6, 3000),
+    new ActivityFlowPicker(),
+    $blockedFirstLimiter,
+);
+$blockedFlow = buildFlow('pool-blocked-first', 'draw_execute');
+$readyFlow1 = buildFlow('pool-ready-1', 'task_status');
+$readyFlow2 = buildFlow('pool-ready-2', 'task_status');
+$blockedFirstBatch = $blockedFirstPool->pick([$blockedFlow, $readyFlow1, $readyFlow2], 100);
+Assert::same(2, count($blockedFirstBatch), 'budget=2 且首条 flow 被限速时，不应占用预算位。');
+$pickedIds = array_map(static fn (ActivityFlow $flow): string => $flow->id(), $blockedFirstBatch);
+Assert::false(in_array($blockedFlow->id(), $pickedIds, true), '被阻塞 flow 应被跳过，不得占预算位。');
+Assert::true(in_array($readyFlow1->id(), $pickedIds, true), '后续 ready flow 应可入选。');
+Assert::true(in_array($readyFlow2->id(), $pickedIds, true), '预算应留给后续 ready flow。');
+
 $futureFlow = buildFlow('pool-future', 'task_status', 999);
 $futureBatch = $pool->pick([$futureFlow], 100);
 Assert::same(0, count($futureBatch), 'next_run_at 未到期的 flow 不应入选。');
@@ -81,4 +98,3 @@ function buildFlow(string $activityId, string $lane, int $nextRunAt = 0): Activi
 
     return ActivityFlow::fromArray($row);
 }
-

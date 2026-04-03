@@ -9,6 +9,8 @@ use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlowPlanner;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlow;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode;
 use Bhp\Plugin\ActivityLottery\Internal\Catalog\ActivityCatalogItem;
+use Bhp\Plugin\ActivityLottery\Internal\EraActivityPage;
+use Bhp\Plugin\ActivityLottery\Internal\EraActivityTask;
 
 $catalogItem = ActivityCatalogItem::fromArray([
     'id' => 'shared-activity',
@@ -82,3 +84,36 @@ Assert::false(
     in_array('era_task_unknown', $dynamicTypes, true),
     '未知能力不应生成节点。'
 );
+
+$pageWithTaskObjects = EraActivityPage::fromArray([
+    'title' => 'era-page',
+    'page_id' => 'p1',
+    'activity_id' => 'act-flow-planner',
+    'lottery_id' => 'l1',
+    'start_time' => 0,
+    'end_time' => 0,
+    'tasks' => [
+        [
+            'task_id' => 'obj-follow',
+            'task_name' => '关注任务',
+            'capability' => EraActivityTask::CAPABILITY_FOLLOW,
+            'task_status' => 2,
+        ],
+        [
+            'task_id' => 'obj-manual',
+            'task_name' => '手动任务',
+            'capability' => EraActivityTask::CAPABILITY_MANUAL,
+            'task_status' => 1,
+        ],
+    ],
+]);
+$flowWithTaskObjects = $planner->plan($catalogItem, $pageWithTaskObjects, '2026-04-02');
+$objectDynamicNodes = array_values(array_filter(
+    $flowWithTaskObjects->nodes(),
+    static fn (ActivityNode $node): bool => str_starts_with($node->type(), 'era_task_'),
+));
+Assert::same(1, count($objectDynamicNodes), 'EraActivityTask 对象输入应生成可识别能力的动态节点。');
+Assert::same('era_task_follow', $objectDynamicNodes[0]->type(), '对象任务 capability=follow 应映射为 era_task_follow。');
+Assert::same('obj-follow', (string)($objectDynamicNodes[0]->payload()['task_id'] ?? ''), '动态节点应携带对象任务 task_id。');
+Assert::same('follow', (string)($objectDynamicNodes[0]->payload()['capability'] ?? ''), '动态节点应携带对象任务 capability。');
+Assert::same(2, (int)($objectDynamicNodes[0]->payload()['task_status'] ?? -1), '动态节点应携带对象任务 task_status。');

@@ -35,10 +35,17 @@ final class ActivityFlowPool
         }
 
         $pickLimit = $this->budget->maxFlowSelectionsPerTick();
-        $candidates = $this->picker->pick($eligible, $pickLimit);
-
         $selected = [];
-        foreach ($candidates as $flow) {
+        $scanLimit = count($eligible);
+        $scanned = 0;
+        while ($scanned < $scanLimit && count($selected) < $pickLimit) {
+            $candidateBatch = $this->picker->pick($eligible, 1);
+            $scanned++;
+            if ($candidateBatch === []) {
+                break;
+            }
+
+            $flow = $candidateBatch[0];
             $lane = $this->resolveLane($flow);
             if (!$this->laneLimiter->canPass($lane, $now)) {
                 continue;
@@ -46,9 +53,6 @@ final class ActivityFlowPool
 
             $this->laneLimiter->reserve($lane, $now);
             $selected[] = $flow;
-            if (count($selected) >= $pickLimit) {
-                break;
-            }
         }
 
         return $selected;
@@ -88,4 +92,3 @@ final class ActivityFlowPool
         };
     }
 }
-
