@@ -12,14 +12,19 @@ final class ActivityFlowFactory
      */
     public static function create(ActivityCatalogItem $item, string $bizDate, array $nodes): ActivityFlow
     {
+        if ($nodes === []) {
+            throw new RuntimeException('ActivityFlowFactory 不允许创建空节点 flow');
+        }
+
         $now = time();
         $activity = $item->toArray();
         $stableKey = self::resolveStableActivityKey($activity);
-        $flowId = self::buildFlowId($stableKey, $bizDate);
+        $normalizedBizDate = ActivityFlow::normalizeBizDate($bizDate);
+        $flowId = self::buildFlowId($stableKey, $normalizedBizDate);
 
         return new ActivityFlow(
             $flowId,
-            $bizDate,
+            $normalizedBizDate,
             $activity,
             ActivityFlowStatus::PENDING,
             0,

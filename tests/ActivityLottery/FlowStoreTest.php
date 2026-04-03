@@ -488,3 +488,202 @@ try {
 }
 Assert::true($duplicateFlowIdOnSaveThrown, 'save 入参同日重复 flow_id 时应严格失败。');
 Assert::true(str_contains($duplicateFlowIdOnSaveMessage, 'flow_id'), 'save 重复 flow_id 异常应包含 flow_id 关键字。');
+
+$missingActivityThrown = false;
+try {
+    $missingActivityPayload = $flow->toArray();
+    unset($missingActivityPayload['activity']);
+    ActivityFlow::fromArray($missingActivityPayload);
+} catch (\RuntimeException) {
+    $missingActivityThrown = true;
+}
+Assert::true($missingActivityThrown, 'flow activity 缺失时应严格失败。');
+
+$nullActivityThrown = false;
+try {
+    ActivityFlow::fromArray(array_merge($flow->toArray(), [
+        'activity' => null,
+    ]));
+} catch (\RuntimeException) {
+    $nullActivityThrown = true;
+}
+Assert::true($nullActivityThrown, 'flow activity 为 null 时应严格失败。');
+
+$missingNodesThrown = false;
+try {
+    $missingNodesPayload = $flow->toArray();
+    unset($missingNodesPayload['nodes']);
+    ActivityFlow::fromArray($missingNodesPayload);
+} catch (\RuntimeException) {
+    $missingNodesThrown = true;
+}
+Assert::true($missingNodesThrown, 'flow nodes 缺失时应严格失败。');
+
+$nullNodesThrown = false;
+try {
+    ActivityFlow::fromArray(array_merge($flow->toArray(), [
+        'nodes' => null,
+    ]));
+} catch (\RuntimeException) {
+    $nullNodesThrown = true;
+}
+Assert::true($nullNodesThrown, 'flow nodes 为 null 时应严格失败。');
+
+$missingContextThrown = false;
+try {
+    $missingContextPayload = $flow->toArray();
+    unset($missingContextPayload['context']);
+    ActivityFlow::fromArray($missingContextPayload);
+} catch (\RuntimeException) {
+    $missingContextThrown = true;
+}
+Assert::true($missingContextThrown, 'flow context 缺失时应严格失败。');
+
+$nullContextThrown = false;
+try {
+    ActivityFlow::fromArray(array_merge($flow->toArray(), [
+        'context' => null,
+    ]));
+} catch (\RuntimeException) {
+    $nullContextThrown = true;
+}
+Assert::true($nullContextThrown, 'flow context 为 null 时应严格失败。');
+
+$missingLogsThrown = false;
+try {
+    $missingLogsPayload = $flow->toArray();
+    unset($missingLogsPayload['logs']);
+    ActivityFlow::fromArray($missingLogsPayload);
+} catch (\RuntimeException) {
+    $missingLogsThrown = true;
+}
+Assert::true($missingLogsThrown, 'flow logs 缺失时应严格失败。');
+
+$nullLogsThrown = false;
+try {
+    ActivityFlow::fromArray(array_merge($flow->toArray(), [
+        'logs' => null,
+    ]));
+} catch (\RuntimeException) {
+    $nullLogsThrown = true;
+}
+Assert::true($nullLogsThrown, 'flow logs 为 null 时应严格失败。');
+
+$missingNodePayloadThrown = false;
+try {
+    ActivityNode::fromArray([
+        'type' => 'node-missing-payload',
+        'status' => ActivityNodeStatus::PENDING,
+        'context' => [],
+        'attempts' => 0,
+    ]);
+} catch (\RuntimeException) {
+    $missingNodePayloadThrown = true;
+}
+Assert::true($missingNodePayloadThrown, 'node payload 缺失时应严格失败。');
+
+$nullNodePayloadThrown = false;
+try {
+    ActivityNode::fromArray([
+        'type' => 'node-null-payload',
+        'status' => ActivityNodeStatus::PENDING,
+        'payload' => null,
+        'context' => [],
+        'attempts' => 0,
+    ]);
+} catch (\RuntimeException) {
+    $nullNodePayloadThrown = true;
+}
+Assert::true($nullNodePayloadThrown, 'node payload 为 null 时应严格失败。');
+
+$missingNodeContextThrown = false;
+try {
+    ActivityNode::fromArray([
+        'type' => 'node-missing-context',
+        'status' => ActivityNodeStatus::PENDING,
+        'payload' => [],
+        'attempts' => 0,
+    ]);
+} catch (\RuntimeException) {
+    $missingNodeContextThrown = true;
+}
+Assert::true($missingNodeContextThrown, 'node context 缺失时应严格失败。');
+
+$nullNodeContextThrown = false;
+try {
+    ActivityNode::fromArray([
+        'type' => 'node-null-context',
+        'status' => ActivityNodeStatus::PENDING,
+        'payload' => [],
+        'context' => null,
+        'attempts' => 0,
+    ]);
+} catch (\RuntimeException) {
+    $nullNodeContextThrown = true;
+}
+Assert::true($nullNodeContextThrown, 'node context 为 null 时应严格失败。');
+
+$missingResultPayloadThrown = false;
+try {
+    ActivityNode::fromArray([
+        'type' => 'node-missing-result-payload',
+        'status' => ActivityNodeStatus::PENDING,
+        'payload' => [],
+        'context' => [],
+        'attempts' => 0,
+        'result' => [
+            'ok' => true,
+            'message' => 'ok',
+        ],
+    ]);
+} catch (\RuntimeException) {
+    $missingResultPayloadThrown = true;
+}
+Assert::true($missingResultPayloadThrown, 'node result.payload 缺失时应严格失败。');
+
+$nullResultPayloadThrown = false;
+try {
+    ActivityNode::fromArray([
+        'type' => 'node-null-result-payload',
+        'status' => ActivityNodeStatus::PENDING,
+        'payload' => [],
+        'context' => [],
+        'attempts' => 0,
+        'result' => [
+            'ok' => true,
+            'message' => 'ok',
+            'payload' => null,
+        ],
+    ]);
+} catch (\RuntimeException) {
+    $nullResultPayloadThrown = true;
+}
+Assert::true($nullResultPayloadThrown, 'node result.payload 为 null 时应严格失败。');
+
+$invalidBizDateFromArrayThrown = false;
+try {
+    ActivityFlow::fromArray(array_merge($flow->toArray(), [
+        'biz_date' => '2026/04/02',
+    ]));
+} catch (\RuntimeException) {
+    $invalidBizDateFromArrayThrown = true;
+}
+Assert::true($invalidBizDateFromArrayThrown, '非法格式 biz_date 在 fromArray 中应被拒绝。');
+
+$invalidBizDateFactoryThrown = false;
+try {
+    ActivityFlowFactory::create($catalogItem, '2026/04/02', [
+        new ActivityNode('invalid-biz-date'),
+    ]);
+} catch (\RuntimeException) {
+    $invalidBizDateFactoryThrown = true;
+}
+Assert::true($invalidBizDateFactoryThrown, '非法格式 biz_date 在工厂创建中应被拒绝。');
+
+$emptyNodesFactoryThrown = false;
+try {
+    ActivityFlowFactory::create($catalogItem, '2026-04-13', []);
+} catch (\RuntimeException) {
+    $emptyNodesFactoryThrown = true;
+}
+Assert::true($emptyNodesFactoryThrown, '工厂创建不应接受空节点流。');

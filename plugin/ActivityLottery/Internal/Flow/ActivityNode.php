@@ -52,14 +52,8 @@ final class ActivityNode
             }
         }
 
-        $context = $data['context'] ?? [];
-        if (!is_array($context)) {
-            throw new RuntimeException('ActivityNode context 必须为数组');
-        }
-        $payload = $data['payload'] ?? [];
-        if (!is_array($payload)) {
-            throw new RuntimeException('ActivityNode payload 必须为数组');
-        }
+        $context = self::readRequiredArrayField($data, 'context');
+        $payload = self::readRequiredArrayField($data, 'payload');
 
         return new self(
             self::readRequiredStringField($data, 'type'),
@@ -184,6 +178,28 @@ final class ActivityNode
         if (!is_int($value)) {
             throw new RuntimeException(sprintf(
                 'ActivityNode attempts 必须为 int，实际类型: %s',
+                get_debug_type($value),
+            ));
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @return array<mixed>
+     */
+    private static function readRequiredArrayField(array $data, string $field): array
+    {
+        if (!array_key_exists($field, $data)) {
+            throw new RuntimeException(sprintf('ActivityNode 缺少必填字段: %s', $field));
+        }
+
+        $value = $data[$field];
+        if (!is_array($value)) {
+            throw new RuntimeException(sprintf(
+                'ActivityNode %s 必须为 array，实际类型: %s',
+                $field,
                 get_debug_type($value),
             ));
         }

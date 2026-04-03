@@ -22,15 +22,10 @@ final class ActivityNodeResult
      */
     public static function fromArray(array $data): self
     {
-        $payload = $data['payload'] ?? [];
-        if (!is_array($payload)) {
-            throw new RuntimeException('ActivityNodeResult payload 必须为数组');
-        }
-
         return new self(
             self::readRequiredOk($data),
             self::readRequiredMessage($data),
-            $payload,
+            self::readRequiredPayload($data),
             self::readCreatedAt($data),
         );
     }
@@ -124,6 +119,27 @@ final class ActivityNodeResult
         if (!is_int($value)) {
             throw new RuntimeException(sprintf(
                 'ActivityNodeResult created_at 必须为 int，实际类型: %s',
+                get_debug_type($value),
+            ));
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
+     */
+    private static function readRequiredPayload(array $data): array
+    {
+        if (!array_key_exists('payload', $data)) {
+            throw new RuntimeException('ActivityNodeResult 缺少必填字段: payload');
+        }
+
+        $value = $data['payload'];
+        if (!is_array($value)) {
+            throw new RuntimeException(sprintf(
+                'ActivityNodeResult payload 必须为 array，实际类型: %s',
                 get_debug_type($value),
             ));
         }

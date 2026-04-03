@@ -2,6 +2,7 @@
 
 namespace Bhp\Plugin\ActivityLottery\Internal\Flow;
 
+use DateTimeImmutable;
 use RuntimeException;
 
 final class ActivityFlow
@@ -42,7 +43,7 @@ final class ActivityFlow
         private readonly int $updatedAt,
     ) {
         $this->flowId = trim($flowId);
-        $this->bizDate = trim($bizDate);
+        $this->bizDate = self::normalizeBizDate($bizDate);
         $this->activity = $activity;
         $this->status = trim($status);
         $this->nodes = $nodes;
@@ -64,15 +65,9 @@ final class ActivityFlow
      */
     public static function fromArray(array $data): self
     {
-        $rawActivity = $data['activity'] ?? [];
-        if (!is_array($rawActivity)) {
-            throw new RuntimeException('ActivityFlow activity 必须为数组');
-        }
+        $rawActivity = self::readRequiredArrayField($data, 'activity');
 
-        $rawNodes = $data['nodes'] ?? [];
-        if (!is_array($rawNodes)) {
-            throw new RuntimeException('ActivityFlow nodes 必须为数组');
-        }
+        $rawNodes = self::readRequiredArrayField($data, 'nodes');
 
         $nodes = [];
         foreach ($rawNodes as $index => $node) {
@@ -85,16 +80,10 @@ final class ActivityFlow
             $nodes[] = ActivityNode::fromArray($node);
         }
 
-        $rawContext = $data['context'] ?? [];
-        if (!is_array($rawContext)) {
-            throw new RuntimeException('ActivityFlow context 必须为数组');
-        }
+        $rawContext = self::readRequiredArrayField($data, 'context');
         $context = ActivityFlowContext::fromArray($rawContext);
 
-        $rawLogs = $data['logs'] ?? [];
-        if (!is_array($rawLogs)) {
-            throw new RuntimeException('ActivityFlow logs 必须为数组');
-        }
+        $rawLogs = self::readRequiredArrayField($data, 'logs');
 
         $logs = [];
         foreach ($rawLogs as $index => $log) {
@@ -121,6 +110,16 @@ final class ActivityFlow
             self::readRequiredIntField($data, 'created_at'),
             self::readRequiredIntField($data, 'updated_at'),
         );
+    }
+
+    public static function normalizeBizDate(string $bizDate): string
+    {
+        $normalized = trim($bizDate);
+        if (!self::isValidBizDate($normalized)) {
+            throw new RuntimeException(sprintf('ActivityFlow biz_date 格式非法: %s', $normalized));
+        }
+
+        return $normalized;
     }
 
     public function id(): string
@@ -247,8 +246,8 @@ final class ActivityFlow
         if (trim($flowId) === '') {
             throw new RuntimeException('ActivityFlow flow_id 不能为空');
         }
-        if (trim($bizDate) === '') {
-            throw new RuntimeException('ActivityFlow biz_date 不能为空');
+        if (!self::isValidBizDate($bizDate)) {
+            throw new RuntimeException('ActivityFlow biz_date 必须为 Y-m-d 格式');
         }
         if (!in_array($status, self::allowedStatuses(), true)) {
             throw new RuntimeException('ActivityFlow 状态非法: ' . $status);
@@ -306,6 +305,28 @@ final class ActivityFlow
 
     /**
      * @param array<string, mixed> $data
+     * @return array<mixed>
+     */
+    private static function readRequiredArrayField(array $data, string $field): array
+    {
+        if (!array_key_exists($field, $data)) {
+            throw new RuntimeException(sprintf('ActivityFlow 缺少必填字段: %s', $field));
+        }
+
+        $value = $data[$field];
+        if (!is_array($value)) {
+            throw new RuntimeException(sprintf(
+                'ActivityFlow %s 必须为 array，实际类型: %s',
+                $field,
+                get_debug_type($value),
+            ));
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param array<string, mixed> $data
      */
     private static function readRequiredIntField(array $data, string $field): int
     {
@@ -323,5 +344,19 @@ final class ActivityFlow
         }
 
         return $value;
+    }
+
+    private static function isValidBizDate(string $bizDate): bool
+    {
+        if ($bizDate === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $bizDate)) {
+            return false;
+        }
+
+        $date = DateTimeImmutable::createFromFormat('!Y-m-d', $bizDate);
+        if (!$date instanceof DateTimeImmutable) {
+            return false;
+        }
+
+        return $date->format('Y-m-d') === $bizDate;
     }
 }
