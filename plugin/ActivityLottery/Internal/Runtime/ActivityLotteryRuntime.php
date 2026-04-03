@@ -180,6 +180,25 @@ final class ActivityLotteryRuntime
             )) {
                 $this->log('info', $resultMessage, $resultLogContext);
             }
+            [$summaryMessage, $summaryContext] = $this->buildFlowSummaryLog($flow, $currentNode, $updated, $executedNode);
+            if ($summaryMessage !== '' && $this->shouldEmitLifecycleLog(
+                'flow.summary',
+                $updated->id(),
+                $currentNode->type(),
+                $executedNode->status(),
+                $summaryContext,
+                $now,
+            )) {
+                $this->log('info', $summaryMessage, array_replace([
+                    'event' => 'flow.summary',
+                    'biz_date' => $bizDate,
+                    'flow_id' => $updated->id(),
+                    'node_type' => $currentNode->type(),
+                    'node_status' => $executedNode->status(),
+                    'flow_status' => $updated->status(),
+                    'current_node_index' => $updated->currentNodeIndex(),
+                ], $summaryContext));
+            }
         }
 
         $this->flowStore->save(array_values($flows));
@@ -430,6 +449,28 @@ final class ActivityLotteryRuntime
     }
 
     /**
+     * @return array{0: string, 1: array<string, mixed>}
+     */
+    private function buildFlowSummaryLog(
+        ActivityFlow $beforeFlow,
+        \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode $beforeNode,
+        ActivityFlow $afterFlow,
+        \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode $afterNode,
+    ): array {
+        $context = $this->buildNodeBusinessContext($beforeFlow, $beforeNode, $afterFlow);
+        $activityTitle = $context['activity_title'] ?? '未命名活动';
+        $summary = $this->buildFlowSummaryMessage($beforeNode->type(), $afterNode, $context);
+        if ($summary === '') {
+            return ['', $context];
+        }
+
+        return [
+            sprintf('活动「%s」当前阶段：%s', $activityTitle, $summary),
+            $context,
+        ];
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function buildNodeBusinessContext(
@@ -560,6 +601,25 @@ final class ActivityLotteryRuntime
             'execute_draw' => $this->buildExecuteDrawResultMessage($afterNode, $context, $fallback, $delay),
             'record_draw_result' => $this->buildRecordDrawResultMessage($afterNode, $context, $fallback),
             default => $fallback,
+        };
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private function buildFlowSummaryMessage(
+        string $nodeType,
+        \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode $afterNode,
+        array $context,
+    ): string {
+        return match ($nodeType) {
+            'era_task_follow' => $this->buildFollowSummaryMessage($afterNode, $context),
+            'era_task_watch_video_fixed', 'era_task_watch_video_topic' => $this->buildWatchVideoSummaryMessage($afterNode, $context),
+            'era_task_watch_live' => $this->buildWatchLiveSummaryMessage($afterNode, $context),
+            'refresh_draw_times' => $this->buildRefreshDrawSummaryMessage($afterNode, $context),
+            'execute_draw' => $this->buildExecuteDrawSummaryMessage($afterNode, $context),
+            'record_draw_result' => $this->buildRecordDrawSummaryMessage($afterNode, $context),
+            default => '',
         };
     }
 
@@ -715,6 +775,136 @@ final class ActivityLotteryRuntime
         }
 
         return sprintf('累计抽奖 %d 次，命中 %d 次，奖品：%s', $total, $winCount, implode(' / ', $wins));
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private function buildFollowSummaryMessage(
+        \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode $afterNode,
+        array $context,
+    ): string {
+        $completed = max(0, (int)($context['follow_completed_count'] ?? 0));
+        $total = max(0, (int)($context['follow_total_count'] ?? 0));
+        if ($afterNode->status() === ActivityNodeStatus::WAITING && $total > 0) {
+            $nextTargetUid = trim((string)($context['target_uid'] ?? ''));
+            $suffix = $nextTargetUid !== '' ? sprintf('，下一目标 UID=%s', $nextTargetUid) : '';
+            return sprintf('关注任务，已完成 %d/%d%s%s', $completed, $total, $suffix, $this->formatDelaySuffix((int)($context['wait_delay_seconds'] ?? 0)));
+        }
+
+        if ($afterNode->status() === ActivityNodeStatus::SUCCEEDED && $total > 0) {
+            return sprintf('关注任务，已完成 %d/%d', $completed, $total);
+        }
+
+        return '';
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private function buildWatchVideoSummaryMessage(
+        \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode $afterNode,
+        array $context,
+    ): string {
+        $currentSeconds = max(0, (int)($context['local_watch_seconds'] ?? 0));
+        $targetSeconds = max(0, (int)($context['display_target_seconds'] ?? 0));
+        $progress = $targetSeconds > 0 ? sprintf('%d/%d 秒', $currentSeconds, $targetSeconds) : sprintf('%d 秒', $currentSeconds);
+        $archiveLabel = $this->archiveLabel($context);
+        $prefix = $archiveLabel !== '' ? sprintf('观看视频，稿件 %s，', $archiveLabel) : '观看视频，';
+
+        if ($afterNode->status() === ActivityNodeStatus::WAITING) {
+            return sprintf('%s当前累计 %s%s', $prefix, $progress, $this->formatDelaySuffix((int)($context['wait_delay_seconds'] ?? 0)));
+        }
+        if ($afterNode->status() === ActivityNodeStatus::SUCCEEDED) {
+            return sprintf('%s累计 %s', $prefix, $progress);
+        }
+
+        return '';
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private function buildWatchLiveSummaryMessage(
+        \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode $afterNode,
+        array $context,
+    ): string {
+        $currentSeconds = max(0, (int)($context['local_watch_seconds'] ?? 0));
+        $targetSeconds = max(0, (int)($context['display_target_seconds'] ?? 0));
+        $progress = $targetSeconds > 0 ? sprintf('%d/%d 秒', $currentSeconds, $targetSeconds) : sprintf('%d 秒', $currentSeconds);
+        $roomId = max(0, (int)($context['room_id'] ?? 0));
+        $prefix = $roomId > 0 ? sprintf('观看直播，房间 %d，', $roomId) : '观看直播，';
+
+        if ($afterNode->status() === ActivityNodeStatus::WAITING) {
+            return sprintf('%s当前累计 %s%s', $prefix, $progress, $this->formatDelaySuffix((int)($context['wait_delay_seconds'] ?? 0)));
+        }
+        if ($afterNode->status() === ActivityNodeStatus::SUCCEEDED) {
+            return sprintf('%s累计 %s', $prefix, $progress);
+        }
+
+        return '';
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private function buildRefreshDrawSummaryMessage(
+        \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode $afterNode,
+        array $context,
+    ): string {
+        $remaining = max(0, (int)($context['draw_times_remaining'] ?? 0));
+        if ($afterNode->status() === ActivityNodeStatus::SUCCEEDED) {
+            return sprintf('抽奖阶段，当前可抽 %d 次', $remaining);
+        }
+        if ($afterNode->status() === ActivityNodeStatus::SKIPPED) {
+            return '抽奖阶段，当前无可用抽奖次数';
+        }
+
+        return '';
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private function buildExecuteDrawSummaryMessage(
+        \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode $afterNode,
+        array $context,
+    ): string {
+        $remaining = max(0, (int)($context['draw_times_remaining'] ?? 0));
+        $resultName = trim((string)($context['last_draw_gift_name'] ?? ''));
+        $resultLabel = $resultName !== '' ? $resultName : '未知结果';
+        if ($afterNode->status() === ActivityNodeStatus::WAITING) {
+            return sprintf('抽奖阶段，本次结果：%s，剩余 %d 次%s', $resultLabel, $remaining, $this->formatDelaySuffix((int)($context['wait_delay_seconds'] ?? 0)));
+        }
+        if ($afterNode->status() === ActivityNodeStatus::SUCCEEDED) {
+            return sprintf('抽奖阶段，本次结果：%s，剩余 %d 次', $resultLabel, $remaining);
+        }
+        if ($afterNode->status() === ActivityNodeStatus::SKIPPED) {
+            return '抽奖阶段，抽奖次数已耗尽';
+        }
+
+        return '';
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private function buildRecordDrawSummaryMessage(
+        \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode $afterNode,
+        array $context,
+    ): string {
+        if ($afterNode->status() !== ActivityNodeStatus::SUCCEEDED) {
+            return '';
+        }
+
+        $total = max(0, (int)($context['draw_total_count'] ?? 0));
+        $winCount = max(0, (int)($context['draw_win_count'] ?? 0));
+        $wins = is_array($context['draw_win_names'] ?? null) ? $context['draw_win_names'] : [];
+        if ($winCount <= 0) {
+            return sprintf('抽奖汇总，累计抽奖 %d 次，未命中', $total);
+        }
+
+        return sprintf('抽奖汇总，累计抽奖 %d 次，命中 %d 次，奖品：%s', $total, $winCount, implode(' / ', $wins));
     }
 
     /**

@@ -291,6 +291,10 @@ Assert::true($followWaitingLog !== null, '关注 waiting 场景应记录 node.re
 Assert::true(str_contains((string)$followWaitingLog['message'], '已完成 1/2'), '关注 waiting 日志应包含已完成数量。');
 Assert::true(str_contains((string)$followWaitingLog['message'], '67890'), '关注 waiting 日志应包含下一目标 UID。');
 Assert::true(str_contains((string)$followWaitingLog['message'], '15 秒后继续'), '关注 waiting 日志应包含等待秒数。');
+$followWaitingSummaryLog = findRuntimeLog($followWaitingLogs, 'flow.summary');
+Assert::true($followWaitingSummaryLog !== null, '关注 waiting 场景应记录 flow.summary 日志。');
+Assert::true(str_contains((string)$followWaitingSummaryLog['message'], '当前阶段：关注任务'), '关注摘要日志应包含当前阶段。');
+Assert::true(str_contains((string)$followWaitingSummaryLog['message'], '已完成 1/2'), '关注摘要日志应包含已完成数量。');
 
 $videoWaitingLogs = [];
 $videoWaitingRuntime = buildBusinessRuntime(
@@ -354,6 +358,10 @@ Assert::true($videoWaitingLog !== null, '视频 waiting 场景应记录 node.res
 Assert::true(str_contains((string)$videoWaitingLog['message'], '35/60 秒'), '视频 waiting 日志应包含累计观看秒数。');
 Assert::true(str_contains((string)$videoWaitingLog['message'], 'BV1Topic9001'), '视频 waiting 日志应包含当前稿件标识。');
 Assert::true(str_contains((string)$videoWaitingLog['message'], '5 秒后继续'), '视频 waiting 日志应包含等待秒数。');
+$videoWaitingSummaryLog = findRuntimeLog($videoWaitingLogs, 'flow.summary');
+Assert::true($videoWaitingSummaryLog !== null, '视频 waiting 场景应记录 flow.summary 日志。');
+Assert::true(str_contains((string)$videoWaitingSummaryLog['message'], '当前阶段：观看视频'), '视频摘要日志应包含当前阶段。');
+Assert::true(str_contains((string)$videoWaitingSummaryLog['message'], '35/60 秒'), '视频摘要日志应包含累计观看秒数。');
 
 $liveWaitingLogs = [];
 $liveWaitingRuntime = buildBusinessRuntime(
@@ -417,6 +425,10 @@ Assert::true($liveWaitingLog !== null, '直播 waiting 场景应记录 node.resu
 Assert::true(str_contains((string)$liveWaitingLog['message'], '房间 2233'), '直播 waiting 日志应包含房间号。');
 Assert::true(str_contains((string)$liveWaitingLog['message'], '120/240 秒'), '直播 waiting 日志应包含累计观看秒数。');
 Assert::true(str_contains((string)$liveWaitingLog['message'], '30 秒后继续'), '直播 waiting 日志应包含等待秒数。');
+$liveWaitingSummaryLog = findRuntimeLog($liveWaitingLogs, 'flow.summary');
+Assert::true($liveWaitingSummaryLog !== null, '直播 waiting 场景应记录 flow.summary 日志。');
+Assert::true(str_contains((string)$liveWaitingSummaryLog['message'], '当前阶段：观看直播'), '直播摘要日志应包含当前阶段。');
+Assert::true(str_contains((string)$liveWaitingSummaryLog['message'], '120/240 秒'), '直播摘要日志应包含累计观看秒数。');
 
 $drawRefreshLogs = [];
 $drawRefreshRuntime = buildBusinessRuntime(
@@ -458,6 +470,10 @@ $drawRefreshRuntime->tick();
 $drawRefreshLog = findRuntimeLog($drawRefreshLogs, 'node.result');
 Assert::true($drawRefreshLog !== null, '刷新抽奖次数节点应记录 node.result 日志。');
 Assert::true(str_contains((string)$drawRefreshLog['message'], '当前可抽 3 次'), '刷新抽奖次数日志应包含剩余次数。');
+$drawRefreshSummaryLog = findRuntimeLog($drawRefreshLogs, 'flow.summary');
+Assert::true($drawRefreshSummaryLog !== null, '刷新抽奖次数节点应记录 flow.summary 日志。');
+Assert::true(str_contains((string)$drawRefreshSummaryLog['message'], '当前阶段：抽奖阶段'), '刷新抽奖次数摘要日志应包含阶段。');
+Assert::true(str_contains((string)$drawRefreshSummaryLog['message'], '当前可抽 3 次'), '刷新抽奖次数摘要日志应包含剩余次数。');
 
 $drawExecuteLogs = [];
 $drawExecuteRuntime = buildBusinessRuntime(
@@ -506,6 +522,10 @@ Assert::true($drawExecuteLog !== null, '执行抽奖节点应记录 node.result 
 Assert::true(str_contains((string)$drawExecuteLog['message'], '本次结果：未中奖'), '抽奖执行日志应包含本次结果。');
 Assert::true(str_contains((string)$drawExecuteLog['message'], '剩余 2 次'), '抽奖执行日志应包含剩余次数。');
 Assert::true(str_contains((string)$drawExecuteLog['message'], '5 秒后继续'), '抽奖执行日志应包含等待秒数。');
+$drawExecuteSummaryLog = findRuntimeLog($drawExecuteLogs, 'flow.summary');
+Assert::true($drawExecuteSummaryLog !== null, '执行抽奖节点应记录 flow.summary 日志。');
+Assert::true(str_contains((string)$drawExecuteSummaryLog['message'], '当前阶段：抽奖阶段'), '执行抽奖摘要日志应包含阶段。');
+Assert::true(str_contains((string)$drawExecuteSummaryLog['message'], '剩余 2 次'), '执行抽奖摘要日志应包含剩余次数。');
 
 $drawSummaryLogs = [];
 $drawSummaryRuntime = buildBusinessRuntime(
@@ -555,6 +575,9 @@ Assert::true($drawSummaryLog !== null, '抽奖汇总节点应记录 node.result 
 Assert::true(str_contains((string)$drawSummaryLog['message'], '累计抽奖 3 次'), '抽奖汇总日志应包含总抽奖次数。');
 Assert::true(str_contains((string)$drawSummaryLog['message'], '命中 1 次'), '抽奖汇总日志应包含中奖次数。');
 Assert::true(str_contains((string)$drawSummaryLog['message'], '测试奖品'), '抽奖汇总日志应包含奖品名称。');
+$drawSummaryFlowLog = findRuntimeLog($drawSummaryLogs, 'flow.summary');
+Assert::true($drawSummaryFlowLog !== null, '抽奖汇总节点应记录 flow.summary 日志。');
+Assert::true(str_contains((string)$drawSummaryFlowLog['message'], '当前阶段：抽奖汇总'), '抽奖汇总摘要日志应包含阶段。');
 
 $throttleLogs = [];
 $throttleNow = $now;
@@ -655,6 +678,11 @@ Assert::same(1, count(array_values(array_filter(
     static fn (array $log): bool => ($log['context']['event'] ?? '') === 'node.result'
 ))),
     '相同 waiting 状态短时间重复推进时不应重复输出 node.result 日志。');
+Assert::same(1, count(array_values(array_filter(
+    $throttleLogs,
+    static fn (array $log): bool => ($log['context']['event'] ?? '') === 'flow.summary'
+))),
+    '相同 waiting 状态短时间重复推进时不应重复输出 flow.summary 日志。');
 
 /**
  * @param array<int, array{level: string, message: string, context: array<string, mixed>}> $logs
