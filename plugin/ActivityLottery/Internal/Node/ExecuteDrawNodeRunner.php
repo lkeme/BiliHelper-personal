@@ -53,6 +53,19 @@ final class ExecuteDrawNodeRunner implements NodeRunnerInterface
         }
 
         $latest = is_array($response['data'][0] ?? null) ? $response['data'][0] : [];
+        $giftName = trim((string)($latest['gift_name'] ?? ''));
+        if ($giftName === '') {
+            return new ActivityNodeResult(false, '执行抽奖失败：返回结果缺少奖品名', [
+                'node_status' => ActivityNodeStatus::FAILED,
+                'draw_execute_response' => $response,
+                'context_patch' => [
+                    'draw_times_remaining' => $remaining,
+                    'draw_results' => $drawResults,
+                    'draw_execute_response' => $response,
+                ],
+            ], $now);
+        }
+
         $drawResults[] = $latest;
         $remaining = max(0, $remaining - 1);
         $nodeStatus = $remaining > 0 ? ActivityNodeStatus::WAITING : ActivityNodeStatus::SUCCEEDED;

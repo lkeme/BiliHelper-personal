@@ -843,7 +843,7 @@ final class ActivityLotteryRuntime
     ): string {
         $remaining = max(0, (int)($context['draw_times_remaining'] ?? 0));
         $resultName = trim((string)($context['last_draw_gift_name'] ?? ''));
-        $resultLabel = $resultName !== '' ? $resultName : '未知结果';
+        $resultLabel = $resultName !== '' ? $resultName : '结果缺少奖品名';
 
         if ($afterNode->status() === ActivityNodeStatus::WAITING) {
             return sprintf('本次结果：%s，剩余 %d 次%s', $resultLabel, $remaining, $delay);
@@ -975,7 +975,7 @@ final class ActivityLotteryRuntime
     ): string {
         $remaining = max(0, (int)($context['draw_times_remaining'] ?? 0));
         $resultName = trim((string)($context['last_draw_gift_name'] ?? ''));
-        $resultLabel = $resultName !== '' ? $resultName : '未知结果';
+        $resultLabel = $resultName !== '' ? $resultName : '结果缺少奖品名';
         if ($afterNode->status() === ActivityNodeStatus::WAITING) {
             return sprintf('抽奖阶段，本次结果：%s，剩余 %d 次%s', $resultLabel, $remaining, $this->formatDelaySuffix((int)($context['wait_delay_seconds'] ?? 0)));
         }

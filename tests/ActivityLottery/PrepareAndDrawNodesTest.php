@@ -452,6 +452,37 @@ $contextOnlyExecuteResult = $contextOnlyExecuteRunner->run(
 Assert::same(ActivityNodeStatus::SKIPPED, (string)($contextOnlyExecuteResult->payload()['node_status'] ?? ''), 'execute_draw 应只消费 flow context，不应回退读取 node payload 里的抽奖状态。');
 Assert::same(0, count($contextOnlyExecuteEvents), '未通过 context 写入次数时不应触发 draw 请求。');
 
+$missingGiftNameEvents = [];
+$missingGiftNameGateway = new DrawGateway(
+    static fn (array $payload): array => ['code' => 0, 'data' => ['times' => 1], 'message' => 'ok'],
+    static function (array $payload) use (&$missingGiftNameEvents): array {
+        $missingGiftNameEvents[] = ['type' => 'draw', 'payload' => $payload];
+        return ['code' => 0, 'data' => [['gift_id' => 0]], 'message' => 'ok'];
+    },
+);
+$missingGiftNameFlow = applyContextPatchToFlow(buildFlowWithActivity([
+    'id' => 'missing-gift-name-flow',
+    'activity_id' => 'missing-gift-name-activity',
+    'lottery_id' => 'missing-gift-name-lottery',
+    'title' => '抽奖结果缺少奖品名',
+    'url' => 'https://www.bilibili.com/blackboard/era/missing-gift-name.html',
+], 'execute_draw'), [
+    'context_patch' => [
+        'draw_times_remaining' => 1,
+        'draw_results' => [],
+    ],
+]);
+$missingGiftNameRunner = new ExecuteDrawNodeRunner($missingGiftNameGateway);
+$missingGiftNameResult = $missingGiftNameRunner->run(
+    $missingGiftNameFlow,
+    new ActivityNode('execute_draw', ['lane' => 'draw_execute']),
+    time()
+);
+Assert::false($missingGiftNameResult->ok(), '抽奖返回缺少 gift_name 时 execute_draw 应失败。');
+Assert::same(ActivityNodeStatus::FAILED, (string)($missingGiftNameResult->payload()['node_status'] ?? ''), '抽奖返回缺少 gift_name 时应返回 failed。');
+Assert::true(str_contains($missingGiftNameResult->message(), '奖品名'), '抽奖返回缺少 gift_name 时应返回明确错误信息。');
+Assert::same(1, count($missingGiftNameEvents), '缺少 gift_name 的抽奖响应也应被实际请求一次。');
+
 $refreshRunner = new RefreshDrawTimesNodeRunner($drawGateway);
 $refreshResult = $refreshRunner->run($flow, new ActivityNode('refresh_draw_times', ['lane' => 'draw_refresh']), time());
 Assert::true($refreshResult->ok(), '刷新抽奖次数节点应执行成功。');
