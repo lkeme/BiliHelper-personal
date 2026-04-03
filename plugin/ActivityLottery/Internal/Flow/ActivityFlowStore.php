@@ -3,6 +3,7 @@
 namespace Bhp\Plugin\ActivityLottery\Internal\Flow;
 
 use Bhp\Cache\Cache;
+use RuntimeException;
 
 final class ActivityFlowStore
 {
@@ -10,7 +11,9 @@ final class ActivityFlowStore
 
     public function __construct(private readonly string $scope = 'ActivityLottery')
     {
-        $this->ensureCachePathReady();
+        if (!defined('PROFILE_CACHE_PATH')) {
+            throw new RuntimeException('缺少 PROFILE_CACHE_PATH，无法初始化 ActivityFlowStore');
+        }
         Cache::initCache($this->scope);
     }
 
@@ -21,11 +24,30 @@ final class ActivityFlowStore
     {
         $grouped = [];
         foreach ($flows as $flow) {
-            $grouped[$flow->bizDate()][] = $flow->toArray();
+            $grouped[$flow->bizDate()][] = $flow;
         }
 
         foreach ($grouped as $bizDate => $items) {
-            Cache::set($this->cacheKey((string)$bizDate), array_values($items), $this->scope);
+            $existingRows = Cache::get($this->cacheKey((string)$bizDate), $this->scope);
+            $mergedById = [];
+            if (is_array($existingRows)) {
+                foreach ($existingRows as $index => $row) {
+                    if (!is_array($row)) {
+                        continue;
+                    }
+                    $flowId = trim((string)($row['flow_id'] ?? ''));
+                    if ($flowId === '') {
+                        $flowId = '__legacy_' . $index;
+                    }
+                    $mergedById[$flowId] = $row;
+                }
+            }
+
+            foreach ($items as $flow) {
+                $mergedById[$flow->id()] = $flow->toArray();
+            }
+
+            Cache::set($this->cacheKey((string)$bizDate), array_values($mergedById), $this->scope);
         }
     }
 
@@ -52,18 +74,5 @@ final class ActivityFlowStore
     private function cacheKey(string $bizDate): string
     {
         return self::CACHE_KEY_PREFIX . trim($bizDate);
-    }
-
-    private function ensureCachePathReady(): void
-    {
-        if (defined('PROFILE_CACHE_PATH')) {
-            return;
-        }
-
-        $path = sys_get_temp_dir() . '/bhp-activity-lottery-cache/';
-        if (!is_dir($path)) {
-            mkdir($path, 0777, true);
-        }
-        define('PROFILE_CACHE_PATH', $path);
     }
 }

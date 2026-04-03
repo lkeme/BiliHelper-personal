@@ -2,6 +2,8 @@
 
 namespace Bhp\Plugin\ActivityLottery\Internal\Flow;
 
+use RuntimeException;
+
 final class ActivityFlow
 {
     /**
@@ -30,11 +32,34 @@ final class ActivityFlow
      */
     public static function fromArray(array $data): self
     {
+        $bizDate = trim((string)($data['biz_date'] ?? ''));
+        if ($bizDate === '') {
+            throw new RuntimeException('ActivityFlow biz_date 不能为空');
+        }
+
+        $status = trim((string)($data['status'] ?? ActivityFlowStatus::PENDING));
+        if (!in_array($status, self::allowedStatuses(), true)) {
+            throw new RuntimeException('ActivityFlow 状态非法: ' . $status);
+        }
+
         $nodes = [];
         foreach (($data['nodes'] ?? []) as $node) {
             if (is_array($node)) {
                 $nodes[] = ActivityNode::fromArray($node);
             }
+        }
+
+        $currentNodeIndex = (int)($data['current_node_index'] ?? 0);
+        if ($currentNodeIndex < 0) {
+            throw new RuntimeException('ActivityFlow current_node_index 不能为负数');
+        }
+        if ($nodes !== [] && $currentNodeIndex >= count($nodes)) {
+            throw new RuntimeException('ActivityFlow current_node_index 越界');
+        }
+
+        $attempts = (int)($data['attempts'] ?? 0);
+        if ($attempts < 0) {
+            throw new RuntimeException('ActivityFlow attempts 不能为负数');
         }
 
         $context = ActivityFlowContext::fromArray(
@@ -43,13 +68,13 @@ final class ActivityFlow
 
         return new self(
             trim((string)($data['flow_id'] ?? '')),
-            trim((string)($data['biz_date'] ?? '')),
+            $bizDate,
             is_array($data['activity'] ?? null) ? $data['activity'] : [],
-            trim((string)($data['status'] ?? ActivityFlowStatus::PENDING)),
-            (int)($data['current_node_index'] ?? 0),
+            $status,
+            $currentNodeIndex,
             $nodes,
             (int)($data['next_run_at'] ?? 0),
-            (int)($data['attempts'] ?? 0),
+            $attempts,
             $context,
             is_array($data['logs'] ?? null) ? $data['logs'] : [],
             (int)($data['created_at'] ?? 0),
@@ -147,6 +172,22 @@ final class ActivityFlow
             'logs' => $this->logs,
             'created_at' => $this->createdAt,
             'updated_at' => $this->updatedAt,
+        ];
+    }
+
+    /**
+     * @return string[]
+     */
+    private static function allowedStatuses(): array
+    {
+        return [
+            ActivityFlowStatus::PENDING,
+            ActivityFlowStatus::RUNNING,
+            ActivityFlowStatus::BLOCKED,
+            ActivityFlowStatus::COMPLETED,
+            ActivityFlowStatus::SKIPPED,
+            ActivityFlowStatus::EXPIRED,
+            ActivityFlowStatus::FAILED,
         ];
     }
 }

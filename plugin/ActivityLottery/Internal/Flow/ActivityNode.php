@@ -2,6 +2,8 @@
 
 namespace Bhp\Plugin\ActivityLottery\Internal\Flow;
 
+use RuntimeException;
+
 final class ActivityNode
 {
     /**
@@ -22,6 +24,15 @@ final class ActivityNode
      */
     public static function fromArray(array $data): self
     {
+        $status = trim((string)($data['status'] ?? ActivityNodeStatus::PENDING));
+        if (!in_array($status, self::allowedStatuses(), true)) {
+            throw new RuntimeException('ActivityNode 状态非法: ' . $status);
+        }
+        $attempts = (int)($data['attempts'] ?? 0);
+        if ($attempts < 0) {
+            throw new RuntimeException('ActivityNode attempts 不能为负数');
+        }
+
         $result = null;
         if (is_array($data['result'] ?? null)) {
             $result = ActivityNodeResult::fromArray($data['result']);
@@ -30,10 +41,10 @@ final class ActivityNode
         return new self(
             trim((string)($data['type'] ?? '')),
             is_array($data['payload'] ?? null) ? $data['payload'] : [],
-            trim((string)($data['status'] ?? ActivityNodeStatus::PENDING)),
+            $status,
             is_array($data['context'] ?? null) ? $data['context'] : [],
             $result,
-            (int)($data['attempts'] ?? 0),
+            $attempts,
         );
     }
 
@@ -85,6 +96,21 @@ final class ActivityNode
             'context' => $this->context,
             'attempts' => $this->attempts,
             'result' => $this->result?->toArray(),
+        ];
+    }
+
+    /**
+     * @return string[]
+     */
+    private static function allowedStatuses(): array
+    {
+        return [
+            ActivityNodeStatus::PENDING,
+            ActivityNodeStatus::RUNNING,
+            ActivityNodeStatus::WAITING,
+            ActivityNodeStatus::SUCCEEDED,
+            ActivityNodeStatus::SKIPPED,
+            ActivityNodeStatus::FAILED,
         ];
     }
 }
