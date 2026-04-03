@@ -35,6 +35,22 @@
 - `resolveTaskResult()`
 - `bootPlugin()`
 
+## 复杂插件建议
+
+对于需要目录加载、状态持久化、节点编排的插件，不要把全部流程堆进入口类。
+
+推荐做法：
+
+- 插件入口类只保留 `runOnce(): TaskResult`
+- 复杂业务下沉到独立 runtime，例如 `ActivityLotteryRuntime`
+- 节点执行、副作用调用、状态存储分别拆到 `Node / Gateway / Flow / Runtime`
+
+`ActivityLottery` 当前就是这一模式：
+
+- 入口类只负责 `enabled()` 判断和 runtime 装配
+- runtime 负责窗口判断、建流、落库、调度和单步推进
+- 公共观看能力放在 `src/Automation/Watch/*`，避免插件内部重复造轮子
+
 ## 插件 manifest
 
 插件元数据当前仍放在类属性 `info` 中，并可在发现阶段通过 `discoverManifest()` 读取。

@@ -1,21 +1,79 @@
 <?php declare(strict_types=1);
 
-namespace Bhp\Plugin\ActivityLottery\Internal;
+namespace Bhp\Plugin\ActivityLottery\Internal\Gateway;
 
 use Bhp\Api\XLive\WebInterface\V1\Second\ApiList;
 use Bhp\Api\XLive\WebInterface\V1\WebMain\ApiRecommend;
-use Bhp\Api\XLive\DataInterface\V1\X25Kn\ApiTrace;
 use Bhp\Api\XLive\WebRoom\V1\Index\ApiIndex;
+use Bhp\Automation\Watch\LiveWatchService;
+use Bhp\Automation\Watch\LiveWatchSession;
 use Bhp\Log\Log;
 use Bhp\Request\Request;
-use Bhp\Runtime\Runtime;
-use Bhp\Util\Fake\Fake;
 
-final class EraLiveWatchService
+final class WatchLiveGateway
 {
     private bool $areaFetchFailureReported = false;
     /** @var array<string, string> */
     private array $areaWebIds = [];
+    /**
+     * @var callable(array<int, string>, int, int): ?array<string, mixed>
+     */
+    private readonly mixed $startAction;
+    /**
+     * @var callable(array<string, mixed>): array<string, mixed>
+     */
+    private readonly mixed $heartbeatAction;
+    /** @var \Closure(int):(?array<string, int|string>) */
+    private \Closure $roomResolver;
+    /** @var \Closure(int, int):(?array<string, int|string>) */
+    private \Closure $areaRoomPicker;
+
+    public function __construct(
+        ?callable $startAction = null,
+        ?callable $heartbeatAction = null,
+        ?LiveWatchService $watchService = null,
+        ?callable $roomResolver = null,
+        ?callable $areaRoomPicker = null,
+    ) {
+        $watchService ??= new LiveWatchService();
+        $this->roomResolver = $roomResolver !== null
+            ? \Closure::fromCallable($roomResolver)
+            : function (int $roomId): ?array {
+                return $this->resolveLiveRoom($roomId);
+            };
+        $this->areaRoomPicker = $areaRoomPicker !== null
+            ? \Closure::fromCallable($areaRoomPicker)
+            : function (int $areaId, int $parentAreaId): ?array {
+                $areaRoom = $this->pickAreaLiveRoom($areaId, $parentAreaId);
+                if ($areaRoom !== null) {
+                    return $areaRoom;
+                }
+
+                return $this->pickRecommendedAreaLiveRoom($areaId, $parentAreaId);
+            };
+
+        $this->startAction = $startAction ?? function (array $roomIds, int $areaId = 0, int $parentAreaId = 0) use ($watchService): ?array {
+            $room = $this->pickLiveRoom($roomIds, $areaId, $parentAreaId);
+            if ($room === null) {
+                return null;
+            }
+
+            $session = $watchService->start(
+                (int)$room['room_id'],
+                [
+                    'ruid' => (int)$room['ruid'],
+                    'parent_area_id' => (int)$room['parent_area_id'],
+                    'area_id' => (int)$room['area_id'],
+                    'room_title' => (string)($room['room_title'] ?? ''),
+                    'room_uname' => (string)($room['room_uname'] ?? ''),
+                    'room_pick_source' => (string)($room['pick_source'] ?? 'room'),
+                ],
+            );
+
+            return $session->toArray();
+        };
+        $this->heartbeatAction = $heartbeatAction ?? fn (array $session): array => $watchService->heartbeat(LiveWatchSession::fromArray($session))->toArray();
+    }
 
     /**
      * @param string[] $roomIds
@@ -23,56 +81,8 @@ final class EraLiveWatchService
      */
     public function start(array $roomIds, int $areaId = 0, int $parentAreaId = 0): ?array
     {
-        $room = $this->pickLiveRoom($roomIds, $areaId, $parentAreaId);
-        if ($room === null) {
-            return null;
-        }
-
-        ApiIndex::roomEntryAction((int)$room['room_id']);
-
-        $session = [
-            'room_id' => (int)$room['room_id'],
-            'ruid' => (int)$room['ruid'],
-            'parent_area_id' => (int)$room['parent_area_id'],
-            'area_id' => (int)$room['area_id'],
-            'room_title' => (string)($room['room_title'] ?? ''),
-            'room_uname' => (string)($room['room_uname'] ?? ''),
-            'room_pick_source' => (string)($room['pick_source'] ?? 'room'),
-            'seq_id' => 0,
-            'live_buvid' => Fake::buvid(),
-            'live_uuid' => Fake::uuid4(),
-        ];
-
-        $response = ApiTrace::enter(
-            $session['room_id'],
-            $session['ruid'],
-            $session['parent_area_id'],
-            $session['area_id'],
-            $session['live_buvid'],
-            $session['live_uuid'],
-            $this->userAgent(),
-        );
-        if (($response['code'] ?? 0) !== 0) {
-            throw new \RuntimeException("x25Kn/E失败 {$response['code']} -> {$response['message']}");
-        }
-
-        $data = is_array($response['data'] ?? null) ? $response['data'] : [];
-        $secretKey = trim((string)($data['secret_key'] ?? ''));
-        $secretRule = $data['secret_rule'] ?? [];
-        $heartbeatInterval = max(30, (int)($data['heartbeat_interval'] ?? 60));
-        $ets = (int)($data['timestamp'] ?? 0);
-
-        if ($secretKey === '' || !is_array($secretRule) || $ets <= 0) {
-            throw new \RuntimeException('x25Kn/E返回缺少必要会话字段');
-        }
-
-        $session['heartbeat_interval'] = $heartbeatInterval;
-        $session['ets'] = $ets;
-        $session['secret_key'] = $secretKey;
-        $session['secret_rule'] = array_values(array_map(static fn (mixed $rule): int => (int)$rule, $secretRule));
-        $session['last_heartbeat_at'] = microtime(true);
-
-        return $session;
+        $session = ($this->startAction)($roomIds, $areaId, $parentAreaId);
+        return is_array($session) ? $session : null;
     }
 
     /**
@@ -81,37 +91,8 @@ final class EraLiveWatchService
      */
     public function heartbeat(array $session): array
     {
-        $now = microtime(true);
-        $lastHeartbeatAt = max(0.0, (float)($session['last_heartbeat_at'] ?? 0.0));
-        $elapsedSeconds = $lastHeartbeatAt > 0
-            ? max(1, (int)floor($now - $lastHeartbeatAt))
-            : max(1, (int)($session['heartbeat_interval'] ?? 60));
-
-        $session['_debug_elapsed_seconds'] = $elapsedSeconds;
-        $session['_debug_heartbeat_at'] = $now;
-
-        $response = ApiTrace::heartbeat($session, $this->userAgent(), (int)($session['heartbeat_interval'] ?? 60));
-        if (($response['code'] ?? 0) !== 0) {
-            throw new \RuntimeException("x25Kn/X失败 {$response['code']} -> {$response['message']}");
-        }
-
-        $data = is_array($response['data'] ?? null) ? $response['data'] : [];
-        $session['seq_id'] = (int)($session['seq_id'] ?? 0) + 1;
-        $session['heartbeat_interval'] = max(30, (int)($data['heartbeat_interval'] ?? $session['heartbeat_interval'] ?? 60));
-        $session['ets'] = (int)($data['timestamp'] ?? $session['ets'] ?? 0);
-
-        $nextSecretKey = trim((string)($data['secret_key'] ?? ''));
-        if ($nextSecretKey !== '') {
-            $session['secret_key'] = $nextSecretKey;
-        }
-
-        if (is_array($data['secret_rule'] ?? null) && $data['secret_rule'] !== []) {
-            $session['secret_rule'] = array_values(array_map(static fn (mixed $rule): int => (int)$rule, $data['secret_rule']));
-        }
-
-        $session['last_heartbeat_at'] = $now;
-
-        return $session;
+        $nextSession = ($this->heartbeatAction)($session);
+        return is_array($nextSession) ? $nextSession : [];
     }
 
     /**
@@ -127,45 +108,17 @@ final class EraLiveWatchService
                 continue;
             }
 
-            $response = ApiIndex::getInfoByRoom($roomId);
-            if (($response['code'] ?? 0) !== 0) {
-                continue;
+            $room = ($this->roomResolver)($roomId);
+            if ($room !== null) {
+                return $room;
             }
-
-            $roomInfo = is_array($response['data']['room_info'] ?? null) ? $response['data']['room_info'] : [];
-            if ((int)($roomInfo['live_status'] ?? 0) !== 1) {
-                continue;
-            }
-
-            $actualRoomId = (int)($roomInfo['room_id'] ?? $roomId);
-            $ruid = (int)($roomInfo['uid'] ?? 0);
-            $roomParentAreaId = (int)($roomInfo['parent_area_id'] ?? 0);
-            $roomAreaId = (int)($roomInfo['area_id'] ?? 0);
-            if ($actualRoomId <= 0 || $ruid <= 0 || $roomParentAreaId <= 0 || $roomAreaId <= 0) {
-                continue;
-            }
-
-            return [
-                'room_id' => $actualRoomId,
-                'ruid' => $ruid,
-                'parent_area_id' => $roomParentAreaId,
-                'area_id' => $roomAreaId,
-                'room_title' => trim((string)($roomInfo['title'] ?? '')),
-                'room_uname' => trim((string)($response['data']['anchor_info']['base_info']['uname'] ?? '')),
-                'pick_source' => 'room',
-            ];
         }
 
         if ($areaId <= 0) {
             return null;
         }
 
-        $areaRoom = $this->pickAreaLiveRoom($areaId, $parentAreaId);
-        if ($areaRoom !== null) {
-            return $areaRoom;
-        }
-
-        return $this->pickRecommendedAreaLiveRoom($areaId, $parentAreaId);
+        return ($this->areaRoomPicker)($areaId, $parentAreaId);
     }
 
     /**
@@ -192,34 +145,12 @@ final class EraLiveWatchService
         }
 
         foreach ($sortTypes as $sortType) {
-            $maxPages = 2;
-            for ($page = 1; $page <= $maxPages; $page++) {
+            for ($page = 1; $page <= 2; $page++) {
                 $response = $page === 1 && $sortType === ''
                     ? $seedResponse
                     : ApiList::getList($parentAreaId, $areaId, $page, $sortType, $webId);
                 if (($response['code'] ?? 0) !== 0) {
-                    if (!$this->areaFetchFailureReported) {
-                        Log::warning(sprintf(
-                            'ERA直播分区接口异常 area=%d parent=%d sort=%s page=%d code=%s message=%s',
-                            $areaId,
-                            $parentAreaId,
-                            $sortType !== '' ? $sortType : '-',
-                            $page,
-                            (string)($response['code'] ?? ''),
-                            (string)($response['message'] ?? $response['msg'] ?? '')
-                        ));
-                        $this->areaFetchFailureReported = true;
-                    } else {
-                        Log::debug(sprintf(
-                            'ERA直播分区接口异常 area=%d parent=%d sort=%s page=%d code=%s message=%s',
-                            $areaId,
-                            $parentAreaId,
-                            $sortType !== '' ? $sortType : '-',
-                            $page,
-                            (string)($response['code'] ?? ''),
-                            (string)($response['message'] ?? $response['msg'] ?? '')
-                        ));
-                    }
+                    $this->logAreaListFailure($areaId, $parentAreaId, $sortType, $page, $response);
                     continue;
                 }
 
@@ -249,11 +180,7 @@ final class EraLiveWatchService
 
                     $candidateRoomId = (int)($room['roomid'] ?? $room['room_id'] ?? 0);
                     $candidateRuid = (int)($room['uid'] ?? 0);
-                    if ($candidateRoomId <= 0) {
-                        continue;
-                    }
-
-                    if ($candidateRuid <= 0) {
+                    if ($candidateRoomId <= 0 || $candidateRuid <= 0) {
                         continue;
                     }
 
@@ -401,8 +328,27 @@ final class EraLiveWatchService
         ];
     }
 
-    private function userAgent(): string
+    /**
+     * @param array<string, mixed> $response
+     */
+    private function logAreaListFailure(int $areaId, int $parentAreaId, string $sortType, int $page, array $response): void
     {
-        return (string)Runtime::getInstance()->appContext()->device('platform.headers.pc_ua');
+        $message = sprintf(
+            'ERA直播分区接口异常 area=%d parent=%d sort=%s page=%d code=%s message=%s',
+            $areaId,
+            $parentAreaId,
+            $sortType !== '' ? $sortType : '-',
+            $page,
+            (string)($response['code'] ?? ''),
+            (string)($response['message'] ?? $response['msg'] ?? '')
+        );
+
+        if (!$this->areaFetchFailureReported) {
+            Log::warning($message);
+            $this->areaFetchFailureReported = true;
+            return;
+        }
+
+        Log::debug($message);
     }
 }

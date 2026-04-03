@@ -49,6 +49,21 @@
 - 插件 manifest 已类型化到 `PluginManifest`
 - 插件装配仍会根据扫描结果 `include_once` 目标入口文件，但已不再依赖 `class_alias()` 或全局 helper 桥接
 
+### ActivityLottery
+
+- `plugin/ActivityLottery/ActivityLottery.php`
+- `plugin/ActivityLottery/Internal/Runtime/ActivityLotteryRuntime.php`
+- `plugin/ActivityLottery/Internal/Flow/*`
+- `plugin/ActivityLottery/Internal/Node/*`
+- `plugin/ActivityLottery/Internal/Gateway/*`
+
+当前 `ActivityLottery` 已重构为活动流引擎：
+
+- 插件入口只负责配置装配，并把执行委托给 `ActivityLotteryRuntime::tick()`
+- 每个活动按 `biz_date` 生成独立 flow，节点状态和上下文持久化到 cache
+- 运行窗口固定为 `06:00:00 ~ 23:00:00`，窗口外直接调度到下一次窗口开始
+- `watch_video` / `watch_live` 复用 `src/Automation/Watch/*` 公共组件，插件内只保留活动语义和编排
+
 ### 调度与执行
 
 - `src/Scheduler/Scheduler.php`
