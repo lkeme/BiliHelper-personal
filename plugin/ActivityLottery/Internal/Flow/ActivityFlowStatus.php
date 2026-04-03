@@ -6,8 +6,9 @@ final class ActivityFlowStatus
 {
     public const PENDING = 'pending';
     public const RUNNING = 'running';
-    public const WAITING = 'waiting';
-    public const SUCCEEDED = 'succeeded';
+    public const BLOCKED = 'blocked';
+    public const COMPLETED = 'completed';
+    public const SKIPPED = 'skipped';
+    public const EXPIRED = 'expired';
     public const FAILED = 'failed';
-    public const CANCELLED = 'cancelled';
 }
