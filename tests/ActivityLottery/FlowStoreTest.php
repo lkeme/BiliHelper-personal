@@ -129,3 +129,51 @@ try {
     $negativeAttemptsThrown = true;
 }
 Assert::true($negativeAttemptsThrown, 'flow attempts 为负数应抛出异常。');
+
+$emptyFlowIdThrown = false;
+try {
+    ActivityFlow::fromArray(array_merge($flow->toArray(), [
+        'flow_id' => '',
+    ]));
+} catch (\RuntimeException) {
+    $emptyFlowIdThrown = true;
+}
+Assert::true($emptyFlowIdThrown, '空 flow_id 应被拒绝。');
+
+$emptyNodeTypeThrown = false;
+try {
+    new ActivityNode('');
+} catch (\RuntimeException) {
+    $emptyNodeTypeThrown = true;
+}
+Assert::true($emptyNodeTypeThrown, '空 node type 应被拒绝。');
+
+$emptyNodesIndexThrown = false;
+try {
+    ActivityFlow::fromArray(array_merge($flow->toArray(), [
+        'nodes' => [],
+        'current_node_index' => 1,
+    ]));
+} catch (\RuntimeException) {
+    $emptyNodesIndexThrown = true;
+}
+Assert::true($emptyNodesIndexThrown, 'nodes 为空时 current_node_index>0 应被拒绝。');
+
+$goodRow = ActivityFlowFactory::create($catalogItem, '2026-04-04', [new ActivityNode('ok')])->toArray();
+Cache::set('activity_flow_day:2026-04-04', [
+    $goodRow,
+    array_merge($goodRow, ['flow_id' => '']),
+], 'ActivityLottery');
+$mixedRowsThrown = false;
+$mixedRowsMessage = '';
+try {
+    $store->load('2026-04-04');
+} catch (\RuntimeException $exception) {
+    $mixedRowsThrown = true;
+    $mixedRowsMessage = $exception->getMessage();
+}
+Assert::true($mixedRowsThrown, '混合好坏缓存行时应严格失败。');
+Assert::true(
+    str_contains($mixedRowsMessage, '2026-04-04') && str_contains($mixedRowsMessage, 'index=1'),
+    '严格失败异常信息应包含 biz_date 与索引定位信息。'
+);

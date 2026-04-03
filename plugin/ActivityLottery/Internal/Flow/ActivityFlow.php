@@ -25,6 +25,14 @@ final class ActivityFlow
         private readonly int $createdAt,
         private readonly int $updatedAt,
     ) {
+        self::assertValid(
+            $this->flowId,
+            $this->bizDate,
+            $this->status,
+            $this->currentNodeIndex,
+            $this->nodes,
+            $this->attempts,
+        );
     }
 
     /**
@@ -32,34 +40,11 @@ final class ActivityFlow
      */
     public static function fromArray(array $data): self
     {
-        $bizDate = trim((string)($data['biz_date'] ?? ''));
-        if ($bizDate === '') {
-            throw new RuntimeException('ActivityFlow biz_date 不能为空');
-        }
-
-        $status = trim((string)($data['status'] ?? ActivityFlowStatus::PENDING));
-        if (!in_array($status, self::allowedStatuses(), true)) {
-            throw new RuntimeException('ActivityFlow 状态非法: ' . $status);
-        }
-
         $nodes = [];
         foreach (($data['nodes'] ?? []) as $node) {
             if (is_array($node)) {
                 $nodes[] = ActivityNode::fromArray($node);
             }
-        }
-
-        $currentNodeIndex = (int)($data['current_node_index'] ?? 0);
-        if ($currentNodeIndex < 0) {
-            throw new RuntimeException('ActivityFlow current_node_index 不能为负数');
-        }
-        if ($nodes !== [] && $currentNodeIndex >= count($nodes)) {
-            throw new RuntimeException('ActivityFlow current_node_index 越界');
-        }
-
-        $attempts = (int)($data['attempts'] ?? 0);
-        if ($attempts < 0) {
-            throw new RuntimeException('ActivityFlow attempts 不能为负数');
         }
 
         $context = ActivityFlowContext::fromArray(
@@ -68,13 +53,13 @@ final class ActivityFlow
 
         return new self(
             trim((string)($data['flow_id'] ?? '')),
-            $bizDate,
+            trim((string)($data['biz_date'] ?? '')),
             is_array($data['activity'] ?? null) ? $data['activity'] : [],
-            $status,
-            $currentNodeIndex,
+            trim((string)($data['status'] ?? ActivityFlowStatus::PENDING)),
+            (int)($data['current_node_index'] ?? 0),
             $nodes,
             (int)($data['next_run_at'] ?? 0),
-            $attempts,
+            (int)($data['attempts'] ?? 0),
             $context,
             is_array($data['logs'] ?? null) ? $data['logs'] : [],
             (int)($data['created_at'] ?? 0),
@@ -189,5 +174,39 @@ final class ActivityFlow
             ActivityFlowStatus::EXPIRED,
             ActivityFlowStatus::FAILED,
         ];
+    }
+
+    /**
+     * @param ActivityNode[] $nodes
+     */
+    private static function assertValid(
+        string $flowId,
+        string $bizDate,
+        string $status,
+        int $currentNodeIndex,
+        array $nodes,
+        int $attempts,
+    ): void {
+        if (trim($flowId) === '') {
+            throw new RuntimeException('ActivityFlow flow_id 不能为空');
+        }
+        if (trim($bizDate) === '') {
+            throw new RuntimeException('ActivityFlow biz_date 不能为空');
+        }
+        if (!in_array($status, self::allowedStatuses(), true)) {
+            throw new RuntimeException('ActivityFlow 状态非法: ' . $status);
+        }
+        if ($attempts < 0) {
+            throw new RuntimeException('ActivityFlow attempts 不能为负数');
+        }
+        if ($currentNodeIndex < 0) {
+            throw new RuntimeException('ActivityFlow current_node_index 不能为负数');
+        }
+        if ($nodes === [] && $currentNodeIndex !== 0) {
+            throw new RuntimeException('ActivityFlow nodes 为空时 current_node_index 必须为 0');
+        }
+        if ($nodes !== [] && $currentNodeIndex >= count($nodes)) {
+            throw new RuntimeException('ActivityFlow current_node_index 越界');
+        }
     }
 }

@@ -17,6 +17,7 @@ final class ActivityNode
         private readonly ?ActivityNodeResult $result = null,
         private readonly int $attempts = 0,
     ) {
+        self::assertValid($this->type, $this->status, $this->attempts);
     }
 
     /**
@@ -24,15 +25,6 @@ final class ActivityNode
      */
     public static function fromArray(array $data): self
     {
-        $status = trim((string)($data['status'] ?? ActivityNodeStatus::PENDING));
-        if (!in_array($status, self::allowedStatuses(), true)) {
-            throw new RuntimeException('ActivityNode 状态非法: ' . $status);
-        }
-        $attempts = (int)($data['attempts'] ?? 0);
-        if ($attempts < 0) {
-            throw new RuntimeException('ActivityNode attempts 不能为负数');
-        }
-
         $result = null;
         if (is_array($data['result'] ?? null)) {
             $result = ActivityNodeResult::fromArray($data['result']);
@@ -41,10 +33,10 @@ final class ActivityNode
         return new self(
             trim((string)($data['type'] ?? '')),
             is_array($data['payload'] ?? null) ? $data['payload'] : [],
-            $status,
+            trim((string)($data['status'] ?? ActivityNodeStatus::PENDING)),
             is_array($data['context'] ?? null) ? $data['context'] : [],
             $result,
-            $attempts,
+            (int)($data['attempts'] ?? 0),
         );
     }
 
@@ -112,5 +104,18 @@ final class ActivityNode
             ActivityNodeStatus::SKIPPED,
             ActivityNodeStatus::FAILED,
         ];
+    }
+
+    private static function assertValid(string $type, string $status, int $attempts): void
+    {
+        if (trim($type) === '') {
+            throw new RuntimeException('ActivityNode type 不能为空');
+        }
+        if (!in_array($status, self::allowedStatuses(), true)) {
+            throw new RuntimeException('ActivityNode 状态非法: ' . $status);
+        }
+        if ($attempts < 0) {
+            throw new RuntimeException('ActivityNode attempts 不能为负数');
+        }
     }
 }

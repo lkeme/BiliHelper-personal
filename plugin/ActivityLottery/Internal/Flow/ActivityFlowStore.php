@@ -23,7 +23,13 @@ final class ActivityFlowStore
     public function save(array $flows): void
     {
         $grouped = [];
-        foreach ($flows as $flow) {
+        foreach ($flows as $index => $flow) {
+            if (!$flow instanceof ActivityFlow) {
+                throw new RuntimeException('ActivityFlowStore::save 参数非法，index=' . $index);
+            }
+            if (trim($flow->id()) === '') {
+                throw new RuntimeException('ActivityFlowStore::save flow_id 不能为空，index=' . $index);
+            }
             $grouped[$flow->bizDate()][] = $flow;
         }
 
@@ -33,13 +39,25 @@ final class ActivityFlowStore
             if (is_array($existingRows)) {
                 foreach ($existingRows as $index => $row) {
                     if (!is_array($row)) {
-                        continue;
+                        throw new RuntimeException(sprintf(
+                            'ActivityFlowStore::save 读取历史数据失败 biz_date=%s index=%d：行结构非法',
+                            (string)$bizDate,
+                            (int)$index,
+                        ));
                     }
-                    $flowId = trim((string)($row['flow_id'] ?? ''));
-                    if ($flowId === '') {
-                        $flowId = '__legacy_' . $index;
+                    try {
+                        $restored = ActivityFlow::fromArray($row);
+                    } catch (\Throwable $throwable) {
+                        $flowId = trim((string)($row['flow_id'] ?? ''));
+                        throw new RuntimeException(sprintf(
+                            'ActivityFlowStore::save 读取历史数据失败 biz_date=%s index=%d flow_id=%s: %s',
+                            (string)$bizDate,
+                            (int)$index,
+                            $flowId !== '' ? $flowId : '<empty>',
+                            $throwable->getMessage(),
+                        ), 0, $throwable);
                     }
-                    $mergedById[$flowId] = $row;
+                    $mergedById[$restored->id()] = $restored->toArray();
                 }
             }
 
@@ -62,9 +80,26 @@ final class ActivityFlowStore
         }
 
         $flows = [];
-        foreach ($rows as $row) {
-            if (is_array($row)) {
+        foreach ($rows as $index => $row) {
+            if (!is_array($row)) {
+                throw new RuntimeException(sprintf(
+                    'ActivityFlowStore::load 解析失败 biz_date=%s index=%d：行结构非法',
+                    $bizDate,
+                    (int)$index,
+                ));
+            }
+
+            try {
                 $flows[] = ActivityFlow::fromArray($row);
+            } catch (\Throwable $throwable) {
+                $flowId = trim((string)($row['flow_id'] ?? ''));
+                throw new RuntimeException(sprintf(
+                    'ActivityFlowStore::load 解析失败 biz_date=%s index=%d flow_id=%s: %s',
+                    $bizDate,
+                    (int)$index,
+                    $flowId !== '' ? $flowId : '<empty>',
+                    $throwable->getMessage(),
+                ), 0, $throwable);
             }
         }
 
