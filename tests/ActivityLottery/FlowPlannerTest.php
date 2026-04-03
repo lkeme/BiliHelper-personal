@@ -234,3 +234,35 @@ try {
     $invalidObjectTaskThrown = str_contains($e->getMessage(), '非法任务对象类型');
 }
 Assert::true($invalidObjectTaskThrown, '非数组且非 EraActivityTask 的任务对象应显式失败，不可静默丢弃。');
+
+$invalidArrayTaskIdThrown = false;
+try {
+    $planner->plan(
+        $catalogItem,
+        (object)[
+            'tasks' => [
+                ['task_id' => ['bad'], 'capability' => EraActivityTask::CAPABILITY_FOLLOW],
+            ],
+        ],
+        '2026-04-02',
+    );
+} catch (\RuntimeException $e) {
+    $invalidArrayTaskIdThrown = str_contains($e->getMessage(), 'task_id');
+}
+Assert::true($invalidArrayTaskIdThrown, '数组任务 task_id 为不可接受类型时必须显式失败。');
+
+$invalidArrayCapabilityThrown = false;
+try {
+    $planner->plan(
+        $catalogItem,
+        (object)[
+            'tasks' => [
+                ['task_id' => 'follow-ok', 'capability' => ['bad']],
+            ],
+        ],
+        '2026-04-02',
+    );
+} catch (\RuntimeException $e) {
+    $invalidArrayCapabilityThrown = str_contains($e->getMessage(), 'capability');
+}
+Assert::true($invalidArrayCapabilityThrown, '数组任务 capability 为不可接受类型时必须显式失败。');

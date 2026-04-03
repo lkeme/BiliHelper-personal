@@ -28,9 +28,8 @@ final class ActivityFlowPool
      * @param ActivityFlow[] $flows
      * @return ActivityFlow[]
      */
-    public function pick(array $flows, int $now, ?int $tickStartedAtMs = null): array
+    public function pick(array $flows, int $now, int $tickStartedAtMs): array
     {
-        $tickStartedAtMs ??= (int)(microtime(true) * 1000);
         $nowMs = (int)(microtime(true) * 1000);
         if (($nowMs - $tickStartedAtMs) >= $this->budget->maxRuntimeMsPerTick()) {
             return [];
@@ -43,6 +42,7 @@ final class ActivityFlowPool
                 && $this->isFlowEligible($flow, $now)
                 && !isset($this->pickedFlowIdsInTick[$flow->id()]),
         ));
+        $eligible = $this->deduplicateFlowsById($eligible);
         if ($eligible === []) {
             return [];
         }
@@ -107,11 +107,37 @@ final class ActivityFlowPool
         $defaultLane = $contracts[$node->type()]['lane'];
 
         $payloadLane = trim((string)($node->payload()['lane'] ?? ''));
-        if ($payloadLane !== '') {
-            return $payloadLane;
+        if ($payloadLane !== '' && $payloadLane !== $defaultLane) {
+            throw new RuntimeException(sprintf(
+                'lane 与 node type 契约冲突: node_type=%s expected=%s actual=%s',
+                $node->type(),
+                $defaultLane,
+                $payloadLane,
+            ));
         }
 
         return $defaultLane;
+    }
+
+    /**
+     * @param ActivityFlow[] $flows
+     * @return ActivityFlow[]
+     */
+    private function deduplicateFlowsById(array $flows): array
+    {
+        $deduplicated = [];
+        $seenIds = [];
+        foreach ($flows as $flow) {
+            $flowId = $flow->id();
+            if (isset($seenIds[$flowId])) {
+                continue;
+            }
+
+            $seenIds[$flowId] = true;
+            $deduplicated[] = $flow;
+        }
+
+        return $deduplicated;
     }
 
     private function prepareTickState(int $tickStartedAtMs): void

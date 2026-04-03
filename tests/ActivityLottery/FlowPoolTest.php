@@ -26,12 +26,13 @@ $laneLimiter = new ActivityLaneLimiter([
     'draw_execute' => 10,
 ]);
 $pool = new ActivityFlowPool($budget, $picker, $laneLimiter);
+$defaultTickStartedAtMs = (int)(microtime(true) * 1000);
 
 $flowA = buildFlow('pool-a', 'task_status');
 $flowB = buildFlow('pool-b', 'task_status');
 $flowC = buildFlow('pool-c', 'task_status');
 
-$batch1 = $pool->pick([$flowA, $flowB, $flowC], 100);
+$batch1 = $pool->pick([$flowA, $flowB, $flowC], 100, $defaultTickStartedAtMs);
 Assert::same(3, count($batch1), '可推进 flow 小于预算时应全部入选。');
 
 $limitedBudgetPool = new ActivityFlowPool(
@@ -51,7 +52,7 @@ Assert::same($flowA->id(), $limitedBatch2[1]->id(), '游标应环形前进，避
 $drawFlow = buildFlow('pool-draw', 'draw_execute');
 $statusFlow = buildFlow('pool-status', 'task_status');
 $laneLimiter->reserve('draw_execute', 100);
-$laneBatch = $pool->pick([$drawFlow, $statusFlow], 105);
+$laneBatch = $pool->pick([$drawFlow, $statusFlow], 105, $defaultTickStartedAtMs);
 Assert::same(1, count($laneBatch), '被车道限速阻塞的 flow 本轮不应入选。');
 Assert::same($statusFlow->id(), $laneBatch[0]->id(), '未阻塞车道的 flow 应可正常入选。');
 
@@ -65,7 +66,7 @@ $blockedFirstPool = new ActivityFlowPool(
 $blockedFlow = buildFlow('pool-blocked-first', 'draw_execute');
 $readyFlow1 = buildFlow('pool-ready-1', 'task_status');
 $readyFlow2 = buildFlow('pool-ready-2', 'task_status');
-$blockedFirstBatch = $blockedFirstPool->pick([$blockedFlow, $readyFlow1, $readyFlow2], 100);
+$blockedFirstBatch = $blockedFirstPool->pick([$blockedFlow, $readyFlow1, $readyFlow2], 100, $defaultTickStartedAtMs);
 Assert::same(2, count($blockedFirstBatch), 'budget=2 且首条 flow 被限速时，不应占用预算位。');
 $pickedIds = array_map(static fn (ActivityFlow $flow): string => $flow->id(), $blockedFirstBatch);
 Assert::false(in_array($blockedFlow->id(), $pickedIds, true), '被阻塞 flow 应被跳过，不得占预算位。');
@@ -73,7 +74,7 @@ Assert::true(in_array($readyFlow1->id(), $pickedIds, true), '后续 ready flow �
 Assert::true(in_array($readyFlow2->id(), $pickedIds, true), '预算应留给后续 ready flow。');
 
 $futureFlow = buildFlow('pool-future', 'task_status', 999);
-$futureBatch = $pool->pick([$futureFlow], 100);
+$futureBatch = $pool->pick([$futureFlow], 100, $defaultTickStartedAtMs);
 Assert::same(0, count($futureBatch), 'next_run_at 未到期的 flow 不应入选。');
 
 $sameTickPool = new ActivityFlowPool(
@@ -85,7 +86,7 @@ $sameTickFlowA = buildFlow('same-tick-a', 'task_status');
 $sameTickFlowB = buildFlow('same-tick-b', 'task_status');
 $sameTickFlowC = buildFlow('same-tick-c', 'task_status');
 $sameTickFlowD = buildFlow('same-tick-d', 'task_status');
-$sameTickStartedAtMs = (int)(microtime(true) * 1000);
+$sameTickStartedAtMs = $defaultTickStartedAtMs + 500;
 $sameTickBatch1 = $sameTickPool->pick([$sameTickFlowA, $sameTickFlowB, $sameTickFlowC, $sameTickFlowD], 100, $sameTickStartedAtMs);
 Assert::same(2, count($sameTickBatch1), '同一 tick 第一轮应按预算选出 flow。');
 $sameTickBatch2 = $sameTickPool->pick([$sameTickFlowA, $sameTickFlowB, $sameTickFlowC, $sameTickFlowD], 100, $sameTickStartedAtMs);
@@ -98,11 +99,11 @@ $unknownLanePool = new ActivityFlowPool(
 );
 $unknownLaneThrown = false;
 try {
-    $unknownLanePool->pick([buildFlow('unknown-lane', 'unknown_lane')], 100);
+    $unknownLanePool->pick([buildFlow('unknown-lane', 'unknown_lane')], 100, $defaultTickStartedAtMs);
 } catch (\RuntimeException $e) {
-    $unknownLaneThrown = str_contains($e->getMessage(), '未知 lane');
+    $unknownLaneThrown = str_contains($e->getMessage(), 'lane') && str_contains($e->getMessage(), '契约冲突');
 }
-Assert::true($unknownLaneThrown, '未知 lane 应触发异常，不应静默降级。');
+Assert::true($unknownLaneThrown, '已知 node type 的冲突 lane 应触发异常，不应静默降级。');
 
 $unknownNodeTypePool = new ActivityFlowPool(
     new ActivityFlowBudget(2, 6, 3000),
@@ -112,7 +113,7 @@ $unknownNodeTypePool = new ActivityFlowPool(
 $unknownNodeTypeFlow = buildFlowWithType('unknown-node-type', 'mystery_node', []);
 $unknownNodeTypeThrown = false;
 try {
-    $unknownNodeTypePool->pick([$unknownNodeTypeFlow], 100);
+    $unknownNodeTypePool->pick([$unknownNodeTypeFlow], 100, $defaultTickStartedAtMs);
 } catch (\RuntimeException $e) {
     $unknownNodeTypeThrown = str_contains($e->getMessage(), '未知 node type');
 }
@@ -126,7 +127,7 @@ $unknownNodeTypeWithLanePool = new ActivityFlowPool(
 $unknownNodeTypeWithLaneFlow = buildFlowWithType('unknown-node-type-with-lane', 'mystery_node', ['lane' => 'task_status']);
 $unknownNodeTypeWithLaneThrown = false;
 try {
-    $unknownNodeTypeWithLanePool->pick([$unknownNodeTypeWithLaneFlow], 100);
+    $unknownNodeTypeWithLanePool->pick([$unknownNodeTypeWithLaneFlow], 100, $defaultTickStartedAtMs);
 } catch (\RuntimeException $e) {
     $unknownNodeTypeWithLaneThrown = str_contains($e->getMessage(), '未知 node type');
 }
@@ -156,7 +157,7 @@ $dynamicPool = new ActivityFlowPool(
     new ActivityFlowPicker(),
     new ActivityLaneLimiter(['follow' => 0, 'task_status' => 0]),
 );
-$dynamicBatch = $dynamicPool->pick([$readyFollowFlow], 100);
+$dynamicBatch = $dynamicPool->pick([$readyFollowFlow], 100, $defaultTickStartedAtMs);
 Assert::same(1, count($dynamicBatch), 'planner 产出的 era_task_follow 节点应可被 pool 正常选中。');
 Assert::same($readyFollowFlow->id(), $dynamicBatch[0]->id(), '动态 follow flow 应成功进入调度结果。');
 
@@ -177,9 +178,45 @@ $skippedPool = new ActivityFlowPool(
     new ActivityFlowPicker(),
     new ActivityLaneLimiter(['task_status' => 0]),
 );
-$skippedBatch = $skippedPool->pick([$readySkippedFlow], 100);
+$skippedBatch = $skippedPool->pick([$readySkippedFlow], 100, $defaultTickStartedAtMs);
 Assert::same(1, count($skippedBatch), 'skipped 节点进入 flow 后应可被 pool 接受而非因映射不一致报错。');
 Assert::same($readySkippedFlow->id(), $skippedBatch[0]->id(), '含 skipped 节点的 flow 应可完成调度选择。');
+
+$missingTickThrown = false;
+try {
+    $pool->pick([$flowA], 100);
+} catch (\ArgumentCountError) {
+    $missingTickThrown = true;
+}
+Assert::true($missingTickThrown, 'pick 不传 tickStartedAtMs 时必须显式失败，避免 silent reset。');
+
+$singlePickDedupPool = new ActivityFlowPool(
+    new ActivityFlowBudget(2, 6, 3000),
+    new ActivityFlowPicker(),
+    new ActivityLaneLimiter(['task_status' => 0]),
+);
+$singlePickFlow = buildFlow('single-pick-dedup', 'task_status');
+$singlePickDedupBatch = $singlePickDedupPool->pick(
+    [$singlePickFlow, $singlePickFlow],
+    100,
+    $defaultTickStartedAtMs + 1_000,
+);
+Assert::same(1, count($singlePickDedupBatch), '单次 pick 内重复 flow_id 只能入选一次。');
+Assert::same($singlePickFlow->id(), $singlePickDedupBatch[0]->id(), '单次 pick 去重后应保留目标 flow。');
+
+$conflictLaneFlow = buildFlowWithType('conflict-lane', 'execute_draw', ['lane' => 'task_status']);
+$conflictLanePool = new ActivityFlowPool(
+    new ActivityFlowBudget(1, 6, 3000),
+    new ActivityFlowPicker(),
+    new ActivityLaneLimiter(['draw_execute' => 0, 'task_status' => 0]),
+);
+$conflictLaneThrown = false;
+try {
+    $conflictLanePool->pick([$conflictLaneFlow], 100, $defaultTickStartedAtMs + 2_000);
+} catch (\RuntimeException $e) {
+    $conflictLaneThrown = str_contains($e->getMessage(), 'lane') && str_contains($e->getMessage(), 'execute_draw');
+}
+Assert::true($conflictLaneThrown, '已知 node type 的 lane 若与 payload 冲突，必须 fail fast。');
 
 /**
  * @return ActivityFlow

@@ -245,8 +245,8 @@ final class ActivityFlowPlanner
     {
         if (is_array($task)) {
             return [
-                'task_id' => trim((string)($task['task_id'] ?? $task['taskId'] ?? '')),
-                'capability' => trim((string)($task['capability'] ?? '')),
+                'task_id' => $this->normalizeArrayTaskField($task, ['task_id', 'taskId'], 'task_id'),
+                'capability' => $this->normalizeArrayTaskField($task, ['capability'], 'capability'),
             ];
         }
 
@@ -262,5 +262,34 @@ final class ActivityFlowPlanner
         }
 
         return null;
+    }
+
+    /**
+     * @param array<string, mixed> $task
+     * @param string[] $keys
+     */
+    private function normalizeArrayTaskField(array $task, array $keys, string $fieldName): string
+    {
+        foreach ($keys as $key) {
+            if (!array_key_exists($key, $task)) {
+                continue;
+            }
+
+            $value = $task[$key];
+            if ($value === null) {
+                return '';
+            }
+            if (!is_scalar($value)) {
+                throw new RuntimeException(sprintf(
+                    '非法任务字段类型: %s=%s',
+                    $fieldName,
+                    get_debug_type($value),
+                ));
+            }
+
+            return trim((string)$value);
+        }
+
+        return '';
     }
 }
