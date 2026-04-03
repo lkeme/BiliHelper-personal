@@ -336,6 +336,209 @@ try {
 }
 Assert::true($invalidCtorLogsThrown, '构造函数应拒绝非数组的 logs 项。');
 
+$sparseCtorNodesThrown = false;
+try {
+    new ActivityFlow(
+        'flow-sparse-ctor-nodes',
+        '2026-04-08',
+        ['id' => 'act-ctor'],
+        ActivityFlowStatus::PENDING,
+        0,
+        [
+            0 => new ActivityNode('node-0'),
+            2 => new ActivityNode('node-2'),
+        ],
+        0,
+        0,
+        new \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlowContext(),
+        [],
+        time(),
+        time(),
+    );
+} catch (\RuntimeException) {
+    $sparseCtorNodesThrown = true;
+}
+Assert::true($sparseCtorNodesThrown, '构造函数应拒绝稀疏 nodes。');
+
+$assocCtorNodesThrown = false;
+try {
+    new ActivityFlow(
+        'flow-assoc-ctor-nodes',
+        '2026-04-08',
+        ['id' => 'act-ctor'],
+        ActivityFlowStatus::PENDING,
+        0,
+        [
+            'first' => new ActivityNode('node-first'),
+        ],
+        0,
+        0,
+        new \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlowContext(),
+        [],
+        time(),
+        time(),
+    );
+} catch (\RuntimeException) {
+    $assocCtorNodesThrown = true;
+}
+Assert::true($assocCtorNodesThrown, '构造函数应拒绝关联 nodes。');
+
+$sparseCtorLogsThrown = false;
+try {
+    new ActivityFlow(
+        'flow-sparse-ctor-logs',
+        '2026-04-08',
+        ['id' => 'act-ctor'],
+        ActivityFlowStatus::PENDING,
+        0,
+        [new ActivityNode('ok-node')],
+        0,
+        0,
+        new \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlowContext(),
+        [
+            0 => ['message' => 'log-0'],
+            2 => ['message' => 'log-2'],
+        ],
+        time(),
+        time(),
+    );
+} catch (\RuntimeException) {
+    $sparseCtorLogsThrown = true;
+}
+Assert::true($sparseCtorLogsThrown, '构造函数应拒绝稀疏 logs。');
+
+$assocCtorLogsThrown = false;
+try {
+    new ActivityFlow(
+        'flow-assoc-ctor-logs',
+        '2026-04-08',
+        ['id' => 'act-ctor'],
+        ActivityFlowStatus::PENDING,
+        0,
+        [new ActivityNode('ok-node')],
+        0,
+        0,
+        new \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlowContext(),
+        [
+            'first' => ['message' => 'log-first'],
+        ],
+        time(),
+        time(),
+    );
+} catch (\RuntimeException) {
+    $assocCtorLogsThrown = true;
+}
+Assert::true($assocCtorLogsThrown, '构造函数应拒绝关联 logs。');
+
+$sparseFromArrayNodesThrown = false;
+try {
+    ActivityFlow::fromArray(array_merge($flow->toArray(), [
+        'nodes' => [
+            0 => $flow->nodes()[0]->toArray(),
+            2 => $flow->nodes()[1]->toArray(),
+        ],
+        'current_node_index' => 1,
+    ]));
+} catch (\RuntimeException) {
+    $sparseFromArrayNodesThrown = true;
+}
+Assert::true($sparseFromArrayNodesThrown, 'fromArray 应拒绝稀疏 nodes。');
+
+$assocFromArrayNodesThrown = false;
+try {
+    ActivityFlow::fromArray(array_merge($flow->toArray(), [
+        'nodes' => [
+            'first' => $flow->nodes()[0]->toArray(),
+        ],
+    ]));
+} catch (\RuntimeException) {
+    $assocFromArrayNodesThrown = true;
+}
+Assert::true($assocFromArrayNodesThrown, 'fromArray 应拒绝关联 nodes。');
+
+$sparseFromArrayLogsThrown = false;
+try {
+    ActivityFlow::fromArray(array_merge($flow->toArray(), [
+        'logs' => [
+            0 => ['message' => 'log-0'],
+            2 => ['message' => 'log-2'],
+        ],
+    ]));
+} catch (\RuntimeException) {
+    $sparseFromArrayLogsThrown = true;
+}
+Assert::true($sparseFromArrayLogsThrown, 'fromArray 应拒绝稀疏 logs。');
+
+$assocFromArrayLogsThrown = false;
+try {
+    ActivityFlow::fromArray(array_merge($flow->toArray(), [
+        'logs' => [
+            'first' => ['message' => 'log-first'],
+        ],
+    ]));
+} catch (\RuntimeException) {
+    $assocFromArrayLogsThrown = true;
+}
+Assert::true($assocFromArrayLogsThrown, 'fromArray 应拒绝关联 logs。');
+
+$loadSparseNodesThrown = false;
+try {
+    $sparseNodesRow = $flow->toArray();
+    $sparseNodesRow['flow_id'] = 'flow-load-sparse-nodes';
+    $sparseNodesRow['nodes'] = [
+        0 => $flow->nodes()[0]->toArray(),
+        2 => $flow->nodes()[1]->toArray(),
+    ];
+    Cache::set('activity_flow_day:2026-04-14', [$sparseNodesRow], 'ActivityLottery');
+    $store->load('2026-04-14');
+} catch (\RuntimeException) {
+    $loadSparseNodesThrown = true;
+}
+Assert::true($loadSparseNodesThrown, 'load 应拒绝稀疏 nodes 缓存行。');
+
+$loadAssocNodesThrown = false;
+try {
+    $assocNodesRow = $flow->toArray();
+    $assocNodesRow['flow_id'] = 'flow-load-assoc-nodes';
+    $assocNodesRow['nodes'] = [
+        'first' => $flow->nodes()[0]->toArray(),
+    ];
+    Cache::set('activity_flow_day:2026-04-15', [$assocNodesRow], 'ActivityLottery');
+    $store->load('2026-04-15');
+} catch (\RuntimeException) {
+    $loadAssocNodesThrown = true;
+}
+Assert::true($loadAssocNodesThrown, 'load 应拒绝关联 nodes 缓存行。');
+
+$loadSparseLogsThrown = false;
+try {
+    $sparseLogsRow = $flow->toArray();
+    $sparseLogsRow['flow_id'] = 'flow-load-sparse-logs';
+    $sparseLogsRow['logs'] = [
+        0 => ['message' => 'log-0'],
+        2 => ['message' => 'log-2'],
+    ];
+    Cache::set('activity_flow_day:2026-04-16', [$sparseLogsRow], 'ActivityLottery');
+    $store->load('2026-04-16');
+} catch (\RuntimeException) {
+    $loadSparseLogsThrown = true;
+}
+Assert::true($loadSparseLogsThrown, 'load 应拒绝稀疏 logs 缓存行。');
+
+$loadAssocLogsThrown = false;
+try {
+    $assocLogsRow = $flow->toArray();
+    $assocLogsRow['flow_id'] = 'flow-load-assoc-logs';
+    $assocLogsRow['logs'] = [
+        'first' => ['message' => 'log-first'],
+    ];
+    Cache::set('activity_flow_day:2026-04-17', [$assocLogsRow], 'ActivityLottery');
+    $store->load('2026-04-17');
+} catch (\RuntimeException) {
+    $loadAssocLogsThrown = true;
+}
+Assert::true($loadAssocLogsThrown, 'load 应拒绝关联 logs 缓存行。');
+
 $invalidFlowActivityThrown = false;
 try {
     ActivityFlow::fromArray(array_merge($flow->toArray(), [

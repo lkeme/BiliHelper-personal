@@ -68,6 +68,7 @@ final class ActivityFlow
         $rawActivity = self::readRequiredArrayField($data, 'activity');
 
         $rawNodes = self::readRequiredArrayField($data, 'nodes');
+        self::assertSequentialList($rawNodes, 'nodes');
 
         $nodes = [];
         foreach ($rawNodes as $index => $node) {
@@ -84,6 +85,7 @@ final class ActivityFlow
         $context = ActivityFlowContext::fromArray($rawContext);
 
         $rawLogs = self::readRequiredArrayField($data, 'logs');
+        self::assertSequentialList($rawLogs, 'logs');
 
         $logs = [];
         foreach ($rawLogs as $index => $log) {
@@ -258,6 +260,9 @@ final class ActivityFlow
         if ($currentNodeIndex < 0) {
             throw new RuntimeException('ActivityFlow current_node_index 不能为负数');
         }
+        if (!array_is_list($nodes)) {
+            throw new RuntimeException('ActivityFlow nodes 必须为顺序 list');
+        }
         if ($nodes === []) {
             throw new RuntimeException('ActivityFlow nodes 至少包含一个节点');
         }
@@ -271,6 +276,9 @@ final class ActivityFlow
         }
         if ($currentNodeIndex >= count($nodes)) {
             throw new RuntimeException('ActivityFlow current_node_index 越界');
+        }
+        if (!array_is_list($logs)) {
+            throw new RuntimeException('ActivityFlow logs 必须为顺序 list');
         }
         foreach ($logs as $index => $log) {
             if (!is_array($log)) {
@@ -323,6 +331,16 @@ final class ActivityFlow
         }
 
         return $value;
+    }
+
+    /**
+     * @param array<mixed> $values
+     */
+    private static function assertSequentialList(array $values, string $field): void
+    {
+        if (!array_is_list($values)) {
+            throw new RuntimeException(sprintf('ActivityFlow %s 必须为顺序 list', $field));
+        }
     }
 
     /**
