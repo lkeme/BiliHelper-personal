@@ -25,4 +25,9 @@ final class RemoteCatalogSource implements CatalogSourceInterface
 
         return $this->reader->load();
     }
+
+    public function priority(): int
+    {
+        return 100;
+    }
 }

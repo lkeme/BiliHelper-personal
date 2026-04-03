@@ -16,6 +16,11 @@ final class LocalCatalogSource implements CatalogSourceInterface
         return $this->parseItemsFromPath($this->path);
     }
 
+    public function priority(): int
+    {
+        return 200;
+    }
+
     /**
      * @return ActivityCatalogItem[]
      */

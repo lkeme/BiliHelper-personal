@@ -22,7 +22,10 @@ final class ActivityCatalogLoader
     {
         /** @var array<string, ActivityCatalogItem> $merged */
         $merged = [];
+        /** @var array<string, int> $sourcePriorityById */
+        $sourcePriorityById = [];
         foreach ($this->sources as $source) {
+            $sourcePriority = $source->priority();
             foreach ($source->load() as $item) {
                 if (!$item instanceof ActivityCatalogItem) {
                     continue;
@@ -34,8 +37,15 @@ final class ActivityCatalogLoader
                 }
 
                 $current = $merged[$id] ?? null;
-                if ($current === null || $item->updateTimestamp() > $current->updateTimestamp()) {
+                $currentPriority = $sourcePriorityById[$id] ?? PHP_INT_MIN;
+                $incomingTimestamp = $item->updateTimestamp();
+                $currentTimestamp = $current?->updateTimestamp() ?? PHP_INT_MIN;
+                $shouldReplace = $current === null
+                    || $incomingTimestamp > $currentTimestamp
+                    || ($incomingTimestamp === $currentTimestamp && $sourcePriority > $currentPriority);
+                if ($shouldReplace) {
                     $merged[$id] = $item;
+                    $sourcePriorityById[$id] = $sourcePriority;
                 }
             }
         }

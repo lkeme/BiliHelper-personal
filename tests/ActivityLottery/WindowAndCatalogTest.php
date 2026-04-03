@@ -142,3 +142,15 @@ Assert::same(
     $sharedItem->id(),
     '共享活动的唯一键应可稳定定位。'
 );
+
+/** @var ActivityCatalogItem[] $catalog */
+$catalog = (new ActivityCatalogLoader([
+    new RemoteCatalogSource(activityLotteryFixturePath('catalog.tie.remote.json'), true),
+    new LocalCatalogSource(activityLotteryFixturePath('catalog.tie.local.json')),
+]))->load();
+Assert::same(1, count($catalog), '无 update_time 的同键冲突应只保留一个条目。');
+Assert::same(
+    'local-tie-title',
+    $catalog[0]->title(),
+    '当双方都缺失 update_time 时应按来源优先级保留本地版本，而非依赖 sources 顺序。'
+);
