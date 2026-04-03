@@ -420,9 +420,10 @@ final class ActivityLotteryRuntime
         $taskName = trim((string)($context['task_name'] ?? ''));
         $label = $taskName !== '' ? sprintf('任务「%s」', $taskName) : sprintf('节点「%s」', $this->nodeLabel($node->type()));
         $suffix = $this->buildNodeExecuteSuffix($context, $node->type());
+        $progressSuffix = $this->buildInlineProgressSuffix($context);
 
         return [
-            sprintf('活动「%s」开始执行%s%s', $activityTitle, $label, $suffix),
+            sprintf('活动「%s」开始执行%s%s%s', $activityTitle, $label, $suffix, $progressSuffix),
             $context,
         ];
     }
@@ -437,6 +438,8 @@ final class ActivityLotteryRuntime
         \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode $afterNode,
     ): array {
         $context = $this->buildNodeBusinessContext($beforeFlow, $beforeNode, $afterFlow);
+        $context['node_status_label'] = $this->nodeStatusLabel($afterNode->status());
+        $context['flow_status_label'] = $this->flowStatusLabel($afterFlow->status());
         $activityTitle = $context['activity_title'] ?? '未命名活动';
         $taskName = trim((string)($context['task_name'] ?? ''));
         $label = $taskName !== '' ? sprintf('任务「%s」', $taskName) : sprintf('节点「%s」', $this->nodeLabel($beforeNode->type()));
@@ -458,14 +461,24 @@ final class ActivityLotteryRuntime
         \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode $afterNode,
     ): array {
         $context = $this->buildNodeBusinessContext($beforeFlow, $beforeNode, $afterFlow);
+        $context['node_status_label'] = $this->nodeStatusLabel($afterNode->status());
+        $context['flow_status_label'] = $this->flowStatusLabel($afterFlow->status());
         $activityTitle = $context['activity_title'] ?? '未命名活动';
         $summary = $this->buildFlowSummaryMessage($beforeNode->type(), $afterNode, $context);
         if ($summary === '') {
             return ['', $context];
         }
 
+        [$stage, $detail] = $this->splitStageSummary($summary);
+        $segments = array_values(array_filter([
+            $this->buildFlowProgressPrefix($context),
+            $stage !== '' ? sprintf('当前阶段：%s', $stage) : '',
+            ($context['node_status_label'] ?? '') !== '' ? sprintf('状态：%s', (string)$context['node_status_label']) : '',
+            $detail,
+        ], static fn (string $value): bool => $value !== ''));
+
         return [
-            sprintf('活动「%s」当前阶段：%s', $activityTitle, $summary),
+            sprintf('活动「%s」%s', $activityTitle, implode('，', $segments)),
             $context,
         ];
     }
@@ -484,6 +497,9 @@ final class ActivityLotteryRuntime
             'activity_id' => trim((string)($activity['activity_id'] ?? '')),
         ];
         $stateSource = $afterFlow ?? $flow;
+        $totalNodes = count($stateSource->nodes());
+        $context['node_position'] = $totalNodes > 0 ? min($flow->currentNodeIndex() + 1, $totalNodes) : 0;
+        $context['node_total'] = $totalNodes;
         $stateContext = $stateSource->context()->toArray();
         $context['wait_delay_seconds'] = $this->resolveWaitDelaySeconds($stateSource);
         $context['draw_times_remaining'] = max(0, (int)($stateContext['draw_times_remaining'] ?? 0));
@@ -585,6 +601,34 @@ final class ActivityLotteryRuntime
     /**
      * @param array<string, mixed> $context
      */
+    private function buildInlineProgressSuffix(array $context): string
+    {
+        $position = max(0, (int)($context['node_position'] ?? 0));
+        $total = max(0, (int)($context['node_total'] ?? 0));
+        if ($position <= 0 || $total <= 0) {
+            return '';
+        }
+
+        return sprintf('（进度 %d/%d）', $position, $total);
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private function buildFlowProgressPrefix(array $context): string
+    {
+        $position = max(0, (int)($context['node_position'] ?? 0));
+        $total = max(0, (int)($context['node_total'] ?? 0));
+        if ($position <= 0 || $total <= 0) {
+            return '';
+        }
+
+        return sprintf('流程进度 %d/%d', $position, $total);
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
     private function buildDetailedNodeResultMessage(
         string $nodeType,
         \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode $afterNode,
@@ -620,6 +664,45 @@ final class ActivityLotteryRuntime
             'execute_draw' => $this->buildExecuteDrawSummaryMessage($afterNode, $context),
             'record_draw_result' => $this->buildRecordDrawSummaryMessage($afterNode, $context),
             default => '',
+        };
+    }
+
+    /**
+     * @return array{0: string, 1: string}
+     */
+    private function splitStageSummary(string $summary): array
+    {
+        $summary = trim($summary);
+        if ($summary === '') {
+            return ['', ''];
+        }
+
+        $chunks = explode('，', $summary, 2);
+        $stage = trim((string)($chunks[0] ?? ''));
+        $detail = trim((string)($chunks[1] ?? ''));
+
+        return [$stage, $detail];
+    }
+
+    private function nodeStatusLabel(string $status): string
+    {
+        return match ($status) {
+            ActivityNodeStatus::WAITING => '等待继续',
+            ActivityNodeStatus::SUCCEEDED => '已完成',
+            ActivityNodeStatus::SKIPPED => '已跳过',
+            ActivityNodeStatus::FAILED => '执行失败',
+            default => '执行中',
+        };
+    }
+
+    private function flowStatusLabel(string $status): string
+    {
+        return match ($status) {
+            ActivityFlowStatus::BLOCKED => '阻塞中',
+            ActivityFlowStatus::COMPLETED => '已完成',
+            ActivityFlowStatus::FAILED => '已失败',
+            ActivityFlowStatus::RUNNING => '执行中',
+            default => '待执行',
         };
     }
 
