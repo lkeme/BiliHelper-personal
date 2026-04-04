@@ -124,19 +124,68 @@ final class ApiJson
             return $raw;
         }
 
+        if (self::looksLikePlainJson($raw)) {
+            return $raw;
+        }
+
         if (str_starts_with($raw, "\x1f\x8b")) {
             $decoded = @gzdecode($raw);
-            if (is_string($decoded) && $decoded !== '') {
+            if (is_string($decoded) && $decoded !== '' && self::looksLikeDecodedText($decoded)) {
                 return $decoded;
             }
         }
 
-        $decoded = @zlib_decode($raw);
-        if (is_string($decoded) && $decoded !== '') {
-            return $decoded;
+        if (self::looksLikeZlibStream($raw)) {
+            $decoded = @zlib_decode($raw);
+            if (is_string($decoded) && $decoded !== '' && self::looksLikeDecodedText($decoded)) {
+                return $decoded;
+            }
         }
 
         return $raw;
+    }
+
+    private static function looksLikePlainJson(string $raw): bool
+    {
+        $trimmed = ltrim($raw);
+        if ($trimmed === '') {
+            return false;
+        }
+
+        return str_starts_with($trimmed, '{') || str_starts_with($trimmed, '[');
+    }
+
+    private static function looksLikeDecodedText(string $raw): bool
+    {
+        if ($raw === '') {
+            return false;
+        }
+
+        if (self::looksLikePlainJson($raw)) {
+            return true;
+        }
+
+        return preg_match('//u', $raw) === 1;
+    }
+
+    private static function looksLikeZlibStream(string $raw): bool
+    {
+        if (strlen($raw) < 2) {
+            return false;
+        }
+
+        $cmf = ord($raw[0]);
+        $flg = ord($raw[1]);
+
+        if (($cmf & 0x0F) !== 0x08) {
+            return false;
+        }
+
+        if ((($cmf << 8) + $flg) % 31 !== 0) {
+            return false;
+        }
+
+        return true;
     }
 
     private static function normalizeUtf8(string $raw): string
