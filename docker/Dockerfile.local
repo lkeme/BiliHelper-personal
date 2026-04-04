@@ -36,11 +36,8 @@ RUN apk add --no-cache \
     ${PHPIZE_DEPS} \
     linux-headers \
     oniguruma-dev \
-    sqlite-dev \
     git \
     tzdata
-
-RUN docker-php-ext-install mbstring sqlite3
 
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
     && echo Asia/Shanghai > /etc/timezone
