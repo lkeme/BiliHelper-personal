@@ -547,6 +547,56 @@ Assert::true(str_contains((string)$liveWaitingSummaryLog['message'], '当前阶�
 Assert::true(str_contains((string)$liveWaitingSummaryLog['message'], '状态：等待继续'), '直播摘要日志应包含等待状态。');
 Assert::true(str_contains((string)$liveWaitingSummaryLog['message'], '120/240 秒'), '直播摘要日志应包含累计观看秒数。');
 
+$liveFailedLogs = [];
+$liveFailedRuntime = buildBusinessRuntime(
+    $scope . '_live_failed',
+    $now,
+    [
+        'id' => 'live-failed-activity',
+        'activity_id' => 'live-failed-activity',
+        'lottery_id' => 'live-failed-lottery',
+        'title' => '直播失败日志活动',
+        'url' => 'https://www.bilibili.com/blackboard/era/live-failed.html',
+        'update_time' => '2026-04-03 08:00:00',
+    ],
+    [
+        new ActivityNode('era_task_watch_live', ['lane' => 'watch_live', 'task_id' => 'task-live']),
+    ],
+    [
+        [
+            'task_id' => 'task-live',
+            'task_name' => '每日观看直播',
+            'capability' => 'watch_live',
+            'support_level' => 'now',
+            'required_watch_seconds' => 240,
+            'target_room_ids' => ['2233'],
+            'task_status' => 1,
+            'task_award_type' => 0,
+        ],
+    ],
+    [
+        new class implements NodeRunnerInterface {
+            public function type(): string
+            {
+                return 'era_task_watch_live';
+            }
+
+            public function run(ActivityFlow $flow, ActivityNode $node, int $now): ActivityNodeResult
+            {
+                return new ActivityNodeResult(false, 'x25Kn/X失败 1012002 -> time check failed', [
+                    'node_status' => ActivityNodeStatus::FAILED,
+                ], $now);
+            }
+        },
+    ],
+    $liveFailedLogs,
+);
+$liveFailedRuntime->tick();
+$liveFailedLog = findRuntimeLog($liveFailedLogs, 'node.result');
+Assert::true($liveFailedLog !== null, '直播失败场景应记录 node.result 日志。');
+Assert::same('warning', (string)($liveFailedLog['level'] ?? ''), '直播心跳失败日志应提升为 warning。');
+Assert::true(str_contains((string)$liveFailedLog['message'], 'time check failed'), '直播心跳失败日志应包含原始失败信息。');
+
 $drawRefreshLogs = [];
 $drawRefreshRuntime = buildBusinessRuntime(
     $scope . '_draw_refresh',

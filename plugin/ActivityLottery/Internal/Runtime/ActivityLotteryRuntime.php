@@ -696,7 +696,7 @@ final class ActivityLotteryRuntime
         \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode $afterNode,
         array $context,
     ): string {
-        if ($afterNode->status() === ActivityNodeStatus::FAILED) {
+        if ($afterNode->status() === ActivityNodeStatus::FAILED || $this->looksLikeFailureMessage((string)($context['node_message'] ?? ''))) {
             return 'warning';
         }
 
@@ -715,7 +715,7 @@ final class ActivityLotteryRuntime
         \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode $afterNode,
         array $context,
     ): string {
-        if ($afterNode->status() === ActivityNodeStatus::FAILED) {
+        if ($afterNode->status() === ActivityNodeStatus::FAILED || $this->looksLikeFailureMessage((string)($context['node_message'] ?? ''))) {
             return 'warning';
         }
 
@@ -724,6 +724,22 @@ final class ActivityLotteryRuntime
         }
 
         return 'info';
+    }
+
+    private function looksLikeFailureMessage(string $message): bool
+    {
+        $message = trim($message);
+        if ($message === '') {
+            return false;
+        }
+
+        foreach (['失败', '异常', 'error', 'failed'] as $keyword) {
+            if (str_contains(strtolower($message), strtolower($keyword))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
