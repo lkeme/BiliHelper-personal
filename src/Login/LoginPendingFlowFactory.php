@@ -44,14 +44,18 @@ final class LoginPendingFlowFactory
     }
 
     /**
-     * @return array{type: string, auth_code: string, expires_at: int}
+     * @return array{type: string, auth_code: string, expires_at: int, started_at: int, last_progress_log_at: int}
      */
     public function qrcodePoll(QrAuthCode $qrData, int $expiresAt): array
     {
+        $startedAt = time();
+
         return [
             'type' => 'qrcode_poll',
             'auth_code' => $qrData->authCode,
             'expires_at' => $expiresAt,
+            'started_at' => $startedAt,
+            'last_progress_log_at' => 0,
         ];
     }
 

@@ -3,6 +3,7 @@
 namespace Bhp\Plugin\ActivityLottery\Internal\Node;
 
 use Bhp\Api\Api\X\Relation\ApiRelation;
+use Bhp\Login\AuthFailureClassifier;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlow;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNodeResult;
@@ -16,10 +17,12 @@ final class EraFollowNodeRunner implements NodeRunnerInterface
      * @var callable(int): array<string, mixed>
      */
     private readonly mixed $followAction;
+    private readonly AuthFailureClassifier $authFailureClassifier;
 
-    public function __construct(?callable $followAction = null)
+    public function __construct(?callable $followAction = null, ?AuthFailureClassifier $authFailureClassifier = null)
     {
         $this->followAction = $followAction ?? static fn (int $uid): array => ApiRelation::follow($uid, ApiRelation::SOURCE_ACTIVITY_PAGE);
+        $this->authFailureClassifier = $authFailureClassifier ?? new AuthFailureClassifier();
     }
 
     public function type(): string
@@ -54,6 +57,7 @@ final class EraFollowNodeRunner implements NodeRunnerInterface
 
         $uid = (string)$uids[$index];
         $response = (array)($this->followAction)((int)$uid);
+        $this->authFailureClassifier->assertNotAuthFailure($response, '关注任务执行时账号未登录');
         if (!$this->isSuccessfulResponse($response)) {
             return new ActivityNodeResult(false, '关注任务执行失败', [
                 'node_status' => ActivityNodeStatus::FAILED,

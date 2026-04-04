@@ -4,6 +4,7 @@ namespace Bhp\Automation\Watch;
 
 use Bhp\Api\XLive\DataInterface\V1\X25Kn\ApiTrace;
 use Bhp\Api\XLive\WebRoom\V1\Index\ApiIndex;
+use Bhp\Login\AuthFailureClassifier;
 use Bhp\Runtime\Runtime;
 use Bhp\Util\Fake\Fake;
 
@@ -15,6 +16,7 @@ final class LiveWatchService
     private \Closure $userAgentResolver;
     private \Closure $buvidFactory;
     private \Closure $uuidFactory;
+    private AuthFailureClassifier $authFailureClassifier;
 
     /**
      * @param null|callable(int):void $roomEntryAction
@@ -31,6 +33,7 @@ final class LiveWatchService
         ?callable $userAgentResolver = null,
         ?callable $buvidFactory = null,
         ?callable $uuidFactory = null,
+        ?AuthFailureClassifier $authFailureClassifier = null,
     ) {
         $this->roomEntryAction = $roomEntryAction !== null
             ? \Closure::fromCallable($roomEntryAction)
@@ -52,6 +55,7 @@ final class LiveWatchService
         $this->uuidFactory = $uuidFactory !== null
             ? \Closure::fromCallable($uuidFactory)
             : static fn (): string => Fake::uuid4();
+        $this->authFailureClassifier = $authFailureClassifier ?? new AuthFailureClassifier();
     }
 
     /**
@@ -75,6 +79,7 @@ final class LiveWatchService
             $session->liveUuid,
             ($this->userAgentResolver)(),
         );
+        $this->authFailureClassifier->assertNotAuthFailure($response, '直播观看建链时账号未登录');
         if (($response['code'] ?? 0) !== 0) {
             $message = (string)($response['message'] ?? $response['msg'] ?? '');
             throw new \RuntimeException("x25Kn/E失败 {$response['code']} -> {$message}");
@@ -117,6 +122,7 @@ final class LiveWatchService
             ($this->userAgentResolver)(),
             $session->heartbeatInterval,
         );
+        $this->authFailureClassifier->assertNotAuthFailure($response, '直播观看心跳时账号未登录');
         if (($response['code'] ?? 0) !== 0) {
             $message = (string)($response['message'] ?? $response['msg'] ?? '');
             throw new \RuntimeException("x25Kn/X失败 {$response['code']} -> {$message}");

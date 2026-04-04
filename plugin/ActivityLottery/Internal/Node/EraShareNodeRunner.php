@@ -3,6 +3,7 @@
 namespace Bhp\Plugin\ActivityLottery\Internal\Node;
 
 use Bhp\Api\Api\X\Activity\ApiActivity;
+use Bhp\Login\AuthFailureClassifier;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlow;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNodeResult;
@@ -14,10 +15,12 @@ final class EraShareNodeRunner implements NodeRunnerInterface
      * @var callable(string, string, string): array<string, mixed>
      */
     private readonly mixed $shareAction;
+    private readonly AuthFailureClassifier $authFailureClassifier;
 
-    public function __construct(?callable $shareAction = null)
+    public function __construct(?callable $shareAction = null, ?AuthFailureClassifier $authFailureClassifier = null)
     {
         $this->shareAction = $shareAction ?? static fn (string $taskId, string $counter, string $url): array => ApiActivity::sendPoints($taskId, $counter, $url);
+        $this->authFailureClassifier = $authFailureClassifier ?? new AuthFailureClassifier();
     }
 
     public function type(): string
@@ -42,6 +45,7 @@ final class EraShareNodeRunner implements NodeRunnerInterface
         }
 
         $response = (array)($this->shareAction)($task->taskId(), $task->counter(), $url);
+        $this->authFailureClassifier->assertNotAuthFailure($response, '分享任务上报时账号未登录');
         if ((int)($response['code'] ?? -1) !== 0) {
             return new ActivityNodeResult(false, '分享任务上报失败', [
                 'node_status' => ActivityNodeStatus::FAILED,

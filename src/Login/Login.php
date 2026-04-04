@@ -88,6 +88,7 @@ class Login extends BasePlugin implements PluginTaskInterface
     private ?LoginSessionCoordinator $sessionCoordinator = null;
     private ?LoginTokenLifecycleService $tokenLifecycleService = null;
     private ?LoginRuntimeState $runtimeState = null;
+    private ?LoginGateStateService $gateStateService = null;
 
     /**
      * @param Plugin $plugin
@@ -124,6 +125,9 @@ class Login extends BasePlugin implements PluginTaskInterface
             }
 
             $this->keepLogin();
+            if (!$this->gateStateService()->authReady()) {
+                return $this->retryAfter(300, '登录就绪态不完整');
+            }
         } catch (RequestException $e) {
             return $this->retryAfterRequestException($e, '登录', 10 * 60);
         } catch (LoginException $e) {
@@ -253,7 +257,7 @@ class Login extends BasePlugin implements PluginTaskInterface
 
     protected function assertLoginReady(string $message): void
     {
-        if ($this->hasPendingLoginFlow() || !$this->hasLoginTokens()) {
+        if ($this->hasPendingLoginFlow() || !$this->gateStateService()->authReady()) {
             throw new NoLoginException($message);
         }
     }
@@ -534,6 +538,11 @@ class Login extends BasePlugin implements PluginTaskInterface
     protected function flowController(): LoginFlowController
     {
         return $this->flowController ??= new LoginFlowController();
+    }
+
+    protected function gateStateService(): LoginGateStateService
+    {
+        return $this->gateStateService ??= new LoginGateStateService(Runtime::getInstance()->appContext());
     }
 
     /**

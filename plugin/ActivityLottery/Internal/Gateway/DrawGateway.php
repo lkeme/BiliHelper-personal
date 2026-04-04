@@ -3,6 +3,7 @@
 namespace Bhp\Plugin\ActivityLottery\Internal\Gateway;
 
 use Bhp\Api\Api\X\Activity\ApiActivity;
+use Bhp\Login\AuthFailureClassifier;
 
 final class DrawGateway
 {
@@ -14,13 +15,16 @@ final class DrawGateway
      * @var callable(array<string, string>): array<string, mixed>
      */
     private readonly mixed $drawOnceFetcher;
+    private readonly AuthFailureClassifier $authFailureClassifier;
 
     public function __construct(
         ?callable $refreshTimesFetcher = null,
         ?callable $drawOnceFetcher = null,
+        ?AuthFailureClassifier $authFailureClassifier = null,
     ) {
         $this->refreshTimesFetcher = $refreshTimesFetcher ?? static fn (array $payload): array => ApiActivity::myTimes($payload);
         $this->drawOnceFetcher = $drawOnceFetcher ?? static fn (array $payload): array => ApiActivity::doLottery($payload);
+        $this->authFailureClassifier = $authFailureClassifier ?? new AuthFailureClassifier();
     }
 
     /**
@@ -29,7 +33,10 @@ final class DrawGateway
      */
     public function refreshTimes(array $activity): array
     {
-        return (array)($this->refreshTimesFetcher)($this->buildPayload($activity));
+        $response = (array)($this->refreshTimesFetcher)($this->buildPayload($activity));
+        $this->authFailureClassifier->assertNotAuthFailure($response, '刷新抽奖次数时账号未登录');
+
+        return $response;
     }
 
     /**
@@ -38,7 +45,10 @@ final class DrawGateway
      */
     public function drawOnce(array $activity): array
     {
-        return (array)($this->drawOnceFetcher)($this->buildPayload($activity));
+        $response = (array)($this->drawOnceFetcher)($this->buildPayload($activity));
+        $this->authFailureClassifier->assertNotAuthFailure($response, '执行抽奖时账号未登录');
+
+        return $response;
     }
 
     /**

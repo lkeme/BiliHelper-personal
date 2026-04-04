@@ -3,6 +3,7 @@
 namespace Bhp\Plugin\ActivityLottery\Internal\Gateway;
 
 use Bhp\Api\Api\X\ActivityComponents\ApiMission;
+use Bhp\Login\AuthFailureClassifier;
 
 final class EraTaskGateway
 {
@@ -14,10 +15,12 @@ final class EraTaskGateway
      * @var callable(string, array<string, mixed>): array<string, mixed>
      */
     private readonly mixed $receiveRewardFetcher;
+    private readonly AuthFailureClassifier $authFailureClassifier;
 
     public function __construct(
         ?callable $taskInfoFetcher = null,
         ?callable $receiveRewardFetcher = null,
+        ?AuthFailureClassifier $authFailureClassifier = null,
     ) {
         $this->taskInfoFetcher = $taskInfoFetcher ?? static fn (string $taskId): array => ApiMission::info($taskId);
         $this->receiveRewardFetcher = $receiveRewardFetcher ?? static function (string $taskId, array $payload): array {
@@ -30,6 +33,7 @@ final class EraTaskGateway
                 trim((string)($payload['address_id'] ?? '')),
             );
         };
+        $this->authFailureClassifier = $authFailureClassifier ?? new AuthFailureClassifier();
     }
 
     /**
@@ -37,7 +41,10 @@ final class EraTaskGateway
      */
     public function taskInfo(string $taskId): array
     {
-        return (array)($this->taskInfoFetcher)($taskId);
+        $response = (array)($this->taskInfoFetcher)($taskId);
+        $this->authFailureClassifier->assertNotAuthFailure($response, '查询领奖任务时账号未登录');
+
+        return $response;
     }
 
     /**
@@ -46,7 +53,10 @@ final class EraTaskGateway
      */
     public function receiveReward(string $taskId, array $payload = []): array
     {
-        return (array)($this->receiveRewardFetcher)($taskId, $payload);
+        $response = (array)($this->receiveRewardFetcher)($taskId, $payload);
+        $this->authFailureClassifier->assertNotAuthFailure($response, '领取奖励时账号未登录');
+
+        return $response;
     }
 }
 

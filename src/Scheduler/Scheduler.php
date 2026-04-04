@@ -3,6 +3,8 @@
 namespace Bhp\Scheduler;
 
 use Bhp\Http\HttpRequestTrafficMonitor;
+use Bhp\Login\LoginGateStateService;
+use Bhp\Login\LoginManualInterventionPolicy;
 use Bhp\Login\LoginPendingFlowStore;
 use Bhp\Log\Log;
 use Bhp\Plugin\Plugin;
@@ -17,6 +19,7 @@ class Scheduler extends SingleTon
 {
     private const CIRCUIT_FAILURE_THRESHOLD = 3;
     private const CIRCUIT_OPEN_SECONDS = 300.0;
+    private const LOGIN_REQUIRED_RETRY_SECONDS = 30.0;
 
     /** @var array<string, ScheduledTask> */
     private array $tasks = [];
@@ -25,7 +28,10 @@ class Scheduler extends SingleTon
     private array $running = [];
 
     private bool $started = false;
+    private bool $loginRecoveryRequested = false;
     private ?SchedulerStateStore $stateStore = null;
+    private ?LoginGateStateService $loginGateStateService = null;
+    private ?LoginManualInterventionPolicy $loginManualInterventionPolicy = null;
 
     public function init(): void
     {
@@ -139,6 +145,7 @@ class Scheduler extends SingleTon
 
     private function runInitialRound(): void
     {
+        $this->loginManualInterventionPolicy()->enforce();
         $tasks = array_values($this->tasks);
         usort($tasks, function (ScheduledTask $left, ScheduledTask $right): int {
             if ($left->bootstrapFirst !== $right->bootstrapFirst) {
@@ -180,6 +187,7 @@ class Scheduler extends SingleTon
 
     private function tick(bool $highFrequency): void
     {
+        $this->loginManualInterventionPolicy()->enforce();
         $now = $this->monotonicNowNs();
         foreach ($this->tasks as $task) {
             if ($this->shouldHoldTaskForLoginPendingFlow($task)) {
@@ -247,11 +255,12 @@ class Scheduler extends SingleTon
                     AppTerminator::fail("登录失败，终止运行: {$e->getMessage()}", [], 0);
                 }
 
+                $this->requestLoginRecovery($task, $this->monotonicNowNs(), $e->getMessage());
                 Log::warning("[SCHEDULER] {$task->name} login required: {$e->getMessage()}", [
                     'plugin' => $task->hook,
                     'task' => 'plugin.run',
                 ]);
-                $result = TaskResult::after(3600);
+                $result = TaskResult::after(self::LOGIN_REQUIRED_RETRY_SECONDS);
             } catch (Throwable $e) {
                 if ($task->hook === 'Login') {
                     AppTerminator::fail("登录异常，终止运行: {$e->getMessage()}", [], 0);
@@ -296,11 +305,12 @@ class Scheduler extends SingleTon
                 AppTerminator::fail("登录失败，终止启动: {$e->getMessage()}", [], 0);
             }
 
+            $this->requestLoginRecovery($task, $this->monotonicNowNs(), $e->getMessage());
             Log::warning("[SCHEDULER.INIT] {$task->name} login required: {$e->getMessage()}", [
                 'plugin' => $task->hook,
                 'task' => 'plugin.run',
             ]);
-            $result = TaskResult::after(3600);
+            $result = TaskResult::after(self::LOGIN_REQUIRED_RETRY_SECONDS);
         } catch (Throwable $e) {
             if ($task->hook === 'Login') {
                 AppTerminator::fail("登录异常，终止启动: {$e->getMessage()}", [], 0);
@@ -331,11 +341,13 @@ class Scheduler extends SingleTon
             $delayNs = max(1.0, round(max(0.0, $result->nextRunAfterSeconds) * 1_000_000_000));
             $task->nextRunAtNs = $referenceNs + $delayNs;
             $this->persistTaskState($task);
+            $this->refreshLoginRecoveryState($task);
             return;
         }
 
         $this->advanceNextRunAt($task, $referenceNs);
         $this->persistTaskState($task);
+        $this->refreshLoginRecoveryState($task);
     }
 
     private function advanceNextRunAt(ScheduledTask $task, float $nowNs): void
@@ -537,12 +549,54 @@ class Scheduler extends SingleTon
             return false;
         }
 
-        return $this->hasPendingLoginFlow();
+        if ($this->loginRecoveryRequested) {
+            return true;
+        }
+
+        return $this->loginGateStateService()->shouldBlockBusinessTasks();
     }
 
     private function hasPendingLoginFlow(): bool
     {
-        return (new LoginPendingFlowStore())->load() !== null;
+        return $this->loginGateStateService()->hasPendingFlow();
+    }
+
+    private function loginGateStateService(): LoginGateStateService
+    {
+        return $this->loginGateStateService ??= new LoginGateStateService();
+    }
+
+    private function loginManualInterventionPolicy(): LoginManualInterventionPolicy
+    {
+        return $this->loginManualInterventionPolicy ??= new LoginManualInterventionPolicy();
+    }
+
+    private function requestLoginRecovery(ScheduledTask $sourceTask, float $nowNs, string $reason): void
+    {
+        $this->loginRecoveryRequested = true;
+        $loginTask = $this->tasks['Login'] ?? null;
+        if (!$loginTask instanceof ScheduledTask) {
+            return;
+        }
+
+        if ($loginTask->nextRunAtNs > $nowNs) {
+            $loginTask->nextRunAtNs = $nowNs;
+            $this->persistTaskState($loginTask);
+        }
+
+        Log::notice("[SCHEDULER] rearm Login because {$sourceTask->name} requires authentication: {$reason}", [
+            'plugin' => $sourceTask->hook,
+            'task' => 'scheduler.login_rearm',
+        ]);
+    }
+
+    private function refreshLoginRecoveryState(ScheduledTask $task): void
+    {
+        if ($task->hook !== 'Login') {
+            return;
+        }
+
+        $this->loginRecoveryRequested = $this->loginGateStateService()->shouldBlockBusinessTasks();
     }
 
     private function restoreDeadlineFromState(

@@ -3,11 +3,13 @@
 namespace Bhp\Automation\Watch;
 
 use Bhp\Api\Video\ApiWatch;
+use Bhp\Login\AuthFailureClassifier;
 
 final class VideoWatchService
 {
     private \Closure $videoAction;
     private \Closure $heartbeatAction;
+    private AuthFailureClassifier $authFailureClassifier;
 
     /**
      * @param null|callable(string, string, string, array<string, mixed>):array<string, mixed> $videoAction
@@ -16,6 +18,7 @@ final class VideoWatchService
     public function __construct(
         ?callable $videoAction = null,
         ?callable $heartbeatAction = null,
+        ?AuthFailureClassifier $authFailureClassifier = null,
     ) {
         $this->videoAction = $videoAction !== null
             ? \Closure::fromCallable($videoAction)
@@ -23,6 +26,7 @@ final class VideoWatchService
         $this->heartbeatAction = $heartbeatAction !== null
             ? \Closure::fromCallable($heartbeatAction)
             : static fn (string $aid, string $cid, int $progress, string $bvid, array $options): array => ApiWatch::heartbeat($aid, $cid, $progress, $bvid, $options);
+        $this->authFailureClassifier = $authFailureClassifier ?? new AuthFailureClassifier();
     }
 
     /**
@@ -42,6 +46,7 @@ final class VideoWatchService
         $videoResponse = ($this->videoAction)($session->archiveId, $session->cid, $session->bvid, [
             'session' => $session->sessionId,
         ]);
+        $this->authFailureClassifier->assertNotAuthFailure($videoResponse, '视频观看初始化时账号未登录');
         if (($videoResponse['code'] ?? -1) !== 0) {
             $code = (int)($videoResponse['code'] ?? -1);
             $message = trim((string)($videoResponse['message'] ?? $videoResponse['msg'] ?? ''));
@@ -52,6 +57,7 @@ final class VideoWatchService
         $heartbeatResponse = ($this->heartbeatAction)($session->archiveId, $session->cid, $progress, $session->bvid, [
             'session' => $session->sessionId,
         ]);
+        $this->authFailureClassifier->assertNotAuthFailure($heartbeatResponse, '视频观看心跳时账号未登录');
         if (($heartbeatResponse['code'] ?? -1) !== 0) {
             $code = (int)($heartbeatResponse['code'] ?? -1);
             $message = trim((string)($heartbeatResponse['message'] ?? $heartbeatResponse['msg'] ?? ''));
@@ -80,6 +86,7 @@ final class VideoWatchService
             'start_ts' => time(),
             'session' => $session->sessionId,
         ]);
+        $this->authFailureClassifier->assertNotAuthFailure($response, '视频观看收尾时账号未登录');
         return ($response['code'] ?? -1) === 0;
     }
 }
