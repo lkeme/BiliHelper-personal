@@ -2,7 +2,10 @@
   "items": [
     {
       "id": "tie-activity",
-      "title": "remote-tie-title"
+      "activity_id": "tie-activity",
+      "lottery_id": "tie-activity-lottery",
+      "title": "remote-tie-title",
+      "url": "https://www.bilibili.com/blackboard/era/tie-remote.html"
     }
   ]
 }

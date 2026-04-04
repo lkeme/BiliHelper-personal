@@ -6,13 +6,15 @@ final class ActivityCatalogLoader
 {
     /** @var CatalogSourceInterface[] */
     private array $sources;
+    private ActivityCatalogValidator $validator;
 
     /**
      * @param CatalogSourceInterface[] $sources
      */
-    public function __construct(array $sources)
+    public function __construct(array $sources, ?ActivityCatalogValidator $validator = null)
     {
         $this->sources = $sources;
+        $this->validator = $validator ?? new ActivityCatalogValidator();
     }
 
     /**
@@ -50,6 +52,6 @@ final class ActivityCatalogLoader
             }
         }
 
-        return array_values($merged);
+        return $this->validator->validate(array_values($merged));
     }
 }

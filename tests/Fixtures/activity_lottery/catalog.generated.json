@@ -5,12 +5,17 @@
     {
       "id": "generated-shared-fallback",
       "activity_id": "generated-shared",
+      "lottery_id": "generated-shared-lottery",
       "title": "generated-shared-title",
+      "url": "https://www.bilibili.com/blackboard/era/generated-shared.html",
       "update_time": "2026-04-02 11:29:22"
     },
     {
       "id": "generated-only",
+      "activity_id": "generated-only",
+      "lottery_id": "generated-only-lottery",
       "title": "generated-only-title",
+      "url": "https://www.bilibili.com/blackboard/era/generated-only.html",
       "update_time": "2026-04-02 11:30:00"
     }
   ]

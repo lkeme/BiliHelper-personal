@@ -12,6 +12,8 @@ final class ActivityCatalogItem
         private readonly string $pageId = '',
         private readonly string $lotteryId = '',
         private readonly string $url = '',
+        private readonly int $startTime = 0,
+        private readonly int $endTime = 0,
     ) {
     }
 
@@ -35,6 +37,8 @@ final class ActivityCatalogItem
             $pageId,
             $lotteryId,
             $url,
+            (int)($data['start_time'] ?? $data['startTime'] ?? 0),
+            (int)($data['end_time'] ?? $data['endTime'] ?? 0),
         );
     }
 
@@ -59,6 +63,16 @@ final class ActivityCatalogItem
         return $timestamp === false ? 0 : $timestamp;
     }
 
+    public function startTime(): int
+    {
+        return $this->startTime;
+    }
+
+    public function endTime(): int
+    {
+        return $this->endTime;
+    }
+
     /**
      * @return array<string, string>
      */
@@ -72,6 +86,8 @@ final class ActivityCatalogItem
             'page_id' => $this->pageId,
             'lottery_id' => $this->lotteryId,
             'url' => $this->url,
+            'start_time' => $this->startTime,
+            'end_time' => $this->endTime,
         ];
     }
 

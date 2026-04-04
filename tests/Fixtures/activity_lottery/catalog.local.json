@@ -2,12 +2,18 @@
   "items": [
     {
       "id": "shared-activity",
+      "activity_id": "shared-activity",
+      "lottery_id": "shared-lottery",
       "title": "local-old-title",
+      "url": "https://www.bilibili.com/blackboard/era/shared-local.html",
       "update_time": "2026-04-01T12:00:00+00:00"
     },
     {
       "id": "local-only",
+      "activity_id": "local-only",
+      "lottery_id": "local-only-lottery",
       "title": "local-only-title",
+      "url": "https://www.bilibili.com/blackboard/era/local-only.html",
       "update_time": "2026-03-30T10:00:00+00:00"
     }
   ]

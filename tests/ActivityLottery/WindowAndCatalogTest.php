@@ -6,6 +6,7 @@ require_once __DIR__ . '/../bootstrap.php';
 
 use Bhp\Plugin\ActivityLottery\Internal\Catalog\ActivityCatalogItem;
 use Bhp\Plugin\ActivityLottery\Internal\Catalog\ActivityCatalogLoader;
+use Bhp\Plugin\ActivityLottery\Internal\Catalog\ActivityCatalogValidator;
 use Bhp\Plugin\ActivityLottery\Internal\Catalog\LocalCatalogSource;
 use Bhp\Plugin\ActivityLottery\Internal\Catalog\RemoteCatalogSource;
 use Bhp\Plugin\ActivityLottery\Internal\Runtime\ActivityLotteryClock;
@@ -154,3 +155,44 @@ Assert::same(
     $catalog[0]->title(),
     '当双方都缺失 update_time 时应按来源优先级保留本地版本，而非依赖 sources 顺序。'
 );
+
+$catalogValidationLogs = [];
+$validator = new ActivityCatalogValidator(static function (string $level, string $message, array $context = []) use (&$catalogValidationLogs): void {
+    $catalogValidationLogs[] = [
+        'level' => $level,
+        'message' => $message,
+        'context' => $context,
+    ];
+});
+$validatedCatalog = $validator->validate([
+    ActivityCatalogItem::fromArray([
+        'id' => 'valid-activity',
+        'activity_id' => 'valid-activity',
+        'lottery_id' => 'valid-lottery',
+        'url' => 'https://www.bilibili.com/blackboard/era/valid.html',
+        'title' => 'valid',
+        'start_time' => 100,
+        'end_time' => 200,
+        'update_time' => '2026-04-01T12:00:00+00:00',
+    ]),
+    ActivityCatalogItem::fromArray([
+        'id' => 'missing-url',
+        'activity_id' => 'missing-url',
+        'lottery_id' => 'missing-url-lottery',
+        'title' => 'missing-url',
+        'update_time' => '2026-04-01T12:00:00+00:00',
+    ]),
+    ActivityCatalogItem::fromArray([
+        'id' => 'invalid-window',
+        'activity_id' => 'invalid-window',
+        'lottery_id' => 'invalid-window-lottery',
+        'url' => 'https://www.bilibili.com/blackboard/era/invalid-window.html',
+        'title' => 'invalid-window',
+        'start_time' => 200,
+        'end_time' => 100,
+        'update_time' => '2026-04-01T12:00:00+00:00',
+    ]),
+]);
+Assert::same(1, count($validatedCatalog), '目录校验应过滤掉缺关键字段和非法时间窗的活动。');
+Assert::same('valid-activity', $validatedCatalog[0]->id(), '目录校验后应保留合法活动。');
+Assert::same(2, count($catalogValidationLogs), '目录校验应记录两条过滤日志。');

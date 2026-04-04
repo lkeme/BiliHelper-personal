@@ -6,6 +6,22 @@ ini_set('display_errors', '1');
 
 require_once __DIR__ . '/Support/Assert.php';
 
+if (!defined('PROFILE_CONFIG_PATH')) {
+    $configPath = sys_get_temp_dir() . '/bilihelper-test-config/' ;
+    if (!is_dir($configPath)) {
+        mkdir($configPath, 0777, true);
+    }
+    define('PROFILE_CONFIG_PATH', $configPath);
+}
+
+if (!defined('PROFILE_LOG_PATH')) {
+    $logPath = sys_get_temp_dir() . '/bilihelper-test-log/';
+    if (!is_dir($logPath)) {
+        mkdir($logPath, 0777, true);
+    }
+    define('PROFILE_LOG_PATH', $logPath);
+}
+
 /**
  * 获取与活动彩池相关的测试夹具路径
  */
