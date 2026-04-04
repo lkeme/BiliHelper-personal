@@ -36,6 +36,22 @@ try {
 }
 Assert::true($csrfFailureThrown, 'AuthFailureClassifier 应将 -111 归一为 NoLoginException。');
 
+$errnoFailureThrown = false;
+try {
+    $classifier->assertNotAuthFailure(['errno' => -101, 'msg' => '账号未登录']);
+} catch (NoLoginException $exception) {
+    $errnoFailureThrown = $exception->getMessage() === '账号未登录';
+}
+Assert::true($errnoFailureThrown, 'AuthFailureClassifier 应兼容 errno/msg 结构。');
+
+$isLoginFailureThrown = false;
+try {
+    $classifier->assertNotAuthFailure(['data' => ['isLogin' => false]]);
+} catch (NoLoginException $exception) {
+    $isLoginFailureThrown = $exception->getMessage() === '账号未登录';
+}
+Assert::true($isLoginFailureThrown, 'AuthFailureClassifier 应兼容 data.isLogin=false 结构。');
+
 $drawGateway = new DrawGateway(
     static fn (array $payload): array => ['code' => -101, 'message' => '账号未登录'],
     static fn (array $payload): array => ['code' => 0, 'data' => [['gift_id' => 0, 'gift_name' => '未中奖']], 'message' => 'ok'],
