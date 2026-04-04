@@ -75,17 +75,21 @@ class CheckUpdate extends BasePluginRW implements PluginTaskInterface
         Log::info('拉取线上最新配置');
         // object
         $online = $this->fetchOnlineVersion();
-        $online_version = $online->version;
         // 网络错误
-        if ($online->code != 200) {
+        if ((int)($online->code ?? 0) !== 200) {
             Log::warning('检查更新: 拉取线上失败，网络错误！');
+            return false;
+        }
+        $online_version = (string)($online->version ?? '');
+        if ($online_version === '') {
+            Log::warning('检查更新: 拉取线上失败，远端版本信息缺失！');
             return false;
         }
         // 比较版本
         if ($this->compareVersion($offline_version, $online_version)) {
             //
-            $time = $online->update_time;
-            $desc = $online->update_description;
+            $time = (string)($online->update_time ?? '');
+            $desc = (string)($online->update_description ?? '');
             $info = "请注意版本变动更新哦~\n\n版本号: $online_version\n\n更新日志: $desc\n\n更新时间: $time\n\n";
             Log::notice($info);
             Notice::push('update', $info);

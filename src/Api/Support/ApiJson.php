@@ -103,6 +103,7 @@ final class ApiJson
     public static function normalizeRawJsonResponse(string $raw): string
     {
         $raw = self::decodeCompressedResponse($raw);
+        $raw = self::normalizeUtf8($raw);
         $raw = preg_replace('/^\xEF\xBB\xBF/u', '', $raw) ?? $raw;
         $raw = trim($raw);
 
@@ -133,6 +134,31 @@ final class ApiJson
         $decoded = @zlib_decode($raw);
         if (is_string($decoded) && $decoded !== '') {
             return $decoded;
+        }
+
+        return $raw;
+    }
+
+    private static function normalizeUtf8(string $raw): string
+    {
+        if ($raw === '') {
+            return $raw;
+        }
+
+        if (preg_match('//u', $raw) === 1) {
+            return $raw;
+        }
+
+        if (function_exists('mb_convert_encoding')) {
+            $converted = @mb_convert_encoding($raw, 'UTF-8', 'UTF-8,GBK,GB2312,BIG5,ISO-8859-1');
+            if (is_string($converted) && $converted !== '' && preg_match('//u', $converted) === 1) {
+                return $converted;
+            }
+        }
+
+        $converted = @iconv('UTF-8', 'UTF-8//IGNORE', $raw);
+        if (is_string($converted) && $converted !== '') {
+            return $converted;
         }
 
         return $raw;
