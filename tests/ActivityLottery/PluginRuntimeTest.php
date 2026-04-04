@@ -11,6 +11,7 @@ use Bhp\Plugin\ActivityLottery\Internal\Catalog\ActivityCatalogLoader;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlow;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlowFactory;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlowPlanner;
+use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlowStatus;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlowStore;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNodeResult;
@@ -240,6 +241,101 @@ Assert::true($businessSummaryLog !== null, '业务节点结束后应记录 flow.
 Assert::same('已完成', (string)($businessSummaryLog['context']['node_status_label'] ?? ''), '业务摘要日志应包含阶段状态标签。');
 Assert::true(str_contains((string)$businessSummaryLog['message'], '流程进度 1/1'), '业务摘要日志应包含流程进度。');
 Assert::true(str_contains((string)$businessSummaryLog['message'], '状态：已完成'), '业务摘要日志应包含阶段状态。');
+
+$exceptionIsolationLogs = [];
+$exceptionIsolationScope = $scope . '_exception_isolation';
+$exceptionIsolationStore = new ActivityFlowStore($exceptionIsolationScope);
+$exceptionIsolationFlowA = ActivityFlowFactory::create(
+    ActivityCatalogItem::fromArray([
+        'id' => 'exception-flow-a',
+        'activity_id' => 'exception-flow-a',
+        'lottery_id' => 'exception-flow-a',
+        'title' => '异常隔离活动A',
+        'url' => 'https://www.bilibili.com/blackboard/era/exception-a.html',
+        'update_time' => '2026-04-03 08:00:00',
+    ]),
+    '2026-04-03',
+    [
+        new ActivityNode('load_activity_snapshot', ['lane' => 'page_fetch']),
+    ],
+);
+$exceptionIsolationFlowB = ActivityFlowFactory::create(
+    ActivityCatalogItem::fromArray([
+        'id' => 'exception-flow-b',
+        'activity_id' => 'exception-flow-b',
+        'lottery_id' => 'exception-flow-b',
+        'title' => '异常隔离活动B',
+        'url' => 'https://www.bilibili.com/blackboard/era/exception-b.html',
+        'update_time' => '2026-04-03 08:00:00',
+    ]),
+    '2026-04-03',
+    [
+        new ActivityNode('refresh_draw_times', ['lane' => 'draw_refresh']),
+    ],
+);
+$exceptionIsolationStore->save([$exceptionIsolationFlowA, $exceptionIsolationFlowB]);
+$exceptionIsolationRuntime = new ActivityLotteryRuntime(
+    new ActivityCatalogLoader([]),
+    $exceptionIsolationStore,
+    [
+        new class implements NodeRunnerInterface {
+            public function type(): string
+            {
+                return 'load_activity_snapshot';
+            }
+
+            public function run(ActivityFlow $flow, ActivityNode $node, int $now): ActivityNodeResult
+            {
+                throw new \RuntimeException('x25Kn/X失败 1012002 -> time check failed');
+            }
+        },
+        new class implements NodeRunnerInterface {
+            public function type(): string
+            {
+                return 'refresh_draw_times';
+            }
+
+            public function run(ActivityFlow $flow, ActivityNode $node, int $now): ActivityNodeResult
+            {
+                return new ActivityNodeResult(true, '正常执行完成', [
+                    'node_status' => ActivityNodeStatus::SUCCEEDED,
+                ], $now);
+            }
+        },
+    ],
+    new ActivityFlowPlanner(),
+    new ActivityFlowPool(new ActivityFlowBudget(2, 2, 3000)),
+    new ActivityLotteryClock(static fn (): int => $now),
+    new ActivityLotteryWindow('06:00:00', '23:00:00'),
+    '06:00:00',
+    '23:00:00',
+    static function (string $level, string $message, array $context = []) use (&$exceptionIsolationLogs): void {
+        $exceptionIsolationLogs[] = [
+            'level' => $level,
+            'message' => $message,
+            'context' => $context,
+        ];
+    },
+);
+$exceptionIsolationResult = $exceptionIsolationRuntime->tick();
+Assert::true($exceptionIsolationResult instanceof TaskResult, '单节点异常时 runtime->tick() 仍应返回 TaskResult。');
+$exceptionIsolationFlows = $exceptionIsolationStore->load('2026-04-03');
+$exceptionFlowStatuses = [];
+foreach ($exceptionIsolationFlows as $savedFlow) {
+    $exceptionFlowStatuses[(string)($savedFlow->activity()['activity_id'] ?? '')] = $savedFlow->status();
+}
+Assert::same(ActivityFlowStatus::FAILED, (string)($exceptionFlowStatuses['exception-flow-a'] ?? ''), '单节点异常不应拖死整轮调度，异常 flow 应落为 failed。');
+Assert::same(ActivityFlowStatus::COMPLETED, (string)($exceptionFlowStatuses['exception-flow-b'] ?? ''), '单节点异常时其他 flow 仍应继续执行。');
+$exceptionFlowAId = '';
+foreach ($exceptionIsolationFlows as $savedFlow) {
+    if ((string)($savedFlow->activity()['activity_id'] ?? '') === 'exception-flow-a') {
+        $exceptionFlowAId = $savedFlow->id();
+        break;
+    }
+}
+$exceptionResultLog = findRuntimeLogByFlow($exceptionIsolationLogs, 'node.result', $exceptionFlowAId);
+Assert::true($exceptionResultLog !== null, '单节点异常时应记录 node.result 日志。');
+Assert::true(str_contains((string)$exceptionResultLog['message'], 'time check failed'), '单节点异常日志应包含原始异常信息。');
 
 $followWaitingLogs = [];
 $followWaitingRuntime = buildBusinessRuntime(
@@ -905,6 +1001,21 @@ function findRuntimeLog(array $logs, string $event): ?array
 {
     foreach ($logs as $log) {
         if (($log['context']['event'] ?? '') === $event) {
+            return $log;
+        }
+    }
+
+    return null;
+}
+
+/**
+ * @param array<int, array{level: string, message: string, context: array<string, mixed>}> $logs
+ * @return array{level: string, message: string, context: array<string, mixed>}|null
+ */
+function findRuntimeLogByFlow(array $logs, string $event, string $flowId): ?array
+{
+    foreach ($logs as $log) {
+        if (($log['context']['event'] ?? '') === $event && ($log['context']['flow_id'] ?? '') === $flowId) {
             return $log;
         }
     }

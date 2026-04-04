@@ -182,14 +182,20 @@ final class ActivityFlowPlanner
      */
     private function fixedTailNodes(): array
     {
-        return array_map(fn (string $type): ActivityNode => $this->nodeByContract($type), [
+        $nodes = array_map(fn (string $type): ActivityNode => $this->nodeByContract($type), [
             'refresh_draw_times',
             'execute_draw',
             'record_draw_result',
             'notify_draw_result',
             'final_claim_reward',
-            'finalize_flow',
         ]);
+        $nodes[] = new ActivityNode('era_task_unfollow', [
+            'lane' => $this->defaultLaneForNodeType('era_task_unfollow'),
+            'cleanup_scope' => 'temporary_follow_uids',
+        ]);
+        $nodes[] = $this->nodeByContract('finalize_flow');
+
+        return $nodes;
     }
 
     /**

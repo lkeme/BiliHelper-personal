@@ -15,6 +15,7 @@ use Bhp\Plugin\ActivityLottery\Internal\Gateway\WatchVideoGateway;
 use Bhp\Plugin\ActivityLottery\Internal\Node\EraClaimRewardNodeRunner;
 use Bhp\Plugin\ActivityLottery\Internal\Node\EraFollowNodeRunner;
 use Bhp\Plugin\ActivityLottery\Internal\Node\EraShareNodeRunner;
+use Bhp\Plugin\ActivityLottery\Internal\Node\EraUnfollowNodeRunner;
 use Bhp\Plugin\ActivityLottery\Internal\Node\EraWatchLiveNodeRunner;
 use Bhp\Plugin\ActivityLottery\Internal\Node\EraWatchVideoNodeRunner;
 use Bhp\Plugin\ActivityLottery\Internal\Page\EraTaskCapabilityResolver;
@@ -79,6 +80,62 @@ $secondFollowResult = $followRunner->run(
 Assert::true($secondFollowResult->ok(), '关注节点第二步应可执行。');
 Assert::same(ActivityNodeStatus::SUCCEEDED, (string)($secondFollowResult->payload()['node_status'] ?? ''), '最后一个关注目标完成后节点应返回 succeeded。');
 Assert::same([10001, 10002], $followEvents, '关注节点应按顺序处理多个 UID。');
+
+$completedFollowEvents = [];
+$completedFollowFlow = buildEraTaskFlow([
+    'task-follow' => [
+        'task_status' => 3,
+    ],
+]);
+$completedFollowResult = (new EraFollowNodeRunner(
+    static function (int $uid) use (&$completedFollowEvents): array {
+        $completedFollowEvents[] = $uid;
+        return ['code' => 0, 'message' => 'ok'];
+    },
+))->run(
+    $completedFollowFlow,
+    new ActivityNode('era_task_follow', ['lane' => 'follow', 'task_id' => 'task-follow']),
+    $now,
+);
+Assert::true($completedFollowResult->ok(), '已完成的关注任务不应整体失败。');
+Assert::same(ActivityNodeStatus::SUCCEEDED, (string)($completedFollowResult->payload()['node_status'] ?? ''), '已完成的关注任务应直接返回 succeeded。');
+Assert::same(0, count($completedFollowEvents), '已完成的关注任务不应再次触发关注动作。');
+
+$unfollowEvents = [];
+$unfollowRunner = new EraUnfollowNodeRunner(
+    static function (int $uid) use (&$unfollowEvents): array {
+        $unfollowEvents[] = $uid;
+        return ['code' => 0, 'message' => 'ok'];
+    },
+);
+$unfollowFlow = applyEraNodeContextPatchToFlow($flow, [
+    'context_patch' => [
+        'era_task_runtime' => [
+            'task-follow' => [
+                'temporary_follow_uids' => ['10001', '10002'],
+            ],
+        ],
+    ],
+]);
+$firstUnfollowResult = $unfollowRunner->run(
+    $unfollowFlow,
+    new ActivityNode('era_task_unfollow', ['lane' => 'unfollow', 'cleanup_scope' => 'temporary_follow_uids']),
+    $now,
+);
+Assert::true($firstUnfollowResult->ok(), '尾部取消关注节点首步应可执行。');
+Assert::same(ActivityNodeStatus::WAITING, (string)($firstUnfollowResult->payload()['node_status'] ?? ''), '多个待取消关注目标时首步应返回 waiting。');
+Assert::same([10001], $unfollowEvents, '尾部取消关注节点首步应只处理一个 UID。');
+
+$unfollowFlow = applyEraNodeContextPatchToFlow($unfollowFlow, $firstUnfollowResult->payload());
+$secondUnfollowResult = $unfollowRunner->run(
+    $unfollowFlow,
+    new ActivityNode('era_task_unfollow', ['lane' => 'unfollow', 'cleanup_scope' => 'temporary_follow_uids']),
+    $now + 20,
+);
+Assert::true($secondUnfollowResult->ok(), '尾部取消关注节点第二步应可执行。');
+Assert::same(ActivityNodeStatus::SUCCEEDED, (string)($secondUnfollowResult->payload()['node_status'] ?? ''), '最后一个待取消关注目标完成后节点应返回 succeeded。');
+Assert::same([10001, 10002], $unfollowEvents, '尾部取消关注节点应按顺序处理多个 UID。');
+Assert::same([], readTaskRuntimePatch($secondUnfollowResult, 'task-follow')['temporary_follow_uids'] ?? [], '尾部取消关注完成后应清空 temporary_follow_uids。');
 
 $claimEvents = [];
 $claimRunner = new EraClaimRewardNodeRunner(new EraTaskGateway(
@@ -252,7 +309,7 @@ function readTaskRuntimePatch(object $result, string $taskId): array
     return is_array($taskRuntime) ? $taskRuntime : [];
 }
 
-function buildEraTaskFlow(): ActivityFlow
+function buildEraTaskFlow(array $taskOverrides = []): ActivityFlow
 {
     $catalog = ActivityCatalogItem::fromArray([
         'id' => 'era-node-flow',
@@ -269,6 +326,87 @@ function buildEraTaskFlow(): ActivityFlow
     ]);
 
     $row = $flow->toArray();
+    $tasks = [
+        [
+            'task_id' => 'task-share',
+            'task_name' => '分享活动',
+            'capability' => EraTaskCapabilityResolver::CAPABILITY_SHARE,
+            'support_level' => EraTaskCapabilityResolver::SUPPORT_NOW,
+            'counter' => '1/1',
+            'task_status' => 1,
+            'task_award_type' => 0,
+        ],
+        [
+            'task_id' => 'task-follow',
+            'task_name' => '关注 UP 主',
+            'capability' => EraTaskCapabilityResolver::CAPABILITY_FOLLOW,
+            'support_level' => EraTaskCapabilityResolver::SUPPORT_NOW,
+            'target_uids' => ['10001', '10002'],
+            'task_status' => 1,
+            'task_award_type' => 0,
+        ],
+        [
+            'task_id' => 'task-claim',
+            'task_name' => '领取奖励',
+            'capability' => EraTaskCapabilityResolver::CAPABILITY_CLAIM_REWARD,
+            'support_level' => EraTaskCapabilityResolver::SUPPORT_NOW,
+            'award_name' => '测试奖品',
+            'task_status' => 2,
+            'task_award_type' => 1,
+        ],
+        [
+            'task_id' => 'task-claim-bind',
+            'task_name' => '领取奖励(需绑定)',
+            'capability' => EraTaskCapabilityResolver::CAPABILITY_CLAIM_REWARD,
+            'support_level' => EraTaskCapabilityResolver::SUPPORT_NOW,
+            'award_name' => '绑定奖品',
+            'task_status' => 2,
+            'task_award_type' => 1,
+        ],
+        [
+            'task_id' => 'task-video-fixed',
+            'task_name' => '观看视频 30 秒',
+            'capability' => EraTaskCapabilityResolver::CAPABILITY_WATCH_VIDEO_FIXED,
+            'support_level' => EraTaskCapabilityResolver::SUPPORT_NOW,
+            'required_watch_seconds' => 30,
+            'target_archives' => [
+                ['aid' => '123456', 'cid' => '654321', 'duration' => 90, 'bvid' => 'BV1FixedDemo', 'title' => '固定稿件'],
+            ],
+            'task_status' => 1,
+            'task_award_type' => 0,
+        ],
+        [
+            'task_id' => 'task-video-topic',
+            'task_name' => '观看话题视频 30 秒',
+            'capability' => EraTaskCapabilityResolver::CAPABILITY_WATCH_VIDEO_TOPIC,
+            'support_level' => EraTaskCapabilityResolver::SUPPORT_NOW,
+            'topic_id' => 'topic-3001',
+            'required_watch_seconds' => 30,
+            'task_status' => 1,
+            'task_award_type' => 0,
+        ],
+        [
+            'task_id' => 'task-live',
+            'task_name' => '观看直播 30 秒',
+            'capability' => EraTaskCapabilityResolver::CAPABILITY_WATCH_LIVE,
+            'support_level' => EraTaskCapabilityResolver::SUPPORT_NOW,
+            'required_watch_seconds' => 30,
+            'target_room_ids' => ['2233'],
+            'target_area_id' => 99,
+            'target_parent_area_id' => 9,
+            'task_status' => 1,
+            'task_award_type' => 0,
+        ],
+    ];
+    foreach ($tasks as $index => $task) {
+        $taskId = (string)($task['task_id'] ?? '');
+        if ($taskId === '' || !isset($taskOverrides[$taskId]) || !is_array($taskOverrides[$taskId])) {
+            continue;
+        }
+
+        $tasks[$index] = array_replace($task, $taskOverrides[$taskId]);
+    }
+
     $row['context'] = [
         'era_page_snapshot' => [
             'activity_id' => 'era-node-activity',
@@ -276,78 +414,7 @@ function buildEraTaskFlow(): ActivityFlow
             'lottery_id' => 'era-node-lottery',
             'start_time' => 0,
             'end_time' => 0,
-            'tasks' => [
-                [
-                    'task_id' => 'task-share',
-                    'task_name' => '分享活动',
-                    'capability' => EraTaskCapabilityResolver::CAPABILITY_SHARE,
-                    'support_level' => EraTaskCapabilityResolver::SUPPORT_NOW,
-                    'counter' => '1/1',
-                    'task_status' => 1,
-                    'task_award_type' => 0,
-                ],
-                [
-                    'task_id' => 'task-follow',
-                    'task_name' => '关注 UP 主',
-                    'capability' => EraTaskCapabilityResolver::CAPABILITY_FOLLOW,
-                    'support_level' => EraTaskCapabilityResolver::SUPPORT_NOW,
-                    'target_uids' => ['10001', '10002'],
-                    'task_status' => 1,
-                    'task_award_type' => 0,
-                ],
-                [
-                    'task_id' => 'task-claim',
-                    'task_name' => '领取奖励',
-                    'capability' => EraTaskCapabilityResolver::CAPABILITY_CLAIM_REWARD,
-                    'support_level' => EraTaskCapabilityResolver::SUPPORT_NOW,
-                    'award_name' => '测试奖品',
-                    'task_status' => 2,
-                    'task_award_type' => 1,
-                ],
-                [
-                    'task_id' => 'task-claim-bind',
-                    'task_name' => '领取奖励(需绑定)',
-                    'capability' => EraTaskCapabilityResolver::CAPABILITY_CLAIM_REWARD,
-                    'support_level' => EraTaskCapabilityResolver::SUPPORT_NOW,
-                    'award_name' => '绑定奖品',
-                    'task_status' => 2,
-                    'task_award_type' => 1,
-                ],
-                [
-                    'task_id' => 'task-video-fixed',
-                    'task_name' => '观看视频 30 秒',
-                    'capability' => EraTaskCapabilityResolver::CAPABILITY_WATCH_VIDEO_FIXED,
-                    'support_level' => EraTaskCapabilityResolver::SUPPORT_NOW,
-                    'required_watch_seconds' => 30,
-                    'target_archives' => [
-                        ['aid' => '123456', 'cid' => '654321', 'duration' => 90, 'bvid' => 'BV1FixedDemo', 'title' => '固定稿件'],
-                    ],
-                    'task_status' => 1,
-                    'task_award_type' => 0,
-                ],
-                [
-                    'task_id' => 'task-video-topic',
-                    'task_name' => '观看话题视频 30 秒',
-                    'capability' => EraTaskCapabilityResolver::CAPABILITY_WATCH_VIDEO_TOPIC,
-                    'support_level' => EraTaskCapabilityResolver::SUPPORT_NOW,
-                    'topic_id' => 'topic-3001',
-                    'required_watch_seconds' => 30,
-                    'task_status' => 1,
-                    'task_award_type' => 0,
-                ],
-                [
-                    'task_id' => 'task-live',
-                    'task_name' => '观看直播 30 秒',
-                    'capability' => EraTaskCapabilityResolver::CAPABILITY_WATCH_LIVE,
-                    'support_level' => EraTaskCapabilityResolver::SUPPORT_NOW,
-                    'required_watch_seconds' => 30,
-                    'target_room_ids' => ['2233'],
-                    'target_area_id' => 99,
-                    'target_parent_area_id' => 9,
-                    'task_status' => 1,
-                    'task_award_type' => 0,
-                ],
-            ],
+            'tasks' => $tasks,
         ],
     ];
 

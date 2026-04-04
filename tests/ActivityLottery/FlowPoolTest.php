@@ -151,7 +151,7 @@ $fixedContractFlow = $planner->plan(ActivityCatalogItem::fromArray([
     'title' => 'fixed-contract-check',
     'update_time' => '2026-04-02T08:00:00+00:00',
 ]), null, '2026-04-02');
-$fixedContractNodeTypes = ['load_activity_snapshot', 'validate_activity_window', 'parse_era_page', 'refresh_draw_times', 'execute_draw', 'record_draw_result', 'notify_draw_result', 'final_claim_reward', 'finalize_flow'];
+$fixedContractNodeTypes = ['load_activity_snapshot', 'validate_activity_window', 'parse_era_page', 'refresh_draw_times', 'execute_draw', 'record_draw_result', 'notify_draw_result', 'final_claim_reward', 'era_task_unfollow', 'finalize_flow'];
 foreach ($fixedContractFlow->nodes() as $node) {
     if (!in_array($node->type(), $fixedContractNodeTypes, true)) {
         continue;

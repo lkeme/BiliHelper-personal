@@ -52,6 +52,7 @@ $fixedNodeTypes = [
     'record_draw_result',
     'notify_draw_result',
     'final_claim_reward',
+    'era_task_unfollow',
     'finalize_flow',
 ];
 foreach ($fixedNodeTypes as $fixedNodeType) {
@@ -114,7 +115,8 @@ $dynamicSnapshot = EraPageSnapshot::fromArray([
 $flowWithDynamic = $planner->plan($catalogItem, $dynamicSnapshot, '2026-04-02');
 $dynamicNodes = array_values(array_filter(
     $flowWithDynamic->nodes(),
-    static fn (ActivityNode $node): bool => str_starts_with($node->type(), 'era_task_'),
+    static fn (ActivityNode $node): bool => str_starts_with($node->type(), 'era_task_')
+        && !array_key_exists('cleanup_scope', $node->payload()),
 ));
 $dynamicTypes = array_map(
     static fn (ActivityNode $node): string => $node->type(),
@@ -179,6 +181,10 @@ Assert::true(
     in_array('final_claim_reward', $allNodeTypes, true),
     '固定尾部领奖节点应为 final_claim_reward。'
 );
+Assert::true(
+    in_array('era_task_unfollow', $allNodeTypes, true),
+    '固定尾部应包含临时关注回收节点。'
+);
 Assert::false(
     in_array('claim_reward', $allNodeTypes, true),
     '节点类型中不应再出现旧 claim_reward。'
@@ -223,11 +229,13 @@ $stableOrderFlowA = $planner->plan($catalogItem, $stableOrderSnapshotA, '2026-04
 $stableOrderFlowB = $planner->plan($catalogItem, $stableOrderSnapshotB, '2026-04-02');
 $stableOrderDynamicA = array_values(array_filter(
     $stableOrderFlowA->nodes(),
-    static fn (ActivityNode $node): bool => str_starts_with($node->type(), 'era_task_'),
+    static fn (ActivityNode $node): bool => str_starts_with($node->type(), 'era_task_')
+        && !array_key_exists('cleanup_scope', $node->payload()),
 ));
 $stableOrderDynamicB = array_values(array_filter(
     $stableOrderFlowB->nodes(),
-    static fn (ActivityNode $node): bool => str_starts_with($node->type(), 'era_task_'),
+    static fn (ActivityNode $node): bool => str_starts_with($node->type(), 'era_task_')
+        && !array_key_exists('cleanup_scope', $node->payload()),
 ));
 $stableOrderTypeSequenceA = array_map(
     static fn (ActivityNode $node): string => $node->type(),

@@ -40,6 +40,12 @@ final class EraFollowNodeRunner implements NodeRunnerInterface
             ], $now);
         }
 
+        if ($task->taskStatus() !== 1) {
+            return new ActivityNodeResult(true, '关注任务已完成', [
+                'node_status' => ActivityNodeStatus::SUCCEEDED,
+            ], $now);
+        }
+
         $uids = $task->targetUids();
         if ($uids === []) {
             return new ActivityNodeResult(true, '关注任务缺少目标 UID，已跳过', [

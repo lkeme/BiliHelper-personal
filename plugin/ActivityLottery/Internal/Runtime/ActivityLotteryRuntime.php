@@ -13,6 +13,7 @@ use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNodeStatus;
 use Bhp\Plugin\ActivityLottery\Internal\Node\EraClaimRewardNodeRunner;
 use Bhp\Plugin\ActivityLottery\Internal\Node\EraFollowNodeRunner;
 use Bhp\Plugin\ActivityLottery\Internal\Node\EraShareNodeRunner;
+use Bhp\Plugin\ActivityLottery\Internal\Node\EraUnfollowNodeRunner;
 use Bhp\Plugin\ActivityLottery\Internal\Node\EraWatchLiveNodeRunner;
 use Bhp\Plugin\ActivityLottery\Internal\Node\EraWatchProgress;
 use Bhp\Plugin\ActivityLottery\Internal\Node\EraWatchVideoNodeRunner;
@@ -33,6 +34,7 @@ use Bhp\Plugin\ActivityLottery\Internal\Page\EraTaskSnapshot;
 use Bhp\Plugin\ActivityLottery\Internal\Pool\ActivityFlowBudget;
 use Bhp\Plugin\ActivityLottery\Internal\Pool\ActivityFlowPool;
 use Bhp\Scheduler\TaskResult;
+use Bhp\Util\Exceptions\NoLoginException;
 use RuntimeException;
 
 final class ActivityLotteryRuntime
@@ -227,6 +229,7 @@ final class ActivityLotteryRuntime
             new ParseEraPageNodeRunner(),
             new EraShareNodeRunner(),
             new EraFollowNodeRunner(),
+            new EraUnfollowNodeRunner(),
             new EraClaimRewardNodeRunner(),
             new EraWatchVideoNodeRunner('era_task_watch_video_fixed'),
             new EraWatchVideoNodeRunner('era_task_watch_video_topic'),
@@ -252,7 +255,21 @@ final class ActivityLotteryRuntime
             throw new RuntimeException('缺少节点执行器: ' . $currentNode->type());
         }
 
-        $result = $runner->run($flow, $currentNode, $now);
+        try {
+            $result = $runner->run($flow, $currentNode, $now);
+        } catch (NoLoginException $exception) {
+            throw $exception;
+        } catch (\Throwable $throwable) {
+            $result = new \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNodeResult(
+                false,
+                $throwable->getMessage() !== '' ? $throwable->getMessage() : '节点执行异常',
+                [
+                    'node_status' => ActivityNodeStatus::FAILED,
+                ],
+                $now,
+            );
+        }
+
         return $this->applyNodeResult($flow, $result, $now);
     }
 
@@ -573,6 +590,7 @@ final class ActivityLotteryRuntime
             'era_task_share' => '分享任务',
             'era_task_watch_video_fixed', 'era_task_watch_video_topic' => '观看视频任务',
             'era_task_watch_live' => '观看直播任务',
+            'era_task_unfollow' => '取消关注任务',
             'era_task_claim_reward' => '领奖任务',
             'era_task_skipped' => '跳过任务',
             default => $nodeType,
