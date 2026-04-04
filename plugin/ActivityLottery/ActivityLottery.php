@@ -16,6 +16,7 @@ use Bhp\Plugin\ActivityLottery\Internal\Pool\ActivityFlowPool;
 use Bhp\Plugin\ActivityLottery\Internal\Runtime\ActivityLotteryClock;
 use Bhp\Plugin\ActivityLottery\Internal\Runtime\ActivityLotteryRuntime;
 use Bhp\Plugin\ActivityLottery\Internal\Runtime\ActivityLotteryWindow;
+use Bhp\Remote\RemoteResourceResolver;
 use Bhp\Scheduler\TaskResult;
 
 class ActivityLottery extends BasePlugin implements PluginTaskInterface
@@ -57,11 +58,15 @@ class ActivityLottery extends BasePlugin implements PluginTaskInterface
 
         $windowStart = trim((string)$this->config('activity_lottery.window_start', '06:00:00', 'string'));
         $windowEnd = trim((string)$this->config('activity_lottery.window_end', '23:00:00', 'string'));
+        $remoteCatalogUrl = trim((string)$this->config('activity_lottery.remote_catalog_url', '', 'string'));
+        if ($remoteCatalogUrl === '') {
+            $remoteCatalogUrl = (new RemoteResourceResolver())->resourceRawUrl('activity_infos.json');
+        }
         $sources = [
             new LocalCatalogSource($this->activityInfosLocalPath()),
             new RemoteCatalogSource(
-                trim((string)$this->config('activity_lottery.remote_catalog_url', '', 'string')),
-                (bool)$this->config('activity_lottery.remote_catalog_enable', false, 'bool'),
+                $remoteCatalogUrl,
+                true,
             ),
         ];
 

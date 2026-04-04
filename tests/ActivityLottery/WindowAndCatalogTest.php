@@ -156,6 +156,25 @@ Assert::same(
     '当双方都缺失 update_time 时应按来源优先级保留本地版本，而非依赖 sources 顺序。'
 );
 
+$remoteFetchedCatalog = (new RemoteCatalogSource(
+    'https://example.test/activity_infos.json',
+    true,
+    null,
+    static fn (string $url): string => (string)json_encode([
+        'data' => [
+            [
+                'activity_id' => 'remote-fetch-activity',
+                'lottery_id' => 'remote-fetch-lottery',
+                'title' => 'remote-fetch-title',
+                'url' => 'https://www.bilibili.com/blackboard/era/remote-fetch.html',
+                'update_time' => '2026-04-04 08:00:00',
+            ],
+        ],
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+))->load();
+Assert::same(1, count($remoteFetchedCatalog), 'RemoteCatalogSource 应支持通过远程 URL 读取目录。');
+Assert::same('remote-fetch-activity', $remoteFetchedCatalog[0]->id(), '远程目录条目应正常解析唯一键。');
+
 $catalogValidationLogs = [];
 $validator = new ActivityCatalogValidator(static function (string $level, string $message, array $context = []) use (&$catalogValidationLogs): void {
     $catalogValidationLogs[] = [
