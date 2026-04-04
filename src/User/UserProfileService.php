@@ -3,6 +3,7 @@
 namespace Bhp\User;
 
 use Bhp\Api\Vip\ApiUser;
+use Bhp\Login\AuthFailureClassifier;
 use Bhp\Log\Log;
 use Bhp\Util\Common\Common;
 
@@ -73,6 +74,7 @@ class UserProfileService
         }
 
         $response = $this->requestVipInfo();
+        (new AuthFailureClassifier())->assertNotAuthFailure($response, '用户资料: 账号未登录');
         if (($response['code'] ?? -1) !== 0) {
             Log::warning(sprintf(
                 '用户资料: 获取大会员信息失败 %s -> %s',
@@ -94,6 +96,7 @@ class UserProfileService
         }
 
         $response = $this->requestNavInfo();
+        (new AuthFailureClassifier())->assertNotAuthFailure($response, '用户资料: 账号未登录');
         if (($response['code'] ?? -1) !== 0) {
             Log::warning(sprintf(
                 '用户资料: 获取用户信息失败 %s -> %s',

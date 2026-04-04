@@ -17,6 +17,7 @@
 
 
 use Bhp\Api\Api\X\VipPoint\ApiTask;
+use Bhp\Login\AuthFailureClassifier;
 use Bhp\Cache\Cache;
 use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
@@ -79,6 +80,7 @@ class VipPoint extends BasePlugin implements PluginTaskInterface
      * @var array|null
      */
     protected ?array $tasks = [];
+    private AuthFailureClassifier $authFailureClassifier;
 
     /**
      * 目标任务
@@ -112,6 +114,7 @@ class VipPoint extends BasePlugin implements PluginTaskInterface
     public function __construct(Plugin &$plugin)
     {
         Cache::initCache();
+        $this->authFailureClassifier = new AuthFailureClassifier();
         $this->bootPlugin($plugin, true);
     }
 
@@ -191,6 +194,7 @@ class VipPoint extends BasePlugin implements PluginTaskInterface
     protected function getTaskList(): bool
     {
         $response = ApiTask::combine();
+        $this->authFailureClassifier->assertNotAuthFailure($response, '大会员积分: 获取任务列表时账号未登录');
         if ($response['code']) {
             Log::warning('大会员积分: 获取任务列表失败');
             return false;

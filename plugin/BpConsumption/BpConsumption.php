@@ -17,6 +17,7 @@
 
 use Bhp\Api\Pay\ApiPay;
 use Bhp\Api\Pay\ApiWallet;
+use Bhp\Login\AuthFailureClassifier;
 use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
 use Bhp\Plugin\Contract\PluginTaskInterface;
@@ -26,6 +27,7 @@ use Bhp\User\User;
 
 class BpConsumption extends BasePlugin implements PluginTaskInterface
 {
+    private AuthFailureClassifier $authFailureClassifier;
     /**
      * 插件信息
      * @var array|string[]
@@ -45,6 +47,7 @@ class BpConsumption extends BasePlugin implements PluginTaskInterface
      */
     public function __construct(Plugin &$plugin)
     {
+        $this->authFailureClassifier = new AuthFailureClassifier();
         $this->bootPlugin($plugin, true);
     }
 
@@ -101,6 +104,7 @@ class BpConsumption extends BasePlugin implements PluginTaskInterface
         // {"code":1300014,"message":"b币余额不足","ttl":1,"data":null}
         // {"code":0,"message":"0","ttl":1,"data":{"status":2,"order_id":"1234171134577071132741234","gold":0,"bp":5000}}
         $response = ApiPay::gold($num);
+        $this->authFailureClassifier->assertNotAuthFailure($response, '消费B币券: 充值金瓜子时账号未登录');
         //
         if ($response['code']) {
             Log::warning("消费B币券: 充值金瓜子失败 {$response['code']} -> {$response['message']}");
@@ -119,6 +123,7 @@ class BpConsumption extends BasePlugin implements PluginTaskInterface
         // {"code":0,"message":"0","ttl":1,"data":{"mid":12324,"up_mid":1234,"order_no":"PAY4567","bp_num":"5","exp":5,"status":4,"msg":""}}
         // {"code":0,"message":"0","ttl":1,"data":{"mid":12324,"up_mid":1234,"order_no":"ABCD","bp_num":2,"exp":2,"status":4,"msg":""}}
         $response = ApiPay::battery($uid, $num);
+        $this->authFailureClassifier->assertNotAuthFailure($response, "消费B币券: 给{$uid}充电时账号未登录");
         //
         if ($response['code']) {
             Log::warning("消费B币券: 给{$uid}充电失败 {$response['code']} -> {$response['message']}");
@@ -140,6 +145,7 @@ class BpConsumption extends BasePlugin implements PluginTaskInterface
     {
         // {"errno":0,"msg":"SUCCESS","showMsg":"","errtag":0,"data":{"mid":1234,"totalBp":5.00,"defaultBp":0.00,"iosBp":0.00,"couponBalance":5.00,"availableBp":5.00,"unavailableBp":0.00,"unavailableReason":"苹果设备上充值的B币不能在其他平台的设备上进行使用","tip":null}}
         $response = ApiWallet::getUserWallet();
+        $this->authFailureClassifier->assertNotAuthFailure($response, '消费B币券: 获取钱包时账号未登录');
         if ($response['errno']) {
             Log::warning("消费B币券: 获取用户钱包信息失败 {$response['errno']} -> {$response['msg']}");
             return 0;

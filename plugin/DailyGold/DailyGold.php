@@ -17,6 +17,7 @@
 
 use Bhp\Api\XLive\AppRoom\V1\ApiDM;
 use Bhp\Api\XLive\AppUcenter\V1\ApiUserTask;
+use Bhp\Login\AuthFailureClassifier;
 use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
 use Bhp\Plugin\Contract\PluginTaskInterface;
@@ -26,6 +27,7 @@ use Bhp\Util\Fake\Fake;
 
 class DailyGold extends BasePlugin implements PluginTaskInterface
 {
+    private AuthFailureClassifier $authFailureClassifier;
     /**
      * 插件信息
      * @var array|string[]
@@ -45,6 +47,7 @@ class DailyGold extends BasePlugin implements PluginTaskInterface
      */
     public function __construct(Plugin &$plugin)
     {
+        $this->authFailureClassifier = new AuthFailureClassifier();
         $this->bootPlugin($plugin, true);
     }
 
@@ -89,6 +92,7 @@ class DailyGold extends BasePlugin implements PluginTaskInterface
     protected function getUserUnfinishedTask(int $up_id): int
     {
         $response = ApiUserTask::getUserTaskProgress($up_id);
+        $this->authFailureClassifier->assertNotAuthFailure($response, '每日电池: 获取任务进度时账号未登录');
         //
         if ($response['code']) {
             Log::warning("每日电池: 获取任务进度失败 {$response['code']} -> {$response['message']}");
@@ -139,6 +143,7 @@ class DailyGold extends BasePlugin implements PluginTaskInterface
     protected function sendDM(int $room_id, string $msg): bool
     {
         $response = ApiDM::sendMsg($room_id, $msg);
+        $this->authFailureClassifier->assertNotAuthFailure($response, '每日电池: 发送弹幕时账号未登录');
         if ($response['code']) {
             Log::warning("每日电池: 发送弹幕失败 {$response['code']} -> {$response['message']}");
             return false;
@@ -156,6 +161,7 @@ class DailyGold extends BasePlugin implements PluginTaskInterface
     protected function userTaskReceiveRewards(int $up_id): bool
     {
         $response = ApiUserTask::userTaskReceiveRewards($up_id);
+        $this->authFailureClassifier->assertNotAuthFailure($response, '每日电池: 领取奖励时账号未登录');
         if ($response['code']) {
             Log::warning("每日电池: 领取任务奖励失败 {$response['code']} -> {$response['message']}");
             return false;

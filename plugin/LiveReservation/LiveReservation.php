@@ -16,6 +16,7 @@
  */
 
 use Bhp\Api\Space\ApiReservation;
+use Bhp\Login\AuthFailureClassifier;
 use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
 use Bhp\Plugin\Contract\PluginTaskInterface;
@@ -24,6 +25,7 @@ use Bhp\Scheduler\TaskResult;
 
 class LiveReservation extends BasePlugin implements PluginTaskInterface
 {
+    private AuthFailureClassifier $authFailureClassifier;
     /**
      * 插件信息
      * @var array|string[]
@@ -43,6 +45,7 @@ class LiveReservation extends BasePlugin implements PluginTaskInterface
      */
     public function __construct(Plugin &$plugin)
     {
+        $this->authFailureClassifier = new AuthFailureClassifier();
         $this->bootPlugin($plugin, true);
     }
 
@@ -84,6 +87,7 @@ class LiveReservation extends BasePlugin implements PluginTaskInterface
         $reservation_list = [];
         // {"code":0,"message":"0","ttl":1,"data":[{"sid":253672,"name":"直播预约：创世之音-虚拟偶像演唱会","total":6382,"stime":1636716437,"etime":1637408100,"is_follow":1,"state":100,"oid":"","type":2,"up_mid":9617619,"reserve_record_ctime":1636731801,"live_plan_start_time":1637406000,"lottery_type":1,"lottery_prize_info":{"text":"预约有奖：小电视年糕抱枕、哔哩哔哩小电视樱花毛绒抱枕大号、哔哩哔哩小夜灯","lottery_icon":"https://i0.hdslb.com/bfs/activity-plat/static/ce06d65bc0a8d8aa2a463747ce2a4752/rgHplMQyiX.png","jump_url":"https://www.bilibili.com/h5/lottery/result?business_id=253672\u0026business_type=10\u0026lottery_id=76240"},"show_total":true,"subtitle":""},{"sid":246469,"name":"直播预约：创世之音-YuNi个人演唱会","total":3555,"stime":1636367836,"etime":1637494500,"is_follow":0,"state":100,"oid":"","type":2,"up_mid":9617619,"reserve_record_ctime":0,"live_plan_start_time":1637492400,"show_total":true,"subtitle":""}]}
         $response = ApiReservation::reservation($vmid);
+        $this->authFailureClassifier->assertNotAuthFailure($response, '预约直播: 获取预约列表时账号未登录');
         //
         if ($response['code']) {
             Log::warning("预约直播: 获取预约列表失败: {$response['code']} -> {$response['message']}");
@@ -138,6 +142,7 @@ class LiveReservation extends BasePlugin implements PluginTaskInterface
     {
         // {"code":0,"message":"0","ttl":1}
         $response = ApiReservation::reserve($data['sid'], $data['vmid']);
+        $this->authFailureClassifier->assertNotAuthFailure($response, '预约直播: 执行预约时账号未登录');
         //
         Log::info("预约直播: {$data['name'] }|{$data['vmid']}|{$data['sid']}");
         Log::info("预约直播: {$data['text']}");

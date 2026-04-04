@@ -17,6 +17,7 @@
 
 namespace Bhp\User;
 
+use Bhp\Login\AuthFailureClassifier;
 use Bhp\Api\Vip\ApiUser;
 use Bhp\Log\Log;
 use Bhp\Runtime\Runtime;
@@ -63,6 +64,7 @@ class User extends SingleTon
     public static function isVip(string $title = '用户信息', array $scope = [1, 2], string $info = '大会员'): bool
     {
         $response = ApiUser::userVipInfo();
+        (new AuthFailureClassifier())->assertNotAuthFailure($response, $title . ': 账号未登录');
         //
         if ($response['code']) {
             Log::warning("$title: 获取大会员信息失败 {$response['code']} -> {$response['message']}");
@@ -97,6 +99,7 @@ class User extends SingleTon
     public static function userNavInfo(): object
     {
         $response = ApiUser::userNavInfo();
+        (new AuthFailureClassifier())->assertNotAuthFailure($response, '用户信息: 账号未登录');
         //
         if ($response['code']) {
             Log::warning("用户信息: 获取用户信息失败 {$response['code']} -> {$response['message']}");

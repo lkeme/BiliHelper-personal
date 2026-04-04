@@ -16,6 +16,7 @@
  */
 
 use Bhp\Api\Esports\ApiGuess;
+use Bhp\Login\AuthFailureClassifier;
 use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
 use Bhp\Plugin\Contract\PluginTaskInterface;
@@ -24,6 +25,7 @@ use Bhp\Scheduler\TaskResult;
 
 class GameForecast extends BasePlugin implements PluginTaskInterface
 {
+    private AuthFailureClassifier $authFailureClassifier;
     /**
      * 插件信息
      * @var array|string[]
@@ -43,6 +45,7 @@ class GameForecast extends BasePlugin implements PluginTaskInterface
      */
     public function __construct(Plugin &$plugin)
     {
+        $this->authFailureClassifier = new AuthFailureClassifier();
         $this->bootPlugin($plugin, true);
     }
 
@@ -67,6 +70,7 @@ class GameForecast extends BasePlugin implements PluginTaskInterface
         $questions = [];
         for ($i = 1; $i < $pm; $i++) {
             $response = ApiGuess::collectionQuestion($i);
+            $this->authFailureClassifier->assertNotAuthFailure($response, '赛事预测: 获取赛事列表时账号未登录');
             //
             if ($response['code']) {
                 Log::warning("赛事预测: 获取赛事列表失败 {$response['code']} -> {$response['message']}");
@@ -168,6 +172,7 @@ class GameForecast extends BasePlugin implements PluginTaskInterface
         Log::info($guess['estimate']);
         //
         $response = ApiGuess::guessAdd($guess['oid'], $guess['main_id'], $guess['detail_id'], $guess['count']);
+        $this->authFailureClassifier->assertNotAuthFailure($response, '赛事预测: 执行竞猜时账号未登录');
         // {"code":0,"message":"0","ttl":1}
         if ($response['message'] == 0) {
             Log::notice('赛事预测: 破产成功');
