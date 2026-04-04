@@ -40,8 +40,8 @@ final class DebugCommand extends Command
         parent::__construct('mode:debug', $this->desc);
         //
         $this
-            ->option('-p --plugin', '[默认会同时加载Login]测试插件')
-            ->option('-P --plugins', '[默认会同时加载Login]测试插件列表')
+            ->option('-p --plugin', '[默认会同时加载Login；无需登录的插件除外]测试插件')
+            ->option('-P --plugins', '[默认会同时加载Login；无需登录的插件除外]测试插件列表')
             ->option('-r --reset-cache', '执行前清理当前 profile 缓存（默认保留登录态）')
             ->option('--purge-auth', '清理缓存时同时清空登录态')
             ->usage(
@@ -91,7 +91,7 @@ final class DebugCommand extends Command
         $pp = array_values(array_unique(array_map('trim', $pp)));
         if (empty($pp)) AppTerminator::fail('没有插件输入');
 
-        if (!in_array('Login', $pp, true)) {
+        if (!in_array('Login', $pp, true) && $this->shouldAttachLogin($pp)) {
             array_unshift($pp, 'Login');
         }
 
@@ -112,6 +112,25 @@ final class DebugCommand extends Command
         $scheduler = Scheduler::getInstance();
         $scheduler->registerPlugins($selected);
         $scheduler->run();
+    }
+
+    /**
+     * @param string[] $hooks
+     */
+    private function shouldAttachLogin(array $hooks): bool
+    {
+        foreach (Plugin::getPlugins() as $plugin) {
+            $hook = (string)($plugin['hook'] ?? '');
+            if ($hook === '' || !in_array($hook, $hooks, true)) {
+                continue;
+            }
+
+            if (($plugin['requires_auth'] ?? true) !== false) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 }

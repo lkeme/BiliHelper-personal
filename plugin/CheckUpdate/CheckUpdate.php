@@ -37,8 +37,9 @@ class CheckUpdate extends BasePluginRW implements PluginTaskInterface
         'version' => '0.0.1', // 插件版本
         'desc' => '检查版本更新', // 插件描述
         'author' => 'Lkeme',// 作者
-        'priority' => 1000, // 插件优先级
+        'priority' => 1001, // 插件优先级
         'cycle' => '24(小时)', // 运行周期
+        'requires_auth' => false, // 调试模式下无需附带 Login
     ];
 
     /**

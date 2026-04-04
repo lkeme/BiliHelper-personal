@@ -45,7 +45,7 @@ class Login extends BasePlugin implements PluginTaskInterface
         'version' => '0.0.1', // 插件版本
         'desc' => '登录', // 插件描述
         'author' => 'Lkeme', // 作者
-        'priority' => 1001, // 插件优先级
+        'priority' => 1000, // 插件优先级
         'cycle' => '2(小时)', // 运行周期
         'interval_seconds' => 7200,
         'max_concurrency' => 1,

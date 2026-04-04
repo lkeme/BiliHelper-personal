@@ -85,6 +85,19 @@ final class SqliteCacheStore implements CacheStoreInterface
     public function clear(): void
     {
         $path = $this->databasePath;
+
+        if ($this->connection instanceof \SQLite3) {
+            $this->purgeEntries($this->connection);
+            @$this->connection->exec('PRAGMA wal_checkpoint(TRUNCATE)');
+        } elseif (is_file($path)) {
+            $connection = new \SQLite3($path);
+            $connection->busyTimeout(5000);
+            $connection->enableExceptions(true);
+            $this->purgeEntries($connection);
+            @$connection->exec('PRAGMA wal_checkpoint(TRUNCATE)');
+            $connection->close();
+        }
+
         if ($this->connection instanceof \SQLite3) {
             $this->connection->close();
             $this->connection = null;
@@ -117,5 +130,27 @@ final class SqliteCacheStore implements CacheStoreInterface
         );
 
         return $this->connection = $connection;
+    }
+
+    private function purgeEntries(\SQLite3 $connection): void
+    {
+        $connection->exec(
+            'CREATE TABLE IF NOT EXISTS cache_entries (
+                scope TEXT NOT NULL,
+                cache_key TEXT NOT NULL,
+                value TEXT NOT NULL,
+                updated_at INTEGER NOT NULL,
+                PRIMARY KEY (scope, cache_key)
+            )'
+        );
+        $connection->exec('BEGIN IMMEDIATE TRANSACTION');
+
+        try {
+            $connection->exec('DELETE FROM cache_entries');
+            $connection->exec('COMMIT');
+        } catch (\Throwable $throwable) {
+            @$connection->exec('ROLLBACK');
+            throw $throwable;
+        }
     }
 }
