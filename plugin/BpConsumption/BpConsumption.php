@@ -143,18 +143,78 @@ class BpConsumption extends BasePlugin implements PluginTaskInterface
      */
     protected function getUserWallet(): int
     {
-        // {"errno":0,"msg":"SUCCESS","showMsg":"","errtag":0,"data":{"mid":1234,"totalBp":5.00,"defaultBp":0.00,"iosBp":0.00,"couponBalance":5.00,"availableBp":5.00,"unavailableBp":0.00,"unavailableReason":"苹果设备上充值的B币不能在其他平台的设备上进行使用","tip":null}}
         $response = ApiWallet::getUserWallet();
         $this->authFailureClassifier->assertNotAuthFailure($response, '消费B币券: 获取钱包时账号未登录');
-        if ($response['errno']) {
-            Log::warning("消费B币券: 获取用户钱包信息失败 {$response['errno']} -> {$response['msg']}");
+
+        $code = $this->resolveWalletResponseCode($response);
+        $message = $this->resolveWalletResponseMessage($response);
+        if ($code !== 0) {
+            Log::warning("消费B币券: 获取用户钱包信息失败 {$code} -> {$message}");
             return 0;
         }
-        //
-        $balance = $response['data']['couponBalance'];
+
+        $balance = $this->resolveWalletBalance($response);
+        if ($balance === null) {
+            Log::warning('消费B币券: 获取用户钱包信息失败，接口返回中缺少可用的B币券余额字段');
+            return 0;
+        }
+
         Log::info("消费B币券: 获取用户钱包信息成功 B币券余额剩余 {$balance}");
-        //
+
         return intval($balance);
+    }
+
+    /**
+     * @param array<string, mixed> $response
+     */
+    private function resolveWalletResponseCode(array $response): int
+    {
+        foreach (['code', 'errno', 'errcode'] as $key) {
+            if (isset($response[$key]) && is_numeric($response[$key])) {
+                return (int)$response[$key];
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * @param array<string, mixed> $response
+     */
+    private function resolveWalletResponseMessage(array $response): string
+    {
+        foreach (['message', 'msg', 'errmsg', 'showMsg'] as $key) {
+            $value = trim((string)($response[$key] ?? ''));
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        return '未知错误';
+    }
+
+    /**
+     * @param array<string, mixed> $response
+     */
+    private function resolveWalletBalance(array $response): ?float
+    {
+        $data = is_array($response['data'] ?? null) ? $response['data'] : [];
+        $accountInfo = is_array($data['accountInfo'] ?? null) ? $data['accountInfo'] : [];
+
+        foreach ([
+            $data['couponBalance'] ?? null,
+            $data['availableBp'] ?? null,
+            $data['totalBp'] ?? null,
+            $accountInfo['couponBalance'] ?? null,
+            $accountInfo['availableBp'] ?? null,
+            $accountInfo['totalBp'] ?? null,
+        ] as $candidate) {
+            if (is_numeric($candidate)) {
+                return (float)$candidate;
+            }
+        }
+
+        return null;
     }
 
 }
