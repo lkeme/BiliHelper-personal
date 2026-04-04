@@ -33,7 +33,7 @@ class ApiManga
         $payload = [];
         // {"code":0,"msg":"","data":{}}
         // {"code":"invalid_argument","msg":"clockin clockin is duplicate","meta":{"argument":"clockin"}}
-        return Request::postJson(true, 'app', $url, Sign::common($payload));
+        return \Bhp\Api\Support\ApiJson::post( 'app', $url, Sign::common($payload));
     }
 
 
@@ -48,7 +48,7 @@ class ApiManga
         // {"code":0,"msg":"","data":{"point":5}}
         // {"code":1,"msg":"","data":{"point":0}}
         // {"code":0, "msg":"今日已分享"}
-        return Request::postJson(true, 'app', $url, Sign::common($payload));
+        return \Bhp\Api\Support\ApiJson::post( 'app', $url, Sign::common($payload));
     }
 
     /**
@@ -59,6 +59,6 @@ class ApiManga
     {
         $url = 'https://manga.bilibili.com/twirp/activity.v1.Activity/GetClockInInfo';
         $payload = [];
-        return Request::postJson(true, 'app', $url, Sign::common($payload));
+        return \Bhp\Api\Support\ApiJson::post( 'app', $url, Sign::common($payload));
     }
 }

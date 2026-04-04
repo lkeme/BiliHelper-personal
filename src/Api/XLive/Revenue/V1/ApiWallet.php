@@ -35,6 +35,6 @@ class ApiWallet
             'origin' => 'https://link.bilibili.com',
             'referer' => 'https://link.bilibili.com/p/center/index'
         ];
-        return Request::getJson(true, 'pc', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::get( 'pc', $url, $payload, $headers);
     }
 }

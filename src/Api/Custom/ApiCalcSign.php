@@ -59,7 +59,7 @@ class ApiCalcSign
             't' => static::formatT($t),
             'r' => static::formatR($r)
         ];
-        return Request::putJson(true, 'other', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::post( 'other', $url, $payload, $headers);
     }
 
 }

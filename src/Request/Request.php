@@ -284,19 +284,6 @@ class Request extends SingleTon
     }
 
     /**
-     * Method GetJson
-     * @param bool|null $associative
-     * @param mixed ...$params
-     * @return mixed
-     */
-    protected static function _getJson(?bool $associative = null, mixed...$params): mixed
-    {
-        $response = self::get(...$params);
-        // JSON_UNESCAPED_UNICODE 当该参数为 TRUE 时，将返回 array 而非 object 。
-        return json_decode($response, $associative);
-    }
-
-    /**
      * Method PostResponse
      * @param $os
      * @param $url
@@ -337,19 +324,6 @@ class Request extends SingleTon
     {
         $response = self::postResponse(...$params);
         return (string)$response->getBody();
-    }
-
-    /**
-     * Method PostJson
-     * @param bool|null $associative
-     * @param mixed ...$params
-     * @return mixed
-     */
-    protected static function _postJson(?bool $associative = null, mixed...$params): mixed
-    {
-        $response = self::post(...$params);
-        // JSON_UNESCAPED_UNICODE
-        return json_decode($response, $associative);
     }
 
     /**
@@ -394,20 +368,6 @@ class Request extends SingleTon
         $response = self::putResponse(...$params);
         return (string)$response->getBody();
     }
-
-    /**
-     * Method PutJson
-     * @param bool|null $associative
-     * @param mixed ...$params
-     * @return mixed
-     */
-    protected static function _putJson(?bool $associative = null, mixed...$params): mixed
-    {
-        $response = self::put(...$params);
-        // JSON_UNESCAPED_UNICODE
-        return json_decode($response, $associative);
-    }
-
 
     /**
      * 下载文件

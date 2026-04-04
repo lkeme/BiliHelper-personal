@@ -35,7 +35,7 @@ class ApiPrivilege
             'referer' => 'https://account.bilibili.com/account/big/myPackage',
         ];
         // {"code":0,"message":"0","ttl":1,"data":{"list":[{"type":1,"state":0,"expire_time":1622476799},{"type":2,"state":0,"expire_time":1622476799}]}}
-        return Request::getJson(true, 'pc', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::get( 'pc', $url, $payload, $headers);
     }
 
     /**
@@ -57,7 +57,7 @@ class ApiPrivilege
             'referer' => 'https://account.bilibili.com/account/big/myPackage',
         ];
         // {"code":0,"message":"0","ttl":1}
-        return Request::postJson(true, 'pc', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::post( 'pc', $url, $payload, $headers);
     }
 
 }

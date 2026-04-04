@@ -50,7 +50,7 @@ class ApiMsg
             'origin' => 'https://live.bilibili.com',
             'referer' => "https://live.bilibili.com/$room_id"
         ];
-        return Request::postJson(true, 'pc', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::post( 'pc', $url, $payload, $headers);
     }
 
     public static function sendBarrageAPP(int $room_id, string $content): array
@@ -67,7 +67,7 @@ class ApiMsg
             'csrf' => $user['csrf'],
             'csrf_token' => $user['csrf'],
         ];
-        return Request::postJson(true, 'app', $url, Sign::common($payload));
+        return \Bhp\Api\Support\ApiJson::post( 'app', $url, Sign::common($payload));
     }
 }
 

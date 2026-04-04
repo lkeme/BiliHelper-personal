@@ -39,7 +39,7 @@ class ApiDynamicSvr
             'origin' => 'https://t.bilibili.com',
             'referer' => 'https://t.bilibili.com/pages/nav/index_new'
         ];
-        return Request::getJson(true, 'pc', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::get( 'pc', $url, $payload, $headers);
     }
 
 }

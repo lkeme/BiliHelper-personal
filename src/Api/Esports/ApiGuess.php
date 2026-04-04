@@ -70,7 +70,7 @@ class ApiGuess
             'origin' => 'https://www.bilibili.com',
             'referer' => 'https://www.bilibili.com/v/game/match/competition'
         ];
-        return Request::postJson(true, 'pc', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::post( 'pc', $url, $payload, $headers);
     }
 
 

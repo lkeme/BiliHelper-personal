@@ -41,7 +41,7 @@ class ApiExperience
             'referer' => 'https://account.bilibili.com/',
         ];
         // {"code":0,"message":"0","ttl":1,"data":{"type":0,"is_grant":true}}
-        return Request::postJson(true, 'pc', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::post( 'pc', $url, $payload, $headers);
     }
 
 }

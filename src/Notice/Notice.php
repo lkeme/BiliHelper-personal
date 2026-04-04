@@ -496,7 +496,7 @@ class Notice extends SingleTon
         $info['content'] = urlencode($info['content']);
         //
         $url = 'https://api.day.app/' . $this->config('notify_bark.token') . "/{$info['title']}/{$info['content']}";
-        $de_raw = Request::getJson(true, 'other', $url, [], []);
+        $de_raw = \Bhp\Api\Support\ApiJson::get( 'other', $url, [], []);
         if ($de_raw['code'] === 200) {
             Log::notice("推送消息成功: {$de_raw['message']}");
         } else {

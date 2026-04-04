@@ -35,7 +35,7 @@ class ApiQrcode
             'content-type' => 'application/x-www-form-urlencoded',
         ];
         // {"code":0,"message":"0","ttl":1,"data":{"url":"https://passport.bilibili.com/x/passport-tv-login/h5/qrcode/auth?auth_code=xxxx","auth_code":"xxxx"}}
-        return Request::postJson(true, 'app', $url, Sign::login($payload), $headers);
+        return \Bhp\Api\Support\ApiJson::post( 'app', $url, Sign::login($payload), $headers);
     }
 
     /**
@@ -53,7 +53,7 @@ class ApiQrcode
             'content-type' => 'application/x-www-form-urlencoded',
         ];
         // {"code":0,"message":"0","ttl":1,"data":{"mid":123,"access_token":"xxx","refresh_token":"xxx","expires_in":2592000}}
-        return Request::postJson(true, 'app', $url, Sign::login($payload), $headers);
+        return \Bhp\Api\Support\ApiJson::post( 'app', $url, Sign::login($payload), $headers);
 
     }
 
@@ -77,7 +77,7 @@ class ApiQrcode
             "origin" => 'https://passport.bilibili.com',
             "referer" => 'https://passport.bilibili.com',
         ];
-        return Request::getJson(true, 'pc', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::get( 'pc', $url, $payload, $headers);
     }
 
     /**

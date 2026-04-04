@@ -37,7 +37,7 @@ class ApiFansMedal
             'page_size' => $ps,
         ];
         // {"code":0,"message":"0","ttl":1,"data":{"list":[],"special_list":[],"bottom_bar":null,"page_info":{"number":0,"current_page":1,"has_more":false,"next_page":2,"next_light_status":2},"total_number":0,"has_medal":0}}
-        return Request::getJson(true, 'app', $url, Sign::common($payload));
+        return \Bhp\Api\Support\ApiJson::get( 'app', $url, Sign::common($payload));
     }
 
 

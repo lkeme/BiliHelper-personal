@@ -48,7 +48,7 @@ class ApiDM
         ];
 
         // {"code":0,"data":{"mode_info":{"extra":"{\"send_from_me\":true,\"mode\":0,\"color\":16777215,\"dm_type\":0,\"font_size\":25,\"player_mode\":1,\"show_player_type\":0,\"content\":\"1\",\"user_hash\":\"111111\",\"emoticon_unique\":\"\",\"bulge_display\":0,\"recommend_score\":8,\"main_state_dm_color\":\"\",\"objective_state_dm_color\":\"\",\"direction\":0,\"pk_direction\":0,\"quartet_direction\":0,\"anniversary_crowd\":0,\"yeah_space_type\":\"\",\"yeah_space_url\":\"\",\"jump_to_url\":\"\",\"space_type\":\"\",\"space_url\":\"\"}","mode":0,"show_player_type":0}},"message":"","msg":""}
-        return Request::postJson(true, 'app', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::post( 'app', $url, $payload, $headers);
     }
 }
 

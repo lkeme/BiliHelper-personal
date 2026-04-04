@@ -54,7 +54,7 @@ class ApiEvent
             'content-type' => 'application/json; charset=utf-8',
         ], self::$headers);
         //
-        return Request::putJson(true, 'app', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::post( 'app', $url, $payload, $headers);
     }
 
 }

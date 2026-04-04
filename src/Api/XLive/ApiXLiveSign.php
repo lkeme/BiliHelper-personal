@@ -34,7 +34,7 @@ class ApiXLiveSign
             'referer' => 'https://link.bilibili.com/p/center/index'
         ];
         // {"code":0,"message":"0","ttl":1,"data":{"text":"","specialText":"","status":0,"allDays":30,"curMonth":6,"curYear":2022,"curDay":4,"curDate":"2022-6-4","hadSignDays":0,"newTask":0,"signDaysList":[],"signBonusDaysList":[]}}
-        return Request::getJson(true, 'pc', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::get( 'pc', $url, $payload, $headers);
     }
 
     /**
@@ -51,6 +51,6 @@ class ApiXLiveSign
             'referer' => 'https://link.bilibili.com/p/center/index'
         ];
         // {"code":0,"message":"0","ttl":1,"data":{"text":"3000点用户经验,2根辣条","specialText":"再签到4天可以获得666银瓜子","allDays":30,"hadSignDays":1,"isBonusDay":0}}
-        return Request::getJson(true, 'pc', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::get( 'pc', $url, $payload, $headers);
     }
 }

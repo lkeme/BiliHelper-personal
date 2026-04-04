@@ -23,7 +23,7 @@ final class DrawGateway
         ?AuthFailureClassifier $authFailureClassifier = null,
     ) {
         $this->refreshTimesFetcher = $refreshTimesFetcher ?? static fn (array $payload): array => ApiActivity::myTimes($payload);
-        $this->drawOnceFetcher = $drawOnceFetcher ?? static fn (array $payload): array => ApiActivity::doLottery($payload);
+        $this->drawOnceFetcher = $drawOnceFetcher ?? static fn (array $payload): array => ApiActivity::doLottery($payload, max(1, (int)($payload['num'] ?? 1)));
         $this->authFailureClassifier = $authFailureClassifier ?? new AuthFailureClassifier();
     }
 
@@ -43,9 +43,11 @@ final class DrawGateway
      * @param array<string, mixed> $activity
      * @return array<string, mixed>
      */
-    public function drawOnce(array $activity): array
+    public function drawOnce(array $activity, int $num = 1): array
     {
-        $response = (array)($this->drawOnceFetcher)($this->buildPayload($activity));
+        $payload = $this->buildPayload($activity);
+        $payload['num'] = (string)max(1, $num);
+        $response = (array)($this->drawOnceFetcher)($payload);
         $this->authFailureClassifier->assertNotAuthFailure($response, '执行抽奖时账号未登录');
 
         return $response;
@@ -59,9 +61,30 @@ final class DrawGateway
     {
         return [
             'sid' => trim((string)($activity['lottery_id'] ?? $activity['sid'] ?? '')),
+            'page_id' => $this->resolvePageId($activity),
             'url' => trim((string)($activity['url'] ?? '')),
             'title' => trim((string)($activity['title'] ?? '')),
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $activity
+     */
+    private function resolvePageId(array $activity): string
+    {
+        $pageId = trim((string)($activity['page_id'] ?? ''));
+        if ($pageId !== '') {
+            return $pageId;
+        }
+
+        $url = trim((string)($activity['url'] ?? ''));
+        if ($url === '') {
+            return '';
+        }
+
+        $path = (string)(parse_url($url, PHP_URL_PATH) ?? '');
+        $filename = pathinfo($path, PATHINFO_FILENAME);
+        return trim((string)$filename);
     }
 }
 

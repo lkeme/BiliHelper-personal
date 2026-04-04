@@ -22,7 +22,6 @@ use Bhp\Plugin\BasePluginRW;
 use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
 use Bhp\Remote\RemoteResourceResolver;
-use Bhp\Request\Request;
 use Bhp\Scheduler\TaskResult;
 use Bhp\Util\Resource\Resource;
 
@@ -118,7 +117,7 @@ class CheckUpdate extends BasePluginRW implements PluginTaskInterface
         $payload = [];
         Log::info("检查更新: 使用远程资源分支 {$branch}");
 
-        return Request::getJson(false, 'other', $url, $payload);
+        return (object)\Bhp\Api\Support\ApiJson::get('other', $url, $payload);
     }
 
     /**

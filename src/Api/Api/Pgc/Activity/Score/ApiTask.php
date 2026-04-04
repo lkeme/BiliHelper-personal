@@ -50,7 +50,7 @@ class ApiTask
         ];
         //
         $headers = array_merge([], self::$headers);
-        return Request::postJson(true, 'app', $url, Sign::common($payload), $headers);
+        return \Bhp\Api\Support\ApiJson::post( 'app', $url, Sign::common($payload), $headers);
     }
 
     /**
@@ -71,7 +71,7 @@ class ApiTask
             'statistics' => Device::getInstance()->get('app.bili_a.statistics'),
         ];
         $headers = array_merge([], self::$headers);
-        return Request::putJson(true, 'app', $url, Sign::common($payload), $headers);
+        return \Bhp\Api\Support\ApiJson::post( 'app', $url, Sign::common($payload), $headers);
     }
 
     /**
@@ -95,7 +95,7 @@ class ApiTask
         $headers = array_merge([
             'Content-Type' => 'application/json'
         ], self::$headers);
-        return Request::putJson(true, 'app', $url, Sign::common($payload), $headers);
+        return \Bhp\Api\Support\ApiJson::post( 'app', $url, Sign::common($payload), $headers);
     }
 
 

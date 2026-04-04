@@ -35,7 +35,7 @@ class ApiOauth2
             'access_token' => $token,
         ];
         // {"ts":1234,"code":0,"data":{"mid":1234,"access_token":"1234","expires_in":7759292}}
-        return Request::getJson(true, 'app', $url, Sign::common($payload));
+        return \Bhp\Api\Support\ApiJson::get( 'app', $url, Sign::common($payload));
     }
 
     /**

@@ -13,8 +13,15 @@ final class ApiJson
      * @param array<string, string> $headers
      * @return array<string, mixed>
      */
-    public static function get(string $os, string $url, array $payload, array $headers, string $label): array
+    public static function get(
+        string $os,
+        string $url,
+        array $payload = [],
+        array $headers = [],
+        string $label = '',
+    ): array
     {
+        $label = $label !== '' ? $label : self::buildLabel('get', $url);
         try {
             $raw = Request::get($os, $url, $payload, $headers);
         } catch (Throwable $throwable) {
@@ -33,8 +40,15 @@ final class ApiJson
      * @param array<string, string> $headers
      * @return array<string, mixed>
      */
-    public static function post(string $os, string $url, array $payload, array $headers, string $label): array
+    public static function post(
+        string $os,
+        string $url,
+        array $payload = [],
+        array $headers = [],
+        string $label = '',
+    ): array
     {
+        $label = $label !== '' ? $label : self::buildLabel('post', $url);
         try {
             $raw = Request::post($os, $url, $payload, $headers);
         } catch (Throwable $throwable) {
@@ -122,5 +136,22 @@ final class ApiJson
         }
 
         return $raw;
+    }
+
+    private static function buildLabel(string $method, string $url): string
+    {
+        $parts = parse_url($url);
+        $host = trim((string)($parts['host'] ?? ''));
+        $path = trim((string)($parts['path'] ?? ''));
+        $path = trim(str_replace('/', '.', $path), '.');
+
+        $segments = array_values(array_filter([
+            'api_json',
+            strtolower(trim($method)),
+            $host !== '' ? str_replace('-', '_', $host) : '',
+            $path !== '' ? str_replace('-', '_', $path) : '',
+        ]));
+
+        return implode('.', $segments);
     }
 }

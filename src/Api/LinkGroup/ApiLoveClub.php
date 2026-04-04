@@ -30,7 +30,7 @@ class ApiLoveClub
     {
         $url = 'https://api.vc.bilibili.com/link_group/v1/member/my_groups';
         $payload = [];
-        return Request::getJson(true, 'app', $url, Sign::common($payload));
+        return \Bhp\Api\Support\ApiJson::get( 'app', $url, Sign::common($payload));
     }
 
     /**
@@ -45,7 +45,7 @@ class ApiLoveClub
             'group_id' => $group_id,
             'owner_id' => $owner_id,
         ];
-        return Request::getJson(true, 'app', $url, Sign::common($payload));
+        return \Bhp\Api\Support\ApiJson::get( 'app', $url, Sign::common($payload));
     }
 
 }

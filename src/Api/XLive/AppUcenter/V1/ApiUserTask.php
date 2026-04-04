@@ -40,7 +40,7 @@ class ApiUserTask
         // 可领取 {"code":0,"message":"0","ttl":1,"data":{"is_surplus":1,"status":2,"progress":5,"target":5,"wallet":{"gold":0,"silver":130},"linked_actions_progress":null}}
         // 进行中 {"code":0,"message":"0","ttl":1,"data":{"is_surplus":1,"status":1,"progress":4,"target":5,"wallet":{"gold":0,"silver":130},"linked_actions_progress":null}}
         // 未开始 {"code":0,"message":"0","ttl":1,"data":{"is_surplus":1,"status":0,"progress":0,"target":5,"wallet":{"gold":0,"silver":130},"linked_actions_progress":null}}
-        return Request::getJson(true, 'app', $url, Sign::common($payload));
+        return \Bhp\Api\Support\ApiJson::get( 'app', $url, Sign::common($payload));
     }
 
 
@@ -58,7 +58,7 @@ class ApiUserTask
         ];
 
         // {"code":0,"message":"0","ttl":1,"data":{"num":1}}
-        return Request::postJson(true, 'app', $url, Sign::common($payload));
+        return \Bhp\Api\Support\ApiJson::post( 'app', $url, Sign::common($payload));
     }
 
 }

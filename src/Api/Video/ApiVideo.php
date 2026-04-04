@@ -34,7 +34,7 @@ class ApiVideo
             'pn' => $pn,
             'ps' => $ps
         ];
-        return Request::getJson(true, 'other', $url, $payload);
+        return \Bhp\Api\Support\ApiJson::get( 'other', $url, $payload);
     }
 
     /**
@@ -52,7 +52,7 @@ class ApiVideo
             'ps' => $ps,
             'rid' => $rids[array_rand($rids)],
         ];
-        return Request::getJson(true, 'other', $url, $payload);
+        return \Bhp\Api\Support\ApiJson::get( 'other', $url, $payload);
     }
 
     /**
@@ -69,7 +69,7 @@ class ApiVideo
             'type' => 1,
             'arc_type' => 0
         ];
-        return Request::getJson(true, 'other', $url, $payload);
+        return \Bhp\Api\Support\ApiJson::get( 'other', $url, $payload);
     }
 
     /**
@@ -83,7 +83,7 @@ class ApiVideo
         $payload = [
             'ps' => $ps,
         ];
-        return Request::getJson(true, 'other', $url, $payload);
+        return \Bhp\Api\Support\ApiJson::get( 'other', $url, $payload);
     }
 
 }

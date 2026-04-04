@@ -35,7 +35,7 @@ class ApiDanMu
             'player' => 'web'
         ];
         // {"code":0,"msg":"ok","message":"ok","data":{"refresh_row_factor":0.125,"refresh_rate":100,"max_delay":5000,"port":2243,"host":"broadcastlv.chat.bilibili.com","host_server_list":[{"host":"ks-live-dmcmt-sh2-pm-03.chat.bilibili.com","port":2243,"wss_port":443,"ws_port":2244},{"host":"ks-live-dmcmt-bj6-pm-02.chat.bilibili.com","port":2243,"wss_port":443,"ws_port":2244},{"host":"broadcastlv.chat.bilibili.com","port":2243,"wss_port":443,"ws_port":2244}],"server_list":[{"host":"120.92.158.137","port":2243},{"host":"120.92.112.150","port":2243},{"host":"broadcastlv.chat.bilibili.com","port":2243},{"host":"120.92.158.137","port":80},{"host":"120.92.112.150","port":80},{"host":"broadcastlv.chat.bilibili.com","port":80}],"token":"*="}}
-        return Request::getJson(true, 'other', $url, $payload);
+        return \Bhp\Api\Support\ApiJson::get( 'other', $url, $payload);
     }
 
 }

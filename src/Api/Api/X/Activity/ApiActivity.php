@@ -18,7 +18,6 @@
 namespace Bhp\Api\Api\X\Activity;
 
 use Bhp\Api\Support\ApiJson;
-use Bhp\Request\Request;
 use Bhp\User\User;
 
 class ApiActivity
@@ -30,10 +29,8 @@ class ApiActivity
      */
     public static function doLottery(array $info, int $num = 1): array
     {
-        //
         $user = User::parseCookie();
-        //
-        $url = 'https://api.bilibili.com/x/lottery/do';
+        $url = 'https://api.bilibili.com/x/lottery/x/do';
         $headers = [
             'origin' => 'https://www.bilibili.com',
             'referer' => $info['url'],
@@ -41,10 +38,14 @@ class ApiActivity
         $payload = [
             'sid' => $info['sid'],
             'num' => $num,
+            'page_id' => (string)($info['page_id'] ?? ''),
             'csrf' => $user['csrf'],
         ];
-        // {"code":0,"message":"0","ttl":1,"data":[{"id":0,"mid":123,"ip":0,"num":1,"gift_id":0,"gift_name":"未中奖0","gift_type":0,"img_url":"","type":1,"ctime":123,"cid":0,"extra":{},"award_info":null,"order_no":""}]}
-        return Request::postJson(true, 'pc', $url, $payload, $headers);
+        if (trim((string)($info['gaia_vtoken'] ?? '')) !== '') {
+            $payload['gaia_vtoken'] = trim((string)$info['gaia_vtoken']);
+        }
+        // {"code":0,"message":"0","ttl":1,"data":[{"mid":6580464,"award_sid":"","type":2,"ctime":1775295108,"award_info":null,"order_no":"0@6580464_1775295108","state":0}]}
+        return ApiJson::post('pc', $url, $payload, $headers, 'x.lottery.x.do');
     }
 
     /**
@@ -68,7 +69,7 @@ class ApiActivity
             'csrf' => $user['csrf'],
         ];
         // {"code":0,"message":"0","ttl":1,"data":{"add_num":1}}
-        return Request::postJson(true, 'pc', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::post( 'pc', $url, $payload, $headers);
     }
 
     /**
@@ -77,7 +78,7 @@ class ApiActivity
      */
     public static function myTimes(array $info): array
     {
-        $url = 'https://api.bilibili.com/x/lottery/mytimes';
+        $url = 'https://api.bilibili.com/x/lottery/x/mytimes';
         $headers = [
             'origin' => 'https://www.bilibili.com',
             'referer' => $info['url'],
@@ -86,7 +87,7 @@ class ApiActivity
             'sid' => $info['sid'],
         ];
         // {"code":0,"message":"0","ttl":1,"data":{"times":1,"lottery_type":0,"points":0,"points_per_time":0,"intergral":null}}
-        return Request::getJson(true, 'pc', $url, $payload, $headers);
+        return ApiJson::get('pc', $url, $payload, $headers, 'x.lottery.x.mytimes');
     }
 
     /**

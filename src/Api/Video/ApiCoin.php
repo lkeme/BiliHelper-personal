@@ -74,7 +74,7 @@ class ApiCoin
         // CODE -> 137001 MSG -> 账号封禁中，无法完成操作
         // CODE -> -650 MSG -> 用户等级太低
         // {"code":-401,"message":"非法访问","ttl":1,"data":{"ga_data":{"decisions":["verify_captcha_level3"],"risk_level":1,"grisk_id":"********","decision_ctx":{"buvid":"********infoc","decision_type":"4","hrid":"53903","ip":"********","mid":"********","origin_scene":"video_coin","referer":"https://www.bilibili.com/video/********","scene":"video_coin","ua":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0","v_voucher":"voucher_e********b"}}}}
-        return Request::postJson(true, 'pc', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::post( 'pc', $url, $payload, $headers);
     }
 
 
@@ -96,7 +96,7 @@ class ApiCoin
             'select_like' => $select_like,// 默认不点赞
         ];
         // {"code":0,"message":"0","ttl":1,"data":{"prompt":true,"like":false,"guide":{"type":"share","title":"喜欢就分享给朋友吧"}}} [] []
-        return Request::postJson(true, 'app', $url, Sign::common($payload));
+        return \Bhp\Api\Support\ApiJson::post( 'app', $url, Sign::common($payload));
     }
 
 
@@ -112,7 +112,7 @@ class ApiCoin
             'referer' => 'https://account.bilibili.com/account/coin',
         ];
         // {"code":0,"status":true,"data":{"money":1707.9}}
-        return Request::getJson(true, 'pc', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::get( 'pc', $url, $payload, $headers);
     }
 
     /**
@@ -123,6 +123,6 @@ class ApiCoin
     {
         $url = 'https://api.bilibili.com/x/member/web/coin/log';
         $payload = [];
-        return Request::getJson(true, 'pc', $url, $payload);
+        return \Bhp\Api\Support\ApiJson::get( 'pc', $url, $payload);
     }
 }

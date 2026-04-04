@@ -23,9 +23,10 @@ final class RecordDrawResultNodeRunner implements NodeRunnerInterface
         );
         $wins = [];
         foreach ($drawResults as $result) {
-            $giftId = (int)($result['gift_id'] ?? 0);
-            $giftName = trim((string)($result['gift_name'] ?? ''));
-            if ($giftId <= 0 || str_contains($giftName, '未中奖')) {
+            $normalized = $this->normalizeSingleDrawResult($result);
+            $giftId = (int)($normalized['gift_id'] ?? 0);
+            $giftName = trim((string)($normalized['gift_name'] ?? ''));
+            if (!$this->isWinningDrawResult($normalized, $giftName)) {
                 continue;
             }
 
@@ -81,5 +82,55 @@ final class RecordDrawResultNodeRunner implements NodeRunnerInterface
         }
 
         return $normalized;
+    }
+
+    /**
+     * @param array<string, mixed> $result
+     * @return array<string, mixed>
+     */
+    private function normalizeSingleDrawResult(array $result): array
+    {
+        $giftName = trim((string)($result['gift_name'] ?? ''));
+        $giftId = array_key_exists('gift_id', $result)
+            ? (int)$result['gift_id']
+            : 0;
+        $awardInfo = is_array($result['award_info'] ?? null)
+            ? $result['award_info']
+            : [];
+
+        if ($giftName === '') {
+            $giftName = trim((string)($awardInfo['name'] ?? ''));
+        }
+        if (!array_key_exists('gift_id', $result) && array_key_exists('id', $awardInfo)) {
+            $giftId = (int)$awardInfo['id'];
+        }
+        if ($giftName === '' && trim((string)($result['award_sid'] ?? '')) === '' && $awardInfo === []) {
+            $giftName = '未中奖';
+        }
+
+        $result['gift_id'] = $giftId;
+        $result['gift_name'] = $giftName;
+        return $result;
+    }
+
+    /**
+     * @param array<string, mixed> $result
+     */
+    private function isWinningDrawResult(array $result, string $giftName): bool
+    {
+        if ($giftName === '' || str_contains($giftName, '未中奖')) {
+            return false;
+        }
+
+        $awardSid = trim((string)($result['award_sid'] ?? ''));
+        if ($awardSid !== '') {
+            return true;
+        }
+
+        if (is_array($result['award_info'] ?? null)) {
+            return true;
+        }
+
+        return array_key_exists('gift_id', $result) && (int)$result['gift_id'] !== 0;
     }
 }

@@ -54,7 +54,7 @@ class ApiRelation
             'order_type' => $order_type,
         ];
         //
-        return Request::getJson(true, 'pc', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::get( 'pc', $url, $payload, $headers);
     }
 
 
@@ -73,7 +73,7 @@ class ApiRelation
         ];
         $payload = [];
         //
-        return Request::getJson(true, 'pc', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::get( 'pc', $url, $payload, $headers);
     }
 
     /**
@@ -99,7 +99,7 @@ class ApiRelation
             'ps' => $ps,
         ];
         //
-        return Request::getJson(true, 'pc', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::get( 'pc', $url, $payload, $headers);
     }
 
 
@@ -146,6 +146,6 @@ class ApiRelation
             'csrf' => $user['csrf'],
         ];
         //
-        return Request::postJson(true, 'pc', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::post( 'pc', $url, $payload, $headers);
     }
 }

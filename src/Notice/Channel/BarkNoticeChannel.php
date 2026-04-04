@@ -24,7 +24,7 @@ final class BarkNoticeChannel extends AbstractNoticeChannel
         $content = urlencode((string)$payload['content']);
         $url = 'https://api.day.app/' . $this->config('notify_bark.token') . "/{$title}/{$content}";
 
-        $decoded = Request::getJson(true, 'other', $url, [], []);
+        $decoded = \Bhp\Api\Support\ApiJson::get( 'other', $url, [], []);
         if (($decoded['code'] ?? -1) === 200) {
             Log::notice('推送消息成功: ' . (string)($decoded['message'] ?? ''));
             return;

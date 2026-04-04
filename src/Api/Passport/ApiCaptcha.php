@@ -37,7 +37,7 @@ class ApiCaptcha
         ];
         // {"code":0,"data":{"result":{"success":1,"gt":"b6e5b7fad7ecd37f465838689732e788","challenge":"88148a764f94e5923564b356a69277fc","key":"230509df5ce048ca9bf29e1ee323af30"},"type":1}}
 
-        return Request::getJson(true, 'other', $url, $payload);
+        return \Bhp\Api\Support\ApiJson::get( 'other', $url, $payload);
     }
 
     /**
@@ -57,7 +57,7 @@ class ApiCaptcha
         $headers = [
             'Content-Type' => 'application/json',
         ];
-        return Request::postJson(true, 'other', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::post( 'other', $url, $payload, $headers);
     }
 
     /**

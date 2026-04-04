@@ -34,6 +34,6 @@ class LotteryReservationExecutor
      */
     protected function postJson(string $url, array $payload, array $headers): array
     {
-        return Request::postJson(true, 'pc', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::post( 'pc', $url, $payload, $headers);
     }
 }

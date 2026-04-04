@@ -33,7 +33,7 @@ class ApiInfo
         $payload = [
             'id' => $room_id
         ];
-        return Request::getJson(true, 'other', $url, $payload);
+        return \Bhp\Api\Support\ApiJson::get( 'other', $url, $payload);
     }
 
     /**
@@ -47,7 +47,7 @@ class ApiInfo
         $payload = [
             'ids[]' => $room_id
         ];
-        return Request::getJson(true, 'other', $url, $payload);
+        return \Bhp\Api\Support\ApiJson::get( 'other', $url, $payload);
     }
 
 }

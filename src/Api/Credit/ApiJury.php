@@ -37,7 +37,7 @@ class ApiJury
         ];
         // {"code":25005,"message":"请成为風機委員后再试","ttl":1}
         // {"code":0,"message":"0","ttl":1,"data":{"uname":"","face":"http://i0.hdslb.com/bfs/face/.jpg","case_total":,"term_end":0,"status":2,"apply_status":4,"err_msg":"已卸任风纪委员","allow_apply":true}}
-        return Request::getJson(true, 'pc', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::get( 'pc', $url, $payload, $headers);
     }
 
     /**
@@ -57,7 +57,7 @@ class ApiJury
             'referer' => 'https://www.bilibili.com/',
         ];
         // {"code":0,"message":"0","ttl":1}
-        return Request::postJson(true, 'pc', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::post( 'pc', $url, $payload, $headers);
     }
 
     /**
@@ -77,7 +77,7 @@ class ApiJury
         // {"code":25014,"message":"25014","ttl":1}
         // {"code":25005,"message":"请成为風機委員后再试","ttl":1}
         // {"code":25006,"message":"風機委員资格已过期","ttl":1}
-        return Request::getJson(true, 'pc', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::get( 'pc', $url, $payload, $headers);
     }
 
     /**
@@ -96,7 +96,7 @@ class ApiJury
             'referer' => 'https://www.bilibili.com/',
         ];
         // {"code":0,"message":"0","ttl":1,"data":{"case_id":"","case_type":1,"vote_items":[{"vote":1,"vote_text":"合适"},{"vote":2,"vote_text":"一般"},{"vote":3,"vote_text":"不合适"},{"vote":4,"vote_text":"无法判断"}],"default_vote":4,"status":0,"origin_start":0,"avid":,"cid":,"vote_cd":5,"case_info":{"comment":{"uname":"用户1","face":"xxxx"},"danmu_img":""}}}
-        return Request::getJson(true, 'pc', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::get( 'pc', $url, $payload, $headers);
     }
 
     /**
@@ -119,7 +119,7 @@ class ApiJury
             'referer' => 'https://www.bilibili.com/',
         ];
         // {"code":0,"message":"0","ttl":1,"data":{"total":438,"list":[]}}
-        return Request::getJson(true, 'pc', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::get( 'pc', $url, $payload, $headers);
     }
 
     /**
@@ -150,7 +150,7 @@ class ApiJury
         ];
         // {"code":0,"message":"0","ttl":1}
         // {"code":25018,"message":"不能进行此操作","ttl":1}
-        return Request::postJson(true, 'pc', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::post( 'pc', $url, $payload, $headers);
     }
 
     /**
@@ -171,7 +171,7 @@ class ApiJury
             'origin' => 'https://www.bilibili.com',
             'referer' => "https://www.bilibili.com/judgement/index"
         ];
-        return Request::getJson(true, 'pc', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::get( 'pc', $url, $payload, $headers);
     }
 
 }

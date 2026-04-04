@@ -43,7 +43,7 @@ class ApiWallet
             'referer' => 'https://pay.bilibili.com/paywallet-fe/bb_balance.html'
         ];
         // {"errno":0,"msg":"SUCCESS","showMsg":"","errtag":0,"data":{"mid":1234,"totalBp":5.00,"defaultBp":0.00,"iosBp":0.00,"couponBalance":5.00,"availableBp":5.00,"unavailableBp":0.00,"unavailableReason":"苹果设备上充值的B币不能在其他平台的设备上进行使用","tip":null}}
-        return Request::putJson(true, 'pc', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::post( 'pc', $url, $payload, $headers);
     }
 
 }

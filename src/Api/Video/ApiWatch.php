@@ -64,7 +64,7 @@ class ApiWatch
             'Referer' => $referer,
         ];
         // {"code":0,"message":"0","ttl":1}
-        return Request::postJson(true, 'pc', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::post( 'pc', $url, $payload, $headers);
     }
 
     /**
@@ -115,7 +115,7 @@ class ApiWatch
             'Referer' => $referer,
         ];
         // {"code":0,"message":"0","ttl":1}
-        return Request::postJson(true, 'pc', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::post( 'pc', $url, $payload, $headers);
     }
 
 }

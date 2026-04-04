@@ -51,7 +51,7 @@ class ApiTask
         ];
         //
         $headers = array_merge([], self::$headers);
-        return Request::postJson(true, 'app', $url, Sign::common($payload), $headers);
+        return \Bhp\Api\Support\ApiJson::post( 'app', $url, Sign::common($payload), $headers);
     }
 
 

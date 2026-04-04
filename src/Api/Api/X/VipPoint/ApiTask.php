@@ -39,7 +39,7 @@ class ApiTask
         $url = 'https://api.bilibili.com/x/vip_point/task/combine';
         $payload = [];
         $headers = array_merge([], self::$headers);
-        return Request::getJson(true, 'app', $url, Sign::common($payload), $headers);
+        return \Bhp\Api\Support\ApiJson::get( 'app', $url, Sign::common($payload), $headers);
     }
 
     /**
@@ -52,6 +52,6 @@ class ApiTask
         $url = 'https://api.bilibili.com/x/vip_point/homepage/combine';
         $payload = [];
         $headers = array_merge([], self::$headers);
-        return Request::getJson(true, 'app', $url, Sign::common($payload), $headers);
+        return \Bhp\Api\Support\ApiJson::get( 'app', $url, Sign::common($payload), $headers);
     }
 }

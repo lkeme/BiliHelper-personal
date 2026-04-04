@@ -29,7 +29,7 @@ class ApiArea
     {
         $url = 'https://api.live.bilibili.com/room/v1/Area/getList';
         $payload = [];
-        return Request::getJson(true, 'other', $url, $payload);
+        return \Bhp\Api\Support\ApiJson::get( 'other', $url, $payload);
     }
 
 }

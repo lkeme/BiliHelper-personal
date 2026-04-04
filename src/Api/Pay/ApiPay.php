@@ -51,7 +51,7 @@ class ApiPay
         ];
         // {"code":1300014,"message":"b币余额不足","ttl":1,"data":null}
         // {"code":0,"message":"0","ttl":1,"data":{"status":2,"order_id":"1234171134577071132741234","gold":0,"bp":5000}}
-        return Request::postJson(true, 'pc', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::post( 'pc', $url, $payload, $headers);
     }
 
     /**
@@ -75,7 +75,7 @@ class ApiPay
         ];
         // {"code":0,"message":"0","ttl":1,"data":{"mid":12324,"up_mid":1234,"order_no":"PAY4567","bp_num":"5","exp":5,"status":4,"msg":""}}
         // {"code":0,"message":"0","ttl":1,"data":{"mid":12324,"up_mid":1234,"order_no":"ABCD","bp_num":2,"exp":2,"status":4,"msg":""}}
-        return Request::postJson(true, 'pc', $url, $payload);
+        return \Bhp\Api\Support\ApiJson::post( 'pc', $url, $payload);
     }
 
 

@@ -43,7 +43,7 @@ class ApiArticle
             'referer' => "https://space.bilibili.com/$uid/"
         ];
         //
-        return Request::getJson(true, 'other', $url, $payload, $headers);
+        return \Bhp\Api\Support\ApiJson::get( 'other', $url, $payload, $headers);
     }
 
 }

@@ -523,6 +523,12 @@ final class ActivityLotteryRuntime
         $stateContext = $stateSource->context()->toArray();
         $context['wait_delay_seconds'] = $this->resolveWaitDelaySeconds($stateSource);
         $context['draw_times_remaining'] = max(0, (int)($stateContext['draw_times_remaining'] ?? 0));
+        $context['draw_batch_size'] = max(0, (int)($stateContext['draw_batch_size'] ?? 0));
+        $context['draw_batch_win_count'] = max(0, (int)($stateContext['draw_batch_win_count'] ?? 0));
+        $context['draw_batch_win_names'] = array_values(array_filter(array_map(
+            static fn (mixed $name): string => trim((string)$name),
+            is_array($stateContext['draw_batch_win_names'] ?? null) ? $stateContext['draw_batch_win_names'] : [],
+        )));
         $lastDraw = $stateContext['last_draw_result'] ?? null;
         if (is_array($lastDraw)) {
             $context['last_draw_gift_name'] = trim((string)($lastDraw['gift_name'] ?? ''));
@@ -917,8 +923,23 @@ final class ActivityLotteryRuntime
         string $delay,
     ): string {
         $remaining = max(0, (int)($context['draw_times_remaining'] ?? 0));
+        $batchSize = max(0, (int)($context['draw_batch_size'] ?? 0));
+        $batchWinCount = max(0, (int)($context['draw_batch_win_count'] ?? 0));
+        $batchWinNames = is_array($context['draw_batch_win_names'] ?? null) ? $context['draw_batch_win_names'] : [];
         $resultName = trim((string)($context['last_draw_gift_name'] ?? ''));
         $resultLabel = $resultName !== '' ? $resultName : '结果缺少奖品名';
+
+        if ($batchSize > 1) {
+            $batchSummary = $batchWinCount > 0
+                ? sprintf('本次连抽 %d 次，命中 %d 次，奖品：%s', $batchSize, $batchWinCount, implode(' / ', $batchWinNames))
+                : sprintf('本次连抽 %d 次，未命中', $batchSize);
+            if ($afterNode->status() === ActivityNodeStatus::WAITING) {
+                return sprintf('%s，剩余 %d 次%s', $batchSummary, $remaining, $delay);
+            }
+            if ($afterNode->status() === ActivityNodeStatus::SUCCEEDED) {
+                return sprintf('%s，剩余 %d 次', $batchSummary, $remaining);
+            }
+        }
 
         if ($afterNode->status() === ActivityNodeStatus::WAITING) {
             return sprintf('本次结果：%s，剩余 %d 次%s', $resultLabel, $remaining, $delay);
@@ -1049,8 +1070,22 @@ final class ActivityLotteryRuntime
         array $context,
     ): string {
         $remaining = max(0, (int)($context['draw_times_remaining'] ?? 0));
+        $batchSize = max(0, (int)($context['draw_batch_size'] ?? 0));
+        $batchWinCount = max(0, (int)($context['draw_batch_win_count'] ?? 0));
+        $batchWinNames = is_array($context['draw_batch_win_names'] ?? null) ? $context['draw_batch_win_names'] : [];
         $resultName = trim((string)($context['last_draw_gift_name'] ?? ''));
         $resultLabel = $resultName !== '' ? $resultName : '结果缺少奖品名';
+        if ($batchSize > 1) {
+            $batchSummary = $batchWinCount > 0
+                ? sprintf('抽奖阶段，本次连抽 %d 次，命中 %d 次，奖品：%s', $batchSize, $batchWinCount, implode(' / ', $batchWinNames))
+                : sprintf('抽奖阶段，本次连抽 %d 次，未命中', $batchSize);
+            if ($afterNode->status() === ActivityNodeStatus::WAITING) {
+                return sprintf('%s，剩余 %d 次%s', $batchSummary, $remaining, $this->formatDelaySuffix((int)($context['wait_delay_seconds'] ?? 0)));
+            }
+            if ($afterNode->status() === ActivityNodeStatus::SUCCEEDED) {
+                return sprintf('%s，剩余 %d 次', $batchSummary, $remaining);
+            }
+        }
         if ($afterNode->status() === ActivityNodeStatus::WAITING) {
             return sprintf('抽奖阶段，本次结果：%s，剩余 %d 次%s', $resultLabel, $remaining, $this->formatDelaySuffix((int)($context['wait_delay_seconds'] ?? 0)));
         }
@@ -1208,6 +1243,9 @@ final class ActivityLotteryRuntime
             'local_watch_seconds' => $context['local_watch_seconds'] ?? 0,
             'display_target_seconds' => $context['display_target_seconds'] ?? 0,
             'draw_times_remaining' => $context['draw_times_remaining'] ?? 0,
+            'draw_batch_size' => $context['draw_batch_size'] ?? 0,
+            'draw_batch_win_count' => $context['draw_batch_win_count'] ?? 0,
+            'draw_batch_win_names' => $context['draw_batch_win_names'] ?? [],
             'last_draw_gift_name' => $context['last_draw_gift_name'] ?? '',
             'wait_delay_seconds' => $context['wait_delay_seconds'] ?? 0,
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));

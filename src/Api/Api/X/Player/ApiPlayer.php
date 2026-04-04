@@ -33,7 +33,7 @@ class ApiPlayer
         }
         // {"code":-404,"message":"啥都木有","ttl":1}
         // {"code":0,"message":"0","ttl":1,"data":[{"cid":123,"page":1,"from":"vupload","part":"","duration":2055,"vid":"","weblink":"","dimension":{"width":480,"height":360,"rotate":0}}]}
-        return Request::getJson(true, 'other', $url, $payload);
+        return \Bhp\Api\Support\ApiJson::get( 'other', $url, $payload);
     }
 
 }

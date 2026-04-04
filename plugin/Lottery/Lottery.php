@@ -194,7 +194,7 @@ class Lottery extends BasePlugin implements PluginTaskInterface
             'csrf' => $user['csrf'],
         ];
         //
-        $response = Request::postJson(true, 'pc', $url, $payload, $headers);
+        $response = \Bhp\Api\Support\ApiJson::post( 'pc', $url, $payload, $headers);
         $this->authFailureClassifier->assertNotAuthFailure($response, '抽奖: 执行预约时账号未登录');
         // $response['code'] === 7604003
         if ($response['code'] === 0) { //预约成功/已经预约
@@ -321,7 +321,7 @@ class Lottery extends BasePlugin implements PluginTaskInterface
             'features' => 'itemOpusStyle'
         ];
         //
-        $response = Request::getJson(true, 'pc', $url, $payload, $headers);
+        $response = \Bhp\Api\Support\ApiJson::get( 'pc', $url, $payload, $headers);
         $this->authFailureClassifier->assertNotAuthFailure($response, "抽奖: 提取动态{$t}时账号未登录");
         //
         if ($response['code']) {
@@ -486,7 +486,7 @@ class Lottery extends BasePlugin implements PluginTaskInterface
 //            'csrf' => $user['csrf'],
 //        ];
 //        echo $business_id . PHP_EOL;
-//        $response = Request::getJson(true, 'pc', $url, $payload, $headers);
+//        $response = \Bhp\Api\Support\ApiJson::get( 'pc', $url, $payload, $headers);
 //        print_r($response);
 //
 //        // 抽奖不存在/请求错误/请求被拦截
@@ -604,7 +604,7 @@ class Lottery extends BasePlugin implements PluginTaskInterface
 //            'features' => 'itemOpusStyle'
 //        ];
 //        //
-//        $response = Request::getJson(true, 'pc', $url, $payload, $headers);
+//        $response = \Bhp\Api\Support\ApiJson::get( 'pc', $url, $payload, $headers);
 //        //
 //        if ($response['code']) {
 //            Log::warning("获取({$host_mid})空间动态失败: {$response['code']} -> {$response['message']}");
