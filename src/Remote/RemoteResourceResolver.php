@@ -51,18 +51,48 @@ final class RemoteResourceResolver
         return $this->rawUrl('resources/' . ltrim(str_replace('\\', '/', $resourcePath), '/'));
     }
 
+    /**
+     * @return string[]
+     */
+    public function resourceRawUrls(string $resourcePath): array
+    {
+        return $this->rawUrls('resources/' . ltrim(str_replace('\\', '/', $resourcePath), '/'));
+    }
+
     public function rawUrl(string $path): string
     {
-        [$owner, $repository] = $this->repository();
-        $normalizedPath = ltrim(str_replace('\\', '/', $path), '/');
+        $urls = $this->rawUrls($path);
+        return $urls[0] ?? '';
+    }
 
-        return GhProxy::mirror(sprintf(
+    /**
+     * @return string[]
+     */
+    public function rawUrls(string $path): array
+    {
+        [$owner, $repository] = $this->repository();
+        $branch = $this->branch();
+        $normalizedPath = ltrim(str_replace('\\', '/', $path), '/');
+        $directRawUrl = sprintf(
             'https://raw.githubusercontent.com/%s/%s/%s/%s',
             $owner,
             $repository,
-            $this->branch(),
+            $branch,
             $normalizedPath,
-        ));
+        );
+        $staticalyUrl = sprintf(
+            'https://cdn.staticaly.com/gh/%s/%s/%s/%s',
+            $owner,
+            $repository,
+            $branch,
+            $normalizedPath,
+        );
+
+        return array_values(array_unique(array_filter([
+            GhProxy::mirror($directRawUrl),
+            $directRawUrl,
+            $staticalyUrl,
+        ])));
     }
 
     /**

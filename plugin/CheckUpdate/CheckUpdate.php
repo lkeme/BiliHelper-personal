@@ -117,11 +117,19 @@ class CheckUpdate extends BasePluginRW implements PluginTaskInterface
     {
         $resolver = new RemoteResourceResolver();
         $branch = $resolver->branch();
-        $url = $resolver->resourceRawUrl('version.json');
-        $payload = [];
         Log::info("检查更新: 使用远程资源分支 {$branch}");
+        $last = ['code' => -500, 'message' => '检查更新: 未获取到远程版本信息', 'data' => []];
 
-        return (object)\Bhp\Api\Support\ApiJson::get('other', $url, $payload);
+        foreach ($resolver->resourceRawUrls('version.json') as $url) {
+            $response = \Bhp\Api\Support\ApiJson::get('other', $url, [], [], 'check_update.remote.version');
+            if ((int)($response['code'] ?? 0) === 200 && trim((string)($response['version'] ?? '')) !== '') {
+                return (object)$response;
+            }
+
+            $last = $response;
+        }
+
+        return (object)$last;
     }
 
     /**

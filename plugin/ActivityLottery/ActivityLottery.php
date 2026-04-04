@@ -59,13 +59,16 @@ class ActivityLottery extends BasePlugin implements PluginTaskInterface
         $windowStart = trim((string)$this->config('activity_lottery.window_start', '06:00:00', 'string'));
         $windowEnd = trim((string)$this->config('activity_lottery.window_end', '23:00:00', 'string'));
         $remoteCatalogUrl = trim((string)$this->config('activity_lottery.remote_catalog_url', '', 'string'));
+        $remoteCatalogUrls = [];
         if ($remoteCatalogUrl === '') {
-            $remoteCatalogUrl = (new RemoteResourceResolver())->resourceRawUrl('activity_infos.json');
+            $remoteCatalogUrls = (new RemoteResourceResolver())->resourceRawUrls('activity_infos.json');
+        } else {
+            $remoteCatalogUrls = [$remoteCatalogUrl];
         }
         $sources = [
             new LocalCatalogSource($this->activityInfosLocalPath()),
             new RemoteCatalogSource(
-                $remoteCatalogUrl,
+                $remoteCatalogUrls,
                 true,
             ),
         ];

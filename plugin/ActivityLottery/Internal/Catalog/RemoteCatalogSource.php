@@ -12,7 +12,7 @@ final class RemoteCatalogSource implements CatalogSourceInterface
     private readonly mixed $fetcher;
 
     public function __construct(
-        private readonly string $url,
+        private readonly string|array $url,
         private readonly bool $enabled = false,
         ?CatalogSourceInterface $reader = null,
         ?callable $fetcher = null,
@@ -35,43 +35,70 @@ final class RemoteCatalogSource implements CatalogSourceInterface
             return $this->reader->load();
         }
 
-        if (trim($this->url) === '') {
+        $urls = $this->urls();
+        if ($urls === []) {
             return [];
         }
 
-        if (is_file($this->url)) {
-            return (new LocalCatalogSource($this->url))->load();
-        }
-
-        $raw = (string)($this->fetcher)($this->url);
-        if (trim($raw) === '') {
-            return [];
-        }
-
-        $decoded = json_decode($raw, true);
-        if (!is_array($decoded)) {
-            return [];
-        }
-
-        $items = $decoded['items'] ?? $decoded['data'] ?? [];
-        if (!is_array($items)) {
-            return [];
-        }
-
-        $result = [];
-        foreach ($items as $item) {
-            if (!is_array($item)) {
+        foreach ($urls as $url) {
+            if (is_file($url)) {
+                $items = (new LocalCatalogSource($url))->load();
+                if ($items !== []) {
+                    return $items;
+                }
                 continue;
             }
 
-            $result[] = ActivityCatalogItem::fromArray($item);
+            $raw = (string)($this->fetcher)($url);
+            if (trim($raw) === '') {
+                continue;
+            }
+
+            $decoded = json_decode($raw, true);
+            if (!is_array($decoded)) {
+                continue;
+            }
+
+            $items = $decoded['items'] ?? $decoded['data'] ?? [];
+            if (!is_array($items)) {
+                continue;
+            }
+
+            $result = [];
+            foreach ($items as $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+
+                $result[] = ActivityCatalogItem::fromArray($item);
+            }
+
+            if ($result !== []) {
+                return $result;
+            }
         }
 
-        return $result;
+        return [];
     }
 
     public function priority(): int
     {
         return 100;
+    }
+
+    /**
+     * @return string[]
+     */
+    private function urls(): array
+    {
+        if (is_array($this->url)) {
+            return array_values(array_filter(array_map(
+                static fn (mixed $item): string => trim((string)$item),
+                $this->url,
+            )));
+        }
+
+        $url = trim((string)$this->url);
+        return $url === '' ? [] : [$url];
     }
 }
