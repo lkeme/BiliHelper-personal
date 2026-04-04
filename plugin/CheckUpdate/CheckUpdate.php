@@ -95,7 +95,7 @@ class CheckUpdate extends BasePluginRW implements PluginTaskInterface
             Log::notice($info);
             Notice::push('update', $info);
         } else {
-            Log::info("当前程序版本($offline_version)已是最新");
+            Log::notice("当前程序版本($offline_version)已是最新");
         }
         return true;
     }

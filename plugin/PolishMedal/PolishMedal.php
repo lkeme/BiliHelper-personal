@@ -45,14 +45,14 @@ class PolishMedal extends BasePlugin implements PluginTaskInterface
         'cycle' => '1(小时)', // 运行周期
     ];
 
-    private static array $grey_fans_medals = []; // 灰色勋章
-    private static int $metal_lock = 0; // 勋章时间锁
-    private static int $next_polish_at = 0;
+    private array $grey_fans_medals = []; // 灰色勋章
+    private int $metal_lock = 0; // 勋章时间锁
+    private int $next_polish_at = 0;
 
     /**
      * @var array
      */
-    private static array $black_list = []; // 黑名单
+    private array $black_list = []; // 黑名单
 
     /**
      * @param Plugin $plugin
@@ -71,37 +71,37 @@ class PolishMedal extends BasePlugin implements PluginTaskInterface
         }
 
         $now = time();
-        if (self::$metal_lock < $now) {
-            if (empty(self::$grey_fans_medals)) {
+        if ($this->metal_lock < $now) {
+            if (empty($this->grey_fans_medals)) {
                 if ($this->config('polish_medal.everyday', false, 'bool')) {
-                    self::fetchGreyMedalList(true);
-                    self::$metal_lock = $now + (int)TaskResult::secondsUntilNextAt(7, 0, 0, 1, 60);
+                    $this->fetchGreyMedalList(true);
+                    $this->metal_lock = $now + (int)TaskResult::secondsUntilNextAt(7, 0, 0, 1, 60);
                 } else {
-                    self::fetchGreyMedalList();
-                    self::$metal_lock = $now + 10 * 60 * 60;
+                    $this->fetchGreyMedalList();
+                    $this->metal_lock = $now + 10 * 60 * 60;
                 }
             } else {
-                self::$metal_lock = $now + 60 * 60;
+                $this->metal_lock = $now + 60 * 60;
             }
         }
 
-        if (!empty(self::$grey_fans_medals) && self::$next_polish_at <= $now) {
-            self::polishTheMedal();
-            self::$next_polish_at = time() + mt_rand(4, 10) * 60;
+        if (!empty($this->grey_fans_medals) && $this->next_polish_at <= $now) {
+            $this->polishTheMedal();
+            $this->next_polish_at = time() + mt_rand(4, 10) * 60;
         }
 
-        if (!empty(self::$grey_fans_medals)) {
-            return TaskResult::after(max(60, self::$next_polish_at - time()));
+        if (!empty($this->grey_fans_medals)) {
+            return TaskResult::after(max(60, $this->next_polish_at - time()));
         }
 
-        return TaskResult::after(max(60, self::$metal_lock - time()));
+        return TaskResult::after(max(60, $this->metal_lock - time()));
     }
 
     /**
      * 获取徽章列表
      * @return array
      */
-    private static function fetchMedalList(): array
+    private function fetchMedalList(): array
     {
         $medalList = [];
         for ($i = 1; $i <= 100; $i++) {
@@ -142,26 +142,26 @@ class PolishMedal extends BasePlugin implements PluginTaskInterface
      * 获取熄灭徽章
      * @param bool $all
      */
-    private static function fetchGreyMedalList(bool $all = false): void
+    private function fetchGreyMedalList(bool $all = false): void
     {
-        self::$black_list = ($tmp = Cache::get('black_list')) ? $tmp : [];
+        $this->black_list = ($tmp = Cache::get('black_list')) ? $tmp : [];
         // 获取徽章列表
-        $data = self::fetchMedalList();
+        $data = $this->fetchMedalList();
         foreach ($data as $vo) {
             // 过滤主站勋章
             if (!isset($vo['roomid']) || $vo['roomid'] == 0) continue;
             // 过滤黑名单
-            if (in_array($vo['roomid'], self::$black_list)) continue;
+            if (in_array($vo['roomid'], $this->black_list, true)) continue;
             // 如果是每天擦亮 ，就不过滤|否则过滤掉，只点亮灰色
             if ($all) {
-                self::$grey_fans_medals[] = [
+                $this->grey_fans_medals[] = [
                     'uid' => $vo['target_id'],
                     'roomid' => $vo['roomid'],
                 ];
             } else {
                 //  灰色
                 if ($vo['medal_color_start'] == 12632256 && $vo['medal_color_end'] == 12632256 && $vo['medal_color_border'] == 12632256) {
-                    self::$grey_fans_medals[] = [
+                    $this->grey_fans_medals[] = [
                         'uid' => $vo['target_id'],
                         'roomid' => $vo['roomid'],
                     ];
@@ -169,7 +169,7 @@ class PolishMedal extends BasePlugin implements PluginTaskInterface
             }
         }
         // 乱序
-        shuffle(self::$grey_fans_medals);
+        shuffle($this->grey_fans_medals);
     }
 
 
@@ -177,9 +177,9 @@ class PolishMedal extends BasePlugin implements PluginTaskInterface
      * 点亮徽章
      * @return void
      */
-    private static function polishTheMedal(): void
+    private function polishTheMedal(): void
     {
-        $medal = array_pop(self::$grey_fans_medals);
+        $medal = array_pop($this->grey_fans_medals);
         // 为空
         if (is_null($medal)) return;
         // 特殊房间处理|央视未开播|CODE -> 11000 MSG -> ''
@@ -193,19 +193,19 @@ class PolishMedal extends BasePlugin implements PluginTaskInterface
         if (isset($res['code']) && $res['code'] == 0) {
             Log::notice("在直播间@{$medal['roomid']}发送点亮弹幕成功");
         } else {
-            self::triggerException($medal, $res);
+            $this->triggerException($medal, $res);
         }
     }
 
-    protected static function triggerException(array $medal, array $res): void
+    protected function triggerException(array $medal, array $res): void
     {
         Log::warning("在直播间@{$medal['roomid']}发送点亮弹幕失败, CODE -> {$res['code']} MSG -> {$res['message']} ");
         //
         switch ($res['code']) {
             case 1003:
                 Log::info("直播间@{$medal['roomid']}已被禁言, 加入黑名单");
-                self::$black_list[] = $medal['roomid'];
-                Cache::set('black_list', self::$black_list);
+                $this->black_list[] = $medal['roomid'];
+                Cache::set('black_list', $this->black_list);
                 break;
             default:
                 break;
