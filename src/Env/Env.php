@@ -73,7 +73,7 @@ class Env extends BaseResource
      */
     protected function inspectExtension(): Env
     {
-        $default_extensions = ['curl', 'openssl', 'sockets', 'json', 'zlib', 'mbstring'];
+        $default_extensions = ['openssl', 'json', 'zlib', 'mbstring', 'sqlite3'];
         foreach ($default_extensions as $extension) {
             if (!extension_loaded($extension)) {
                 Log::error("检查到项目依赖 $extension 扩展未加载。");
@@ -97,8 +97,8 @@ class Env extends BaseResource
         if (PHP_SAPI != 'cli') {
             AppTerminator::fail('Please run this script from command line .');
         }
-        if (version_compare(PHP_VERSION, '8.3.0', '<')) {
-            AppTerminator::fail('Please upgrade PHP version >= 8.3.0 .');
+        if (version_compare(PHP_VERSION, '8.4.0', '<')) {
+            AppTerminator::fail('Please upgrade PHP version >= 8.4.0 .');
         }
         return $this;
     }

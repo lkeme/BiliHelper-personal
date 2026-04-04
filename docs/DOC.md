@@ -18,13 +18,12 @@
 
 | Requirement  |
 |--------------|
-| PHP >=8.3    |
-| php_curl     |
-| php_sockets  |
+| PHP >=8.4    |
 | php_openssl  |
 | php_json     |
 | php_zlib     |
 | php_mbstring |
+| php_sqlite3  |
 
 ## 用户文件夹含义
 

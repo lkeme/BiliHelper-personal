@@ -87,14 +87,15 @@ sync_code() {
   validate_branch "${branch_name}"
   export BRANCH="${branch_name}"
 
-  remote_url="$(resolve_remote_url)"
-  print_block "${GreenBG} 代码分支: ${branch_name} ${Font}"
-  git remote set-url origin "${remote_url}"
-
   if [ "${AUTO_UPDATE:-1}" != "1" ]; then
+    print_block "${GreenBG} 代码分支: ${branch_name} ${Font}"
     print_block "${RedBG} 已跳过更新同步 ${Font}"
     return
   fi
+
+  remote_url="$(resolve_remote_url)"
+  print_block "${GreenBG} 代码分支: ${branch_name} ${Font}"
+  git remote set-url origin "${remote_url}"
 
   print_block "${GreenBG} 正在同步代码分支 ${branch_name} ${Font}"
   git fetch --depth=1 origin "${branch_name}"

@@ -33,13 +33,12 @@
         }
     ],
     "require": {
-        "php": ">=8.3",
-        "ext-curl": "*",
+        "php": ">=8.4",
         "ext-openssl": "*",
-        "ext-sockets": "*",
         "ext-json": "*",
         "ext-zlib": "*",
         "ext-mbstring": "*",
+        "ext-sqlite3": "*",
         "monolog/monolog": "dev-main",
         "symfony/yaml": "8.1.x-dev",
         "amphp/amp": "3.x-dev",

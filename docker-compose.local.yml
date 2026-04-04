@@ -1,0 +1,22 @@
+services:
+  bhp:
+    container_name: bhp-local
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.local
+      args:
+        DEFAULT_BRANCH: dev
+    image: bhp-local:dev
+    stdin_open: true
+    tty: true
+    restart: on-failure:5
+    volumes:
+      - ./:/app
+    network_mode: bridge
+    ports:
+      - "50001:50001"
+    environment:
+      BRANCH: dev
+      AUTO_UPDATE: 0
+      MIRRORS: 0
+      CAPTCHA: 1
