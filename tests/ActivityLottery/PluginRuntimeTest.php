@@ -235,6 +235,7 @@ Assert::true(str_contains((string)$businessExecuteLog['message'], '关注测试U
 Assert::true(str_contains((string)$businessExecuteLog['message'], '进度 1/1'), '业务执行日志消息应包含当前进度。');
 $businessResultLog = findRuntimeLog($businessLogs, 'node.result');
 Assert::true($businessResultLog !== null, '业务节点结束时应记录 node.result 日志。');
+Assert::same('info', (string)($businessResultLog['level'] ?? ''), '普通业务结果日志默认应为 info。');
 Assert::true(str_contains((string)$businessResultLog['message'], '关注任务执行完成'), '业务结果日志消息应包含节点结果。');
 $businessSummaryLog = findRuntimeLog($businessLogs, 'flow.summary');
 Assert::true($businessSummaryLog !== null, '业务节点结束后应记录 flow.summary 日志。');
@@ -335,6 +336,7 @@ foreach ($exceptionIsolationFlows as $savedFlow) {
 }
 $exceptionResultLog = findRuntimeLogByFlow($exceptionIsolationLogs, 'node.result', $exceptionFlowAId);
 Assert::true($exceptionResultLog !== null, '单节点异常时应记录 node.result 日志。');
+Assert::same('warning', (string)($exceptionResultLog['level'] ?? ''), '单节点异常日志应提升为 warning。');
 Assert::true(str_contains((string)$exceptionResultLog['message'], 'time check failed'), '单节点异常日志应包含原始异常信息。');
 
 $followWaitingLogs = [];
@@ -637,6 +639,7 @@ $drawExecuteRuntime = buildBusinessRuntime(
 $drawExecuteRuntime->tick();
 $drawExecuteLog = findRuntimeLog($drawExecuteLogs, 'node.result');
 Assert::true($drawExecuteLog !== null, '执行抽奖节点应记录 node.result 日志。');
+Assert::same('info', (string)($drawExecuteLog['level'] ?? ''), '未中奖的抽奖结果日志应保持 info。');
 Assert::true(str_contains((string)$drawExecuteLog['message'], '本次结果：未中奖'), '抽奖执行日志应包含本次结果。');
 Assert::true(str_contains((string)$drawExecuteLog['message'], '剩余 2 次'), '抽奖执行日志应包含剩余次数。');
 Assert::true(str_contains((string)$drawExecuteLog['message'], '5 秒后继续'), '抽奖执行日志应包含等待秒数。');
@@ -693,11 +696,13 @@ $drawSummaryRuntime = buildBusinessRuntime(
 $drawSummaryRuntime->tick();
 $drawSummaryLog = findRuntimeLog($drawSummaryLogs, 'node.result');
 Assert::true($drawSummaryLog !== null, '抽奖汇总节点应记录 node.result 日志。');
+Assert::same('notice', (string)($drawSummaryLog['level'] ?? ''), '命中奖品的抽奖汇总日志应提升为 notice。');
 Assert::true(str_contains((string)$drawSummaryLog['message'], '累计抽奖 3 次'), '抽奖汇总日志应包含总抽奖次数。');
 Assert::true(str_contains((string)$drawSummaryLog['message'], '命中 1 次'), '抽奖汇总日志应包含中奖次数。');
 Assert::true(str_contains((string)$drawSummaryLog['message'], '测试奖品'), '抽奖汇总日志应包含奖品名称。');
 $drawSummaryFlowLog = findRuntimeLog($drawSummaryLogs, 'flow.summary');
 Assert::true($drawSummaryFlowLog !== null, '抽奖汇总节点应记录 flow.summary 日志。');
+Assert::same('notice', (string)($drawSummaryFlowLog['level'] ?? ''), '命中奖品的抽奖汇总摘要日志应提升为 notice。');
 Assert::same('已完成', (string)($drawSummaryFlowLog['context']['node_status_label'] ?? ''), '抽奖汇总摘要日志应包含完成状态标签。');
 Assert::true(str_contains((string)$drawSummaryFlowLog['message'], '流程进度 1/1'), '抽奖汇总摘要日志应包含流程进度。');
 Assert::true(str_contains((string)$drawSummaryFlowLog['message'], '当前阶段：抽奖汇总'), '抽奖汇总摘要日志应包含阶段。');

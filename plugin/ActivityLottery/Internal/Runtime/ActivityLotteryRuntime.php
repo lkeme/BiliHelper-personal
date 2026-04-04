@@ -63,6 +63,8 @@ final class ActivityLotteryRuntime
                 $context = array_replace(['caller' => 'ActivityLottery'], $context);
                 match (strtolower(trim($level))) {
                     'warning' => Log::warning($message, $context),
+                    'notice' => Log::notice($message, $context),
+                    'error' => Log::error($message, $context),
                     'debug' => Log::debug($message, $context),
                     default => Log::info($message, $context),
                 };
@@ -180,7 +182,7 @@ final class ActivityLotteryRuntime
                 $resultLogContext,
                 $now,
             )) {
-                $this->log('info', $resultMessage, $resultLogContext);
+                $this->log($this->resolveNodeResultLogLevel($currentNode->type(), $executedNode, $resultLogContext), $resultMessage, $resultLogContext);
             }
             [$summaryMessage, $summaryContext] = $this->buildFlowSummaryLog($flow, $currentNode, $updated, $executedNode);
             if ($summaryMessage !== '' && $this->shouldEmitLifecycleLog(
@@ -191,7 +193,7 @@ final class ActivityLotteryRuntime
                 $summaryContext,
                 $now,
             )) {
-                $this->log('info', $summaryMessage, array_replace([
+                $summaryLogContext = array_replace([
                     'event' => 'flow.summary',
                     'biz_date' => $bizDate,
                     'flow_id' => $updated->id(),
@@ -199,7 +201,8 @@ final class ActivityLotteryRuntime
                     'node_status' => $executedNode->status(),
                     'flow_status' => $updated->status(),
                     'current_node_index' => $updated->currentNodeIndex(),
-                ], $summaryContext));
+                ], $summaryContext);
+                $this->log($this->resolveFlowSummaryLogLevel($currentNode->type(), $executedNode, $summaryLogContext), $summaryMessage, $summaryLogContext);
             }
         }
 
@@ -683,6 +686,44 @@ final class ActivityLotteryRuntime
             'record_draw_result' => $this->buildRecordDrawSummaryMessage($afterNode, $context),
             default => '',
         };
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private function resolveNodeResultLogLevel(
+        string $nodeType,
+        \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode $afterNode,
+        array $context,
+    ): string {
+        if ($afterNode->status() === ActivityNodeStatus::FAILED) {
+            return 'warning';
+        }
+
+        if ($nodeType === 'record_draw_result' && max(0, (int)($context['draw_win_count'] ?? 0)) > 0) {
+            return 'notice';
+        }
+
+        return 'info';
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private function resolveFlowSummaryLogLevel(
+        string $nodeType,
+        \Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode $afterNode,
+        array $context,
+    ): string {
+        if ($afterNode->status() === ActivityNodeStatus::FAILED) {
+            return 'warning';
+        }
+
+        if ($nodeType === 'record_draw_result' && max(0, (int)($context['draw_win_count'] ?? 0)) > 0) {
+            return 'notice';
+        }
+
+        return 'info';
     }
 
     /**
