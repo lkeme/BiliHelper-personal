@@ -16,12 +16,14 @@
  */
 
 use Bhp\Api\Api\X\Relation\ApiRelation;
+use Bhp\Login\AuthFailureClassifier;
 use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
 use Bhp\Plugin\Plugin;
 
 class BatchUnfollow extends BasePlugin
 {
+    private AuthFailureClassifier $authFailureClassifier;
     /**
      * 插件信息
      * @var array|string[]
@@ -47,6 +49,7 @@ class BatchUnfollow extends BasePlugin
      */
     public function __construct(Plugin &$plugin)
     {
+        $this->authFailureClassifier = new AuthFailureClassifier();
         $this->bootPlugin($plugin, false);
     }
 
@@ -82,6 +85,7 @@ class BatchUnfollow extends BasePlugin
         //
         if ($this->config('batch_unfollow.tag') == 'all') {
             $response = ApiRelation::followings(1, 50);
+            $this->authFailureClassifier->assertNotAuthFailure($response, '批量取关: 获取关注列表时账号未登录');
             if ($response['code'] != 0) {
                 Log::warning("批量取关: 获取关注列表失败: {$response['code']} -> {$response['message']}");
                 return;
@@ -93,6 +97,7 @@ class BatchUnfollow extends BasePlugin
             $target_tag = $this->config('batch_unfollow.tag');
             //
             $response = ApiRelation::tags();
+            $this->authFailureClassifier->assertNotAuthFailure($response, '批量取关: 获取分组列表时账号未登录');
             if ($response['code'] != 0) {
                 Log::warning("批量取关: 获取分组列表失败: {$response['code']} -> {$response['message']}");
                 return;
@@ -111,6 +116,7 @@ class BatchUnfollow extends BasePlugin
             }
             //
             $response = ApiRelation::tag($tagid, 1, 50);
+            $this->authFailureClassifier->assertNotAuthFailure($response, '批量取关: 获取分组内列表时账号未登录');
             if ($response['code'] != 0) {
                 Log::warning("批量取关: 获取分组内列表失败: {$response['code']} -> {$response['message']}");
                 return;
@@ -140,6 +146,7 @@ class BatchUnfollow extends BasePlugin
         Log::info("批量取关: 尝试取关用户: {$follow['uname']}({$follow['mid']})");
         //
         $response = ApiRelation::modify($follow['mid']);
+        $this->authFailureClassifier->assertNotAuthFailure($response, '批量取关: 执行取关时账号未登录');
         if ($response['code'] != 0) {
             Log::warning("批量取关: 取关失败: {$response['code']} -> {$response['message']}");
             return;

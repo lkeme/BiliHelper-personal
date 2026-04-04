@@ -18,6 +18,7 @@
 use Bhp\Api\Msg\ApiMsg;
 use Bhp\Api\XLive\AppUcenter\V1\ApiFansMedal;
 use Bhp\Cache\Cache;
+use Bhp\Login\AuthFailureClassifier;
 use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
 use Bhp\Plugin\Contract\PluginTaskInterface;
@@ -28,6 +29,7 @@ use Bhp\Util\Fake\Fake;
 
 class PolishMedal extends BasePlugin implements PluginTaskInterface
 {
+    private AuthFailureClassifier $authFailureClassifier;
 
     /**
      * 插件信息
@@ -58,6 +60,7 @@ class PolishMedal extends BasePlugin implements PluginTaskInterface
     public function __construct(Plugin &$plugin)
     {
         Cache::initCache();
+        $this->authFailureClassifier = new AuthFailureClassifier();
         $this->bootPlugin($plugin, true);
     }
 
@@ -103,6 +106,7 @@ class PolishMedal extends BasePlugin implements PluginTaskInterface
         $medalList = [];
         for ($i = 1; $i <= 100; $i++) {
             $de_raw = ApiFansMedal::panel($i, 50);
+            $this->authFailureClassifier->assertNotAuthFailure($de_raw, '点亮徽章: 获取徽章列表时账号未登录');
             if (isset($de_raw['code']) && $de_raw['code']) {
                 Log::warning("获取徽章列表失败 => {$de_raw['message']} => {$de_raw['code']}");
             }
@@ -185,6 +189,7 @@ class PolishMedal extends BasePlugin implements PluginTaskInterface
         // 擦亮
         $custom_word = empty($words = (string)$this->config('polish_medal.reply_words', '')) ? Fake::emoji() : ArrayR::toRand(explode(',', $words));
         $res = ApiMsg::sendBarrageAPP($medal['roomid'], $custom_word);
+        $this->authFailureClassifier->assertNotAuthFailure($res, "点亮徽章: 在直播间@{$medal['roomid']}发送弹幕时账号未登录");
         if (isset($res['code']) && $res['code'] == 0) {
             Log::notice("在直播间@{$medal['roomid']}发送点亮弹幕成功");
         } else {

@@ -18,6 +18,7 @@
 use Bhp\Api\Space\ApiArticle;
 use Bhp\Cache\Cache;
 use Bhp\FilterWords\FilterWords;
+use Bhp\Login\AuthFailureClassifier;
 use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
 use Bhp\Plugin\Contract\PluginTaskInterface;
@@ -30,6 +31,7 @@ use Bhp\Util\Common\Common;
 
 class Lottery extends BasePlugin implements PluginTaskInterface
 {
+    private AuthFailureClassifier $authFailureClassifier;
     /**
      * 插件信息
      * @var array|string[]
@@ -62,6 +64,7 @@ class Lottery extends BasePlugin implements PluginTaskInterface
     public function __construct(Plugin &$plugin)
     {
         Cache::initCache();
+        $this->authFailureClassifier = new AuthFailureClassifier();
         $this->bootPlugin($plugin, true);
     }
 
@@ -192,6 +195,7 @@ class Lottery extends BasePlugin implements PluginTaskInterface
         ];
         //
         $response = Request::postJson(true, 'pc', $url, $payload, $headers);
+        $this->authFailureClassifier->assertNotAuthFailure($response, '抽奖: 执行预约时账号未登录');
         // $response['code'] === 7604003
         if ($response['code'] === 0) { //预约成功/已经预约
             Log::notice("抽奖: 预约成功 ReserveId: {$info['rid']}  Toast: {$response['data']['toast']} 已有{$response['data']['desc_update']} ");
@@ -260,6 +264,7 @@ class Lottery extends BasePlugin implements PluginTaskInterface
     {
         //
         $response = ApiArticle::article($uid);
+        $this->authFailureClassifier->assertNotAuthFailure($response, '抽奖: 获取有效专栏列表时账号未登录');
         //
         if ($response['code'] == 0) {
             $this->_fetchValidArticleUrls($response['data']);
@@ -317,6 +322,7 @@ class Lottery extends BasePlugin implements PluginTaskInterface
         ];
         //
         $response = Request::getJson(true, 'pc', $url, $payload, $headers);
+        $this->authFailureClassifier->assertNotAuthFailure($response, "抽奖: 提取动态{$t}时账号未登录");
         //
         if ($response['code']) {
             Log::warning("抽奖: 提取动态($t)失败: {$response['code']} -> {$response['message']}");

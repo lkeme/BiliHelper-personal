@@ -23,8 +23,8 @@ final class AuthFailureClassifier
 
     public function reason(array $response): ?string
     {
-        $code = (int)($response['code'] ?? 0);
-        $message = trim((string)($response['message'] ?? $response['msg'] ?? ''));
+        $code = $this->resolveCode($response);
+        $message = $this->resolveMessage($response);
 
         if ($code === -101) {
             return $message !== '' ? $message : '账号未登录';
@@ -49,5 +49,38 @@ final class AuthFailureClassifier
         }
 
         return null;
+    }
+
+    private function resolveCode(array $response): int
+    {
+        foreach (['code', 'errno', 'errcode'] as $key) {
+            if (isset($response[$key]) && is_numeric($response[$key])) {
+                return (int)$response[$key];
+            }
+        }
+
+        $data = is_array($response['data'] ?? null) ? $response['data'] : [];
+        if (($data['isLogin'] ?? true) === false) {
+            return -101;
+        }
+
+        return 0;
+    }
+
+    private function resolveMessage(array $response): string
+    {
+        foreach (['message', 'msg', 'errmsg'] as $key) {
+            $value = trim((string)($response[$key] ?? ''));
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        $data = is_array($response['data'] ?? null) ? $response['data'] : [];
+        if (($data['isLogin'] ?? true) === false) {
+            return '账号未登录';
+        }
+
+        return '';
     }
 }

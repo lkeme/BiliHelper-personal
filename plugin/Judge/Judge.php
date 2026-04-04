@@ -16,6 +16,7 @@
  */
 
 use Bhp\Api\Credit\ApiJury;
+use Bhp\Login\AuthFailureClassifier;
 use Bhp\Log\Log;
 use Bhp\Notice\Notice;
 use Bhp\Plugin\BasePlugin;
@@ -25,6 +26,7 @@ use Bhp\Scheduler\TaskResult;
 
 class Judge extends BasePlugin implements PluginTaskInterface
 {
+    private AuthFailureClassifier $authFailureClassifier;
     /**
      * 插件信息
      * @var array|string[]
@@ -63,6 +65,7 @@ class Judge extends BasePlugin implements PluginTaskInterface
      */
     public function __construct(Plugin &$plugin)
     {
+        $this->authFailureClassifier = new AuthFailureClassifier();
         $this->bootPlugin($plugin, true);
     }
 
@@ -140,6 +143,7 @@ class Judge extends BasePlugin implements PluginTaskInterface
         // {"code":0,"message":"0","ttl":1}
         // {"code":25018,"message":"不能进行此操作","ttl":1}
         $response = ApiJury::vote($case_id, $vote, '', 0, array_rand([0, 1]));
+        $this->authFailureClassifier->assertNotAuthFailure($response, "風機委員: 案件{$case_id}投票时账号未登录");
 
         if ($response['code']) {
             Log::warning("風機委員: 案件{$case_id}投票失败 {$response['code']} -> {$response['message']}");
@@ -192,6 +196,7 @@ class Judge extends BasePlugin implements PluginTaskInterface
     {
         // {"code":0,"message":"0","ttl":1,"data":{"total":438,"list":[]}}
         $response = ApiJury::caseOpinion($case_id);
+        $this->authFailureClassifier->assertNotAuthFailure($response, "風機委員: 获取案件{$case_id}众议观点时账号未登录");
         //
         if ($response['code']) {
             Log::warning("風機委員: 獲取案件{$case_id}衆議觀點失敗 {$response['code']} -> {$response['message']}");
@@ -213,6 +218,7 @@ class Judge extends BasePlugin implements PluginTaskInterface
     {
         // {"code":0,"message":"0","ttl":1,"data":{"case_id":"","case_type":1,"vote_items":[{"vote":1,"vote_text":"合适"},{"vote":2,"vote_text":"一般"},{"vote":3,"vote_text":"不合适"},{"vote":4,"vote_text":"无法判断"}],"default_vote":4,"status":0,"origin_start":0,"avid":,"cid":,"vote_cd":5,"case_info":{"comment":{"uname":"用户1","face":"xxxx"},"danmu_img":""}}}
         $response = ApiJury::caseInfo($case_id);
+        $this->authFailureClassifier->assertNotAuthFailure($response, "風機委員: 获取案件{$case_id}详情时账号未登录");
         //
         if ($response['code']) {
             Log::warning("風機委員: 獲取案件{$case_id}詳情失敗 {$response['code']} -> {$response['message']}");
@@ -233,6 +239,7 @@ class Judge extends BasePlugin implements PluginTaskInterface
         // {"code":25005,"message":"请成为風機委員后再试","ttl":1}
         // {"code":25006,"message":"風機委員资格已过期","ttl":1}
         $response = ApiJury::caseNext();
+        $this->authFailureClassifier->assertNotAuthFailure($response, '風紀委員: 获取案例ID时账号未登录');
         //
         switch ($response['code']) {
             case 0:
@@ -272,6 +279,7 @@ class Judge extends BasePlugin implements PluginTaskInterface
         // {"code":25005,"message":"请成为風機委員后再试","ttl":1}
         // {"code":0,"message":"0","ttl":1,"data":{"uname":"","face":"http://i2.hdslb.com/bfs/face/.jpg","case_total":,"term_end":,"status":1}}
         $response = ApiJury::jury();
+        $this->authFailureClassifier->assertNotAuthFailure($response, '風紀委員: 获取审判资格时账号未登录');
         //
         if ($response['code']) return false;
 //        "status": 1  理论正常
@@ -312,6 +320,7 @@ class Judge extends BasePlugin implements PluginTaskInterface
     {
         // {"code":0,"message":"0","ttl":1}
         $response = ApiJury::juryApply();
+        $this->authFailureClassifier->assertNotAuthFailure($response, '風機委員: 申请连任时账号未登录');
         if ($response['code']) {
             Log::warning("風機委員: 申請連任提交失敗 {$response['code']} -> {$response['message']}");
         } else {
@@ -327,6 +336,7 @@ class Judge extends BasePlugin implements PluginTaskInterface
     private static function judgementIndex(): bool
     {
         $response = ApiJury::caseList();
+        $this->authFailureClassifier->assertNotAuthFailure($response, '風紀委員: 获取案例数据时账号未登录');
         if ($response['code']) {
             Log::info("風紀委員: 獲取案例數據失敗 {$response['code']} -> {$response['message']}");
             return false;

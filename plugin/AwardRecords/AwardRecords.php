@@ -20,6 +20,7 @@ use Bhp\Api\XLive\GeneralInterface\V1\ApiGuardBenefit;
 use Bhp\Api\XLive\LotteryInterface\V1\ApiAnchor;
 use Bhp\Api\XLive\Revenue\V1\ApiWallet;
 use Bhp\Cache\Cache;
+use Bhp\Login\AuthFailureClassifier;
 use Bhp\Log\Log;
 use Bhp\Notice\Notice;
 use Bhp\Plugin\BasePlugin;
@@ -29,6 +30,7 @@ use Bhp\Scheduler\TaskResult;
 
 class AwardRecords extends BasePlugin implements PluginTaskInterface
 {
+    private AuthFailureClassifier $authFailureClassifier;
     /**
      * @var array|array[]
      */
@@ -64,6 +66,7 @@ class AwardRecords extends BasePlugin implements PluginTaskInterface
     public function __construct(Plugin &$plugin)
     {
         Cache::initCache();
+        $this->authFailureClassifier = new AuthFailureClassifier();
         $this->bootPlugin($plugin, true);
     }
 
@@ -110,6 +113,7 @@ class AwardRecords extends BasePlugin implements PluginTaskInterface
     protected function operation(string $title = '运营奖惩'): bool
     {
         $response = ApiWallet::apCenterList();
+        $this->authFailureClassifier->assertNotAuthFailure($response, "获奖记录: 获取{$title}时账号未登录");
         //
         if ($response['code']) {
             Log::warning("获奖记录: 获取{$title}失败 {$response['code']} -> {$response['message']}");
@@ -141,6 +145,7 @@ class AwardRecords extends BasePlugin implements PluginTaskInterface
     protected function award(string $title = '获奖记录'): bool
     {
         $response = ApiAward::awardList();
+        $this->authFailureClassifier->assertNotAuthFailure($response, "获奖记录: 获取{$title}时账号未登录");
         //
         if ($response['code']) {
             Log::warning("获奖记录: 获取{$title}失败 {$response['code']} -> {$response['message']}");
@@ -176,6 +181,7 @@ class AwardRecords extends BasePlugin implements PluginTaskInterface
     protected function celestial(string $title = '天选时刻'): bool
     {
         $response = ApiAnchor::awardRecord();
+        $this->authFailureClassifier->assertNotAuthFailure($response, "获奖记录: 获取{$title}时账号未登录");
         //
         if ($response['code']) {
             Log::warning("获奖记录: 获取{$title}失败 {$response['code']} -> {$response['message']}");
@@ -210,6 +216,7 @@ class AwardRecords extends BasePlugin implements PluginTaskInterface
     protected function bonus(string $title = '航海回馈'): bool
     {
         $response = ApiGuardBenefit::winListByUser();
+        $this->authFailureClassifier->assertNotAuthFailure($response, "获奖记录: 获取{$title}时账号未登录");
         //
         if ($response['code']) {
             Log::warning("获奖记录: 获取{$title}失败 {$response['code']} -> {$response['message']}");
