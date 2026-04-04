@@ -11,12 +11,14 @@ final class ResolvedEraTaskView
     /**
      * @param array<string, mixed> $runtimeMap
      * @param array<string, mixed> $activity
+     * @param array<string, mixed> $progressMap
      */
     private function __construct(
         private readonly string $taskId,
         private readonly ?EraTaskSnapshot $task,
         private readonly array $runtimeMap,
         private readonly array $activity,
+        private readonly array $progressMap,
     ) {
     }
 
@@ -44,8 +46,11 @@ final class ResolvedEraTaskView
         $runtimeMap = is_array($context['era_task_runtime'] ?? null)
             ? $context['era_task_runtime']
             : [];
+        $progressMap = is_array($context['era_task_progress_snapshot'] ?? null)
+            ? $context['era_task_progress_snapshot']
+            : [];
 
-        return new self($taskId, $task, $runtimeMap, $flow->activity());
+        return new self($taskId, $task, $runtimeMap, $flow->activity(), $progressMap);
     }
 
     public function taskId(): string
@@ -77,6 +82,29 @@ final class ResolvedEraTaskView
 
         $state = $this->runtimeMap[$this->taskId] ?? [];
         return is_array($state) ? $state : [];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function taskProgress(): array
+    {
+        if ($this->taskId === '') {
+            return [];
+        }
+
+        $snapshot = $this->progressMap[$this->taskId] ?? [];
+        return is_array($snapshot) ? $snapshot : [];
+    }
+
+    public function resolvedTaskStatus(): int
+    {
+        $progress = $this->taskProgress();
+        if (isset($progress['task_status']) && is_numeric($progress['task_status'])) {
+            return (int)$progress['task_status'];
+        }
+
+        return $this->task?->taskStatus() ?? 0;
     }
 
     /**

@@ -40,7 +40,7 @@ final class EraFollowNodeRunner implements NodeRunnerInterface
             ], $now);
         }
 
-        if ($task->taskStatus() !== 1) {
+        if ($taskView->resolvedTaskStatus() !== 1) {
             return new ActivityNodeResult(true, '关注任务已完成', [
                 'node_status' => ActivityNodeStatus::SUCCEEDED,
             ], $now);

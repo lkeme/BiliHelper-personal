@@ -33,6 +33,21 @@ final class EraWatchLiveNodeRunner implements NodeRunnerInterface
         }
 
         $state = $taskView->taskRuntime();
+        $progress = $taskView->taskProgress();
+        $serverWatchSeconds = EraWatchProgress::currentSeconds($task, $progress);
+        $localWatchSeconds = max(max(0, (int)($state['local_watch_seconds'] ?? 0)), $serverWatchSeconds);
+        if ($localWatchSeconds > 0) {
+            $state['local_watch_seconds'] = $localWatchSeconds;
+        }
+
+        if ($taskView->resolvedTaskStatus() === 3) {
+            unset($state['live_session']);
+            return new ActivityNodeResult(true, '直播观看任务完成', [
+                'node_status' => ActivityNodeStatus::SUCCEEDED,
+                'context_patch' => $taskView->replaceTaskRuntime($state),
+            ], $now);
+        }
+
         $session = is_array($state['live_session'] ?? null) ? $state['live_session'] : null;
         if ($session === null) {
             $session = $this->watchGateway->start($task->targetRoomIds(), $task->targetAreaId(), $task->targetParentAreaId());
@@ -64,13 +79,13 @@ final class EraWatchLiveNodeRunner implements NodeRunnerInterface
         }
 
         $elapsedSeconds = max(1, (int)($nextSession['_debug_elapsed_seconds'] ?? $nextSession['heartbeat_interval'] ?? 60));
-        $localWatchSeconds = max(0, (int)($state['local_watch_seconds'] ?? 0)) + $elapsedSeconds;
+        $localWatchSeconds = max(max(0, (int)($state['local_watch_seconds'] ?? 0)), $serverWatchSeconds) + $elapsedSeconds;
         $nextState = array_replace($state, [
             'live_session' => $nextSession,
             'local_watch_seconds' => $localWatchSeconds,
         ]);
 
-        if (EraWatchProgress::targetSeconds($task, null, $localWatchSeconds) > 0) {
+        if (EraWatchProgress::targetSeconds($task, $progress, $localWatchSeconds) > 0) {
             $waitSeconds = max(30, (int)($nextSession['heartbeat_interval'] ?? 60));
             return new ActivityNodeResult(true, '直播观看继续推进', [
                 'node_status' => ActivityNodeStatus::WAITING,

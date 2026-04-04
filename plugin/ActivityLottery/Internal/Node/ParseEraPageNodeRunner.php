@@ -6,12 +6,14 @@ use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityFlow;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNode;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNodeResult;
 use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNodeStatus;
+use Bhp\Plugin\ActivityLottery\Internal\Gateway\EraTaskProgressGateway;
 use Bhp\Plugin\ActivityLottery\Internal\Page\EraPageParser;
 
 final class ParseEraPageNodeRunner implements NodeRunnerInterface
 {
     public function __construct(
         private readonly EraPageParser $pageParser = new EraPageParser(),
+        private readonly EraTaskProgressGateway $taskProgressGateway = new EraTaskProgressGateway(),
     ) {
     }
 
@@ -36,11 +38,24 @@ final class ParseEraPageNodeRunner implements NodeRunnerInterface
             ], $now);
         }
 
+        $progressSnapshot = $this->taskProgressGateway->fetchSnapshots(
+            array_values(array_filter(array_map(
+                static fn ($task): string => $task instanceof \Bhp\Plugin\ActivityLottery\Internal\Page\EraTaskSnapshot ? $task->taskId() : '',
+                $pageSnapshot->tasks(),
+            ))),
+        );
+
+        $contextPatch = [
+            'era_page_snapshot' => $pageSnapshot->toArray(),
+        ];
+        if ($progressSnapshot !== []) {
+            $contextPatch['era_task_progress_snapshot'] = $progressSnapshot;
+            $contextPatch['era_task_progress_fetched_at'] = $now;
+        }
+
         return new ActivityNodeResult(true, 'ERA 页面解析成功', [
             'node_status' => ActivityNodeStatus::SUCCEEDED,
-            'context_patch' => [
-                'era_page_snapshot' => $pageSnapshot->toArray(),
-            ],
+            'context_patch' => $contextPatch,
         ], $now);
     }
 

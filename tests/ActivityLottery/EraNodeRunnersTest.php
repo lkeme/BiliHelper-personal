@@ -246,6 +246,79 @@ Assert::true($topicVideoResult->ok(), '话题视频节点首步应可执行。')
 Assert::same(ActivityNodeStatus::WAITING, (string)($topicVideoResult->payload()['node_status'] ?? ''), '话题视频节点启动后应返回 waiting。');
 Assert::same(1, count(readTaskRuntimePatch($topicVideoResult, 'task-video-topic')['topic_archives'] ?? []), '话题视频节点应缓存 topic_archives。');
 
+$recoveredVideoStartEvents = [];
+$recoveredVideoFlow = buildEraTaskFlow([
+    'task-video-fixed' => [
+        'required_watch_seconds' => 7200,
+    ],
+]);
+$recoveredVideoFlow = applyEraNodeContextPatchToFlow($recoveredVideoFlow, [
+    'context_patch' => [
+        'era_task_progress_snapshot' => [
+            'task-video-fixed' => [
+                'task_id' => 'task-video-fixed',
+                'task_status' => 1,
+                'indicators' => [
+                    ['cur_value' => 3600, 'limit' => 7200],
+                ],
+                'check_points' => [
+                    ['list' => [['cur_value' => 3600, 'limit' => 1800]]],
+                    ['list' => [['cur_value' => 3600, 'limit' => 3600]]],
+                    ['list' => [['cur_value' => 3600, 'limit' => 7200]]],
+                ],
+            ],
+        ],
+    ],
+]);
+$recoveredVideoRunner = new EraWatchVideoNodeRunner(
+    'era_task_watch_video_fixed',
+    new WatchVideoGateway(
+        static fn (array $archive): ?array => $archive,
+        static fn (string $topicId, int $limit = 20): array => [],
+        static function (array $archive, string $sessionId) use (&$recoveredVideoStartEvents): bool {
+            $recoveredVideoStartEvents[] = ['archive' => $archive, 'session_id' => $sessionId];
+            return true;
+        },
+        static fn (array $archive, int $watchedSeconds, string $sessionId): bool => true,
+    ),
+);
+$recoveredVideoResult = $recoveredVideoRunner->run(
+    $recoveredVideoFlow,
+    new ActivityNode('era_task_watch_video_fixed', ['lane' => 'task_status', 'task_id' => 'task-video-fixed']),
+    $now,
+);
+Assert::same(ActivityNodeStatus::WAITING, (string)($recoveredVideoResult->payload()['node_status'] ?? ''), '服务端已有视频进度时节点应继续推进而不是从 0 开始。');
+Assert::same(3600, (int)(readTaskRuntimePatch($recoveredVideoResult, 'task-video-fixed')['local_watch_seconds'] ?? 0), '服务端视频进度应回填到本地 local_watch_seconds。');
+Assert::same(1, count($recoveredVideoStartEvents), '服务端恢复视频进度后只应新建一次本地观看会话。');
+
+$completedVideoFlow = buildEraTaskFlow([
+    'task-video-fixed' => [
+        'required_watch_seconds' => 7200,
+    ],
+]);
+$completedVideoFlow = applyEraNodeContextPatchToFlow($completedVideoFlow, [
+    'context_patch' => [
+        'era_task_progress_snapshot' => [
+            'task-video-fixed' => [
+                'task_id' => 'task-video-fixed',
+                'task_status' => 3,
+                'indicators' => [
+                    ['cur_value' => 7200, 'limit' => 7200],
+                ],
+                'check_points' => [
+                    ['list' => [['cur_value' => 7200, 'limit' => 7200]]],
+                ],
+            ],
+        ],
+    ],
+]);
+$completedVideoResult = $recoveredVideoRunner->run(
+    $completedVideoFlow,
+    new ActivityNode('era_task_watch_video_fixed', ['lane' => 'task_status', 'task_id' => 'task-video-fixed']),
+    $now,
+);
+Assert::same(ActivityNodeStatus::SUCCEEDED, (string)($completedVideoResult->payload()['node_status'] ?? ''), '服务端任务已完成时视频节点应直接返回 succeeded。');
+
 $liveHeartbeatEvents = [];
 $liveRunner = new EraWatchLiveNodeRunner(new WatchLiveGateway(
     static fn (array $roomIds, int $areaId = 0, int $parentAreaId = 0): ?array => [
@@ -289,6 +362,53 @@ $secondLiveResult = $liveRunner->run(
 Assert::true($secondLiveResult->ok(), '直播节点心跳阶段应可执行。');
 Assert::same(ActivityNodeStatus::SUCCEEDED, (string)($secondLiveResult->payload()['node_status'] ?? ''), '达到直播观看阈值后节点应返回 succeeded。');
 Assert::same(1, count($liveHeartbeatEvents), '直播节点第二步应发送一次心跳。');
+
+$recoveredLiveFlow = buildEraTaskFlow([
+    'task-live' => [
+        'required_watch_seconds' => 60,
+    ],
+]);
+$recoveredLiveFlow = applyEraNodeContextPatchToFlow($recoveredLiveFlow, [
+    'context_patch' => [
+        'era_task_progress_snapshot' => [
+            'task-live' => [
+                'task_id' => 'task-live',
+                'task_status' => 1,
+                'indicators' => [
+                    ['cur_value' => 2, 'limit' => 60],
+                ],
+                'check_points' => [
+                    ['list' => [['cur_value' => 2, 'limit' => 10]]],
+                    ['list' => [['cur_value' => 2, 'limit' => 30]]],
+                    ['list' => [['cur_value' => 2, 'limit' => 60]]],
+                ],
+            ],
+        ],
+    ],
+]);
+$recoveredLiveRunner = new EraWatchLiveNodeRunner(new WatchLiveGateway(
+    static fn (array $roomIds, int $areaId = 0, int $parentAreaId = 0): ?array => [
+        'room_id' => 2233,
+        'ruid' => 5566,
+        'parent_area_id' => 9,
+        'area_id' => 99,
+        'heartbeat_interval' => 30,
+        'ets' => 123456,
+        'secret_key' => 'secret',
+        'secret_rule' => [0, 1, 2],
+        'last_heartbeat_at' => (float)$now,
+        'live_buvid' => 'buvid',
+        'live_uuid' => 'uuid',
+    ],
+    static fn (array $session): array => $session,
+));
+$recoveredLiveResult = $recoveredLiveRunner->run(
+    $recoveredLiveFlow,
+    new ActivityNode('era_task_watch_live', ['lane' => 'task_status', 'task_id' => 'task-live']),
+    $now,
+);
+Assert::same(ActivityNodeStatus::WAITING, (string)($recoveredLiveResult->payload()['node_status'] ?? ''), '服务端已有直播进度时节点应继续推进而不是从 0 开始。');
+Assert::same(2, (int)(readTaskRuntimePatch($recoveredLiveResult, 'task-live')['local_watch_seconds'] ?? 0), '服务端直播进度应回填到本地 local_watch_seconds。');
 
 /**
  * @return array<string, mixed>

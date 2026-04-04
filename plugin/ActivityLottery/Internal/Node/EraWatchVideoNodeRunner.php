@@ -37,6 +37,7 @@ final class EraWatchVideoNodeRunner implements NodeRunnerInterface
         }
 
         $state = $taskView->taskRuntime();
+        $progress = $taskView->taskProgress();
         $resolvedArchive = $this->resolveArchive($task, $state);
         if ($resolvedArchive === null) {
             return new ActivityNodeResult(true, '无法解析视频稿件信息，已跳过', [
@@ -48,6 +49,25 @@ final class EraWatchVideoNodeRunner implements NodeRunnerInterface
         $state = array_replace($state, $resolvedArchive['state']);
         $sessionId = trim((string)($state['watch_video_session'] ?? ''));
         $startedAt = (int)($state['watch_video_started_at'] ?? 0);
+        $serverWatchSeconds = EraWatchProgress::currentSeconds($task, $progress);
+        $localWatchSeconds = max(max(0, (int)($state['local_watch_seconds'] ?? 0)), $serverWatchSeconds);
+        if ($localWatchSeconds > 0) {
+            $state['local_watch_seconds'] = $localWatchSeconds;
+        }
+
+        if ($taskView->resolvedTaskStatus() === 3) {
+            unset(
+                $state['watch_video_archive'],
+                $state['watch_video_session'],
+                $state['watch_video_started_at'],
+                $state['watch_video_wait_seconds'],
+            );
+
+            return new ActivityNodeResult(true, '视频观看任务完成', [
+                'node_status' => ActivityNodeStatus::SUCCEEDED,
+                'context_patch' => $taskView->replaceTaskRuntime($state),
+            ], $now);
+        }
 
         if ($sessionId === '' || $startedAt <= 0) {
             $sessionId = self::generateSessionId();
@@ -57,11 +77,10 @@ final class EraWatchVideoNodeRunner implements NodeRunnerInterface
                 ], $now);
             }
 
-            $localWatchSeconds = max(0, (int)($state['local_watch_seconds'] ?? 0));
             $waitSeconds = EraWatchProgress::resolveWaitSeconds(
                 $task,
                 max(1, (int)($archive['duration'] ?? 0)),
-                null,
+                $progress,
                 $localWatchSeconds,
             );
             $nextState = array_replace($state, [
@@ -85,7 +104,7 @@ final class EraWatchVideoNodeRunner implements NodeRunnerInterface
             ], $now);
         }
 
-        $localWatchSeconds = max(0, (int)($state['local_watch_seconds'] ?? 0)) + $watchedSeconds;
+        $localWatchSeconds = max(max(0, (int)($state['local_watch_seconds'] ?? 0)), $serverWatchSeconds) + $watchedSeconds;
         $nextState = $state;
         $nextState['local_watch_seconds'] = $localWatchSeconds;
         unset(
@@ -95,7 +114,7 @@ final class EraWatchVideoNodeRunner implements NodeRunnerInterface
             $nextState['watch_video_wait_seconds'],
         );
 
-        if (EraWatchProgress::targetSeconds($task, null, $localWatchSeconds) > 0) {
+        if (EraWatchProgress::targetSeconds($task, $progress, $localWatchSeconds) > 0) {
             $nextState = $this->advanceArchiveCursor($task, $nextState);
 
             return new ActivityNodeResult(true, '视频观看继续推进', [

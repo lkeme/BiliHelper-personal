@@ -14,6 +14,7 @@ use Bhp\Plugin\ActivityLottery\Internal\Flow\ActivityNodeStatus;
 use Bhp\Plugin\ActivityLottery\Internal\Gateway\ActivityLotteryGateway;
 use Bhp\Plugin\ActivityLottery\Internal\Gateway\DrawGateway;
 use Bhp\Plugin\ActivityLottery\Internal\Gateway\EraTaskGateway;
+use Bhp\Plugin\ActivityLottery\Internal\Gateway\EraTaskProgressGateway;
 use Bhp\Plugin\ActivityLottery\Internal\Node\ExecuteDrawNodeRunner;
 use Bhp\Plugin\ActivityLottery\Internal\Node\FinalizeFlowNodeRunner;
 use Bhp\Plugin\ActivityLottery\Internal\Node\LoadActivitySnapshotNodeRunner;
@@ -279,7 +280,19 @@ $invalidStableValidate = $validateRunner->run(
 Assert::false($invalidStableValidate->ok(), '缺少稳定标识应校验失败。');
 Assert::same(ActivityFlowStatus::FAILED, (string)($invalidStableValidate->payload()['flow_status'] ?? ''), '缺少稳定标识应显式返回 flow_status=failed。');
 
-$parseRunner = new ParseEraPageNodeRunner($parser);
+$emptyProgressGateway = new EraTaskProgressGateway(
+    static function (array $taskIds, bool $needAllInvitedInfo = false): array {
+        return [
+            'code' => 0,
+            'message' => '0',
+            'data' => [
+                'list' => [],
+            ],
+        ];
+    },
+);
+
+$parseRunner = new ParseEraPageNodeRunner($parser, $emptyProgressGateway);
 $parseNode = new ActivityNode('parse_era_page', [
     'lane' => 'page_fetch',
     'activity_snapshot' => [
@@ -290,6 +303,45 @@ $parseResult = $parseRunner->run($flow, $parseNode, time());
 Assert::true($parseResult->ok(), '页面解析节点应执行成功。');
 Assert::same(ActivityNodeStatus::SUCCEEDED, (string)($parseResult->payload()['node_status'] ?? ''), '页面解析节点应返回 succeeded。');
 Assert::same(2, count((array)($parseResult->payload()['context_patch']['era_page_snapshot']['tasks'] ?? [])), '页面解析节点应返回任务快照。');
+
+$progressParseRunner = new ParseEraPageNodeRunner(
+    $parser,
+    new EraTaskProgressGateway(
+        static function (array $taskIds, bool $needAllInvitedInfo = false): array {
+            return [
+                'code' => 0,
+                'message' => '0',
+                'data' => [
+                    'list' => [
+                        [
+                            'task_id' => 't-share',
+                            'task_status' => 3,
+                            'indicators' => [
+                                ['cur_value' => 1, 'limit' => 1],
+                            ],
+                            'check_points' => [
+                                ['list' => [['cur_value' => 1, 'limit' => 1]]],
+                            ],
+                        ],
+                        [
+                            'task_id' => 't-claim',
+                            'task_status' => 2,
+                            'indicators' => [
+                                ['cur_value' => 0, 'limit' => 1],
+                            ],
+                            'check_points' => [
+                                ['list' => [['cur_value' => 0, 'limit' => 1]]],
+                            ],
+                        ],
+                    ],
+                ],
+            ];
+        },
+    ),
+);
+$progressParseResult = $progressParseRunner->run($flow, $parseNode, time());
+Assert::true($progressParseResult->ok(), '带任务进度同步的页面解析节点应执行成功。');
+Assert::same(2, count((array)($progressParseResult->payload()['context_patch']['era_task_progress_snapshot'] ?? [])), '页面解析节点应同步 totalv2 任务进度快照。');
 
 $pageLevelTargetsHtml = <<<'HTML'
 <html>

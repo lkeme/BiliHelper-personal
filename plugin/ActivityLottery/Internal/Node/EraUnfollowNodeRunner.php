@@ -44,7 +44,7 @@ final class EraUnfollowNodeRunner implements NodeRunnerInterface
 
     private function runExplicitUnfollow(ResolvedEraTaskView $taskView, \Bhp\Plugin\ActivityLottery\Internal\Page\EraTaskSnapshot $task, int $now): ActivityNodeResult
     {
-        if ($task->taskStatus() !== 1) {
+        if ($taskView->resolvedTaskStatus() !== 1) {
             return new ActivityNodeResult(true, '取消关注任务已完成', [
                 'node_status' => ActivityNodeStatus::SUCCEEDED,
             ], $now);
