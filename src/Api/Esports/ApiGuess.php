@@ -17,7 +17,7 @@
 
 namespace Bhp\Api\Esports;
 
-use Bhp\Request\Request;
+use Bhp\Api\Support\ApiJson;
 use Bhp\User\User;
 
 class ApiGuess
@@ -41,7 +41,7 @@ class ApiGuess
             'origin' => 'https://www.bilibili.com',
             'referer' => 'https://www.bilibili.com/v/game/match/competition',
         ];
-        return Request::getjSON(true, 'pc', $url, $payload, $headers);
+        return ApiJson::get('pc', $url, $payload, $headers, 'esports.guess.collection_question');
     }
 
     /**
@@ -70,7 +70,7 @@ class ApiGuess
             'origin' => 'https://www.bilibili.com',
             'referer' => 'https://www.bilibili.com/v/game/match/competition'
         ];
-        return \Bhp\Api\Support\ApiJson::post( 'pc', $url, $payload, $headers);
+        return ApiJson::post('pc', $url, $payload, $headers, 'esports.guess.add');
     }
 
 
