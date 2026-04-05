@@ -42,7 +42,7 @@ RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
 COPY composer.json composer.lock /app/
 COPY app.php /app/
 COPY src /app/src
-COPY plugin /app/plugin
+COPY plugins /app/plugins
 COPY resources /app/resources
 COPY profile/example /app/profile/example
 COPY captcha /app/captcha
