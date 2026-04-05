@@ -162,16 +162,6 @@ docker run -itd --rm -e BRANCH=dev -e USER_NAME=你的B站登录账号 -e USER_P
 docker run -itd --rm -v /path/to/your/profile/user:/app/profile/user lkeme/bilihelper-personal
 ```
 
-### 本地开发
-
-本地开发使用 `docker-compose.local.yml`，源码通过 bind mount 提供：
-
-```shell
-docker compose -f docker-compose.local.yml up --build -d
-```
-
-当 Dockerfile、PHP 扩展、Composer 依赖或其他镜像内容变化时，请重新执行上面的 `--build` 命令。
-
 ## 升级指南
 
 ### Docker 生产环境
@@ -179,12 +169,6 @@ docker compose -f docker-compose.local.yml up --build -d
 ```shell
 docker compose pull
 docker compose up -d
-```
-
-### Docker 本地开发
-
-```shell
-docker compose -f docker-compose.local.yml up --build -d
 ```
 
 ### 源码部署

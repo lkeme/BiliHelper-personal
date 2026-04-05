@@ -78,12 +78,6 @@ docker compose pull
 docker compose up -d
 ```
 
-本地开发仍使用：
-
-```bash
-docker compose -f docker-compose.local.yml up --build -d
-```
-
 ### 6. ActivityLottery 改为行级 SQLite 持久化
 
 `ActivityFlowStore` 当前将活动流写入 `profile/<name>/cache/cache.sqlite3` 中的 `activity_flow_entries` 表。

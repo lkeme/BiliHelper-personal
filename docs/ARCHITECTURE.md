@@ -120,14 +120,11 @@
 - `docker/Dockerfile`
 - `docker/entrypoint.sh`
 - `docker-compose.yml`
-- `docker-compose.local.yml`
 
 当前规则：
 
 - 生产 Docker 运行时默认不可变，容器启动时不会再拉取远程代码
 - 生产更新方式为 `docker compose pull` 后再执行 `docker compose up -d`
-- 本地开发使用 `docker-compose.local.yml`，通过 bind mount 提供源码
-- 当镜像内容、扩展或依赖变更时，重新执行 `docker compose -f docker-compose.local.yml up --build -d`
 
 ## 推荐阅读顺序
 

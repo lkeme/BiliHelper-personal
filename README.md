@@ -76,7 +76,7 @@
 ## Docker 提示
 
 - 生产环境 Docker 运行时默认保持镜像不可变，更新镜像请使用 `docker compose pull && docker compose up -d`
-- 本地开发使用 `docker-compose.local.yml`，代码通过 bind mount 提供；镜像或依赖变动后使用 `docker compose -f docker-compose.local.yml up --build -d`
+
 
 ## 🎁 打赏支持
 

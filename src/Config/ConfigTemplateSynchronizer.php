@@ -36,12 +36,18 @@ final class ConfigTemplateSynchronizer
         $section = '';
         foreach ($this->splitLines($content) as $line) {
             $trimmed = trim($line);
-            if ($trimmed === '' || str_starts_with($trimmed, ';') || str_starts_with($trimmed, '#')) {
+            if (preg_match('/^\[(.+)]$/', $trimmed, $matches) === 1) {
+                $section = trim($matches[1]);
                 continue;
             }
 
-            if (preg_match('/^\[(.+)]$/', $trimmed, $matches) === 1) {
-                $section = trim($matches[1]);
+            $legacySection = $this->extractTrailingSectionHeader($trimmed);
+            if ($legacySection !== null) {
+                $section = $legacySection;
+                continue;
+            }
+
+            if ($trimmed === '' || str_starts_with($trimmed, ';') || str_starts_with($trimmed, '#')) {
                 continue;
             }
 
@@ -113,5 +119,22 @@ final class ConfigTemplateSynchronizer
         $newline ??= $this->detectNewline($content);
 
         return explode($newline, $content);
+    }
+
+    private function extractTrailingSectionHeader(string $line): ?string
+    {
+        if ($line === '' || (!str_starts_with($line, ';') && !str_starts_with($line, '#'))) {
+            return null;
+        }
+
+        if (preg_match('/(\[[A-Za-z0-9_]+])$/', $line, $matches) !== 1) {
+            return null;
+        }
+
+        if (preg_match('/^\[(.+)]$/', $matches[1], $sectionMatches) !== 1) {
+            return null;
+        }
+
+        return trim($sectionMatches[1]);
     }
 }
