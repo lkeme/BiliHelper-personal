@@ -2,8 +2,6 @@
 
 namespace Bhp\Notice\Channel;
 
-use Bhp\Log\Log;
-use Bhp\Request\Request;
 
 final class FeiShuNoticeChannel extends AbstractNoticeChannel
 {
@@ -19,9 +17,9 @@ final class FeiShuNoticeChannel extends AbstractNoticeChannel
 
     public function dispatch(array $payload): void
     {
-        Log::info('使用飞书webhook机器人推送消息');
+        $this->info('使用飞书webhook机器人推送消息');
         $url = 'https://open.feishu.cn/open-apis/bot/v2/hook/' . $this->config('notify_feishu.token');
-        $raw = Request::postJsonBody('other', $url, [
+        $raw = $this->requestPostJsonBody($url, [
             'msg_type' => 'text',
             'content' => [
                 'text' => (string)$payload['title'] . (string)$payload['content'],
@@ -30,7 +28,7 @@ final class FeiShuNoticeChannel extends AbstractNoticeChannel
 
         $decoded = $this->decode($raw);
         if (($decoded['StatusCode'] ?? null) === 0) {
-            Log::notice('推送消息成功: ' . (string)$decoded['StatusCode']);
+            $this->notice('推送消息成功: ' . (string)$decoded['StatusCode']);
             return;
         }
 

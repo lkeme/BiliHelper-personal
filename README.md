@@ -64,6 +64,20 @@
 * [常见问题 / WIKI.md](https://github.com/lkeme/BiliHelper-personal/wiki/%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98)
 * [关于项目 / ABOUT.md](./docs/ABOUT.md)
 
+## 当前运行模型
+
+- 入口为 `app.php`，当前启动链为 `AppKernel -> ServiceContainer -> Bootstrap -> Console`
+- 当前只保留 `mode:app`、`mode:debug`、`mode:script`
+- `mode:app`、`mode:debug`、`mode:script` 都支持 `--reset-cache`，需要同时清理登录态时追加 `--purge-auth`
+- 核心只保留 `Login`，其余业务插件统一从 `plugins/<plugin>/plugin.json` 发现并装配
+- 官方随仓库分发的第三方插件位于 `plugins/*`
+- `ActivityLottery` 当前通过 `ActivityFlowStore` 将 flow 行级写入 `profile/<name>/cache/cache.sqlite3`
+
+## Docker 提示
+
+- 生产环境 Docker 运行时默认保持镜像不可变，更新镜像请使用 `docker compose pull && docker compose up -d`
+- 本地开发使用 `docker-compose.local.yml`，代码通过 bind mount 提供；镜像或依赖变动后使用 `docker compose -f docker-compose.local.yml up --build -d`
+
 ## 🎁 打赏支持
 
 如果觉得本项目好用，对你有所帮助，欢迎打赏支持本项目，请作者喝杯奶茶可乐哦。

@@ -22,14 +22,11 @@ use Bhp\Http\HttpClient;
 use Bhp\Http\HttpResponse;
 use Bhp\Http\RequestOptions;
 use Bhp\Log\Log;
-use Bhp\Notice\Notice;
 use Bhp\Runtime\AppContext;
-use Bhp\Runtime\Runtime;
-use Bhp\Util\DesignPattern\SingleTon;
 use Bhp\Util\Exceptions\MethodNotFoundException;
+use Bhp\Util\Exceptions\RequestException;
 use Bhp\Util\Exceptions\ResponseEmptyException;
 use Bhp\Util\Fake\Fake;
-use Bhp\Util\AppTerminator;
 use Exception;
 use RuntimeException;
 use Throwable;
@@ -45,17 +42,19 @@ use Throwable;
  * @method static putResponse(string $os, string $url, array $params = [], array $headers = [], float $timeout = 30.0)
  * @method static putJson(?bool $associative, string $os, string $url, array $params = [], array $headers = [], float $timeout = 30.0)
  */
-class Request extends SingleTon
+class Request
 {
-    /**
-     * @var array
-     */
-    protected array $caches;
+    private static ?self $current = null;
 
     /**
      * @var array
      */
-    protected array $retry_times;
+    protected array $caches = [];
+
+    /**
+     * @var array
+     */
+    protected array $retry_attempts;
 
     /**
      * @var float
@@ -68,15 +67,24 @@ class Request extends SingleTon
     protected ?string $buvid = null;
 
     /**
+     * @param HttpClient $httpClient
+     * @param AppContext $context
      * @param int $min_rt
      * @param int $max_rt
      * @param float $timeout
      * @return void
      */
-    public function init(int $min_rt = 0, int $max_rt = 40, float $timeout = 30.0): void
-    {
-        Cache::initCache();
-        $this->retry_times = range($min_rt, $max_rt);
+    public function __construct(
+        protected readonly HttpClient $httpClient,
+        protected readonly AppContext $context,
+        protected readonly Cache $cache,
+        int $min_rt = 0,
+        int $max_rt = 40,
+        float $timeout = 30.0,
+    ) {
+        self::$current = $this;
+        $this->cache->initializeScope();
+        $this->retry_attempts = range($min_rt, $max_rt);
         $this->timeout = $timeout;
     }
 
@@ -85,7 +93,150 @@ class Request extends SingleTon
      */
     public static function getBuvid(): string
     {
-        return self::getInstance()->buvid;
+        return (string)(self::service()->buvid ?? '');
+    }
+
+    public function buvidValue(): string
+    {
+        if ($this->buvid === null) {
+            $this->buvid = ($tmp = $this->cache->pull('buvid')) ? $tmp : Fake::buvid();
+            $this->cache->put('buvid', $this->buvid);
+        }
+
+        return (string)$this->buvid;
+    }
+
+    public static function auth(string $key): string
+    {
+        return self::service()->context->auth($key);
+    }
+
+    public static function csrf(): string
+    {
+        return self::service()->context->csrf();
+    }
+
+    public function csrfValue(): string
+    {
+        return $this->context->csrf();
+    }
+
+    public static function uid(): string
+    {
+        return self::service()->context->uid();
+    }
+
+    public function uidValue(): string
+    {
+        return $this->context->uid();
+    }
+
+    public static function sid(): string
+    {
+        return self::service()->context->sid();
+    }
+
+    public function sidValue(): string
+    {
+        return $this->context->sid();
+    }
+
+    public static function config(string $key, mixed $default = null, string $type = 'default'): mixed
+    {
+        return self::service()->context->config($key, $default, $type);
+    }
+
+    public static function device(string $key, mixed $default = null, string $type = 'default'): mixed
+    {
+        return self::service()->context->device($key, $default, $type);
+    }
+
+    public static function signAndroid(array $payload): array
+    {
+        return self::service()->signAndroidPayload($payload);
+    }
+
+    public static function signLogin(array $payload): array
+    {
+        return self::service()->signLoginPayload($payload);
+    }
+
+    public static function signTv(array $payload): array
+    {
+        return self::service()->signTvPayload($payload);
+    }
+
+    public static function signCommon(array $payload, bool $includeStatistics = false): array
+    {
+        return self::service()->signCommonPayload($payload, $includeStatistics);
+    }
+
+    public function signAndroidPayload(array $payload): array
+    {
+        $appKey = base64_decode((string)$this->context->device('app.bili_a.app_key_n'));
+        $appSecret = base64_decode((string)$this->context->device('app.bili_a.secret_key_n'));
+        $default = [
+            'access_key' => $this->context->auth('access_token'),
+            'actionKey' => 'appkey',
+            'appkey' => $appKey,
+            'build' => $this->context->device('app.bili_a.build'),
+            'channel' => $this->context->device('app.bili_a.channel'),
+            'device' => $this->context->device('app.bili_a.device'),
+            'mobi_app' => $this->context->device('app.bili_a.mobi_app'),
+            'platform' => $this->context->device('app.bili_a.platform'),
+            'c_locale' => 'zh_CN',
+            's_locale' => 'zh_CN',
+            'disable_rcmd' => '0',
+            'ts' => time(),
+        ];
+
+        return self::signPayload(array_merge($payload, $default), (string)$appSecret);
+    }
+
+    public function signLoginPayload(array $payload): array
+    {
+        return match ((int)$this->context->config('login_mode.mode')) {
+            2, 1 => $this->signAndroidPayload($payload),
+            3 => $this->signTvPayload($payload),
+            default => $this->signCommonPayload($payload),
+        };
+    }
+
+    public function signTvPayload(array $payload): array
+    {
+        $appKey = base64_decode((string)$this->context->device('app.bili_t.app_key'));
+        $appSecret = base64_decode((string)$this->context->device('app.bili_t.secret_key'));
+        $default = [
+            'appkey' => $appKey,
+            'local_id' => 0,
+            'ts' => time(),
+        ];
+
+        return self::signPayload(array_merge($payload, $default), (string)$appSecret);
+    }
+
+    public function signCommonPayload(array $payload, bool $includeStatistics = false): array
+    {
+        $appKey = base64_decode((string)$this->context->device('app.bili_a.app_key'));
+        $appSecret = base64_decode((string)$this->context->device('app.bili_a.secret_key'));
+        $default = [
+            'access_key' => $this->context->auth('access_token'),
+            'actionKey' => 'appkey',
+            'appkey' => $appKey,
+            'build' => $this->context->device('app.bili_a.build'),
+            'device' => $this->context->device('app.bili_a.device'),
+            'mobi_app' => $this->context->device('app.bili_a.mobi_app'),
+            'platform' => $this->context->device('app.bili_a.platform'),
+            'c_locale' => 'zh_CN',
+            's_locale' => 'zh_CN',
+            'disable_rcmd' => '0',
+            'ts' => time(),
+        ];
+        if ($includeStatistics) {
+            $default['statistics'] = $this->context->device('app.bili_a.statistics');
+        }
+
+        return self::signPayload(array_merge($payload, $default), (string)$appSecret);
     }
 
 
@@ -124,8 +275,8 @@ class Request extends SingleTon
     {
         // 从缓存中加载 如果存在就赋值 否则默认值
         if (is_null($this->buvid)) {
-            $this->buvid = ($tmp = Cache::get('buvid')) ? $tmp : Fake::buvid();
-            Cache::set('buvid', $this->buvid);
+            $this->buvid = ($tmp = $this->cache->pull('buvid')) ? $tmp : Fake::buvid();
+            $this->cache->put('buvid', $this->buvid);
         }
         //
         $app_headers = [
@@ -213,31 +364,49 @@ class Request extends SingleTon
         $options = (array)$this->getRequest($request_id, 'options');
         $requestOptions = $this->toHttpRequestOptions($options);
         $classifier = new RequestFailureClassifier();
+        $lastException = null;
+        $lastCategory = RequestException::CATEGORY_UNKNOWN;
+        $retryCount = 0;
 
-        foreach ($this->retry_times as $retry) {
+        foreach ($this->retry_attempts as $retry) {
+            $retryCount++;
             try {
-                $response = HttpClient::getInstance()->send($method, $url, $requestOptions);
+                $response = $this->httpClient->send($method, $url, $requestOptions);
                 if ($response->getBody() === '' && $requestOptions->sink === null) {
                     throw new ResponseEmptyException('Value IsEmpty');
                 }
 
                 return $response;
             } catch (ResponseEmptyException|Exception $e) {
-                $category = $classifier->classify($e);
-                Log::warning("Target -> URL: {$url} METHOD: {$method}");
-                Log::warning("HTTP -> RETRY: {$retry} CATEGORY: {$category} ERROR: {$e->getMessage()} ERRNO: {$e->getCode()} STATUS: Waiting for recovery!");
+                $lastException = $e;
+                $lastCategory = $classifier->classify($e);
+                $this->context->log()->recordWarning("Target -> URL: {$url} METHOD: {$method}");
+                $this->context->log()->recordWarning("HTTP -> RETRY: {$retry} CATEGORY: {$lastCategory} ERROR: {$e->getMessage()} ERRNO: {$e->getCode()} STATUS: Waiting for recovery!");
             } catch (Throwable $throwable) {
-                $exception = new RuntimeException($throwable->getMessage(), (int)$throwable->getCode(), $throwable);
-                $category = $classifier->classifyMessage($throwable->getMessage());
-                Log::warning("Target -> URL: {$url} METHOD: {$method}");
-                Log::warning("HTTP -> RETRY: {$retry} CATEGORY: {$category} ERROR: {$exception->getMessage()} ERRNO: {$exception->getCode()} STATUS: Waiting for recovery!");
+                $lastException = new RuntimeException($throwable->getMessage(), (int)$throwable->getCode(), $throwable);
+                $lastCategory = $classifier->classifyMessage($throwable->getMessage());
+                $this->context->log()->recordWarning("Target -> URL: {$url} METHOD: {$method}");
+                $this->context->log()->recordWarning("HTTP -> RETRY: {$retry} CATEGORY: {$lastCategory} ERROR: {$lastException->getMessage()} ERRNO: {$lastException->getCode()} STATUS: Waiting for recovery!");
             }
-
-            sleep(15);
         }
 
-        Notice::push('network_error','客户端出现网络波动或异常错误，已经尝试重试多次，但是依然无法恢复，请检查网络是否正常！');
-        AppTerminator::fail('网络异常，超出最大尝试次数，退出程序~');
+        $requestExceptionMessage = $lastException instanceof Exception
+            ? sprintf('网络异常，重试 %d 次后仍失败: %s', $retryCount, $lastException->getMessage())
+            : sprintf('网络异常，重试 %d 次后仍失败', $retryCount);
+        $requestExceptionId = $lastException instanceof RequestException && $lastException->getRequestId() !== ''
+            ? $lastException->getRequestId()
+            : $request_id;
+
+        throw new RequestException(
+            $requestExceptionMessage,
+            $method,
+            $url,
+            (int)($lastException?->getCode() ?? 0),
+            $lastException,
+            $lastCategory,
+            $requestExceptionId,
+            $retryCount,
+        );
     }
 
     /**
@@ -251,25 +420,7 @@ class Request extends SingleTon
      */
     protected static function _getResponse(string $os, string $url, array $params = [], array $headers = [], float $timeout = 30.0): HttpResponse
     {
-        //
-        $rid = self::getInstance()->startRequest();
-        //
-        Log::debug("[GET#$rid] $url ", $params);
-        //
-        $payload['query'] = count($params) ? $params : [];
-        //
-        $response = self::getInstance()
-            ->withUrl($rid, $url)
-            ->withMethod($rid, 'get')
-            ->withHeaders($rid, $os, $headers)
-            ->withOptions($rid, $payload, $timeout)
-            ->handle($rid);
-        //
-        self::getInstance()->stopRequest($rid);
-        //
-        Log::debug("[GET#$rid] " . $response->getBody());
-        //
-        return $response;
+        return self::service()->getResponseInstance($os, $url, $params, $headers, $timeout);
     }
 
     /**
@@ -279,8 +430,7 @@ class Request extends SingleTon
      */
     protected static function _get(mixed ...$params): string
     {
-        $response = self::getResponse(...$params);
-        return (string)$response->getBody();
+        return self::service()->getText(...$params);
     }
 
     /**
@@ -294,25 +444,7 @@ class Request extends SingleTon
      */
     protected static function _postResponse($os, $url, array $params = [], array $headers = [], float $timeout = 30.0): HttpResponse
     {
-        //
-        $rid = self::getInstance()->startRequest();
-        //
-        Log::debug("[POST#$rid] $url ", $params);
-        //
-        $payload['form_params'] = count($params) ? $params : [];
-        //
-        $response = self::getInstance()
-            ->withUrl($rid, $url)
-            ->withMethod($rid, 'post')
-            ->withHeaders($rid, $os, $headers)
-            ->withOptions($rid, $payload, $timeout)
-            ->handle($rid);
-        //
-        self::getInstance()->stopRequest($rid);
-        //
-        Log::debug("[POST#$rid] " . $response->getBody());
-        //
-        return $response;
+        return self::service()->postResponseInstance($os, $url, $params, $headers, $timeout);
     }
 
     /**
@@ -322,8 +454,21 @@ class Request extends SingleTon
      */
     protected static function _post(mixed ...$params): string
     {
-        $response = self::postResponse(...$params);
-        return (string)$response->getBody();
+        return self::service()->postText(...$params);
+    }
+
+    /**
+     * POST JSON Body
+     * @param string $os
+     * @param string $url
+     * @param array $params
+     * @param array $headers
+     * @param float $timeout
+     * @return string
+     */
+    protected static function _postJsonBody(string $os, string $url, array $params = [], array $headers = [], float $timeout = 30.0): string
+    {
+        return self::service()->postJsonBodyText($os, $url, $params, $headers, $timeout);
     }
 
     /**
@@ -337,25 +482,7 @@ class Request extends SingleTon
      */
     protected static function _putResponse($os, $url, array $params = [], array $headers = [], float $timeout = 30.0): HttpResponse
     {
-        //
-        $rid = self::getInstance()->startRequest();
-        //
-        Log::debug("[PUT#$rid] $url ", $params);
-        //
-        $payload['json'] = count($params) ? $params : [];
-        //
-        $response = self::getInstance()
-            ->withUrl($rid, $url)
-            ->withMethod($rid, 'post')
-            ->withHeaders($rid, $os, $headers)
-            ->withOptions($rid, $payload, $timeout)
-            ->handle($rid);
-        //
-        self::getInstance()->stopRequest($rid);
-        //
-        Log::debug("[PUT#$rid] " . $response->getBody());
-        //
-        return $response;
+        return self::service()->putResponseInstance($os, $url, $params, $headers, $timeout);
     }
 
     /**
@@ -365,8 +492,7 @@ class Request extends SingleTon
      */
     protected static function _put(mixed ...$params): string
     {
-        $response = self::putResponse(...$params);
-        return (string)$response->getBody();
+        return self::service()->putText(...$params);
     }
 
     /**
@@ -399,47 +525,8 @@ class Request extends SingleTon
      */
     public static function single(string $method, string $url, array $payload = [], array $headers = [], int $timeout = 10, bool $quiet = false): bool|string|null
     {
-        Log::debug("[SINGLE] $url ", $payload);
-        if ($url === '') {
-            return null;
-        }
-
-        $options = new RequestOptions();
-        $options->headers = $headers;
-        $options->timeout = (float)$timeout;
-        $options->quiet = $quiet;
-
-        $normalizedMethod = strtolower($method);
-        if ($normalizedMethod === 'get') {
-            $options->query = $payload;
-        } else {
-            $options->formParams = $payload;
-        }
-
-        try {
-            $response = HttpClient::getInstance()->send($method, $url, $options);
-            $result = $response->getBody();
-            Log::debug("[SINGLE] $result");
-
-            return $result !== '' ? $result : null;
-        } catch (Throwable $throwable) {
-            if ($quiet) {
-                Log::debug("[SINGLE] {$throwable->getMessage()}");
-            } else {
-                Log::warning("[SINGLE] {$throwable->getMessage()}");
-            }
-
-            return null;
-        }
+        return self::service()->sendSingle($method, $url, $payload, $headers, $timeout, $quiet);
     }
-
-    // postAsync  getAsync
-    protected static function multiple(string $os, array $tasks = [], float $timeout = 30.0)
-    {
-
-
-    }
-
 
     public function standardizeParam($param): array
     {
@@ -497,6 +584,10 @@ class Request extends SingleTon
      */
     protected function getRequest(string $request_id, string $key): mixed
     {
+        if (!isset($this->caches[$request_id]) || !array_key_exists($key, $this->caches[$request_id])) {
+            throw new RuntimeException("Missing request cache entry {$request_id}.{$key}");
+        }
+
         return $this->caches[$request_id][$key];
     }
 
@@ -521,26 +612,164 @@ class Request extends SingleTon
      */
     public static function headers($os, $url, array $params = [], array $headers = [], float $timeout = 30.0): array
     {
-        //
-        $rid = self::getInstance()->startRequest();
-        //
-        Log::debug("[HEADERS#$rid] $url ", $params);
-        //
+        return self::service()->fetchHeaders($os, $url, $params, $headers, $timeout);
+    }
+
+    public function getResponseInstance(string $os, string $url, array $params = [], array $headers = [], float $timeout = 30.0): HttpResponse
+    {
+        $rid = $this->startRequest();
+        $this->context->log()->recordDebug("[GET#$rid] $url ", $params);
+        $payload['query'] = count($params) ? $params : [];
+        try {
+            $response = $this
+                ->withUrl($rid, $url)
+                ->withMethod($rid, 'get')
+                ->withHeaders($rid, $os, $headers)
+                ->withOptions($rid, $payload, $timeout)
+                ->handle($rid);
+
+            $this->context->log()->recordDebug("[GET#$rid] " . $response->getBody());
+
+            return $response;
+        } finally {
+            $this->stopRequest($rid);
+        }
+    }
+
+    public function getText(string $os, string $url, array $params = [], array $headers = [], float $timeout = 30.0): string
+    {
+        return (string)$this->getResponseInstance($os, $url, $params, $headers, $timeout)->getBody();
+    }
+
+    public function postResponseInstance(string $os, string $url, array $params = [], array $headers = [], float $timeout = 30.0): HttpResponse
+    {
+        $rid = $this->startRequest();
+        $this->context->log()->recordDebug("[POST#$rid] $url ", $params);
+        $payload['form_params'] = count($params) ? $params : [];
+        try {
+            $response = $this
+                ->withUrl($rid, $url)
+                ->withMethod($rid, 'post')
+                ->withHeaders($rid, $os, $headers)
+                ->withOptions($rid, $payload, $timeout)
+                ->handle($rid);
+
+            $this->context->log()->recordDebug("[POST#$rid] " . $response->getBody());
+
+            return $response;
+        } finally {
+            $this->stopRequest($rid);
+        }
+    }
+
+    public function postText(string $os, string $url, array $params = [], array $headers = [], float $timeout = 30.0): string
+    {
+        return (string)$this->postResponseInstance($os, $url, $params, $headers, $timeout)->getBody();
+    }
+
+    public function postJsonBodyText(string $os, string $url, array $params = [], array $headers = [], float $timeout = 30.0): string
+    {
+        $rid = $this->startRequest();
+        $this->context->log()->recordDebug("[POST_JSON#$rid] $url ", $params);
+        $payload['json'] = count($params) ? $params : [];
+        try {
+            $response = $this
+                ->withUrl($rid, $url)
+                ->withMethod($rid, 'post')
+                ->withHeaders($rid, $os, $headers)
+                ->withOptions($rid, $payload, $timeout)
+                ->handle($rid);
+
+            $this->context->log()->recordDebug("[POST_JSON#$rid] " . $response->getBody());
+
+            return (string)$response->getBody();
+        } finally {
+            $this->stopRequest($rid);
+        }
+    }
+
+    public function putResponseInstance(string $os, string $url, array $params = [], array $headers = [], float $timeout = 30.0): HttpResponse
+    {
+        $rid = $this->startRequest();
+        $this->context->log()->recordDebug("[PUT#$rid] $url ", $params);
+        $payload['json'] = count($params) ? $params : [];
+        try {
+            $response = $this
+                ->withUrl($rid, $url)
+                ->withMethod($rid, 'put')
+                ->withHeaders($rid, $os, $headers)
+                ->withOptions($rid, $payload, $timeout)
+                ->handle($rid);
+
+            $this->context->log()->recordDebug("[PUT#$rid] " . $response->getBody());
+
+            return $response;
+        } finally {
+            $this->stopRequest($rid);
+        }
+    }
+
+    public function putText(string $os, string $url, array $params = [], array $headers = [], float $timeout = 30.0): string
+    {
+        return (string)$this->putResponseInstance($os, $url, $params, $headers, $timeout)->getBody();
+    }
+
+    public function sendSingle(string $method, string $url, array $payload = [], array $headers = [], int $timeout = 10, bool $quiet = false): bool|string|null
+    {
+        $this->context->log()->recordDebug("[SINGLE] $url ", $payload);
+        if ($url === '') {
+            return null;
+        }
+
+        $options = new RequestOptions();
+        $options->headers = $headers;
+        $options->timeout = (float)$timeout;
+        $options->quiet = $quiet;
+
+        $normalizedMethod = strtolower($method);
+        if ($normalizedMethod === 'get') {
+            $options->query = $payload;
+        } else {
+            $options->formParams = $payload;
+        }
+
+        try {
+            $response = $this->httpClient->send($method, $url, $options);
+            $result = $response->getBody();
+            $this->context->log()->recordDebug("[SINGLE] $result");
+
+            return $result !== '' ? $result : null;
+        } catch (Throwable $throwable) {
+            if ($quiet) {
+                $this->context->log()->recordDebug("[SINGLE] {$throwable->getMessage()}");
+            } else {
+                $this->context->log()->recordWarning("[SINGLE] {$throwable->getMessage()}");
+            }
+
+            return null;
+        }
+    }
+
+    public function fetchHeaders(string $os, string $url, array $params = [], array $headers = [], float $timeout = 30.0): array
+    {
+        $rid = $this->startRequest();
+        $this->context->log()->recordDebug("[HEADERS#$rid] $url ", $params);
         $payload['query'] = count($params) ? $params : [];
         $payload['allow_redirects'] = false;
-        //
-        $response = self::getInstance()
-            ->withUrl($rid, $url)
-            ->withMethod($rid, 'get')
-            ->withHeaders($rid, $os, $headers)
-            ->withOptions($rid, $payload, $timeout)
-            ->handle($rid);
-        //
-        self::getInstance()->stopRequest($rid);
-        //
-        Log::debug("[HEADERS#$rid] " . $response->getBody());
-        //
-        return $response->getHeaders();
+        try {
+            $response = $this
+                ->withUrl($rid, $url)
+                ->withMethod($rid, 'get')
+                ->withHeaders($rid, $os, $headers)
+                ->withOptions($rid, $payload, $timeout)
+                ->handle($rid);
+
+            $this->context->log()->recordDebug("[HEADERS#$rid] " . $response->getBody());
+
+            return $response->getHeaders();
+        } finally {
+            $this->stopRequest($rid);
+        }
     }
 
     /**
@@ -548,11 +777,11 @@ class Request extends SingleTon
      */
     public function diagnosticsSummary(): array
     {
-        $retryAttempts = count($this->retry_times);
-        $firstRetry = $retryAttempts > 0 ? (string)$this->retry_times[0] : '0';
-        $lastRetry = $retryAttempts > 0 ? (string)$this->retry_times[$retryAttempts - 1] : '0';
+        $retryAttempts = count($this->retry_attempts);
+        $firstRetry = $retryAttempts > 0 ? (string)$this->retry_attempts[0] : '0';
+        $lastRetry = $retryAttempts > 0 ? (string)$this->retry_attempts[$retryAttempts - 1] : '0';
         $retrySequence = $retryAttempts > 1 ? $firstRetry . '..' . $lastRetry : $lastRetry;
-        $buvidCached = $this->buvid !== null || Cache::get('buvid') !== false;
+        $buvidCached = $this->buvid !== null || $this->cache->pull('buvid') !== false;
 
         return [
             'timeout_seconds' => (string)$this->timeout,
@@ -567,6 +796,18 @@ class Request extends SingleTon
             'governance_max_requests_per_host' => (string)$this->context()->config('request_governance.max_requests_per_host', 60, 'int'),
             'governance_cooldown_seconds' => (string)$this->context()->config('request_governance.cooldown_seconds', 30, 'int'),
         ];
+    }
+
+    protected static function signPayload(array $payload, string $appSecret): array
+    {
+        if (isset($payload['sign'])) {
+            unset($payload['sign']);
+        }
+        ksort($payload);
+        $data = http_build_query($payload);
+        $payload['sign'] = md5($data . $appSecret);
+
+        return $payload;
     }
 
     protected function toHttpRequestOptions(array $options): RequestOptions
@@ -587,7 +828,16 @@ class Request extends SingleTon
 
     protected function context(): AppContext
     {
-        return Runtime::getInstance()->context();
+        return $this->context;
+    }
+
+    private static function service(): self
+    {
+        if (self::$current instanceof self) {
+            return self::$current;
+        }
+
+        throw new RuntimeException('Request has not been bootstrapped.');
     }
 
 }

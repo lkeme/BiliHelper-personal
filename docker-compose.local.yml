@@ -17,6 +17,4 @@ services:
       - "50001:50001"
     environment:
       BRANCH: dev
-      AUTO_UPDATE: 0
-      MIRRORS: 0
       CAPTCHA: 1

@@ -1,102 +1,81 @@
 <?php declare(strict_types=1);
 
-/**
- *  Website: https://mudew.com/
- *  Author: Lkeme
- *  License: The MIT License
- *  Email: Useri@live.cn
- *  Updated: 2018 ~ 2026
- *
- *   _____   _   _       _   _   _   _____   _       _____   _____   _____
- *  |  _  \ | | | |     | | | | | | | ____| | |     |  _  \ | ____| |  _  \ &   ／l、
- *  | |_| | | | | |     | | | |_| | | |__   | |     | |_| | | |__   | |_| |   （ﾟ､ ｡ ７
- *  |  _  { | | | |     | | |  _  | |  __|  | |     |  ___/ |  __|  |  _  /  　 \、ﾞ ~ヽ   *
- *  | |_| | | | | |___  | | | | | | | |___  | |___  | |     | |___  | | \ \   　じしf_, )ノ
- *  |_____/ |_| |_____| |_| |_| |_| |_____| |_____| |_|     |_____| |_|  \_\
- */
-
 namespace Bhp\Api\Api\Pgc\Activity\Score;
 
-use Bhp\Device\Device;
+use Bhp\Api\Support\ApiJson;
 use Bhp\Request\Request;
-use Bhp\Sign\Sign;
-use Bhp\User\User;
+use Throwable;
 
 class ApiTask
 {
     /**
-     * @var array|string[]
+     * @var array<string, string>
      */
-    protected static array $headers = [
-        'Referer' => 'https://big.bilibili.com/mobile/bigPoint/task'
+    private const HEADERS = [
+        'Referer' => 'https://big.bilibili.com/mobile/bigPoint/task',
     ];
 
+    public function __construct(
+        private readonly Request $request,
+    ) {
+    }
+
     /**
-     * 大会员签到
-     * @return array
+     * @return array<string, mixed>
      */
-    public static function sign(): array
+    public function sign(): array
     {
-        //
-        $user = User::parseCookie();
-        //
-        $url = 'https://api.bilibili.com/pgc/activity/score/task/sign2';
-        //
-        $payload = [
+        return $this->decodePost('app', 'https://api.bilibili.com/pgc/activity/score/task/sign2', $this->request->signCommonPayload([
             'disable_rcmd' => '0',
-            'buvid' => Request::getBuvid(),
-            'csrf' => $user['csrf'],
-            'statistics' => Device::getInstance()->get('app.bili_a.statistics'),
-        ];
-        //
-        $headers = array_merge([], self::$headers);
-        return \Bhp\Api\Support\ApiJson::post( 'app', $url, Sign::common($payload), $headers);
+            'buvid' => $this->request->buvidValue(),
+            'csrf' => $this->request->csrfValue(),
+        ], true), self::HEADERS, 'pgc.score.sign');
     }
 
     /**
-     * 领取任务
-     * @param string $task_code
-     * @return array
+     * @return array<string, mixed>
      */
-    public static function receive(string $task_code): array
+    public function receive(string $taskCode): array
     {
-        //
-        $user = User::parseCookie();
-        //
-        $url = 'https://api.bilibili.com/pgc/activity/score/task/receive';
-        // $url = 'https://api.bilibili.com/pgc/activity/score/task/receive/v2';
-        $payload = [
-            'taskCode' => $task_code,
-            'csrf' => $user['csrf'],
-            'statistics' => Device::getInstance()->get('app.bili_a.statistics'),
-        ];
-        $headers = array_merge([], self::$headers);
-        return \Bhp\Api\Support\ApiJson::post( 'app', $url, Sign::common($payload), $headers);
+        return $this->decodePost('app', 'https://api.bilibili.com/pgc/activity/score/task/receive', $this->request->signCommonPayload([
+            'taskCode' => $taskCode,
+            'csrf' => $this->request->csrfValue(),
+        ], true), self::HEADERS, 'pgc.score.receive');
     }
 
     /**
-     * 完成任务
-     * @param string $task_code
-     * @return array
+     * @return array<string, mixed>
      */
-    public static function complete(string $task_code): array
+    public function complete(string $taskCode): array
     {
-        //
-        $user = User::parseCookie();
-        //
-        $url = 'https://api.bilibili.com/pgc/activity/score/task/complete';
-        // $url = 'https://api.bilibili.com/pgc/activity/score/task/complete/v2';
-        $payload = [
-            'taskCode' => $task_code,
-            'csrf' => $user['csrf'],
+        return $this->decodePost('app', 'https://api.bilibili.com/pgc/activity/score/task/complete', $this->request->signCommonPayload([
+            'taskCode' => $taskCode,
+            'csrf' => $this->request->csrfValue(),
             'ts' => time(),
-            'statistics' => Device::getInstance()->get('app.bili_a.statistics'),
-        ];
-        $headers = array_merge([
-            'Content-Type' => 'application/json'
-        ], self::$headers);
-        return \Bhp\Api\Support\ApiJson::post( 'app', $url, Sign::common($payload), $headers);
+        ], true), array_merge([
+            'Content-Type' => 'application/json',
+        ], self::HEADERS), 'pgc.score.complete');
     }
 
+    /**
+     * @param array<string, mixed> $payload
+     * @param array<string, string> $headers
+     * @return array<string, mixed>
+     */
+    private function decodePost(string $os, string $url, array $payload, array $headers, string $label): array
+    {
+        try {
+            $raw = str_contains(strtolower((string)($headers['Content-Type'] ?? $headers['content-type'] ?? '')), 'application/json')
+                ? $this->request->postJsonBodyText($os, $url, $payload, $headers)
+                : $this->request->postText($os, $url, $payload, $headers);
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
+                'data' => [],
+            ];
+        }
 
+        return ApiJson::decode($raw, $label);
+    }
 }

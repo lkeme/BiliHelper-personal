@@ -17,14 +17,15 @@
 
 namespace Bhp\Log;
 
-use Bhp\Config\Config;
 use Bhp\Request\Request;
+use Bhp\Runtime\AppContext;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
-use Bhp\Util\DesignPattern\SingleTon;
 
-class Log extends SingleTon
+class Log
 {
+    private static ?self $current = null;
+
     /**
      * @var Logger|null
      */
@@ -35,14 +36,15 @@ class Log extends SingleTon
      */
     protected array $contextStacks = [];
 
+    public function __construct(
+        private readonly AppContext $context,
+    ) {
+        self::$current = $this;
+    }
+
     /**
      * @return void
      */
-    public function init(): void
-    {
-
-    }
-
     /**
      * 初始化日志服务
      * @return Logger
@@ -82,30 +84,30 @@ class Log extends SingleTon
 
         // DEBUG数据单独处理/不需要回调
         if ($level == 'DEBUG') {
-            $this->getInstance()->getLogger()->debug($message);
+            $this->getLogger()->debug($message);
             return;
         }
         // 匹配等级
         switch ($level) {
             case 'INFO':
                 $level_id = Logger::INFO;
-                $this->getInstance()->getLogger()->info($message);
+                $this->getLogger()->info($message);
                 break;
             case 'NOTICE':
                 $level_id = Logger::NOTICE;
-                $this->getInstance()->getLogger()->notice($message);
+                $this->getLogger()->notice($message);
                 break;
             case 'WARNING':
                 $level_id = Logger::WARNING;
-                $this->getInstance()->getLogger()->warning($message);
+                $this->getLogger()->warning($message);
                 break;
             case 'ERROR':
                 $level_id = Logger::ERROR;
-                $this->getInstance()->getLogger()->error($message);
+                $this->getLogger()->error($message);
                 break;
             default:
                 $level_id = Logger::CRITICAL;
-                $this->getInstance()->getLogger()->critical($message);
+                $this->getLogger()->critical($message);
                 break;
         }
         // 回调
@@ -117,13 +119,7 @@ class Log extends SingleTon
      */
     public static function withContext(array $context, callable $callback): mixed
     {
-        self::getInstance()->pushContext($context);
-
-        try {
-            return $callback();
-        } finally {
-            self::getInstance()->popContext();
-        }
+        return self::service()->withScopedContext($context, $callback);
     }
 
     /**
@@ -134,7 +130,7 @@ class Log extends SingleTon
      */
     public static function error(mixed $message, array $context = []): void
     {
-        self::getInstance()->log('ERROR', $message, $context);
+        self::service()->recordError($message, $context);
     }
 
     /**
@@ -145,7 +141,7 @@ class Log extends SingleTon
      */
     public static function warning(mixed $message, array $context = []): void
     {
-        self::getInstance()->log('WARNING', $message, $context);
+        self::service()->recordWarning($message, $context);
     }
 
     /**
@@ -156,7 +152,7 @@ class Log extends SingleTon
      */
     public static function notice(mixed $message, array $context = []): void
     {
-        self::getInstance()->log('NOTICE', $message, $context);
+        self::service()->recordNotice($message, $context);
     }
 
     /**
@@ -167,7 +163,7 @@ class Log extends SingleTon
      */
     public static function info(mixed $message, array $context = []): void
     {
-        self::getInstance()->log('INFO', $message, $context);
+        self::service()->recordInfo($message, $context);
     }
 
     /**
@@ -178,7 +174,46 @@ class Log extends SingleTon
      */
     public static function debug(mixed $message, array $context = []): void
     {
-        self::getInstance()->log('DEBUG', $message, $context);
+        self::service()->recordDebug($message, $context);
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    public function withScopedContext(array $context, callable $callback): mixed
+    {
+        $this->pushContext($context);
+
+        try {
+            return $callback();
+        } finally {
+            $this->popContext();
+        }
+    }
+
+    public function recordError(mixed $message, array $context = []): void
+    {
+        $this->log('ERROR', (string)$message, $context);
+    }
+
+    public function recordWarning(mixed $message, array $context = []): void
+    {
+        $this->log('WARNING', (string)$message, $context);
+    }
+
+    public function recordNotice(mixed $message, array $context = []): void
+    {
+        $this->log('NOTICE', (string)$message, $context);
+    }
+
+    public function recordInfo(mixed $message, array $context = []): void
+    {
+        $this->log('INFO', (string)$message, $context);
+    }
+
+    public function recordDebug(mixed $message, array $context = []): void
+    {
+        $this->log('DEBUG', (string)$message, $context);
     }
 
     /**
@@ -228,7 +263,7 @@ class Log extends SingleTon
             if ($type == 'DEBUG' && !$this->enabled('debug')) {
                 return;
             }
-            $filename = PROFILE_LOG_PATH . $this->config('login_account.username') . ".log";
+            $filename = $this->context->profileContext()->logPath() . $this->config('login_account.username') . ".log";
             $date = date('[Y-m-d H:i:s] ');
             $data = $date . ' Log.' . $type . ' ' . $message . PHP_EOL;
             file_put_contents($filename, $data, FILE_APPEND);
@@ -253,7 +288,7 @@ class Log extends SingleTon
             $url = str_replace('{level}', $level, $url);
             $url = str_replace('{message}', urlencode($message), $url);
             //
-            Request::single('get', str_replace(' ', '%20', $url));
+            $this->context->request()->sendSingle('get', str_replace(' ', '%20', $url));
         }
     }
 
@@ -319,12 +354,21 @@ class Log extends SingleTon
 
     protected function config(string $key, mixed $default = null, string $type = 'default'): mixed
     {
-        return Config::getInstance()->get($key, $default, $type);
+        return $this->context->config($key, $default, $type);
     }
 
     protected function enabled(string $key, bool $default = false): bool
     {
         return (bool)$this->config($key . '.enable', $default, 'bool');
+    }
+
+    private static function service(): self
+    {
+        if (self::$current instanceof self) {
+            return self::$current;
+        }
+
+        throw new \RuntimeException('Log has not been bootstrapped.');
     }
 
 }

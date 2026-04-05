@@ -1,56 +1,52 @@
 <?php declare(strict_types=1);
 
-/**
- *  Website: https://mudew.com/
- *  Author: Lkeme
- *  License: The MIT License
- *  Email: Useri@live.cn
- *  Updated: 2018 ~ 2026
- *
- *   _____   _   _       _   _   _   _____   _       _____   _____   _____
- *  |  _  \ | | | |     | | | | | | | ____| | |     |  _  \ | ____| |  _  \ &   ／l、
- *  | |_| | | | | |     | | | |_| | | |__   | |     | |_| | | |__   | |_| |   （ﾟ､ ｡ ７
- *  |  _  { | | | |     | | |  _  | |  __|  | |     |  ___/ |  __|  |  _  /  　 \、ﾞ ~ヽ   *
- *  | |_| | | | | |___  | | | | | | | |___  | |___  | |     | |___  | | \ \   　じしf_, )ノ
- *  |_____/ |_| |_____| |_| |_| |_| |_____| |_____| |_|     |_____| |_|  \_\
- */
-
 namespace Bhp\Api\XLive;
 
+use Bhp\Api\Support\ApiJson;
 use Bhp\Request\Request;
+use Throwable;
 
 class ApiXLiveSign
 {
-    /**
-     * 签到信息
-     * @return array
-     */
-    public static function webGetSignInfo(): array
-    {
-        $url = 'https://api.live.bilibili.com/xlive/web-ucenter/v1/sign/WebGetSignInfo';
-        $payload = [];
-        $headers = [
-            'origin' => 'https://link.bilibili.com',
-            'referer' => 'https://link.bilibili.com/p/center/index'
-        ];
-        // {"code":0,"message":"0","ttl":1,"data":{"text":"","specialText":"","status":0,"allDays":30,"curMonth":6,"curYear":2022,"curDay":4,"curDate":"2022-6-4","hadSignDays":0,"newTask":0,"signDaysList":[],"signBonusDaysList":[]}}
-        return \Bhp\Api\Support\ApiJson::get( 'pc', $url, $payload, $headers);
+    public function __construct(
+        private readonly Request $request,
+    ) {
     }
 
     /**
-     * 签到
-     * @return array
+     * @return array<string, mixed>
      */
-    public static function doSign(): array
+    public function webGetSignInfo(): array
     {
-        $url = 'https://api.live.bilibili.com/sign/doSign';
-        $url = 'https://api.live.bilibili.com/xlive/web-ucenter/v1/sign/DoSign';
-        $payload = [];
-        $headers = [
-            'origin' => 'https://link.bilibili.com',
-            'referer' => 'https://link.bilibili.com/p/center/index'
-        ];
-        // {"code":0,"message":"0","ttl":1,"data":{"text":"3000点用户经验,2根辣条","specialText":"再签到4天可以获得666银瓜子","allDays":30,"hadSignDays":1,"isBonusDay":0}}
-        return \Bhp\Api\Support\ApiJson::get( 'pc', $url, $payload, $headers);
+        return $this->decodeGet('https://api.live.bilibili.com/xlive/web-ucenter/v1/sign/WebGetSignInfo', 'xlive.sign.info');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function doSign(): array
+    {
+        return $this->decodeGet('https://api.live.bilibili.com/xlive/web-ucenter/v1/sign/DoSign', 'xlive.sign.do_sign');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function decodeGet(string $url, string $label): array
+    {
+        try {
+            $raw = $this->request->getText('pc', $url, [], [
+                'origin' => 'https://link.bilibili.com',
+                'referer' => 'https://link.bilibili.com/p/center/index',
+            ]);
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
+                'data' => [],
+            ];
+        }
+
+        return ApiJson::decode($raw, $label);
     }
 }

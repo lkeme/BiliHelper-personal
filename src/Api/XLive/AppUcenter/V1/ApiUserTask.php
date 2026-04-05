@@ -1,65 +1,75 @@
 <?php declare(strict_types=1);
 
-/**
- *  Website: https://mudew.com/
- *  Author: Lkeme
- *  License: The MIT License
- *  Email: Useri@live.cn
- *  Updated: 2018 ~ 2026
- *
- *   _____   _   _       _   _   _   _____   _       _____   _____   _____
- *  |  _  \ | | | |     | | | | | | | ____| | |     |  _  \ | ____| |  _  \ &   ／l、
- *  | |_| | | | | |     | | | |_| | | |__   | |     | |_| | | |__   | |_| |   （ﾟ､ ｡ ７
- *  |  _  { | | | |     | | |  _  | |  __|  | |     |  ___/ |  __|  |  _  /  　 \、ﾞ ~ヽ   *
- *  | |_| | | | | |___  | | | | | | | |___  | |___  | |     | |___  | | \ \   　じしf_, )ノ
- *  |_____/ |_| |_____| |_| |_| |_| |_____| |_____| |_|     |_____| |_|  \_\
- */
-
 namespace Bhp\Api\XLive\AppUcenter\V1;
 
-use Bhp\Device\Device;
+use Bhp\Api\Support\ApiJson;
 use Bhp\Request\Request;
-use Bhp\Sign\Sign;
+use Throwable;
 
 class ApiUserTask
 {
-    /**
-     * 获取任务进度
-     * @param int $up_id
-     * @return array
-     */
-    public static function getUserTaskProgress(int $up_id): array
-    {
-        $url = 'https://api.live.bilibili.com/xlive/app-ucenter/v1/userTask/GetUserTaskProgress';
-        $payload = [
-            'target_id' => $up_id,
-            'statistics' => Device::getInstance()->get('app.bili_a.statistics'),
-        ];
-
-        // 已领取 {"code":0,"message":"0","ttl":1,"data":{"is_surplus":1,"status":3,"progress":5,"target":5,"wallet":{"gold":100,"silver":130},"linked_actions_progress":null}}
-        // 可领取 {"code":0,"message":"0","ttl":1,"data":{"is_surplus":1,"status":2,"progress":5,"target":5,"wallet":{"gold":0,"silver":130},"linked_actions_progress":null}}
-        // 进行中 {"code":0,"message":"0","ttl":1,"data":{"is_surplus":1,"status":1,"progress":4,"target":5,"wallet":{"gold":0,"silver":130},"linked_actions_progress":null}}
-        // 未开始 {"code":0,"message":"0","ttl":1,"data":{"is_surplus":1,"status":0,"progress":0,"target":5,"wallet":{"gold":0,"silver":130},"linked_actions_progress":null}}
-        return \Bhp\Api\Support\ApiJson::get( 'app', $url, Sign::common($payload));
+    public function __construct(
+        private readonly Request $request,
+    ) {
     }
 
-
     /**
-     * 获取任务奖品
-     * @param int $up_id
-     * @return array
+     * @return array<string, mixed>
      */
-    public static function userTaskReceiveRewards(int $up_id): array
+    public function getUserTaskProgress(int $upId): array
     {
-        $url = 'https://api.live.bilibili.com/xlive/app-ucenter/v1/userTask/UserTaskReceiveRewards';
-        $payload = [
-            'target_id' => $up_id,
-            'statistics' => Device::getInstance()->get('app.bili_a.statistics'),
-        ];
-
-        // {"code":0,"message":"0","ttl":1,"data":{"num":1}}
-        return \Bhp\Api\Support\ApiJson::post( 'app', $url, Sign::common($payload));
+        return $this->decodeGet('app', 'https://api.live.bilibili.com/xlive/app-ucenter/v1/userTask/GetUserTaskProgress', $this->request->signCommonPayload([
+            'target_id' => $upId,
+        ], true), [], 'xlive.user_task.progress');
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function userTaskReceiveRewards(int $upId): array
+    {
+        return $this->decodePost('app', 'https://api.live.bilibili.com/xlive/app-ucenter/v1/userTask/UserTaskReceiveRewards', $this->request->signCommonPayload([
+            'target_id' => $upId,
+        ], true), [], 'xlive.user_task.receive_rewards');
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @param array<string, string> $headers
+     * @return array<string, mixed>
+     */
+    private function decodeGet(string $os, string $url, array $payload, array $headers, string $label): array
+    {
+        try {
+            $raw = $this->request->getText($os, $url, $payload, $headers);
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
+                'data' => [],
+            ];
+        }
+
+        return ApiJson::decode($raw, $label);
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @param array<string, string> $headers
+     * @return array<string, mixed>
+     */
+    private function decodePost(string $os, string $url, array $payload, array $headers, string $label): array
+    {
+        try {
+            $raw = $this->request->postText($os, $url, $payload, $headers);
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
+                'data' => [],
+            ];
+        }
+
+        return ApiJson::decode($raw, $label);
+    }
 }
-

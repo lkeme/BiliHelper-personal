@@ -6,6 +6,11 @@ use Amp\DeferredCancellation;
 
 class BurstRequest
 {
+    public function __construct(
+        private readonly HttpClient $httpClient,
+    ) {
+    }
+
     /**
      * @param array<int, array{method?: string, url: string, options?: RequestOptions}> $requests
      * @param callable(HttpResponse): bool|null $successPredicate
@@ -68,7 +73,7 @@ class BurstRequest
             ];
         }
 
-        $responses = HttpClient::getInstance()->sendConcurrent($prepared, $burstSize);
+        $responses = $this->httpClient->sendConcurrent($prepared, $burstSize);
 
         if ($successPredicate !== null) {
             foreach ($responses as $response) {

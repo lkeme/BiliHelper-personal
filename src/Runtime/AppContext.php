@@ -2,13 +2,16 @@
 
 namespace Bhp\Runtime;
 
+use Bhp\App\ServiceContainer;
 use Bhp\Cache\Cache;
 use Bhp\Config\Config;
 use Bhp\Device\Device;
 use Bhp\Env\Env;
 use Bhp\FilterWords\FilterWords;
 use Bhp\Http\HttpClient;
+use Bhp\Log\Log;
 use Bhp\Profile\ProfileContext;
+use Bhp\Request\Request;
 use Bhp\User\UserProfileService;
 
 class AppContext
@@ -29,24 +32,35 @@ class AppContext
     ];
 
     private ?ProfileContext $profileContext = null;
+    private ?ServiceContainer $services = null;
+    private ?Cache $cacheService = null;
     private ?Config $configService = null;
     private ?Device $deviceService = null;
     private ?FilterWords $filterWordsService = null;
     private ?Env $envService = null;
     private ?UserProfileService $userProfileService = null;
+    private ?HttpClient $httpClient = null;
+    private ?Log $logService = null;
+    private ?Request $requestService = null;
 
     public function __construct(
-        ?ProfileContext $profileContext = null,
+        ProfileContext $profileContext,
+        ServiceContainer $services,
+        ?Cache $cacheService = null,
         ?Config $configService = null,
         ?Device $deviceService = null,
         ?FilterWords $filterWordsService = null,
         ?Env $envService = null,
+        ?HttpClient $httpClient = null,
     ) {
         $this->profileContext = $profileContext;
+        $this->services = $services;
+        $this->cacheService = $cacheService;
         $this->configService = $configService;
         $this->deviceService = $deviceService;
         $this->filterWordsService = $filterWordsService;
         $this->envService = $envService;
+        $this->httpClient = $httpClient;
     }
 
     public function appRoot(): string
@@ -61,13 +75,27 @@ class AppContext
 
     public function httpClient(): HttpClient
     {
-        return HttpClient::getInstance();
+        return $this->httpClient ??= $this->service(HttpClient::class);
+    }
+
+    public function log(): Log
+    {
+        return $this->logService ??= $this->service(Log::class);
+    }
+
+    public function request(): Request
+    {
+        return $this->requestService ??= $this->service(Request::class);
+    }
+
+    public function cache(): Cache
+    {
+        return $this->cacheService();
     }
 
     public function config(string $key, mixed $default = null, string $type = 'default'): mixed
     {
-        return $this->configService()?->get($key, $default, $type)
-            ?? Config::getInstance()->get($key, $default, $type);
+        return $this->configService()->get($key, $default, $type);
     }
 
     public function enabled(string $key, bool $default = false): bool
@@ -77,64 +105,65 @@ class AppContext
 
     public function device(string $key, mixed $default = null, string $type = 'default'): mixed
     {
-        return $this->deviceService()?->get($key, $default, $type)
-            ?? Device::getInstance()->get($key, $default, $type);
+        return $this->deviceService()->get($key, $default, $type);
     }
 
     public function filterWords(string $key, mixed $default = null, string $type = 'default'): mixed
     {
-        return $this->filterWordsService()?->get($key, $default, $type)
-            ?? FilterWords::getInstance()->get($key, $default, $type);
+        return $this->filterWordsService()->get($key, $default, $type);
     }
 
     public function appName(): string
     {
-        return $this->envService !== null ? $this->envService->app_name : Env::getInstance()->app_name;
+        return $this->envService()->app_name;
     }
 
     public function appVersion(): string
     {
-        return $this->envService !== null ? $this->envService->app_version : Env::getInstance()->app_version;
+        return $this->envService()->app_version;
     }
 
     public function appSource(): string
     {
-        return $this->envService !== null ? $this->envService->app_source : Env::getInstance()->app_source;
+        return $this->envService()->app_source;
     }
 
     public function setConfig(string $key, mixed $value): void
     {
-        if ($this->configService !== null) {
-            $this->configService->set($key, $value);
-            return;
-        }
-
-        Config::getInstance()->set($key, $value);
+        $this->configService()->set($key, $value);
     }
 
-    protected function configService(): ?Config
+    protected function configService(): Config
     {
-        return $this->configService;
+        return $this->configService ??= $this->service(Config::class);
     }
 
-    protected function deviceService(): ?Device
+    protected function cacheService(): Cache
     {
-        return $this->deviceService;
+        return $this->cacheService ??= $this->service(Cache::class);
     }
 
-    protected function filterWordsService(): ?FilterWords
+    protected function deviceService(): Device
     {
-        return $this->filterWordsService;
+        return $this->deviceService ??= $this->service(Device::class);
     }
 
-    protected function envService(): ?Env
+    protected function filterWordsService(): FilterWords
     {
-        return $this->envService;
+        return $this->filterWordsService ??= $this->service(FilterWords::class);
+    }
+
+    protected function envService(): Env
+    {
+        return $this->envService ??= $this->service(Env::class);
     }
 
     public function userProfileService(): UserProfileService
     {
-        return $this->userProfileService ??= new UserProfileService();
+        return $this->userProfileService ??= new UserProfileService(
+            $this->log(),
+            new \Bhp\Api\Vip\ApiUser($this->request()),
+        );
     }
 
     public function auth(string $key): string
@@ -143,8 +172,8 @@ class AppContext
             return '';
         }
 
-        Cache::initCache('Login');
-        $value = Cache::get('auth_' . $key, 'Login');
+        $this->cacheService()->initializeScope('Login');
+        $value = $this->cacheService()->pull('auth_' . $key, 'Login');
 
         if (is_string($value)) {
             return $value;
@@ -157,15 +186,30 @@ class AppContext
         return '';
     }
 
+    public function csrf(): string
+    {
+        return $this->authCookieField('/(?:^|;\s*)bili_jct=([^;]{32})/');
+    }
+
+    public function uid(): string
+    {
+        return $this->authCookieField('/(?:^|;\s*)DedeUserID=(\d+)/');
+    }
+
+    public function sid(): string
+    {
+        return $this->authCookieField('/(?:^|;\s*)DedeUserID__ckMd5=([^;]{16})/');
+    }
+
     public function setAuth(string $key, mixed $value): void
     {
         if (!in_array($key, self::AUTH_FILLABLE, true)) {
             return;
         }
 
-        Cache::initCache('Login');
+        $this->cacheService()->initializeScope('Login');
         $normalized = is_string($value) ? $value : (($value === null || $value === false) ? '' : (string)$value);
-        Cache::set('auth_' . $key, $normalized, 'Login');
+        $this->cacheService()->put('auth_' . $key, $normalized, 'Login');
     }
 
     /**
@@ -206,10 +250,6 @@ class AppContext
 
     public function profileContext(): ProfileContext
     {
-        if ($this->profileContext === null) {
-            $this->profileContext = ProfileContext::fromRuntimeConstants();
-        }
-
         return $this->profileContext;
     }
 
@@ -233,4 +273,15 @@ class AppContext
         return $this->profileContext()->cachePath();
     }
 
+    protected function service(string $id): mixed
+    {
+        return $this->services->get($id);
+    }
+
+    private function authCookieField(string $pattern): string
+    {
+        preg_match($pattern, $this->auth('cookie'), $matches);
+
+        return (string)($matches[1] ?? '');
+    }
 }

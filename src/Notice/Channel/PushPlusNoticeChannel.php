@@ -2,8 +2,6 @@
 
 namespace Bhp\Notice\Channel;
 
-use Bhp\Log\Log;
-use Bhp\Request\Request;
 
 final class PushPlusNoticeChannel extends AbstractNoticeChannel
 {
@@ -19,8 +17,8 @@ final class PushPlusNoticeChannel extends AbstractNoticeChannel
 
     public function dispatch(array $payload): void
     {
-        Log::info('使用PushPlus酱推送消息');
-        $raw = Request::postJsonBody('other', 'https://www.pushplus.plus/send', [
+        $this->info('使用PushPlus酱推送消息');
+        $raw = $this->requestPostJsonBody('https://www.pushplus.plus/send', [
             'token' => $this->config('notify_pushplus.token'),
             'title' => $payload['title'],
             'content' => $payload['content'],
@@ -28,7 +26,7 @@ final class PushPlusNoticeChannel extends AbstractNoticeChannel
 
         $decoded = $this->decode($raw);
         if (($decoded['code'] ?? -1) === 200) {
-            Log::notice('推送消息成功: ' . (string)($decoded['data'] ?? ''));
+            $this->notice('推送消息成功: ' . (string)($decoded['data'] ?? ''));
             return;
         }
 

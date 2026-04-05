@@ -17,31 +17,51 @@
 
 namespace Bhp\Api\Vip;
 
+use Bhp\Api\Support\ApiJson;
 use Bhp\Request\Request;
-use Bhp\User\User;
+use Throwable;
 
 class ApiExperience
 {
-    /**
-     * 领取大会员额外经验
-     * @return array
-     */
-    public static function add(): array
-    {
-        $user = User::parseCookie();
-        //
-        $url = 'https://api.bilibili.com/x/vip/experience/add';
-        $payload = [
-            'mid' => $user['uid'],
-            'csrf' => $user['csrf'],
-            // 'buvid'=>'B8B511D7-AE19-2586-6A5F-xxxxxx',
-        ];
-        $headers = [
-            'origin' => 'https://account.bilibili.com',
-            'referer' => 'https://account.bilibili.com/',
-        ];
-        // {"code":0,"message":"0","ttl":1,"data":{"type":0,"is_grant":true}}
-        return \Bhp\Api\Support\ApiJson::post( 'pc', $url, $payload, $headers);
+    public function __construct(
+        private readonly Request $request,
+    ) {
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function add(): array
+    {
+        $url = 'https://api.bilibili.com/x/vip/experience/add';
+        $payload = [
+            'mid' => $this->request->uidValue(),
+            'csrf' => $this->request->csrfValue(),
+        ];
+
+        return $this->decodePost('pc', $url, $payload, [
+            'origin' => 'https://account.bilibili.com',
+            'referer' => 'https://account.bilibili.com/',
+        ], 'vip.experience.add');
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @param array<string, string> $headers
+     * @return array<string, mixed>
+     */
+    private function decodePost(string $os, string $url, array $payload, array $headers, string $label): array
+    {
+        try {
+            $raw = $this->request->postText($os, $url, $payload, $headers);
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
+                'data' => [],
+            ];
+        }
+
+        return ApiJson::decode($raw, $label);
+    }
 }

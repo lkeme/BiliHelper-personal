@@ -11,9 +11,6 @@ ENV USER_NAME='' \
     CAPTCHA='0' \
     CAPTCHA_HOST='0.0.0.0' \
     CAPTCHA_PORT='50001' \
-    CUSTOM_CLONE_URL='https://speed.example.com/example/example.git' \
-    MIRRORS='0' \
-    AUTO_UPDATE='1' \
     BRANCH="${DEFAULT_BRANCH}" \
     CONFIG_PATH='/app/profile/user/config/user.ini' \
     Green="\\033[32m" \
@@ -52,12 +49,6 @@ COPY captcha /app/captcha
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 RUN chmod +x /usr/local/bin/entrypoint.sh \
-    && git init /app \
-    && git -C /app config user.email "docker@localhost" \
-    && git -C /app config user.name "docker" \
-    && git -C /app add app.php composer.json composer.lock src plugin resources profile captcha \
-    && git -C /app commit -m "image snapshot" --quiet \
-    && git -C /app remote add origin https://github.com/lkeme/BiliHelper-personal.git \
     && composer install --no-interaction --no-progress --prefer-dist --optimize-autoloader \
     && sha1sum /app/composer.lock | awk '{print $1}' > /app/vendor/.composer-lock.hash
 

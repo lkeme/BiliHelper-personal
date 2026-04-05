@@ -5,17 +5,16 @@ namespace Bhp\Scheduler;
 use Bhp\Http\HttpRequestTrafficMonitor;
 use Bhp\Login\LoginGateStateService;
 use Bhp\Login\LoginManualInterventionPolicy;
-use Bhp\Login\LoginPendingFlowStore;
 use Bhp\Log\Log;
 use Bhp\Plugin\Plugin;
-use Bhp\Util\DesignPattern\SingleTon;
 use Bhp\Util\AppTerminator;
 use Bhp\Util\Exceptions\NoLoginException;
+use InvalidArgumentException;
 use Revolt\EventLoop;
 use Throwable;
 use function Amp\async;
 
-class Scheduler extends SingleTon
+class Scheduler
 {
     private const CIRCUIT_FAILURE_THRESHOLD = 3;
     private const CIRCUIT_OPEN_SECONDS = 300.0;
@@ -33,16 +32,28 @@ class Scheduler extends SingleTon
     private ?LoginGateStateService $loginGateStateService = null;
     private ?LoginManualInterventionPolicy $loginManualInterventionPolicy = null;
 
-    public function init(): void
-    {
+    public function __construct(
+        private readonly Plugin $plugin,
+        private readonly Log $log,
+        LoginGateStateService $loginGateStateService,
+        LoginManualInterventionPolicy $loginManualInterventionPolicy,
+        private readonly HttpRequestTrafficMonitor $httpRequestTrafficMonitor,
+        private readonly SchedulerStateStore $schedulerStateStore,
+    ) {
+        $this->loginGateStateService = $loginGateStateService;
+        $this->loginManualInterventionPolicy = $loginManualInterventionPolicy;
     }
 
     public function registerPlugins(array $plugins): void
     {
         $now = $this->monotonicNowNs();
         $nowEpoch = $this->wallTimeNowSeconds();
+        $validatedPlugins = array_map(
+            fn (mixed $plugin): array => $this->validatePluginDefinition($plugin),
+            $plugins
+        );
         $states = $this->stateStore()->load();
-        foreach ($plugins as $plugin) {
+        foreach ($validatedPlugins as $plugin) {
             $hook = (string)$plugin['hook'];
             $intervalSeconds = isset($plugin['interval_seconds']) && is_numeric($plugin['interval_seconds'])
                 ? max(0.05, (float)$plugin['interval_seconds'])
@@ -226,7 +237,7 @@ class Scheduler extends SingleTon
         $running = $this->running[$task->hook] ?? 0;
         if ($running >= $task->maxConcurrency) {
             if ($task->policy === TaskPolicy::SKIP) {
-                Log::debug("[SCHEDULER] skip {$task->name} because previous execution is still running", [
+                $this->log->recordDebug("[SCHEDULER] skip {$task->name} because previous execution is still running", [
                     'plugin' => $task->hook,
                     'task' => 'scheduler.dispatch',
                 ]);
@@ -242,21 +253,21 @@ class Scheduler extends SingleTon
             $startedAt = $this->monotonicNowNs();
             $result = TaskResult::keepSchedule();
             try {
-                Log::debug("[SCHEDULER] dispatch {$task->name} interval={$task->intervalSeconds}s", [
+                $this->log->recordDebug("[SCHEDULER] dispatch {$task->name} interval={$task->intervalSeconds}s", [
                     'plugin' => $task->hook,
                     'task' => 'scheduler.dispatch',
                 ]);
-                $result = Log::withContext([
+                $result = $this->log->withScopedContext([
                     'plugin' => $task->hook,
                     'task' => 'plugin.run',
-                ], fn () => Plugin::getInstance()->runTask($task->hook));
+                ], fn () => $this->plugin->runTask($task->hook));
             } catch (NoLoginException $e) {
                 if ($task->hook === 'Login') {
                     AppTerminator::fail("登录失败，终止运行: {$e->getMessage()}", [], 0);
                 }
 
                 $this->requestLoginRecovery($task, $this->monotonicNowNs(), $e->getMessage());
-                Log::warning("[SCHEDULER] {$task->name} login required: {$e->getMessage()}", [
+                $this->log->recordWarning("[SCHEDULER] {$task->name} login required: {$e->getMessage()}", [
                     'plugin' => $task->hook,
                     'task' => 'plugin.run',
                 ]);
@@ -266,7 +277,7 @@ class Scheduler extends SingleTon
                     AppTerminator::fail("登录异常，终止运行: {$e->getMessage()}", [], 0);
                 }
 
-                Log::error("[SCHEDULER] {$task->name} failed: {$e->getMessage()}", [
+                $this->log->recordError("[SCHEDULER] {$task->name} failed: {$e->getMessage()}", [
                     'plugin' => $task->hook,
                     'task' => 'plugin.run',
                 ]);
@@ -274,7 +285,7 @@ class Scheduler extends SingleTon
                 $finishedAt = $this->monotonicNowNs();
                 $durationSeconds = ($finishedAt - $startedAt) / 1_000_000_000;
                 if ($durationSeconds > $task->timeoutSeconds) {
-                    Log::warning("[SCHEDULER] {$task->name} timeout exceeded {$durationSeconds}s > {$task->timeoutSeconds}s", [
+                    $this->log->recordWarning("[SCHEDULER] {$task->name} timeout exceeded {$durationSeconds}s > {$task->timeoutSeconds}s", [
                         'plugin' => $task->hook,
                         'task' => 'scheduler.dispatch',
                     ]);
@@ -288,7 +299,7 @@ class Scheduler extends SingleTon
 
     private function dispatchSync(ScheduledTask $task, float $nowNs): TaskResult
     {
-        Log::debug("[SCHEDULER.INIT] dispatch {$task->name} priority={$task->priority}", [
+        $this->log->recordDebug("[SCHEDULER.INIT] dispatch {$task->name} priority={$task->priority}", [
             'plugin' => $task->hook,
             'task' => 'scheduler.init',
         ]);
@@ -296,17 +307,17 @@ class Scheduler extends SingleTon
         $startedAt = $this->monotonicNowNs();
         $result = TaskResult::keepSchedule();
         try {
-            $result = Log::withContext([
+            $result = $this->log->withScopedContext([
                 'plugin' => $task->hook,
                 'task' => 'plugin.run',
-            ], fn () => Plugin::getInstance()->runTask($task->hook));
+            ], fn () => $this->plugin->runTask($task->hook));
         } catch (NoLoginException $e) {
             if ($task->hook === 'Login') {
                 AppTerminator::fail("登录失败，终止启动: {$e->getMessage()}", [], 0);
             }
 
             $this->requestLoginRecovery($task, $this->monotonicNowNs(), $e->getMessage());
-            Log::warning("[SCHEDULER.INIT] {$task->name} login required: {$e->getMessage()}", [
+            $this->log->recordWarning("[SCHEDULER.INIT] {$task->name} login required: {$e->getMessage()}", [
                 'plugin' => $task->hook,
                 'task' => 'plugin.run',
             ]);
@@ -316,14 +327,14 @@ class Scheduler extends SingleTon
                 AppTerminator::fail("登录异常，终止启动: {$e->getMessage()}", [], 0);
             }
 
-            Log::error("[SCHEDULER.INIT] {$task->name} failed: {$e->getMessage()}", [
+            $this->log->recordError("[SCHEDULER.INIT] {$task->name} failed: {$e->getMessage()}", [
                 'plugin' => $task->hook,
                 'task' => 'plugin.run',
             ]);
         } finally {
             $durationSeconds = ($this->monotonicNowNs() - $startedAt) / 1_000_000_000;
             if ($durationSeconds > $task->timeoutSeconds) {
-                Log::warning("[SCHEDULER.INIT] {$task->name} timeout exceeded {$durationSeconds}s > {$task->timeoutSeconds}s", [
+                $this->log->recordWarning("[SCHEDULER.INIT] {$task->name} timeout exceeded {$durationSeconds}s > {$task->timeoutSeconds}s", [
                     'plugin' => $task->hook,
                     'task' => 'scheduler.init',
                 ]);
@@ -353,9 +364,6 @@ class Scheduler extends SingleTon
     private function advanceNextRunAt(ScheduledTask $task, float $nowNs): void
     {
         $intervalNs = max(1.0, round($task->intervalSeconds * 1_000_000_000));
-        if ($intervalNs < 1.0) {
-            $intervalNs = 1.0;
-        }
 
         if ($task->nextRunAtNs === 0.0) {
             $task->nextRunAtNs = $nowNs + $intervalNs;
@@ -407,7 +415,7 @@ class Scheduler extends SingleTon
     {
         if ($task->circuitOpenUntilNs <= $nowNs) {
             if ($task->circuitOpenUntilNs > 0.0) {
-                Log::notice("[SCHEDULER] {$task->name} circuit closed, resume scheduling", [
+                $this->log->recordNotice("[SCHEDULER] {$task->name} circuit closed, resume scheduling", [
                     'plugin' => $task->hook,
                     'task' => 'scheduler.circuit',
                 ]);
@@ -443,7 +451,7 @@ class Scheduler extends SingleTon
             $task->nextRunAtNs = $task->circuitOpenUntilNs;
         }
 
-        Log::warning("[SCHEDULER] {$task->name} circuit opened for " . self::CIRCUIT_OPEN_SECONDS . "s", [
+        $this->log->recordWarning("[SCHEDULER] {$task->name} circuit opened for " . self::CIRCUIT_OPEN_SECONDS . "s", [
             'plugin' => $task->hook,
             'task' => 'scheduler.circuit',
         ]);
@@ -460,7 +468,7 @@ class Scheduler extends SingleTon
 
         $remaining = 0.0;
         foreach ($task->governanceHosts as $host) {
-            $hostRemaining = HttpRequestTrafficMonitor::getInstance()->cooldownRemaining(
+            $hostRemaining = $this->httpRequestTrafficMonitor->cooldownRemaining(
                 $host,
                 $task->governanceWindowSeconds,
                 $task->governanceMaxRequestsPerHost,
@@ -475,7 +483,7 @@ class Scheduler extends SingleTon
 
         $delaySeconds = $remaining * $this->resolveGovernanceCooldownMultiplier($task);
         $task->nextRunAtNs = $nowNs + ($delaySeconds * 1_000_000_000);
-        Log::notice("[SCHEDULER] {$task->name} delayed by request governance cooldown {$delaySeconds}s", [
+        $this->log->recordNotice("[SCHEDULER] {$task->name} delayed by request governance cooldown {$delaySeconds}s", [
             'plugin' => $task->hook,
             'task' => 'scheduler.governance',
         ]);
@@ -504,7 +512,7 @@ class Scheduler extends SingleTon
 
         $delaySeconds = $this->resolveGovernanceGroupBackoffSeconds($task);
         $task->nextRunAtNs = $nowNs + ($delaySeconds * 1_000_000_000);
-        Log::notice("[SCHEDULER] {$task->name} delayed by governance group {$task->governanceGroup}", [
+        $this->log->recordNotice("[SCHEDULER] {$task->name} delayed by governance group {$task->governanceGroup}", [
             'plugin' => $task->hook,
             'task' => 'scheduler.governance_group',
         ]);
@@ -540,7 +548,7 @@ class Scheduler extends SingleTon
 
     private function stateStore(): SchedulerStateStore
     {
-        return $this->stateStore ??= new SchedulerStateStore();
+        return $this->stateStore ??= $this->schedulerStateStore;
     }
 
     private function shouldHoldTaskForLoginPendingFlow(ScheduledTask $task): bool
@@ -563,12 +571,20 @@ class Scheduler extends SingleTon
 
     private function loginGateStateService(): LoginGateStateService
     {
-        return $this->loginGateStateService ??= new LoginGateStateService();
+        if (!$this->loginGateStateService instanceof LoginGateStateService) {
+            throw new InvalidArgumentException('Scheduler login gate state dependency is not configured.');
+        }
+
+        return $this->loginGateStateService;
     }
 
     private function loginManualInterventionPolicy(): LoginManualInterventionPolicy
     {
-        return $this->loginManualInterventionPolicy ??= new LoginManualInterventionPolicy();
+        if (!$this->loginManualInterventionPolicy instanceof LoginManualInterventionPolicy) {
+            throw new InvalidArgumentException('Scheduler login manual intervention dependency is not configured.');
+        }
+
+        return $this->loginManualInterventionPolicy;
     }
 
     private function requestLoginRecovery(ScheduledTask $sourceTask, float $nowNs, string $reason): void
@@ -584,7 +600,7 @@ class Scheduler extends SingleTon
             $this->persistTaskState($loginTask);
         }
 
-        Log::notice("[SCHEDULER] rearm Login because {$sourceTask->name} requires authentication: {$reason}", [
+        $this->log->recordNotice("[SCHEDULER] rearm Login because {$sourceTask->name} requires authentication: {$reason}", [
             'plugin' => $sourceTask->hook,
             'task' => 'scheduler.login_rearm',
         ]);
@@ -637,5 +653,37 @@ class Scheduler extends SingleTon
         $nowEpoch = $this->wallTimeNowSeconds();
 
         return $nowEpoch + max(0.0, ($deadlineNs - $nowNs) / 1_000_000_000);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function validatePluginDefinition(mixed $plugin): array
+    {
+        if (!is_array($plugin)) {
+            throw new InvalidArgumentException('Scheduler plugin definition must be an array.');
+        }
+
+        $missing = [];
+        if (!isset($plugin['hook']) || trim((string)$plugin['hook']) === '') {
+            $missing[] = 'hook';
+        }
+        if (!isset($plugin['name']) || trim((string)$plugin['name']) === '') {
+            $missing[] = 'name';
+        }
+
+        $hasInterval = isset($plugin['interval_seconds']) && is_numeric($plugin['interval_seconds']);
+        $hasCycle = isset($plugin['cycle']) && trim((string)$plugin['cycle']) !== '';
+        if (!$hasInterval && !$hasCycle) {
+            $missing[] = 'cycle';
+        }
+
+        if ($missing !== []) {
+            throw new InvalidArgumentException(
+                'Scheduler plugin definition is missing required metadata: ' . implode(', ', $missing)
+            );
+        }
+
+        return $plugin;
     }
 }

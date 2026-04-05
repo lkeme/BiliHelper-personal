@@ -1,0 +1,8 @@
+{
+  "hook": "Lottery",
+  "name": "Lottery",
+  "class_name": "Bhp\\Plugin\\Builtin\\Lottery\\LotteryPlugin",
+  "entry": "src/LotteryPlugin.php",
+  "vendor": "official",
+  "source": "bundled"
+}

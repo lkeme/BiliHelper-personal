@@ -18,14 +18,14 @@
 namespace Bhp\WbiSign;
 
 use Bhp\Api\Vip\ApiUser;
-use Bhp\Util\DesignPattern\SingleTon;
 
-class WbiSign extends SingleTon
+class WbiSign
 {
     /**
      * @var array{0: string, 1: string}|null
      */
     protected static ?array $cachedWbiKeys = null;
+    protected static ?ApiUser $apiUser = null;
 
     /**
      * @var array|int[]
@@ -37,22 +37,13 @@ class WbiSign extends SingleTon
         36, 20, 34, 44, 52
     ];
 
-
-    /**
-     * @return void
-     */
-    public function init(): void
-    {
-
-    }
-
     /**
      * 获取最新的 img_key 和 sub_key
      * @return array
      */
     protected static function getWbiKeys(): array
     {
-        $response = ApiUser::userNavInfo();
+        $response = self::apiUser()->userNavInfo();
         $keys = self::extractWbiKeys($response);
         if ($keys !== null) {
             self::$cachedWbiKeys = $keys;
@@ -154,6 +145,20 @@ class WbiSign extends SingleTon
         }
 
         return pathinfo($path, PATHINFO_FILENAME);
+    }
+
+    public static function bootstrap(ApiUser $apiUser): void
+    {
+        self::$apiUser = $apiUser;
+    }
+
+    private static function apiUser(): ApiUser
+    {
+        if (self::$apiUser instanceof ApiUser) {
+            return self::$apiUser;
+        }
+
+        throw new \RuntimeException('WbiSign has not been bootstrapped.');
     }
 
 }

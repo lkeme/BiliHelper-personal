@@ -2,66 +2,10 @@
 
 namespace Bhp\Api\Support;
 
-use Bhp\Log\Log;
-use Bhp\Request\Request;
 use Throwable;
 
 final class ApiJson
 {
-    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */
-    public static function get(
-        string $os,
-        string $url,
-        array $payload = [],
-        array $headers = [],
-        string $label = '',
-    ): array
-    {
-        $label = $label !== '' ? $label : self::buildLabel('get', $url);
-        try {
-            $raw = Request::get($os, $url, $payload, $headers);
-        } catch (Throwable $throwable) {
-            return [
-                'code' => -500,
-                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
-                'data' => [],
-            ];
-        }
-
-        return self::decode($raw, $label);
-    }
-
-    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */
-    public static function post(
-        string $os,
-        string $url,
-        array $payload = [],
-        array $headers = [],
-        string $label = '',
-    ): array
-    {
-        $label = $label !== '' ? $label : self::buildLabel('post', $url);
-        try {
-            $raw = Request::post($os, $url, $payload, $headers);
-        } catch (Throwable $throwable) {
-            return [
-                'code' => -500,
-                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
-                'data' => [],
-            ];
-        }
-
-        return self::decode($raw, $label);
-    }
-
     /**
      * @return array<string, mixed>
      */
@@ -79,9 +23,6 @@ final class ApiJson
         try {
             $decoded = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
         } catch (Throwable $throwable) {
-            Log::warning("{$label} 响应解析失败: {$throwable->getMessage()}");
-            Log::debug("{$label} raw: {$raw}");
-
             return [
                 'code' => -500,
                 'message' => "{$label} 响应解析失败",
@@ -213,20 +154,4 @@ final class ApiJson
         return $raw;
     }
 
-    private static function buildLabel(string $method, string $url): string
-    {
-        $parts = parse_url($url);
-        $host = trim((string)($parts['host'] ?? ''));
-        $path = trim((string)($parts['path'] ?? ''));
-        $path = trim(str_replace('/', '.', $path), '.');
-
-        $segments = array_values(array_filter([
-            'api_json',
-            strtolower(trim($method)),
-            $host !== '' ? str_replace('-', '_', $host) : '',
-            $path !== '' ? str_replace('-', '_', $path) : '',
-        ]));
-
-        return implode('.', $segments);
-    }
 }

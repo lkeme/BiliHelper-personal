@@ -1,108 +1,83 @@
 <?php declare(strict_types=1);
 
-/**
- *  Website: https://mudew.com/
- *  Author: Lkeme
- *  License: The MIT License
- *  Email: Useri@live.cn
- *  Updated: 2018 ~ 2026
- *
- *   _____   _   _       _   _   _   _____   _       _____   _____   _____
- *  |  _  \ | | | |     | | | | | | | ____| | |     |  _  \ | ____| |  _  \ &   ／l、
- *  | |_| | | | | |     | | | |_| | | |__   | |     | |_| | | |__   | |_| |   （ﾟ､ ｡ ７
- *  |  _  { | | | |     | | |  _  | |  __|  | |     |  ___/ |  __|  |  _  /  　 \、ﾞ ~ヽ   *
- *  | |_| | | | | |___  | | | | | | | |___  | |___  | |     | |___  | | \ \   　じしf_, )ノ
- *  |_____/ |_| |_____| |_| |_| |_| |_____| |_____| |_|     |_____| |_|  \_\
- */
-
 namespace Bhp\Api\Passport;
 
 use Bhp\Api\Support\ApiJson;
-use Bhp\Config\Config;
 use Bhp\Request\Request;
-use Bhp\Sign\Sign;
+use Throwable;
 
 class ApiCaptcha
 {
-    /**
-     * 获取验证码
-     * @param int $plat
-     * @return mixed
-     */
-    public static function combine(int $plat = 3): array
-    {
-        $url = 'https://passport.bilibili.com/web/captcha/combine';
-        $payload = [
-            'plat' => $plat
-        ];
-        // {"code":0,"data":{"result":{"success":1,"gt":"b6e5b7fad7ecd37f465838689732e788","challenge":"88148a764f94e5923564b356a69277fc","key":"230509df5ce048ca9bf29e1ee323af30"},"type":1}}
-
-        return \Bhp\Api\Support\ApiJson::get( 'other', $url, $payload);
+    public function __construct(
+        private readonly Request $request,
+    ) {
     }
 
     /**
-     * 识别验证码
-     * @param array $captcha
-     * @return array
+     * @return array<string, mixed>
      */
-    public static function ocr(array $captcha): array
+    public function combine(int $plat = 3): array
     {
-        $url = 'https://captcha-v1.mudew.com:19951/';
-        $payload = [
-            'type' => 'gt3',
-            'gt' => $captcha['gt'],
-            "challenge" => $captcha['challenge'],
-            "referer" => "https://passport.bilibili.com/"
-        ];
-        $headers = [
-            'Content-Type' => 'application/json',
-        ];
-        return \Bhp\Api\Support\ApiJson::post( 'other', $url, $payload, $headers);
-    }
-
-    /**
-     * @param string $challenge
-     * @return array
-     */
-    public static function fetch(string $challenge): array
-    {
-        $url = rtrim((string)Config::getInstance()->get('login_captcha.url'), '/') . '/fetch';
-        $payload = [
-            'challenge' => $challenge,
-        ];
-        $raw = self::fetchRaw($url, $payload, 3);
-        if (!is_string($raw) || trim($raw) === '') {
+        try {
+            $raw = $this->request->getText('other', 'https://passport.bilibili.com/web/captcha/combine', [
+                'plat' => $plat,
+            ]);
+        } catch (Throwable $throwable) {
             return [
                 'code' => -500,
-                'message' => 'captcha.fetch 请求失败',
+                'message' => 'passport.captcha.combine 请求失败: ' . $throwable->getMessage(),
+                'data' => [],
+            ];
+        }
+
+        return ApiJson::decode($raw, 'passport.captcha.combine');
+    }
+
+    /**
+     * @param array<string, mixed> $captcha
+     * @return array<string, mixed>
+     */
+    public function ocr(array $captcha): array
+    {
+        try {
+            $raw = $this->request->postJsonBodyText('other', 'https://captcha-v1.mudew.com:19951/', [
+                'type' => 'gt3',
+                'gt' => $captcha['gt'],
+                'challenge' => $captcha['challenge'],
+                'referer' => 'https://passport.bilibili.com/',
+            ], [
+                'Content-Type' => 'application/json',
+            ]);
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => 'passport.captcha.ocr 请求失败: ' . $throwable->getMessage(),
+                'data' => [],
+            ];
+        }
+
+        return ApiJson::decode($raw, 'passport.captcha.ocr');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function fetch(string $url, string $challenge): array
+    {
+        $url = rtrim($url, '/') . '/fetch';
+
+        try {
+            $raw = $this->request->getText('other', $url, [
+                'challenge' => $challenge,
+            ], [], 3);
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => 'captcha.fetch 请求失败: ' . $throwable->getMessage(),
                 'data' => [],
             ];
         }
 
         return ApiJson::decode($raw, 'captcha.fetch');
-    }
-
-    /**
-     * @param array<string, string> $payload
-     */
-    protected static function fetchRaw(string $url, array $payload, int $timeoutSeconds): string
-    {
-        $query = http_build_query($payload);
-        $target = str_contains($url, '?') ? $url . '&' . $query : $url . '?' . $query;
-        $context = stream_context_create([
-            'http' => [
-                'method' => 'GET',
-                'timeout' => $timeoutSeconds,
-                'ignore_errors' => true,
-                'header' => "Accept: application/json\r\nUser-Agent: BiliHelper-personal/captcha-fetch\r\n",
-            ],
-        ]);
-
-        $raw = @file_get_contents($target, false, $context);
-        if (!is_string($raw)) {
-            return '';
-        }
-
-        return $raw;
     }
 }

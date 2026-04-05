@@ -1,87 +1,101 @@
 <?php declare(strict_types=1);
 
-/**
- *  Website: https://mudew.com/
- *  Author: Lkeme
- *  License: The MIT License
- *  Email: Useri@live.cn
- *  Updated: 2018 ~ 2026
- *
- *   _____   _   _       _   _   _   _____   _       _____   _____   _____
- *  |  _  \ | | | |     | | | | | | | ____| | |     |  _  \ | ____| |  _  \ &   ／l、
- *  | |_| | | | | |     | | | |_| | | |__   | |     | |_| | | |__   | |_| |   （ﾟ､ ｡ ７
- *  |  _  { | | | |     | | |  _  | |  __|  | |     |  ___/ |  __|  |  _  /  　 \、ﾞ ~ヽ   *
- *  | |_| | | | | |___  | | | | | | | |___  | |___  | |     | |___  | | \ \   　じしf_, )ノ
- *  |_____/ |_| |_____| |_| |_| |_| |_____| |_____| |_|     |_____| |_|  \_\
- */
-
 namespace Bhp\Api\XLive;
 
+use Bhp\Api\Support\ApiJson;
 use Bhp\Request\Request;
-use Bhp\Sign\Sign;
-use Bhp\User\User;
+use Throwable;
 
 class ApiRevenueWallet
 {
-    /**
-     * app银瓜子兑换硬币
-     * @return array
-     */
-    public static function appSilver2coin(): array
-    {
-        $url = 'https://api.live.bilibili.com/AppExchange/silver2coin';
-        $payload = [];
-        // {"code":403,"data":{"coin":0,"gold":0,"silver":0,"tid":""},"message":"银瓜子余额不足"}
-        return \Bhp\Api\Support\ApiJson::post( 'app', $url, Sign::common($payload));
+    public function __construct(
+        private readonly Request $request,
+    ) {
     }
 
     /**
-     * pc银瓜子兑换硬币
-     * @return array
+     * @return array<string, mixed>
      */
-    public static function pcSilver2coin(): array
+    public function appSilver2coin(): array
     {
-        $user = User::parseCookie();
-        // $url = "https://api.live.bilibili.com/exchange/silver2coin";
-        // $url = "https://api.live.bilibili.com/pay/v1/Exchange/silver2coin";
-        $url = "https://api.live.bilibili.com/xlive/revenue/v1/wallet/silver2coin";
-        $payload = [
-            'csrf_token' => $user['csrf'],
-            'csrf' => $user['csrf'],
-            'visit_id' => ''
-        ];
-        // {"code":403,"data":{"coin":0,"gold":0,"silver":0,"tid":""},"message":"银瓜子余额不足"}
-        return \Bhp\Api\Support\ApiJson::post( 'pc', $url, $payload);
+        return $this->decodePost(
+            'app',
+            'https://api.live.bilibili.com/AppExchange/silver2coin',
+            $this->request->signCommonPayload([]),
+            [],
+            'xlive.revenue.app_silver2coin',
+        );
     }
 
     /**
-     * 钱包状态
-     * @return array
+     * @return array<string, mixed>
      */
-    public static function getStatus(): array
+    public function pcSilver2coin(): array
     {
-        $url = "https://api.live.bilibili.com/xlive/revenue/v1/wallet/getStatus";
-        $payload = [];
-        // {"code":0,"message":"0","ttl":1,"data":{"silver":1111,"gold":0,"coin":11,"bp":11,"coin_2_silver_left":50,"silver_2_coin_left":1,"num":50,"status":1,"vip":1}}
-        return \Bhp\Api\Support\ApiJson::get( 'pc', $url, $payload);
+        return $this->decodePost('pc', 'https://api.live.bilibili.com/xlive/revenue/v1/wallet/silver2coin', [
+            'csrf_token' => $this->request->csrfValue(),
+            'csrf' => $this->request->csrfValue(),
+            'visit_id' => '',
+        ], [], 'xlive.revenue.pc_silver2coin');
     }
 
     /**
-     * 我的钱包
-     * @return array
+     * @return array<string, mixed>
      */
-    public static function myWallet(): array
+    public function getStatus(): array
     {
-        $url = 'https://api.live.bilibili.com/xlive/revenue/v1/wallet/myWallet';
-        $payload = [
+        return $this->decodeGet('pc', 'https://api.live.bilibili.com/xlive/revenue/v1/wallet/getStatus', [], [], 'xlive.revenue.status');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function myWallet(): array
+    {
+        return $this->decodeGet('pc', 'https://api.live.bilibili.com/xlive/revenue/v1/wallet/myWallet', [
             'need_bp' => 1,
             'need_metal' => 1,
-            'platform' => 'pc'
-        ];
-        // {"code":0,"message":"0","ttl":1,"data":{"gold":0,"silver":111,"bp":"0","metal":111,"need_use_new_bp":true,"ios_bp":0,"common_bp":0,"new_bp":"0","bp_2_gold_amount":0}}
-        return \Bhp\Api\Support\ApiJson::get( 'pc', $url, $payload);
-
+            'platform' => 'pc',
+        ], [], 'xlive.revenue.my_wallet');
     }
 
+    /**
+     * @param array<string, mixed> $payload
+     * @param array<string, string> $headers
+     * @return array<string, mixed>
+     */
+    private function decodeGet(string $os, string $url, array $payload, array $headers, string $label): array
+    {
+        try {
+            $raw = $this->request->getText($os, $url, $payload, $headers);
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
+                'data' => [],
+            ];
+        }
 
+        return ApiJson::decode($raw, $label);
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @param array<string, string> $headers
+     * @return array<string, mixed>
+     */
+    private function decodePost(string $os, string $url, array $payload, array $headers, string $label): array
+    {
+        try {
+            $raw = $this->request->postText($os, $url, $payload, $headers);
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
+                'data' => [],
+            ];
+        }
+
+        return ApiJson::decode($raw, $label);
+    }
 }

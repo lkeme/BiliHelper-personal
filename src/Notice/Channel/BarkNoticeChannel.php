@@ -2,8 +2,7 @@
 
 namespace Bhp\Notice\Channel;
 
-use Bhp\Log\Log;
-use Bhp\Request\Request;
+use Bhp\Api\Support\ApiJson;
 
 final class BarkNoticeChannel extends AbstractNoticeChannel
 {
@@ -19,17 +18,18 @@ final class BarkNoticeChannel extends AbstractNoticeChannel
 
     public function dispatch(array $payload): void
     {
-        Log::info('使用bark推送消息');
+        $this->info('使用bark推送消息');
         $title = urlencode((string)$payload['title']);
         $content = urlencode((string)$payload['content']);
         $url = 'https://api.day.app/' . $this->config('notify_bark.token') . "/{$title}/{$content}";
 
-        $decoded = \Bhp\Api\Support\ApiJson::get( 'other', $url, [], []);
+        $raw = $this->requestGet('other', $url);
+        $decoded = ApiJson::decode($raw, 'notice.bark.dispatch');
         if (($decoded['code'] ?? -1) === 200) {
-            Log::notice('推送消息成功: ' . (string)($decoded['message'] ?? ''));
+            $this->notice('推送消息成功: ' . (string)($decoded['message'] ?? ''));
             return;
         }
 
-        Log::warning('推送消息失败: ' . json_encode($decoded));
+        $this->warning('推送消息失败: ' . json_encode($decoded));
     }
 }

@@ -17,17 +17,17 @@
 
 namespace Bhp\Device;
 
+use Bhp\Profile\ProfileContext;
 use Bhp\Util\Resource\Resource;
 use Bhp\Util\Resource\BaseResource;
 use Symfony\Component\Yaml\Yaml;
 
 class Device extends BaseResource
 {
-    /**
-     * @param string $filename
-     * @return void
-     */
-    public function init(string $filename = 'default.yaml'): void
+    public function __construct(
+        private readonly ProfileContext $profileContext,
+        string $filename = 'default.yaml',
+    )
     {
         $filename = $filename === 'device.yaml' ? 'default.yaml' : $filename;
         $defaultPath = $this->getFilePath($filename);
@@ -59,12 +59,12 @@ class Device extends BaseResource
      */
     protected function getFilePath(string $filename): string
     {
-        return str_replace("\\", "/", APP_RESOURCES_PATH . 'device/' . $filename);
+        return str_replace("\\", "/", $this->profileContext->resourcesPath() . 'device/' . $filename);
     }
 
     protected function profileOverridePath(string $filename): string
     {
-        return str_replace("\\", "/", PROFILE_CONFIG_PATH . $filename);
+        return str_replace("\\", "/", $this->profileContext->configPath() . $filename);
     }
 
     /**

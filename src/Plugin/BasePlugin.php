@@ -17,20 +17,30 @@
 
 namespace Bhp\Plugin;
 
+use Bhp\Cache\Cache;
 use Bhp\Log\Log;
+use Bhp\Notice\Notice;
+use Bhp\Request\Request;
 use Bhp\Runtime\AppContext;
-use Bhp\Runtime\Runtime;
 use Bhp\Scheduler\TaskResult;
+use Bhp\User\UserProfileService;
 use Bhp\Util\Exceptions\RequestException;
+use LogicException;
 
 abstract class BasePlugin
 {
     use BasePluginInfo;
 
     protected ?TaskResult $taskResult = null;
+    private ?AppContext $context = null;
+    private ?Notice $notice = null;
+    private ?Log $log = null;
 
-    protected function bootPlugin(Plugin &$plugin, bool $schedulerTask = false): void
+    protected function bootPlugin(Plugin $plugin, bool $schedulerTask = false): void
     {
+        $this->context = $plugin->appContext();
+        $this->notice = $plugin->notice();
+        $this->log = $plugin->log();
         $plugin->register($this, $schedulerTask ? 'runOnce' : 'execute');
     }
 
@@ -60,14 +70,18 @@ abstract class BasePlugin
         float $fallbackSeconds = 600.0,
     ): TaskResult {
         $suffix = $exception->getCategory() !== '' ? " [{$exception->getCategory()}]" : '';
-        Log::warning("{$label}: {$exception->getMessage()}{$suffix}");
+        $this->warning("{$label}: {$exception->getMessage()}{$suffix}");
 
         return $this->retryAfter($fallbackSeconds, $exception->getMessage());
     }
 
     protected function appContext(): AppContext
     {
-        return Runtime::getInstance()->appContext();
+        if (!$this->context instanceof AppContext) {
+            throw new LogicException('Plugin context has not been bootstrapped.');
+        }
+
+        return $this->context;
     }
 
     protected function config(string $key, mixed $default = null, string $type = 'default'): mixed
@@ -85,9 +99,109 @@ abstract class BasePlugin
         return $this->appContext()->auth($key);
     }
 
+    protected function csrf(): string
+    {
+        return $this->appContext()->csrf();
+    }
+
+    protected function uid(): string
+    {
+        return $this->appContext()->uid();
+    }
+
+    protected function sid(): string
+    {
+        return $this->appContext()->sid();
+    }
+
     protected function setAuth(string $key, mixed $value): void
     {
         $this->appContext()->setAuth($key, $value);
+    }
+
+    protected function filterWords(string $key, mixed $default = null, string $type = 'default'): mixed
+    {
+        return $this->appContext()->filterWords($key, $default, $type);
+    }
+
+    protected function request(): Request
+    {
+        return $this->appContext()->request();
+    }
+
+    protected function requestGet(string $os, string $url, array $params = [], array $headers = [], float $timeout = 30.0): string
+    {
+        return $this->request()->getText($os, $url, $params, $headers, $timeout);
+    }
+
+    protected function cache(): Cache
+    {
+        return $this->appContext()->cache();
+    }
+
+    protected function initializeCache(?string $scope = null): void
+    {
+        $this->cache()->initializeScope($scope);
+    }
+
+    protected function cacheGet(string $key, mixed $default = null, ?string $scope = null): mixed
+    {
+        $value = $this->cache()->pull($key, $scope);
+
+        return $value === null ? $default : $value;
+    }
+
+    protected function cacheSet(string $key, mixed $value, ?string $scope = null): void
+    {
+        $this->cache()->put($key, $value, $scope);
+    }
+
+    protected function userProfiles(): UserProfileService
+    {
+        return $this->appContext()->userProfileService();
+    }
+
+    protected function error(string $message, array $context = []): void
+    {
+        $this->logService()->recordError($message, $context);
+    }
+
+    protected function warning(string $message, array $context = []): void
+    {
+        $this->logService()->recordWarning($message, $context);
+    }
+
+    protected function notice(string $message, array $context = []): void
+    {
+        $this->logService()->recordNotice($message, $context);
+    }
+
+    protected function info(string $message, array $context = []): void
+    {
+        $this->logService()->recordInfo($message, $context);
+    }
+
+    protected function debug(string $message, array $context = []): void
+    {
+        $this->logService()->recordDebug($message, $context);
+    }
+
+    protected function notify(string $type, string $message = ''): void
+    {
+        if (!$this->notice instanceof Notice) {
+            throw new LogicException('Plugin notice service has not been bootstrapped.');
+        }
+
+        $this->notice->publish($type, $message);
+    }
+
+    protected function logService(): Log
+    {
+        if (!$this->log instanceof Log) {
+            throw new LogicException('Plugin log service has not been bootstrapped.');
+        }
+
+        return $this->log;
     }
 }
 

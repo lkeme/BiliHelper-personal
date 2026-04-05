@@ -2,14 +2,22 @@
 
 namespace Bhp\Remote;
 
-use Bhp\Config\Config;
-use Bhp\Env\Env;
+use Bhp\Runtime\AppContext;
 use Bhp\Util\GhProxy\GhProxy;
 
 final class RemoteResourceResolver
 {
     private const DEFAULT_OWNER = 'lkeme';
     private const DEFAULT_REPOSITORY = 'BiliHelper-personal';
+
+    private readonly GhProxy $ghProxy;
+
+    public function __construct(
+        private readonly AppContext $context,
+        ?GhProxy $ghProxy = null,
+    ) {
+        $this->ghProxy = $ghProxy ?? new GhProxy($this->context);
+    }
 
     public function branch(): string
     {
@@ -38,7 +46,7 @@ final class RemoteResourceResolver
 
     public function configuredBranch(): ?string
     {
-        $branch = trim((string)Config::getInstance()->get('app.branch', 'master'));
+        $branch = trim((string)$this->context->config('app.branch', 'master'));
         if ($branch === '') {
             return null;
         }
@@ -89,7 +97,7 @@ final class RemoteResourceResolver
         );
 
         return array_values(array_unique(array_filter([
-            GhProxy::mirror($directRawUrl),
+            $this->ghProxy->mirror($directRawUrl),
             $directRawUrl,
             $staticalyUrl,
         ])));
@@ -100,7 +108,7 @@ final class RemoteResourceResolver
      */
     private function repository(): array
     {
-        $source = trim((string)Env::getInstance()->app_source);
+        $source = trim($this->context->appSource());
         if ($source !== '' && preg_match('~github\.com/([^/]+)/([^/]+?)(?:\.git)?/?$~i', $source, $matches) === 1) {
             return [$matches[1], $matches[2]];
         }

@@ -10,6 +10,7 @@ final class VideoWatchService
     private \Closure $videoAction;
     private \Closure $heartbeatAction;
     private AuthFailureClassifier $authFailureClassifier;
+    private readonly ?ApiWatch $apiWatch;
 
     /**
      * @param null|callable(string, string, string, array<string, mixed>):array<string, mixed> $videoAction
@@ -19,13 +20,27 @@ final class VideoWatchService
         ?callable $videoAction = null,
         ?callable $heartbeatAction = null,
         ?AuthFailureClassifier $authFailureClassifier = null,
+        ?ApiWatch $apiWatch = null,
     ) {
+        $this->apiWatch = $apiWatch;
         $this->videoAction = $videoAction !== null
             ? \Closure::fromCallable($videoAction)
-            : static fn (string $aid, string $cid, string $bvid, array $options): array => ApiWatch::video($aid, $cid, $bvid, $options);
+            : function (string $aid, string $cid, string $bvid, array $options): array {
+                if (!$this->apiWatch instanceof ApiWatch) {
+                    throw new \LogicException('VideoWatchService requires an ApiWatch dependency.');
+                }
+
+                return $this->apiWatch->video($aid, $cid, $bvid, $options);
+            };
         $this->heartbeatAction = $heartbeatAction !== null
             ? \Closure::fromCallable($heartbeatAction)
-            : static fn (string $aid, string $cid, int $progress, string $bvid, array $options): array => ApiWatch::heartbeat($aid, $cid, $progress, $bvid, $options);
+            : function (string $aid, string $cid, int $progress, string $bvid, array $options): array {
+                if (!$this->apiWatch instanceof ApiWatch) {
+                    throw new \LogicException('VideoWatchService requires an ApiWatch dependency.');
+                }
+
+                return $this->apiWatch->heartbeat($aid, $cid, $progress, $bvid, $options);
+            };
         $this->authFailureClassifier = $authFailureClassifier ?? new AuthFailureClassifier();
     }
 

@@ -2,8 +2,6 @@
 
 namespace Bhp\Notice\Channel;
 
-use Bhp\Log\Log;
-use Bhp\Request\Request;
 
 final class DingTalkNoticeChannel extends AbstractNoticeChannel
 {
@@ -19,9 +17,9 @@ final class DingTalkNoticeChannel extends AbstractNoticeChannel
 
     public function dispatch(array $payload): void
     {
-        Log::info('使用DingTalk机器人推送消息');
+        $this->info('使用DingTalk机器人推送消息');
         $url = 'https://oapi.dingtalk.com/robot/send?access_token=' . $this->config('notify_dingtalk.token');
-        $raw = Request::postJsonBody('other', $url, [
+        $raw = $this->requestPostJsonBody($url, [
             'msgtype' => 'markdown',
             'markdown' => [
                 'title' => $payload['title'],
@@ -31,7 +29,7 @@ final class DingTalkNoticeChannel extends AbstractNoticeChannel
 
         $decoded = $this->decode($raw);
         if (($decoded['errcode'] ?? -1) === 0) {
-            Log::notice('推送消息成功: ' . (string)($decoded['errmsg'] ?? ''));
+            $this->notice('推送消息成功: ' . (string)($decoded['errmsg'] ?? ''));
             return;
         }
 

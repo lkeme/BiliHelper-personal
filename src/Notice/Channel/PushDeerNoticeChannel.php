@@ -2,8 +2,6 @@
 
 namespace Bhp\Notice\Channel;
 
-use Bhp\Log\Log;
-use Bhp\Request\Request;
 
 final class PushDeerNoticeChannel extends AbstractNoticeChannel
 {
@@ -19,13 +17,13 @@ final class PushDeerNoticeChannel extends AbstractNoticeChannel
 
     public function dispatch(array $payload): void
     {
-        Log::info('使用 PushDeer 推送消息');
+        $this->info('使用 PushDeer 推送消息');
         $url = (string)$this->config('notify_push_deer.url', '', 'string');
         if (!str_contains($url, 'http')) {
             $url = 'https://api2.pushdeer.com/message/push';
         }
 
-        $raw = Request::post('other', $url, [
+        $raw = $this->requestPost($url, [
             'text' => $payload['title'],
             'desp' => $payload['content'],
             'pushkey' => $this->config('notify_push_deer.token'),
@@ -35,7 +33,7 @@ final class PushDeerNoticeChannel extends AbstractNoticeChannel
 
         $decoded = $this->decode($raw);
         if (($decoded['code'] ?? -1) === 0) {
-            Log::notice('推送消息成功: ' . (string)($decoded['content']['result'][0] ?? ''));
+            $this->notice('推送消息成功: ' . (string)($decoded['content']['result'][0] ?? ''));
             return;
         }
 

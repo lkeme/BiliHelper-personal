@@ -2,8 +2,6 @@
 
 namespace Bhp\Notice\Channel;
 
-use Bhp\Log\Log;
-use Bhp\Request\Request;
 
 final class SctNoticeChannel extends AbstractNoticeChannel
 {
@@ -19,16 +17,16 @@ final class SctNoticeChannel extends AbstractNoticeChannel
 
     public function dispatch(array $payload): void
     {
-        Log::info('使用ServerChan(Turbo)推送消息');
+        $this->info('使用ServerChan(Turbo)推送消息');
         $url = 'https://sctapi.ftqq.com/' . $this->config('notify_sct.sctkey') . '.send';
-        $raw = Request::post('other', $url, [
+        $raw = $this->requestPost($url, [
             'text' => $payload['title'],
             'desp' => $payload['content'],
         ]);
 
         $decoded = $this->decode($raw);
         if (($decoded['code'] ?? -1) === 0) {
-            Log::notice('推送消息成功: ' . (string)($decoded['data']['pushid'] ?? ''));
+            $this->notice('推送消息成功: ' . (string)($decoded['data']['pushid'] ?? ''));
             return;
         }
 

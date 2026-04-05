@@ -1,0 +1,8 @@
+{
+  "hook": "MainSite",
+  "name": "MainSite",
+  "class_name": "Bhp\\Plugin\\Builtin\\MainSite\\MainSitePlugin",
+  "entry": "src/MainSitePlugin.php",
+  "vendor": "official",
+  "source": "bundled"
+}

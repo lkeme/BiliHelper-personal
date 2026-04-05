@@ -18,15 +18,15 @@ namespace Bhp\Login;
  */
 
 use Bhp\Api\Passport\ApiLogin;
+use Bhp\Api\Passport\ApiOauth2;
 use Bhp\Api\Response\LoginDecision;
 use Bhp\Api\Response\LoginTokenBundle;
 use Bhp\Api\Response\QrAuthCode;
+use Bhp\Api\PassportTv\ApiQrcode;
 use Bhp\Api\WWW\ApiMain;
-use Bhp\Log\Log;
 use Bhp\Plugin\BasePlugin;
 use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
-use Bhp\Runtime\Runtime;
 use Bhp\Util\Common\Common;
 use Bhp\Util\Exceptions\LoginException;
 use Bhp\Util\Exceptions\NoLoginException;
@@ -89,6 +89,10 @@ class Login extends BasePlugin implements PluginTaskInterface
     private ?LoginTokenLifecycleService $tokenLifecycleService = null;
     private ?LoginRuntimeState $runtimeState = null;
     private ?LoginGateStateService $gateStateService = null;
+    private ?ApiLogin $apiLogin = null;
+    private ?ApiOauth2 $apiOauth2 = null;
+    private ?ApiQrcode $apiQrcode = null;
+    private ?ApiMain $apiMain = null;
 
     /**
      * @param Plugin $plugin
@@ -132,14 +136,14 @@ class Login extends BasePlugin implements PluginTaskInterface
             return $this->retryAfterRequestException($e, '登录', 10 * 60);
         } catch (LoginException $e) {
             if ($this->hasPendingLoginFlow()) {
-                Log::warning("登录: {$e->getMessage()}");
+                $this->warning("登录: {$e->getMessage()}");
                 return $this->retryAfter($e->getRetryAfterSeconds());
             }
 
             if (!$this->hasLoginTokens()) {
                 throw new NoLoginException($e->getMessage());
             }
-            Log::warning("登录: {$e->getMessage()}");
+            $this->warning("登录: {$e->getMessage()}");
             return $this->retryAfter($e->getRetryAfterSeconds());
         }
 
@@ -180,8 +184,8 @@ class Login extends BasePlugin implements PluginTaskInterface
             throw new NoLoginException('未配置可用登录方式');
         }
 
-        Log::info('启动登录程序');
-        Log::info('准备载入登录令牌');
+        $this->info('启动登录程序');
+        $this->info('准备载入登录令牌');
         $this->login();
         if ($this->hasPendingLoginFlow()) {
             return;
@@ -295,24 +299,24 @@ class Login extends BasePlugin implements PluginTaskInterface
                 $challenge,
                 $recaptchaToken,
                 function (string $phone, string $cid, string $targetUrl): void {
-                    Log::warning("此次请求需要行为验证码");
+                    $this->warning("此次请求需要行为验证码");
                     $this->beginSmsCaptchaLogin($phone, $cid, $targetUrl);
                 },
             ),
             fn (string $message): string => $this->cliInput($message),
             function (array $payload, string $code): void {
-                $response = ApiLogin::smsLogin($payload, $code);
+                $response = $this->authenticationService()->submitSmsLogin($payload, $code);
                 $this->authenticationService()->completeLogin('短信模式', $response, function (LoginDecision $decision, array $rawResponse): void {
                     $this->decisionApplierService()->apply(
                         $decision,
                         $rawResponse,
                         function (array $successResponse, string $message): void {
-                            Log::info($message);
+                            $this->info($message);
                             $this->updateLoginInfo($successResponse);
-                            Log::info('生成信息配置完毕');
+                            $this->info('生成信息配置完毕');
                         },
                         function (string $captchaUrl, string $message): void {
-                            Log::warning($message);
+                            $this->warning($message);
                             $this->beginCaptchaLogin($captchaUrl);
                         },
                     );
@@ -323,11 +327,11 @@ class Login extends BasePlugin implements PluginTaskInterface
                     $this->updateLoginInfo($response);
                 });
                 if (!$result['confirmed']) {
-                    Log::info("等待扫码 {$result['message']}");
+                    $this->info("等待扫码 {$result['message']}");
                     return false;
                 }
 
-                Log::notice("扫码成功 {$result['message']}");
+                $this->notice("扫码成功 {$result['message']}");
 
                 return true;
             },
@@ -344,9 +348,9 @@ class Login extends BasePlugin implements PluginTaskInterface
             time() + 120,
         );
         $this->syncRuntimeState();
-        Log::info('请在浏览器中打开以下链接，完成验证码识别');
-        Log::info($result['display_url']);
-        Log::info('请在2分钟内完成识别操作');
+        $this->info('请在浏览器中打开以下链接，完成验证码识别');
+        $this->info($result['display_url']);
+        $this->info('请在2分钟内完成识别操作');
         $this->scheduleAfter($result['delay_seconds']);
     }
 
@@ -362,9 +366,9 @@ class Login extends BasePlugin implements PluginTaskInterface
             time() + 120,
         );
         $this->syncRuntimeState();
-        Log::info('请在浏览器中打开以下链接，完成验证码识别');
-        Log::info($result['display_url']);
-        Log::info('请在2分钟内完成识别操作');
+        $this->info('请在浏览器中打开以下链接，完成验证码识别');
+        $this->info($result['display_url']);
+        $this->info('请在2分钟内完成识别操作');
         $this->scheduleAfter($result['delay_seconds']);
     }
 
@@ -373,16 +377,16 @@ class Login extends BasePlugin implements PluginTaskInterface
         $this->invalidateSessionAuth();
         $result = $this->pendingFlowLifecycleService()->beginQrcodePolling($this->state(), $qrData, time() + 180);
         $this->syncRuntimeState();
-        Log::info("1.终端直接显示(输入:1)");
-        Log::info("2.浏览器链接访问(输入:2)");
+        $this->info("1.终端直接显示(输入:1)");
+        $this->info("2.浏览器链接访问(输入:2)");
         $option = $this->cliInput("请输入二维码显示方式: ");
         $display = $this->qrCoordinator()->resolveDisplay($option, $result['qr_url']);
         if ($display['mode'] === 'terminal') {
             $this->cliInput("请尝试放大窗口，以确保二维码完整显示，回车继续");
             Qrcode::show($display['url']);
         } else {
-            Log::info("请使用浏览器访问下面的链接，以确保二维码完整显示");
-            Log::info($display['url']);
+            $this->info("请使用浏览器访问下面的链接，以确保二维码完整显示");
+            $this->info($display['url']);
         }
         $this->scheduleAfter($result['delay_seconds']);
     }
@@ -394,7 +398,7 @@ class Login extends BasePlugin implements PluginTaskInterface
     {
         $response = $this->pendingFlowLifecycleService()->fetchCaptchaResult($this->state(), $challenge);
         if ($response !== null) {
-            Log::notice('验证码识别成功');
+            $this->notice('验证码识别成功');
             return $response;
         }
 
@@ -412,9 +416,9 @@ class Login extends BasePlugin implements PluginTaskInterface
         );
 
         match ($result['level']) {
-            'notice' => Log::notice($result['message']),
-            'warning' => Log::warning($result['message']),
-            default => Log::info($result['message']),
+            'notice' => $this->notice($result['message']),
+            'warning' => $this->warning($result['message']),
+            default => $this->info($result['message']),
         };
 
         if ($result['patched_cookie'] !== null) {
@@ -435,19 +439,20 @@ class Login extends BasePlugin implements PluginTaskInterface
     protected function tokenLifecycleService(): LoginTokenLifecycleService
     {
         return $this->tokenLifecycleService ??= new LoginTokenLifecycleService(
-            Runtime::getInstance()->appContext(),
+            $this->appContext(),
             $this->cookiePatchService(),
+            $this->apiOauth2(),
         );
     }
 
     protected function captchaService(): LoginCaptchaService
     {
-        return $this->captchaService ??= new LoginCaptchaService(Runtime::getInstance()->appContext());
+        return $this->captchaService ??= new LoginCaptchaService($this->appContext());
     }
 
     protected function credentialService(): LoginCredentialService
     {
-        return $this->credentialService ??= new LoginCredentialService(Runtime::getInstance()->appContext());
+        return $this->credentialService ??= new LoginCredentialService($this->appContext(), $this->apiOauth2());
     }
 
     protected function promptService(): LoginPromptService
@@ -457,7 +462,7 @@ class Login extends BasePlugin implements PluginTaskInterface
 
     protected function qrService(): LoginQrService
     {
-        return $this->qrService ??= new LoginQrService();
+        return $this->qrService ??= new LoginQrService($this->apiQrcode());
     }
 
     protected function responseService(): LoginResponseService
@@ -490,17 +495,18 @@ class Login extends BasePlugin implements PluginTaskInterface
             $this->modeExecutor(),
             $this->smsService(),
             $this->responseService(),
+            $this->apiLogin(),
         );
     }
 
     protected function smsService(): LoginSmsService
     {
-        return $this->smsService ??= new LoginSmsService(Runtime::getInstance()->appContext());
+        return $this->smsService ??= new LoginSmsService($this->appContext(), $this->apiLogin());
     }
 
     protected function pendingFlowStore(): LoginPendingFlowStore
     {
-        return $this->pendingFlowStore ??= new LoginPendingFlowStore();
+        return $this->pendingFlowStore ??= new LoginPendingFlowStore($this->cache());
     }
 
     protected function pendingFlowStateService(): LoginPendingFlowStateService
@@ -514,6 +520,7 @@ class Login extends BasePlugin implements PluginTaskInterface
             $this->captchaService(),
             $this->pendingFlowFactory(),
             $this->pendingFlowStateService(),
+            $this->appContext()->log(),
         );
     }
 
@@ -542,7 +549,7 @@ class Login extends BasePlugin implements PluginTaskInterface
 
     protected function gateStateService(): LoginGateStateService
     {
-        return $this->gateStateService ??= new LoginGateStateService(Runtime::getInstance()->appContext());
+        return $this->gateStateService ??= new LoginGateStateService($this->appContext(), $this->pendingFlowStore());
     }
 
     /**
@@ -578,7 +585,7 @@ class Login extends BasePlugin implements PluginTaskInterface
     {
         $this->setAuth($key, $value);
         if ($print) {
-            Log::info(" > " . $this->displayKeyForLog($key, $hide) . ': ' . $this->formatLogValueForLog($key, $value, $hide));
+            $this->info(" > " . $this->displayKeyForLog($key, $hide) . ': ' . $this->formatLogValueForLog($key, $value, $hide));
         }
     }
 
@@ -635,7 +642,7 @@ class Login extends BasePlugin implements PluginTaskInterface
      */
     protected function accountLogin(string $validate = '', string $challenge = '', string $mode = '账密模式'): void
     {
-        Log::info("尝试 $mode 登录");
+        $this->info("尝试 $mode 登录");
         $this->authenticationService()->accountLogin(
             $this->state(),
             $mode,
@@ -647,12 +654,12 @@ class Login extends BasePlugin implements PluginTaskInterface
                         $decision,
                         $rawResponse,
                         function (array $successResponse, string $message): void {
-                            Log::info($message);
+                            $this->info($message);
                             $this->updateLoginInfo($successResponse);
-                            Log::info('生成信息配置完毕');
+                            $this->info('生成信息配置完毕');
                         },
                         function (string $captchaUrl, string $message): void {
-                            Log::warning($message);
+                            $this->warning($message);
                             $this->beginCaptchaLogin($captchaUrl);
                         },
                     );
@@ -667,7 +674,7 @@ class Login extends BasePlugin implements PluginTaskInterface
      */
     protected function smsLogin(string $mode = '短信模式'): void
     {
-        Log::info("尝试 $mode 登录");
+        $this->info("尝试 $mode 登录");
         $this->authenticationService()->smsLogin(
             $this->state(),
             (string) $this->config('login_country.code'),
@@ -677,18 +684,18 @@ class Login extends BasePlugin implements PluginTaskInterface
             },
             fn (string $message): string => $this->cliInput($message),
             function (array $payload, string $code) use ($mode): void {
-                $response = ApiLogin::smsLogin($payload, $code);
+                $response = $this->authenticationService()->submitSmsLogin($payload, $code);
                 $this->authenticationService()->completeLogin($mode, $response, function (LoginDecision $decision, array $rawResponse): void {
                     $this->decisionApplierService()->apply(
                         $decision,
                         $rawResponse,
                         function (array $successResponse, string $message): void {
-                            Log::info($message);
+                            $this->info($message);
                             $this->updateLoginInfo($successResponse);
-                            Log::info('生成信息配置完毕');
+                            $this->info('生成信息配置完毕');
                         },
                         function (string $captchaUrl, string $message): void {
-                            Log::warning($message);
+                            $this->warning($message);
                             $this->beginCaptchaLogin($captchaUrl);
                         },
                     );
@@ -724,7 +731,7 @@ class Login extends BasePlugin implements PluginTaskInterface
 
     protected function fetchHomeHeaders(): array
     {
-        $response = ApiMain::home();
+        $response = $this->apiMain()->home();
         return is_array($response) ? $response : [];
     }
 
@@ -759,6 +766,26 @@ class Login extends BasePlugin implements PluginTaskInterface
         $this->username = $this->state()->username();
         $this->password = $this->state()->password();
         $this->pendingLoginFlow = $this->state()->pendingFlow();
+    }
+
+    private function apiLogin(): ApiLogin
+    {
+        return $this->apiLogin ??= new ApiLogin($this->appContext()->request());
+    }
+
+    private function apiOauth2(): ApiOauth2
+    {
+        return $this->apiOauth2 ??= new ApiOauth2($this->appContext()->request());
+    }
+
+    private function apiQrcode(): ApiQrcode
+    {
+        return $this->apiQrcode ??= new ApiQrcode($this->appContext()->request());
+    }
+
+    private function apiMain(): ApiMain
+    {
+        return $this->apiMain ??= new ApiMain($this->appContext()->request());
     }
 
 }

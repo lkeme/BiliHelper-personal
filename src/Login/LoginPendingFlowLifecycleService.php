@@ -14,6 +14,7 @@ final class LoginPendingFlowLifecycleService
         private readonly LoginCaptchaService $captchaService,
         private readonly LoginPendingFlowFactory $pendingFlowFactory,
         private readonly LoginPendingFlowStateService $pendingFlowStateService,
+        private readonly Log $log,
     ) {
     }
 
@@ -120,7 +121,7 @@ final class LoginPendingFlowLifecycleService
             return;
         }
 
-        Log::info(sprintf(
+        $this->log->recordInfo(sprintf(
             '验证码结果轮询中，验证码服务访问正常，已等待 %d 秒，2秒后继续',
             $this->captchaPendingWaitedSeconds($flow, $now),
         ));
@@ -137,7 +138,7 @@ final class LoginPendingFlowLifecycleService
         }
 
         $suffix = $message !== '' ? ": {$message}" : '';
-        Log::warning(sprintf(
+        $this->log->recordWarning(sprintf(
             '验证码结果查询异常%s，已等待 %d 秒，2秒后继续',
             $suffix,
             $this->captchaPendingWaitedSeconds($flow, $now),

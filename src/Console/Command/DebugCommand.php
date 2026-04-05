@@ -17,6 +17,8 @@
 
 namespace Bhp\Console\Command;
 
+use Closure;
+use LogicException;
 use Bhp\Console\Cli\Command;
 use Bhp\Console\Cli\Interactor;
 use Bhp\Log\Log;
@@ -35,8 +37,12 @@ final class DebugCommand extends Command
     /**
      *
      */
-    public function __construct()
-    {
+    public function __construct(
+        private readonly Log $log,
+        private readonly ?Closure $schedulerResolver = null,
+        private readonly ?Closure $pluginResolver = null,
+        private readonly ?Closure $cacheResetServiceResolver = null,
+    ) {
         parent::__construct('mode:debug', $this->desc);
         //
         $this
@@ -67,7 +73,7 @@ final class DebugCommand extends Command
      */
     public function execute(): void
     {
-        Log::info("执行 $this->desc");
+        $this->log->recordInfo("执行 $this->desc");
 
         $single = trim((string)($this->values()['plugin'] ?? ''));
         $multi = trim((string)($this->values()['plugins'] ?? ''));
@@ -76,8 +82,8 @@ final class DebugCommand extends Command
         }
 
         if ((bool)($this->values()['reset-cache'] ?? false) || (bool)($this->values()['purge-auth'] ?? false)) {
-            Log::info('调试模式: 进入前清理缓存');
-            (new ProfileCacheResetService())->reset((bool)($this->values()['purge-auth'] ?? false));
+            $this->log->recordInfo('调试模式: 进入前清理缓存');
+            $this->cacheResetService()->reset((bool)($this->values()['purge-auth'] ?? false));
         }
         $pp = [];
         if ($single !== '') {
@@ -89,14 +95,16 @@ final class DebugCommand extends Command
         }
 
         $pp = array_values(array_unique(array_map('trim', $pp)));
-        if (empty($pp)) AppTerminator::fail('没有插件输入');
+        if (empty($pp)) {
+            AppTerminator::fail('没有插件输入');
+        }
 
         if (!in_array('Login', $pp, true) && $this->shouldAttachLogin($pp)) {
             array_unshift($pp, 'Login');
         }
 
         $selected = [];
-        foreach (Plugin::getPlugins() as $plugin) {
+        foreach ($this->plugin()->plugins() as $plugin) {
             if (($plugin['mode'] ?? 'app') === 'script') {
                 continue;
             }
@@ -109,7 +117,7 @@ final class DebugCommand extends Command
             AppTerminator::fail('没有匹配到可执行插件');
         }
 
-        $scheduler = Scheduler::getInstance();
+        $scheduler = $this->scheduler();
         $scheduler->registerPlugins($selected);
         $scheduler->run();
     }
@@ -119,7 +127,7 @@ final class DebugCommand extends Command
      */
     private function shouldAttachLogin(array $hooks): bool
     {
-        foreach (Plugin::getPlugins() as $plugin) {
+        foreach ($this->plugin()->plugins() as $plugin) {
             $hook = (string)($plugin['hook'] ?? '');
             if ($hook === '' || !in_array($hook, $hooks, true)) {
                 continue;
@@ -131,6 +139,36 @@ final class DebugCommand extends Command
         }
 
         return false;
+    }
+
+    private function scheduler(): Scheduler
+    {
+        $scheduler = $this->schedulerResolver instanceof Closure ? ($this->schedulerResolver)() : null;
+        if ($scheduler instanceof Scheduler) {
+            return $scheduler;
+        }
+
+        throw new LogicException('DebugCommand scheduler dependency is not configured.');
+    }
+
+    private function plugin(): Plugin
+    {
+        $plugin = $this->pluginResolver instanceof Closure ? ($this->pluginResolver)() : null;
+        if ($plugin instanceof Plugin) {
+            return $plugin;
+        }
+
+        throw new LogicException('DebugCommand plugin dependency is not configured.');
+    }
+
+    private function cacheResetService(): ProfileCacheResetService
+    {
+        $service = $this->cacheResetServiceResolver instanceof Closure ? ($this->cacheResetServiceResolver)() : null;
+        if ($service instanceof ProfileCacheResetService) {
+            return $service;
+        }
+
+        throw new LogicException('DebugCommand cache reset dependency is not configured.');
     }
 
 }

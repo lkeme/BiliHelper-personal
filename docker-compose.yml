@@ -1,4 +1,4 @@
-# docker-compose up -d
+# Update image first: docker compose pull && docker compose up -d
 version: '3'
 services:
     bhp:
@@ -13,8 +13,6 @@ services:
         ports:
             - "50001:50001" # 50001替换为自己的端口 user.ini->login_captcha->url
         environment:
-            BRANCH: master # 代码分支。优先于 profile 里的 app.branch
-            AUTO_UPDATE: 1 # 容器启动时同步远程代码
-            MIRRORS: 1 # 使用github镜像加速 docs/DOC.md#docker使用指南
+            BRANCH: master # 远程资源分支。优先于 profile 里的 app.branch
             CAPTCHA: 1 # docs/CAPTCHA.md
 

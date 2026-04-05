@@ -17,10 +17,11 @@
 
 namespace Bhp\Console\Command;
 
+use Closure;
+use LogicException;
 use Bhp\Console\Cli\Command;
 use Bhp\Console\Cli\Interactor;
 use Bhp\Console\Cli\RuntimeException as CliRuntimeException;
-use Bhp\Console\Console;
 use Bhp\Log\Log;
 use Bhp\Plugin\Plugin;
 use Bhp\Profile\ProfileCacheResetService;
@@ -36,8 +37,15 @@ final class ScriptCommand extends Command
     /**
      *
      */
-    public function __construct()
-    {
+    /**
+     * @param string[] $argv
+     */
+    public function __construct(
+        private readonly Log $log,
+        private readonly array $argv = [],
+        private readonly ?Closure $pluginResolver = null,
+        private readonly ?Closure $cacheResetServiceResolver = null,
+    ) {
         parent::__construct('mode:script', $this->desc);
         $this
             ->option('-l --list', '列出脚本插件')
@@ -68,10 +76,10 @@ final class ScriptCommand extends Command
      */
     public function execute(): void
     {
-        Log::info("执行 $this->desc");
+        $this->log->recordInfo("执行 $this->desc");
         if ((bool)($this->values()['reset-cache'] ?? false) || (bool)($this->values()['purge-auth'] ?? false)) {
-            Log::info('脚本模式: 进入前清理缓存');
-            (new ProfileCacheResetService())->reset((bool)($this->values()['purge-auth'] ?? false));
+            $this->log->recordInfo('脚本模式: 进入前清理缓存');
+            $this->cacheResetService()->reset((bool)($this->values()['purge-auth'] ?? false));
         }
 
         if ((bool)($this->values()['list'] ?? false)) {
@@ -94,7 +102,7 @@ final class ScriptCommand extends Command
         }
         $selectedHooks = array_values(array_unique(array_map('trim', $selectedHooks)));
         $plugins = array_values(array_filter(
-            Plugin::getPlugins(),
+            $this->plugin()->plugins(),
             static fn(array $plugin): bool => (($plugin['mode'] ?? 'app') === 'script')
                 && in_array((string)($plugin['hook'] ?? ''), $selectedHooks, true)
         ));
@@ -102,16 +110,17 @@ final class ScriptCommand extends Command
             throw new CliRuntimeException('没有匹配到可执行脚本插件');
         }
 
-        $argv = Console::getInstance()->argv();
+        $argv = array_values(array_map('strval', $this->argv ?: ($_SERVER['argv'] ?? [])));
+        $pluginService = $this->plugin();
         foreach ($plugins as $plugin) {
-            Plugin::getInstance()->trigger((string)$plugin['hook'], $this->values(), $argv);
+            $pluginService->trigger((string)$plugin['hook'], $this->values(), $argv);
         }
     }
 
     protected function renderScriptPluginList(): void
     {
         $plugins = array_values(array_filter(
-            Plugin::getPlugins(),
+            $this->plugin()->plugins(),
             static fn(array $plugin): bool => (($plugin['mode'] ?? 'app') === 'script')
         ));
         if ($plugins === []) {
@@ -130,5 +139,25 @@ final class ScriptCommand extends Command
         foreach (AsciiTable::array2table($rows, '脚本插件列表') as $line) {
             echo $line . PHP_EOL;
         }
+    }
+
+    private function plugin(): Plugin
+    {
+        $plugin = $this->pluginResolver instanceof Closure ? ($this->pluginResolver)() : null;
+        if ($plugin instanceof Plugin) {
+            return $plugin;
+        }
+
+        throw new LogicException('ScriptCommand plugin dependency is not configured.');
+    }
+
+    private function cacheResetService(): ProfileCacheResetService
+    {
+        $service = $this->cacheResetServiceResolver instanceof Closure ? ($this->cacheResetServiceResolver)() : null;
+        if ($service instanceof ProfileCacheResetService) {
+            return $service;
+        }
+
+        throw new LogicException('ScriptCommand cache reset dependency is not configured.');
     }
 }

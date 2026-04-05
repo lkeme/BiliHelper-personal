@@ -1,29 +1,23 @@
 <?php declare(strict_types=1);
 
-/**
- *  Website: https://mudew.com/
- *  Author: Lkeme
- *  License: The MIT License
- *  Email: Useri@live.cn
- *  Updated: 2018 ~ 2026
- *
- *   _____   _   _       _   _   _   _____   _       _____   _____   _____
- *  |  _  \ | | | |     | | | | | | | ____| | |     |  _  \ | ____| |  _  \ &   ／l、
- *  | |_| | | | | |     | | | |_| | | |__   | |     | |_| | | |__   | |_| |   （ﾟ､ ｡ ７
- *  |  _  { | | | |     | | |  _  | |  __|  | |     |  ___/ |  __|  |  _  /  　 \、ﾞ ~ヽ   *
- *  | |_| | | | | |___  | | | | | | | |___  | |___  | |     | |___  | | \ \   　じしf_, )ノ
- *  |_____/ |_| |_____| |_| |_| |_| |_____| |_____| |_|     |_____| |_|  \_\
- */
-
 namespace Bhp\Api\Api\X\Player;
 
+use Bhp\Api\Support\ApiJson;
 use Bhp\Request\Request;
+use Throwable;
 
 class ApiPlayer
 {
-    public static function pageList(string $aid = '', string $bvid = ''): array
+    public function __construct(
+        private readonly Request $request,
+    ) {
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function pageList(string $aid = '', string $bvid = ''): array
     {
-        $url = 'https://api.bilibili.com/x/player/pagelist';
         $payload = [];
         if ($aid !== '') {
             $payload['aid'] = $aid;
@@ -31,9 +25,17 @@ class ApiPlayer
         if ($bvid !== '') {
             $payload['bvid'] = $bvid;
         }
-        // {"code":-404,"message":"啥都木有","ttl":1}
-        // {"code":0,"message":"0","ttl":1,"data":[{"cid":123,"page":1,"from":"vupload","part":"","duration":2055,"vid":"","weblink":"","dimension":{"width":480,"height":360,"rotate":0}}]}
-        return \Bhp\Api\Support\ApiJson::get( 'other', $url, $payload);
-    }
 
+        try {
+            $raw = $this->request->getText('other', 'https://api.bilibili.com/x/player/pagelist', $payload);
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => 'x.player.pagelist 请求失败: ' . $throwable->getMessage(),
+                'data' => [],
+            ];
+        }
+
+        return ApiJson::decode($raw, 'x.player.pagelist');
+    }
 }

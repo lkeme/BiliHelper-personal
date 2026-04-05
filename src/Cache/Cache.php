@@ -17,10 +17,10 @@
 
 namespace Bhp\Cache;
 
-use Bhp\Util\DesignPattern\SingleTon;
+use Bhp\Profile\ProfileContext;
 use Bhp\Util\AppTerminator;
 
-class Cache extends SingleTon
+class Cache
 {
     /**
      * @var array<string, true>
@@ -28,45 +28,47 @@ class Cache extends SingleTon
     protected array $initializedScopes = [];
 
     protected ?CacheStoreInterface $store = null;
+    private readonly string $databasePath;
 
-    public function init(): void
+    public function __construct(ProfileContext $profileContext)
     {
-        $this->store = new SqliteCacheStore(PROFILE_CACHE_PATH . 'cache.sqlite3');
+        $this->databasePath = $profileContext->cachePath() . 'cache.sqlite3';
+        $this->store = new SqliteCacheStore($this->databasePath);
     }
 
-    public static function initCache(?string $classname = null): void
+    public function initializeScope(?string $classname = null): void
     {
-        $scope = self::getInstance()->resolveScope($classname);
-        if (isset(self::getInstance()->initializedScopes[$scope])) {
+        $scope = $this->resolveScope($classname);
+        if (isset($this->initializedScopes[$scope])) {
             return;
         }
 
-        self::getInstance()->initializedScopes[$scope] = true;
+        $this->initializedScopes[$scope] = true;
     }
 
-    public static function set(string $key, mixed $value, ?string $classname = null): void
+    public function put(string $key, mixed $value, ?string $classname = null): void
     {
-        $scope = self::getInstance()->ensureScopeInitialized($classname);
-        self::getInstance()->store()->set($scope, $key, $value);
+        $scope = $this->ensureScopeInitialized($classname);
+        $this->store()->set($scope, $key, $value);
     }
 
-    public static function get(string $key, ?string $classname = null): mixed
+    public function pull(string $key, ?string $classname = null): mixed
     {
-        $scope = self::getInstance()->ensureScopeInitialized($classname);
+        $scope = $this->ensureScopeInitialized($classname);
 
-        return self::getInstance()->store()->get($scope, $key);
+        return $this->store()->get($scope, $key);
     }
 
-    public static function clearAll(): void
+    public function flush(): void
     {
-        self::getInstance()->initializedScopes = [];
-        self::getInstance()->store()->clear();
+        $this->initializedScopes = [];
+        $this->store()->clear();
     }
 
     protected function ensureScopeInitialized(?string $classname = null): string
     {
         $scope = $this->resolveScope($classname);
-        self::initCache($classname);
+        $this->initializeScope($classname);
 
         return $scope;
     }
@@ -87,7 +89,7 @@ class Cache extends SingleTon
 
     protected function store(): CacheStoreInterface
     {
-        return $this->store ??= new SqliteCacheStore(PROFILE_CACHE_PATH . 'cache.sqlite3');
+        return $this->store ??= new SqliteCacheStore($this->databasePath);
     }
 
     protected function getCallClassName(): string

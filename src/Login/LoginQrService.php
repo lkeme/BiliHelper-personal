@@ -9,6 +9,11 @@ use Bhp\Util\Exceptions\LoginException;
 
 class LoginQrService
 {
+    public function __construct(
+        private readonly ApiQrcode $apiQrcode,
+    ) {
+    }
+
     public function fetchAuthCode(): QrAuthCode
     {
         $response = $this->requestAuthCode();
@@ -37,7 +42,7 @@ class LoginQrService
      */
     protected function requestAuthCode(): array
     {
-        return ApiQrcode::authCode();
+        return $this->apiQrcode->authCode();
     }
 
     /**
@@ -45,6 +50,6 @@ class LoginQrService
      */
     protected function requestPoll(string $authCode): array
     {
-        return ApiQrcode::poll($authCode);
+        return $this->apiQrcode->poll($authCode);
     }
 }

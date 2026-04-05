@@ -9,6 +9,11 @@ use function Amp\Future\awaitFirst;
 
 class RaceRequest
 {
+    public function __construct(
+        private readonly HttpClient $httpClient,
+    ) {
+    }
+
     /**
      * @param array<int, array{method?: string, url: string, options?: RequestOptions}> $requests
      * @param callable(HttpResponse): bool|null $successPredicate
@@ -27,7 +32,7 @@ class RaceRequest
             $options->cancellation = $deferredCancellation->getCancellation();
 
             $futures[$key] = async(function () use ($request, $options) {
-                return HttpClient::getInstance()->send(
+                return $this->httpClient->send(
                     $request['method'] ?? 'GET',
                     $request['url'],
                     $options,

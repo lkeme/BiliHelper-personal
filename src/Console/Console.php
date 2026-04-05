@@ -1,31 +1,16 @@
 <?php declare(strict_types=1);
 
-/**
- *  Website: https://mudew.com/
- *  Author: Lkeme
- *  License: The MIT License
- *  Email: Useri@live.cn
- *  Updated: 2018 ~ 2026
- *
- *   _____   _   _       _   _   _   _____   _       _____   _____   _____
- *  |  _  \ | | | |     | | | | | | | ____| | |     |  _  \ | ____| |  _  \ &   ／l、
- *  | |_| | | | | |     | | | |_| | | |__   | |     | |_| | | |__   | |_| |   （ﾟ､ ｡ ７
- *  |  _  { | | | |     | | |  _  | |  __|  | |     |  ___/ |  __|  |  _  /  　 \、ﾞ ~ヽ   *
- *  | |_| | | | | |___  | | | | | | | |___  | |___  | |     | |___  | | \ \   　じしf_, )ノ
- *  |_____/ |_| |_____| |_| |_| |_| |_____| |_____| |_|     |_____| |_|  \_\
- */
-
 namespace Bhp\Console;
 
+use LogicException;
 use Bhp\Console\Cli\Application;
+use Bhp\Console\Cli\RuntimeException as CliRuntimeException;
 use Bhp\Console\Command\AppCommand;
 use Bhp\Console\Command\DebugCommand;
 use Bhp\Console\Command\ScriptCommand;
 use Bhp\Env\Env;
-use Bhp\Util\DesignPattern\SingleTon;
-use Bhp\Util\AppTerminator;
 
-class Console extends SingleTon
+class Console
 {
     /**
      * @var string[]
@@ -54,7 +39,7 @@ class Console extends SingleTon
 LOGO;
 
     /**
-     * @var array
+     * @var string[]
      */
     protected array $argv;
 
@@ -63,27 +48,27 @@ LOGO;
      */
     protected Application $app;
 
-
     /**
-     * @return void
+     * @param string[] $argv
      */
-    public function init(): void
-    {
-
+    public function __construct(
+        array $argv = [],
+        private readonly ?Env $env = null,
+        private readonly ?AppCommand $appCommand = null,
+        private readonly ?DebugCommand $debugCommand = null,
+        private readonly ?ScriptCommand $scriptCommand = null,
+    ) {
+        $this->argv = array_values(array_map('strval', $argv ?: ($_SERVER['argv'] ?? [])));
+        self::assertNoUnknownCommandToken($this->argv);
     }
 
     /**
-     * 解析参数
-     * @param array $argv
-     * @param string $default
-     * @param array $reserved
-     * @return string
+     * @param string[] $argv
+     * @param string[] $reserved
      */
     public static function parse(array $argv, string $default = 'user', array $reserved = ['example']): string
     {
-        $argv = $argv ?? $_SERVER['argv'];
-        self::getInstance()->argv = $argv;
-        self::getInstance()->assertNoUnknownCommandToken($argv);
+        self::assertNoUnknownCommandToken($argv);
 
         $filename = $default;
         $first = (string)($argv[1] ?? '');
@@ -92,16 +77,24 @@ LOGO;
         }
 
         // 保留关键字
-        if (in_array($filename, $reserved)) {
-            AppTerminator::fail("不能使用程序保留关键字 {$filename}");
+        if (in_array($filename, $reserved, true)) {
+            throw new CliRuntimeException("不能使用程序保留关键字 {$filename}");
         }
 
         return $filename;
     }
 
     /**
-     * @param array $argv
-     * @return array
+     * @param string[] $argv
+     */
+    public static function isHelpRequest(array $argv): bool
+    {
+        return in_array('--help', $argv, true) || in_array('-h', $argv, true);
+    }
+
+    /**
+     * @param string[] $argv
+     * @return string[]
      */
     protected function transArgv(array $argv): array
     {
@@ -112,17 +105,27 @@ LOGO;
         return array_values($argv);
     }
 
-    /**
-     * @return void
-     */
     public function register(): void
     {
-        $env = Env::getInstance();
+        $env = $this->env;
+        if (!$env instanceof Env) {
+            throw new LogicException('Console environment dependency is not configured.');
+        }
+        if (!$this->appCommand instanceof AppCommand) {
+            throw new LogicException('Console app command dependency is not configured.');
+        }
+        if (!$this->debugCommand instanceof DebugCommand) {
+            throw new LogicException('Console debug command dependency is not configured.');
+        }
+        if (!$this->scriptCommand instanceof ScriptCommand) {
+            throw new LogicException('Console script command dependency is not configured.');
+        }
+
         $this->app = new Application($env->app_name, $env->app_version);
         $this->app
-            ->add(new AppCommand(), 'm:a', true) // 模式1
-            ->add(new DebugCommand(), 'm:d')  // 模式2
-            ->add(new ScriptCommand(), 'm:s') // 模式3
+            ->add($this->appCommand, 'm:a', true) // 模式1
+            ->add($this->debugCommand, 'm:d')  // 模式2
+            ->add($this->scriptCommand, 'm:s') // 模式3
             ->logo($this->logo)
             ->handle($this->transArgv($this->argv));
     }
@@ -137,7 +140,15 @@ LOGO;
 
     public function mode(): string
     {
-        foreach ($this->argv() as $token) {
+        return self::resolveMode($this->argv());
+    }
+
+    /**
+     * @param string[] $argv
+     */
+    public static function resolveMode(array $argv): string
+    {
+        foreach ($argv as $token) {
             $token = trim((string)$token);
             if ($token === '' || str_starts_with($token, '-')) {
                 continue;
@@ -166,7 +177,7 @@ LOGO;
     /**
      * @param string[] $argv
      */
-    private function assertNoUnknownCommandToken(array $argv): void
+    private static function assertNoUnknownCommandToken(array $argv): void
     {
         foreach (array_slice($argv, 1) as $token) {
             $token = trim((string)$token);
@@ -175,11 +186,10 @@ LOGO;
             }
 
             if (self::isCommandToken($token)) {
-                return;
+                continue;
             }
 
-            fwrite(STDERR, "未找到可执行命令: {$token}" . PHP_EOL);
-            exit(1);
+            throw new CliRuntimeException("未找到可执行命令: {$token}");
         }
     }
 

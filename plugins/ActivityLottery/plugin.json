@@ -1,0 +1,8 @@
+{
+  "hook": "ActivityLottery",
+  "name": "ActivityLottery",
+  "class_name": "Bhp\\Plugin\\Builtin\\ActivityLottery\\ActivityLotteryPlugin",
+  "entry": "src/ActivityLotteryPlugin.php",
+  "vendor": "official",
+  "source": "bundled"
+}

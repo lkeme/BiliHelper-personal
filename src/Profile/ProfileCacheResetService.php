@@ -3,15 +3,19 @@
 namespace Bhp\Profile;
 
 use Bhp\Cache\Cache;
-use Bhp\Log\Log;
 use Bhp\Runtime\AppContext;
-use Bhp\Util\Os\Path;
 
 final class ProfileCacheResetService
 {
+    public function __construct(
+        private readonly AppContext $context,
+        private readonly Cache $cache,
+    ) {
+    }
+
     public function reset(bool $purgeAuth = false): void
     {
-        $authSnapshot = $purgeAuth ? [] : (new AppContext())->authSnapshot();
+        $authSnapshot = $purgeAuth ? [] : $this->context->authSnapshot();
 
         $this->clearCacheFiles($authSnapshot);
     }
@@ -21,12 +25,12 @@ final class ProfileCacheResetService
      */
     private function clearCacheFiles(array $authSnapshot): void
     {
-        $cacheDir = ProfileContext::fromRuntimeConstants()->cachePath();
+        $cacheDir = $this->context->cachePath();
         if (!is_dir($cacheDir)) {
             return;
         }
 
-        Cache::clearAll();
+        $this->cache->flush();
         $this->removeFiles([
             $cacheDir . DIRECTORY_SEPARATOR . 'cache.sqlite3',
             $cacheDir . DIRECTORY_SEPARATOR . 'cache.sqlite3-shm',
@@ -34,8 +38,8 @@ final class ProfileCacheResetService
         ]);
 
         if ($authSnapshot !== []) {
-            (new AppContext())->restoreAuthSnapshot($authSnapshot);
-            Log::info('已保留当前登录态');
+            $this->context->restoreAuthSnapshot($authSnapshot);
+            $this->context->log()->recordInfo('已保留当前登录态');
         }
     }
 
@@ -46,7 +50,7 @@ final class ProfileCacheResetService
     {
         foreach ($files as $file) {
             if (is_file($file) && @unlink($file)) {
-                Log::info("清理缓存文件: " . basename($file));
+                $this->context->log()->recordInfo("清理缓存文件: " . basename($file));
             }
         }
     }

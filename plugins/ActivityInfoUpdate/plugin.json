@@ -1,0 +1,8 @@
+{
+  "hook": "ActivityInfoUpdate",
+  "name": "ActivityInfoUpdate",
+  "class_name": "Bhp\\Plugin\\Builtin\\ActivityInfoUpdate\\ActivityInfoUpdatePlugin",
+  "entry": "src/ActivityInfoUpdatePlugin.php",
+  "vendor": "official",
+  "source": "bundled"
+}

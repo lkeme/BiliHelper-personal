@@ -17,17 +17,22 @@
 
 namespace Bhp\Api\PassportTv;
 
+use Bhp\Api\Support\ApiJson;
 use Bhp\Request\Request;
-use Bhp\Sign\Sign;
+use Throwable;
 
 class ApiQrcode
 {
+    public function __construct(
+        private readonly Request $request,
+    ) {
+    }
 
     /**
      * 获取authCode
      * @return array
      */
-    public static function authCode(): array
+    public function authCode(): array
     {
         $url = 'https://passport.bilibili.com/x/passport-tv-login/qrcode/auth_code';
         $payload = [];
@@ -35,7 +40,7 @@ class ApiQrcode
             'content-type' => 'application/x-www-form-urlencoded',
         ];
         // {"code":0,"message":"0","ttl":1,"data":{"url":"https://passport.bilibili.com/x/passport-tv-login/h5/qrcode/auth?auth_code=xxxx","auth_code":"xxxx"}}
-        return \Bhp\Api\Support\ApiJson::post( 'app', $url, Sign::login($payload), $headers);
+        return $this->decodePost('app', $url, $this->request->signLoginPayload($payload), $headers, 'passport_tv.qrcode.auth_code');
     }
 
     /**
@@ -43,7 +48,7 @@ class ApiQrcode
      * @param string $auth_code
      * @return mixed
      */
-    public static function poll(string $auth_code): array
+    public function poll(string $auth_code): array
     {
         $url = 'https://passport.bilibili.com/x/passport-tv-login/qrcode/poll';
         $payload = [
@@ -53,7 +58,7 @@ class ApiQrcode
             'content-type' => 'application/x-www-form-urlencoded',
         ];
         // {"code":0,"message":"0","ttl":1,"data":{"mid":123,"access_token":"xxx","refresh_token":"xxx","expires_in":2592000}}
-        return \Bhp\Api\Support\ApiJson::post( 'app', $url, Sign::login($payload), $headers);
+        return $this->decodePost('app', $url, $this->request->signLoginPayload($payload), $headers, 'passport_tv.qrcode.poll');
 
     }
 
@@ -63,7 +68,7 @@ class ApiQrcode
      * @param string $app_secret
      * @return array
      */
-    public static function getConfrimUrl(string $app_key, string $app_secret): array
+    public function getConfrimUrl(string $app_key, string $app_secret): array
     {
         $sign = md5('api=http://link.acg.tv/forum.php' . $app_secret);
         //
@@ -77,7 +82,7 @@ class ApiQrcode
             "origin" => 'https://passport.bilibili.com',
             "referer" => 'https://passport.bilibili.com',
         ];
-        return \Bhp\Api\Support\ApiJson::get( 'pc', $url, $payload, $headers);
+        return $this->decodeGet('pc', $url, $payload, $headers, 'passport_tv.qrcode.confirm_url');
     }
 
     /**
@@ -85,7 +90,7 @@ class ApiQrcode
      * @param string $url
      * @return array
      */
-    public static function goConfrimUrl(string $url): array
+    public function goConfrimUrl(string $url): array
     {
         // 取出url的主体部分
         $query = parse_url($url)['query'];
@@ -95,7 +100,46 @@ class ApiQrcode
             "origin" => 'https://passport.bilibili.com',
             "referer" => 'https://passport.bilibili.com',
         ];
-        return Request::headers('pc', $url, $payload, $headers);
+        return $this->request->fetchHeaders('pc', $url, $payload, $headers);
     }
 
+    /**
+     * @param array<string, mixed> $payload
+     * @param array<string, string> $headers
+     * @return array<string, mixed>
+     */
+    private function decodeGet(string $os, string $url, array $payload, array $headers, string $label): array
+    {
+        try {
+            $raw = $this->request->getText($os, $url, $payload, $headers);
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
+                'data' => [],
+            ];
+        }
+
+        return ApiJson::decode($raw, $label);
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @param array<string, string> $headers
+     * @return array<string, mixed>
+     */
+    private function decodePost(string $os, string $url, array $payload, array $headers, string $label): array
+    {
+        try {
+            $raw = $this->request->postText($os, $url, $payload, $headers);
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
+                'data' => [],
+            ];
+        }
+
+        return ApiJson::decode($raw, $label);
+    }
 }

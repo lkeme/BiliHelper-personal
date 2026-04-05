@@ -17,66 +17,74 @@
 
 namespace Bhp\Api\Pay;
 
+use Bhp\Api\Support\ApiJson;
 use Bhp\Request\Request;
-use Bhp\User\User;
-use Bhp\Util\Common\Common;
+use Throwable;
 
 class ApiPay
 {
+    public function __construct(
+        private readonly Request $request,
+    ) {
+    }
 
     /**
-     * 金瓜子
-     * @param int $num
-     * @return array
+     * @return array<string, mixed>
      */
-    public static function gold(int $num): array
+    public function gold(int $num): array
     {
-        $user = User::parseCookie();
-        //
-        $url = 'https://api.live.bilibili.com/xlive/revenue/v1/order/createOrder';
         $payload = [
             'platform' => 'pc',
-            'pay_bp' => $num * 1000, // 瓜子数量
-            'context_id' => 1, // 直播间
+            'pay_bp' => $num * 1000,
+            'context_id' => 1,
             'context_type' => 11,
-            'goods_id' => 1, // 商品ID
-            'goods_num' => $num, // B币数量
-            'csrf_token' => $user['csrf'],
-            'csrf' => $user['csrf'],
+            'goods_id' => 1,
+            'goods_num' => $num,
+            'csrf_token' => $this->request->csrfValue(),
+            'csrf' => $this->request->csrfValue(),
             'visit_id' => '',
         ];
-        $headers = [
+
+        return $this->decodePost('pc', 'https://api.live.bilibili.com/xlive/revenue/v1/order/createOrder', $payload, [
             'origin' => 'https://link.bilibili.com',
-            'referer' => 'https://link.bilibili.com/p/center/index'
-        ];
-        // {"code":1300014,"message":"b币余额不足","ttl":1,"data":null}
-        // {"code":0,"message":"0","ttl":1,"data":{"status":2,"order_id":"1234171134577071132741234","gold":0,"bp":5000}}
-        return \Bhp\Api\Support\ApiJson::post( 'pc', $url, $payload, $headers);
+            'referer' => 'https://link.bilibili.com/p/center/index',
+        ], 'pay.gold');
     }
 
     /**
-     * 电池
-     * @param int $up_mid
-     * @param int $num
-     * @return array
+     * @return array<string, mixed>
      */
-    public static function battery(int $up_mid, int $num = 5): array
+    public function battery(int $up_mid, int $num = 5): array
     {
-        $user = User::parseCookie();
-        //
-        $url = 'https://api.bilibili.com/x/ugcpay/web/v2/trade/elec/pay/quick';
         $payload = [
-            'bp_num' => $num, // 数量
-            'is_bp_remains_prior' => true, // 是否优先扣除B币余额
-            'up_mid' => $up_mid, // 目标UID
-            'otype' => 'up', // 来源 up：空间充电 archive：视频充电
-            'oid' => $up_mid, // 目标UID or 稿件avid
-            'csrf' => $user['csrf']
+            'bp_num' => $num,
+            'is_bp_remains_prior' => true,
+            'up_mid' => $up_mid,
+            'otype' => 'up',
+            'oid' => $up_mid,
+            'csrf' => $this->request->csrfValue(),
         ];
-        // {"code":0,"message":"0","ttl":1,"data":{"mid":12324,"up_mid":1234,"order_no":"PAY4567","bp_num":"5","exp":5,"status":4,"msg":""}}
-        // {"code":0,"message":"0","ttl":1,"data":{"mid":12324,"up_mid":1234,"order_no":"ABCD","bp_num":2,"exp":2,"status":4,"msg":""}}
-        return \Bhp\Api\Support\ApiJson::post( 'pc', $url, $payload);
+
+        return $this->decodePost('pc', 'https://api.bilibili.com/x/ugcpay/web/v2/trade/elec/pay/quick', $payload, [], 'pay.battery');
     }
 
+    /**
+     * @param array<string, mixed> $payload
+     * @param array<string, string> $headers
+     * @return array<string, mixed>
+     */
+    private function decodePost(string $os, string $url, array $payload, array $headers, string $label): array
+    {
+        try {
+            $raw = $this->request->postText($os, $url, $payload, $headers);
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
+                'data' => [],
+            ];
+        }
 
+        return ApiJson::decode($raw, $label);
+    }
 }

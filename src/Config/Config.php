@@ -17,15 +17,15 @@
 
 namespace Bhp\Config;
 
+use Bhp\Profile\ProfileContext;
 use Bhp\Util\Resource\BaseResource;
 
 class Config extends BaseResource
 {
-    /**
-     * @param string $filename
-     * @return void
-     */
-    public function init(string $filename = 'user.ini'): void
+    public function __construct(
+        private readonly ProfileContext $profileContext,
+        string $filename = 'user.ini',
+    )
     {
         $targetPath = $this->getFilePath($filename);
         $schema = new ConfigSchemaDefinition();
@@ -49,6 +49,6 @@ class Config extends BaseResource
      */
     protected function getFilePath(string $filename): string
     {
-        return str_replace("\\", "/", PROFILE_CONFIG_PATH . $filename);
+        return str_replace("\\", "/", $this->profileContext->configPath() . $filename);
     }
 }

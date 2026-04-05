@@ -9,13 +9,18 @@ final class SchedulerStateStore
     private const CACHE_SCOPE = 'Scheduler';
     private const CACHE_KEY = 'tasks';
 
+    public function __construct(
+        private readonly Cache $cache,
+    ) {
+    }
+
     /**
      * @return array<string, array{next_run_at: float, failure_count: int, circuit_open_until: float}>
      */
     public function load(): array
     {
-        Cache::initCache(self::CACHE_SCOPE);
-        $states = Cache::get(self::CACHE_KEY, self::CACHE_SCOPE);
+        $this->cache->initializeScope(self::CACHE_SCOPE);
+        $states = $this->cache->pull(self::CACHE_KEY, self::CACHE_SCOPE);
 
         return $this->normalizeStates($states);
     }
@@ -25,8 +30,8 @@ final class SchedulerStateStore
      */
     public function save(array $states): void
     {
-        Cache::initCache(self::CACHE_SCOPE);
-        Cache::set(self::CACHE_KEY, $states, self::CACHE_SCOPE);
+        $this->cache->initializeScope(self::CACHE_SCOPE);
+        $this->cache->put(self::CACHE_KEY, $states, self::CACHE_SCOPE);
     }
 
     public function saveTaskState(

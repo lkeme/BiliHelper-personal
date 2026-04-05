@@ -9,7 +9,7 @@
 - 使用插件 manifest 声明元数据
 - 优先使用 `AppContext` 访问配置、设备、认证与路径
 - 不新增 `getConf()`、`getEnable()`、`getU()`、`setU()` 这类 helper 依赖
-- 新插件优先使用命名空间类；插件发现已兼容 namespaced plugin class
+- 插件统一放在 `plugins/<plugin>/` 下，通过 `plugin.json` 接入运行时
 
 ## 推荐基类
 
@@ -17,21 +17,19 @@
 
 - 继承 `BasePlugin`
 
-需要读写资源文件的插件：
+资源文件读取：
 
-- 继承 `BasePluginRW`
+- 直接使用 `Resource` 或专用 service，不再增加额外插件基类
 
-这两个基类都已提供：
+`BasePlugin` 已提供：
 
 - `config()`
 - `enabled()`
 - `auth()`
 - `setAuth()`
-- `device()`
 - `appContext()`
 - `scheduleAfter()`
 - `retryAfter()`
-- `scheduleNextAt()`
 - `resolveTaskResult()`
 - `bootPlugin()`
 
@@ -53,7 +51,12 @@
 
 ## 插件 manifest
 
-插件元数据当前仍放在类属性 `info` 中，并可在发现阶段通过 `discoverManifest()` 读取。
+插件目录最少应包含：
+
+- `plugin.json`
+- `src/`
+
+发现阶段先读取 `plugin.json`，运行态元数据仍可在类属性 `info` 中声明，并可通过 `discoverManifest()` 返回。
 
 装配阶段现在会先把数组 manifest 收敛为 `PluginManifest` DTO，再做校验和默认值补齐。插件侧暂时仍然声明数组，这是当前迁移中的兼容边界。
 
@@ -174,6 +177,7 @@ public function runOnce(): TaskResult
 ```php
 $enabled = $this->enabled('demo_plugin');
 $limit = $this->config('demo_plugin.limit', 10, 'int');
+$device = $this->appContext()->device('platform.headers.app_ua');
 ```
 
 不要再写：

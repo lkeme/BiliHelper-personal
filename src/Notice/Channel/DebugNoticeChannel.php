@@ -2,8 +2,6 @@
 
 namespace Bhp\Notice\Channel;
 
-use Bhp\Log\Log;
-use Bhp\Request\Request;
 
 final class DebugNoticeChannel extends AbstractNoticeChannel
 {
@@ -20,8 +18,8 @@ final class DebugNoticeChannel extends AbstractNoticeChannel
 
     public function dispatch(array $payload): void
     {
-        Log::info('使用Debug推送消息');
-        $raw = Request::postJsonBody('other', (string)$this->config('notify_debug.url'), [
+        $this->info('使用Debug推送消息');
+        $raw = $this->requestPostJsonBody((string)$this->config('notify_debug.url'), [
             'token' => $this->config('notify_debug.token'),
             'title' => $payload['title'],
             'content' => $payload['content'],
@@ -31,7 +29,7 @@ final class DebugNoticeChannel extends AbstractNoticeChannel
 
         $decoded = $this->decode($raw);
         if (($decoded['data']['status'] ?? -1) === 0) {
-            Log::notice('推送消息成功: ' . (string)($decoded['data']['message'] ?? ''));
+            $this->notice('推送消息成功: ' . (string)($decoded['data']['message'] ?? ''));
             return;
         }
 

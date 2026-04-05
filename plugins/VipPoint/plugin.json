@@ -1,0 +1,8 @@
+{
+  "hook": "VipPoint",
+  "name": "VipPoint",
+  "class_name": "Bhp\\Plugin\\Builtin\\VipPoint\\VipPointPlugin",
+  "entry": "src/VipPointPlugin.php",
+  "vendor": "official",
+  "source": "bundled"
+}

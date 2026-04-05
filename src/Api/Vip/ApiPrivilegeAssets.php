@@ -17,50 +17,88 @@
 
 namespace Bhp\Api\Vip;
 
+use Bhp\Api\Support\ApiJson;
 use Bhp\Request\Request;
-use Bhp\Sign\Sign;
-use Bhp\User\User;
+use Throwable;
 
 class ApiPrivilegeAssets
 {
     /**
-     * @var array|string[]
+     * @var array<string, string>
      */
-    protected static array $headers = [
-        'Referer' => 'https://big.bilibili.com/mobile/cardBag?closable=1&navhide=1&tab=all'
+    protected array $headers = [
+        'Referer' => 'https://big.bilibili.com/mobile/cardBag?closable=1&navhide=1&tab=all',
     ];
 
-    /**
-     * 获取大会员权益列表
-     * @return array
-     */
-    public static function list(): array
-    {
-        $user = User::parseCookie();
-        //
-        $url = 'https://api.bilibili.com/x/vip/privilege_assets/list';
-        $payload = [
-            'csrf' => $user['csrf'],
-        ];
-        $headers = array_merge([], self::$headers);
-        return \Bhp\Api\Support\ApiJson::get( 'app', $url, Sign::common($payload), $headers);
+    public function __construct(
+        private readonly Request $request,
+    ) {
     }
 
     /**
-     * 兑换大会员权益
-     * @param string $token
-     * @return array
+     * @return array<string, mixed>
      */
-    public static function exchange(string $token): array
+    public function list(): array
     {
-        $user = User::parseCookie();
-        //
+        $url = 'https://api.bilibili.com/x/vip/privilege_assets/list';
+        $payload = [
+            'csrf' => $this->request->csrfValue(),
+        ];
+
+        return $this->decodeGet('app', $url, $this->request->signCommonPayload($payload), $this->headers, 'vip.privilege_assets.list');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function exchange(string $token): array
+    {
         $url = 'https://api.bilibili.com/x/vip/privilege_assets/exchange';
         $payload = [
             'token' => $token,
-            'csrf' => $user['csrf'],
+            'csrf' => $this->request->csrfValue(),
         ];
-        $headers = array_merge([], self::$headers);
-        return \Bhp\Api\Support\ApiJson::post( 'app', $url, Sign::common($payload), $headers);
+
+        return $this->decodePost('app', $url, $this->request->signCommonPayload($payload), $this->headers, 'vip.privilege_assets.exchange');
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @param array<string, string> $headers
+     * @return array<string, mixed>
+     */
+    private function decodeGet(string $os, string $url, array $payload, array $headers, string $label): array
+    {
+        try {
+            $raw = $this->request->getText($os, $url, $payload, $headers);
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
+                'data' => [],
+            ];
+        }
+
+        return ApiJson::decode($raw, $label);
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @param array<string, string> $headers
+     * @return array<string, mixed>
+     */
+    private function decodePost(string $os, string $url, array $payload, array $headers, string $label): array
+    {
+        try {
+            $raw = $this->request->postText($os, $url, $payload, $headers);
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
+                'data' => [],
+            ];
+        }
+
+        return ApiJson::decode($raw, $label);
     }
 }

@@ -1,0 +1,8 @@
+{
+  "hook": "PolishMedal",
+  "name": "PolishMedal",
+  "class_name": "Bhp\\Plugin\\Builtin\\PolishMedal\\PolishMedalPlugin",
+  "entry": "src/PolishMedalPlugin.php",
+  "vendor": "official",
+  "source": "bundled"
+}

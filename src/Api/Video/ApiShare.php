@@ -17,33 +17,57 @@
 
 namespace Bhp\Api\Video;
 
+use Bhp\Api\Support\ApiJson;
 use Bhp\Request\Request;
-use Bhp\User\User;
+use Throwable;
 
 class ApiShare
 {
+    public function __construct(
+        private readonly Request $request,
+    ) {
+    }
+
     /**
      * 分享视频
      * @param string $aid
      * @return array
      */
-    public static function share(string $aid): array
+    public function share(string $aid): array
     {
         //
-        $user = User::parseCookie();
         //
         $url = 'https://api.bilibili.com/x/web-interface/share/add';
         //
         $payload = [
             'aid' => $aid,
-            'csrf' => $user['csrf'],
+            'csrf' => $this->request->csrfValue(),
         ];
         $headers = [
             'origin' => 'https://www.bilibili.com',
             'Referer' => "https://www.bilibili.com/video/av$aid",
         ];
         // {"code":0,"message":"0","ttl":1}
-        return \Bhp\Api\Support\ApiJson::post( 'pc', $url, $payload, $headers);
+        return $this->decodePost('pc', $url, $payload, $headers, 'video.share');
     }
 
+    /**
+     * @param array<string, mixed> $payload
+     * @param array<string, string> $headers
+     * @return array<string, mixed>
+     */
+    private function decodePost(string $os, string $url, array $payload, array $headers, string $label): array
+    {
+        try {
+            $raw = $this->request->postText($os, $url, $payload, $headers);
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
+                'data' => [],
+            ];
+        }
+
+        return ApiJson::decode($raw, $label);
+    }
 }

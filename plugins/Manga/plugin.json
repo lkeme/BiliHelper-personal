@@ -1,0 +1,8 @@
+{
+  "hook": "Manga",
+  "name": "Manga",
+  "class_name": "Bhp\\Plugin\\Builtin\\Manga\\MangaPlugin",
+  "entry": "src/MangaPlugin.php",
+  "vendor": "official",
+  "source": "bundled"
+}

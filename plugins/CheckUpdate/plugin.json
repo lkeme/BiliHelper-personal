@@ -1,0 +1,8 @@
+{
+  "hook": "CheckUpdate",
+  "name": "CheckUpdate",
+  "class_name": "Bhp\\Plugin\\Builtin\\CheckUpdate\\CheckUpdatePlugin",
+  "entry": "src/CheckUpdatePlugin.php",
+  "vendor": "official",
+  "source": "bundled"
+}

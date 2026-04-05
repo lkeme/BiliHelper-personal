@@ -17,24 +17,27 @@
 
 namespace Bhp\Api\Video;
 
+use Bhp\Api\Support\ApiJson;
 use Bhp\Request\Request;
-use Bhp\User\User;
+use Throwable;
 
 class ApiWatch
 {
+    public function __construct(
+        private readonly Request $request,
+    ) {
+    }
+
     /**
      * 观看视频
      * @param string $aid
      * @param string $cid
      * @param string $bvid
      * @param array<string, mixed>|null $data
-     * @return array
+     * @return array<string, mixed>
      */
-    public static function video(string $aid, string $cid, string $bvid = '', ?array $data = null): array
+    public function video(string $aid, string $cid, string $bvid = '', ?array $data = null): array
     {
-        //
-        $user = User::parseCookie();
-        //
         $url = 'https://api.bilibili.com/x/click-interface/click/web/h5';
         $referer = $bvid !== '' ? "https://www.bilibili.com/video/{$bvid}" : "https://www.bilibili.com/video/av{$aid}";
         $payload = [
@@ -44,8 +47,8 @@ class ApiWatch
             'part' => 1,
             'ftime' => time(),
             'jsonp' => 'jsonp',
-            'mid' => $user['uid'],
-            'csrf' => $user['csrf'],
+            'mid' => $this->request->uidValue(),
+            'csrf' => $this->request->csrfValue(),
             'stime' => time(),
             'lv' => '',
             'auto_continued_play' => 0,
@@ -56,15 +59,14 @@ class ApiWatch
             'spmid' => '333.788.0.0',
             'from_spmid' => '333.999.0.0',
         ];
-        if (!is_null($data)) {
+        if ($data !== null) {
             $payload = array_merge($payload, $data);
         }
-        $headers = [
+
+        return $this->decodePost('pc', $url, $payload, [
             'origin' => 'https://www.bilibili.com',
             'Referer' => $referer,
-        ];
-        // {"code":0,"message":"0","ttl":1}
-        return \Bhp\Api\Support\ApiJson::post( 'pc', $url, $payload, $headers);
+        ], 'video.watch.start');
     }
 
     /**
@@ -73,22 +75,19 @@ class ApiWatch
      * @param string $cid
      * @param int $duration
      * @param string $bvid
-     * @param array|null $data
-     * @return array
+     * @param array<string, mixed>|null $data
+     * @return array<string, mixed>
      */
-    public static function heartbeat(string $aid, string $cid, int $duration, string $bvid = '', ?array $data = null): array
+    public function heartbeat(string $aid, string $cid, int $duration, string $bvid = '', ?array $data = null): array
     {
-        //
-        $user = User::parseCookie();
-        //
         $url = 'https://api.bilibili.com/x/click-interface/web/heartbeat';
         $referer = $bvid !== '' ? "https://www.bilibili.com/video/{$bvid}" : "https://www.bilibili.com/video/av{$aid}";
         $payload = [
             'aid' => $aid,
             'bvid' => $bvid,
             'cid' => $cid,
-            'mid' => $user['uid'],
-            'csrf' => $user['csrf'],
+            'mid' => $this->request->uidValue(),
+            'csrf' => $this->request->csrfValue(),
             'jsonp' => 'jsonp',
             'played_time' => 0,
             'realtime' => $duration,
@@ -105,17 +104,33 @@ class ApiWatch
             'spmid' => '333.788.0.0',
             'from_spmid' => '333.999.0.0',
         ];
-        //
-        if (!is_null($data)) {
+        if ($data !== null) {
             $payload = array_merge($payload, $data);
         }
-        //
-        $headers = [
+
+        return $this->decodePost('pc', $url, $payload, [
             'origin' => 'https://www.bilibili.com',
             'Referer' => $referer,
-        ];
-        // {"code":0,"message":"0","ttl":1}
-        return \Bhp\Api\Support\ApiJson::post( 'pc', $url, $payload, $headers);
+        ], 'video.watch.heartbeat');
     }
 
+    /**
+     * @param array<string, mixed> $payload
+     * @param array<string, string> $headers
+     * @return array<string, mixed>
+     */
+    private function decodePost(string $os, string $url, array $payload, array $headers, string $label): array
+    {
+        try {
+            $raw = $this->request->postText($os, $url, $payload, $headers);
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
+                'data' => [],
+            ];
+        }
+
+        return ApiJson::decode($raw, $label);
+    }
 }

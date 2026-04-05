@@ -1,35 +1,33 @@
 <?php declare(strict_types=1);
 
-/**
- *  Website: https://mudew.com/
- *  Author: Lkeme
- *  License: The MIT License
- *  Email: Useri@live.cn
- *  Updated: 2018 ~ 2026
- *
- *   _____   _   _       _   _   _   _____   _       _____   _____   _____
- *  |  _  \ | | | |     | | | | | | | ____| | |     |  _  \ | ____| |  _  \ &   ／l、
- *  | |_| | | | | |     | | | |_| | | |__   | |     | |_| | | |__   | |_| |   （ﾟ､ ｡ ７
- *  |  _  { | | | |     | | |  _  | |  __|  | |     |  ___/ |  __|  |  _  /  　 \、ﾞ ~ヽ   *
- *  | |_| | | | | |___  | | | | | | | |___  | |___  | |     | |___  | | \ \   　じしf_, )ノ
- *  |_____/ |_| |_____| |_| |_| |_| |_____| |_____| |_|     |_____| |_|  \_\
- */
-
 namespace Bhp\Api\Room\V1;
 
+use Bhp\Api\Support\ApiJson;
 use Bhp\Request\Request;
+use Throwable;
 
 class ApiArea
 {
-    /**
-     * 获取分区列表
-     * @return array
-     */
-    public static function getList(): array
-    {
-        $url = 'https://api.live.bilibili.com/room/v1/Area/getList';
-        $payload = [];
-        return \Bhp\Api\Support\ApiJson::get( 'other', $url, $payload);
+    public function __construct(
+        private readonly Request $request,
+    ) {
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function getList(): array
+    {
+        try {
+            $raw = $this->request->getText('other', 'https://api.live.bilibili.com/room/v1/Area/getList');
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => 'room.area.get_list 请求失败: ' . $throwable->getMessage(),
+                'data' => [],
+            ];
+        }
+
+        return ApiJson::decode($raw, 'room.area.get_list');
+    }
 }

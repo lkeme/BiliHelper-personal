@@ -17,22 +17,22 @@
 
 namespace Bhp\Api\Msg;
 
+use Bhp\Api\Support\ApiJson;
 use Bhp\Request\Request;
-use Bhp\Sign\Sign;
-use Bhp\User\User;
+use Throwable;
 
 class ApiMsg
 {
-    /**
-     * @param int $room_id
-     * @param string $content
-     * @return array
-     */
-    public static function sendBarragePC(int $room_id, string $content): array
-    {
+    public function __construct(
+        private readonly Request $request,
+    ) {
+    }
 
-        $user = User::parseCookie();
-        $url = 'https://api.live.bilibili.com/msg/send';
+    /**
+     * @return array<string, mixed>
+     */
+    public function sendBarragePC(int $room_id, string $content): array
+    {
         $payload = [
             'color' => '16777215',
             'fontsize' => 25,
@@ -41,22 +41,21 @@ class ApiMsg
             'rnd' => 0,
             'bubble' => 0,
             'roomid' => $room_id,
-            'csrf' => $user['csrf'],
-            'csrf_token' => $user['csrf'],
+            'csrf' => $this->request->csrfValue(),
+            'csrf_token' => $this->request->csrfValue(),
         ];
 
-
-        $headers = [
+        return $this->decodePost('pc', 'https://api.live.bilibili.com/msg/send', $payload, [
             'origin' => 'https://live.bilibili.com',
-            'referer' => "https://live.bilibili.com/$room_id"
-        ];
-        return \Bhp\Api\Support\ApiJson::post( 'pc', $url, $payload, $headers);
+            'referer' => "https://live.bilibili.com/{$room_id}",
+        ], 'msg.barrage.pc');
     }
 
-    public static function sendBarrageAPP(int $room_id, string $content): array
+    /**
+     * @return array<string, mixed>
+     */
+    public function sendBarrageAPP(int $room_id, string $content): array
     {
-        $user = User::parseCookie();
-        $url = 'https://api.live.bilibili.com/msg/send';
         $payload = [
             'color' => '16777215',
             'fontsize' => 25,
@@ -64,10 +63,30 @@ class ApiMsg
             'msg' => $content,
             'rnd' => 0,
             'roomid' => $room_id,
-            'csrf' => $user['csrf'],
-            'csrf_token' => $user['csrf'],
+            'csrf' => $this->request->csrfValue(),
+            'csrf_token' => $this->request->csrfValue(),
         ];
-        return \Bhp\Api\Support\ApiJson::post( 'app', $url, Sign::common($payload));
+
+        return $this->decodePost('app', 'https://api.live.bilibili.com/msg/send', $this->request->signCommonPayload($payload), [], 'msg.barrage.app');
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @param array<string, string> $headers
+     * @return array<string, mixed>
+     */
+    private function decodePost(string $os, string $url, array $payload, array $headers, string $label): array
+    {
+        try {
+            $raw = $this->request->postText($os, $url, $payload, $headers);
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
+                'data' => [],
+            ];
+        }
+
+        return ApiJson::decode($raw, $label);
     }
 }
-

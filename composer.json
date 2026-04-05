@@ -47,7 +47,12 @@
     "autoload": {
         "psr-4": {
             "Bhp\\": "src/"
-        }
+        },
+        "classmap": [
+            "plugins/"
+        ]
     },
-    "require-dev": {}
+    "require-dev": {
+        "phpunit/phpunit": "^12.0@stable"
+    }
 }

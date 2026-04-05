@@ -4,15 +4,20 @@ namespace Bhp\Api\XLive\DataInterface\V1\X25Kn;
 
 use Bhp\Api\Support\ApiJson;
 use Bhp\Request\Request;
-use Bhp\User\User;
 use Bhp\WbiSign\WbiSign;
+use Throwable;
 
 final class ApiTrace
 {
+    public function __construct(
+        private readonly Request $request,
+    ) {
+    }
+
     /**
      * @return array<string, mixed>
      */
-    public static function enter(
+    public function enter(
         int $roomId,
         int $ruid,
         int $parentAreaId,
@@ -21,8 +26,6 @@ final class ApiTrace
         string $uuid,
         string $userAgent,
     ): array {
-        $user = User::parseCookie();
-        $url = 'https://live-trace.bilibili.com/xlive/data-interface/v1/x25Kn/E';
         $query = WbiSign::encryption([
             'id' => self::compactJson([$parentAreaId, $areaId, 0, $roomId]),
             'device' => self::compactJson([$buvid, $uuid]),
@@ -32,28 +35,35 @@ final class ApiTrace
             'heart_beat' => '[]',
             'ua' => $userAgent,
             'web_location' => '444.8',
-            'csrf' => $user['csrf'],
+            'csrf' => $this->request->csrfValue(),
         ]);
-        $headers = [
-            'origin' => 'https://live.bilibili.com',
-            'referer' => "https://live.bilibili.com/blanc/{$roomId}?liteVersion=true",
-        ];
 
-        return ApiJson::post('pc', $url . '?' . http_build_query($query), [], $headers, 'xlive.trace.enter');
+        try {
+            $raw = $this->request->postText('pc', 'https://live-trace.bilibili.com/xlive/data-interface/v1/x25Kn/E?' . http_build_query($query), [], [
+                'origin' => 'https://live.bilibili.com',
+                'referer' => "https://live.bilibili.com/blanc/{$roomId}?liteVersion=true",
+            ]);
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => 'xlive.trace.enter 请求失败: ' . $throwable->getMessage(),
+                'data' => [],
+            ];
+        }
+
+        return ApiJson::decode($raw, 'xlive.trace.enter');
     }
 
     /**
      * @param array<string, mixed> $session
      * @return array<string, mixed>
      */
-    public static function heartbeat(array $session, string $userAgent, ?int $durationSeconds = null): array
+    public function heartbeat(array $session, string $userAgent, ?int $durationSeconds = null): array
     {
-        $user = User::parseCookie();
         $roomId = (int)($session['room_id'] ?? 0);
         $seqId = (int)($session['seq_id'] ?? 0) + 1;
         $duration = max(1, (int)($durationSeconds ?? $session['heartbeat_interval'] ?? 60));
         $ts = (int)round(microtime(true) * 1000);
-        $url = 'https://live-trace.bilibili.com/xlive/data-interface/v1/x25Kn/X';
         $query = WbiSign::encryption([
             's' => self::buildSignature(
                 (int)($session['parent_area_id'] ?? 0),
@@ -86,14 +96,23 @@ final class ApiTrace
             'trackid' => -99998,
             'ua' => $userAgent,
             'web_location' => '444.8',
-            'csrf' => $user['csrf'],
+            'csrf' => $this->request->csrfValue(),
         ]);
-        $headers = [
-            'origin' => 'https://live.bilibili.com',
-            'referer' => "https://live.bilibili.com/blanc/{$roomId}?liteVersion=true",
-        ];
 
-        return ApiJson::post('pc', $url . '?' . http_build_query($query), [], $headers, 'xlive.trace.heartbeat');
+        try {
+            $raw = $this->request->postText('pc', 'https://live-trace.bilibili.com/xlive/data-interface/v1/x25Kn/X?' . http_build_query($query), [], [
+                'origin' => 'https://live.bilibili.com',
+                'referer' => "https://live.bilibili.com/blanc/{$roomId}?liteVersion=true",
+            ]);
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => 'xlive.trace.heartbeat 请求失败: ' . $throwable->getMessage(),
+                'data' => [],
+            ];
+        }
+
+        return ApiJson::decode($raw, 'xlive.trace.heartbeat');
     }
 
     /**

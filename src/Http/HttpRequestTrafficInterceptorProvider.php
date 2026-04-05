@@ -4,6 +4,11 @@ namespace Bhp\Http;
 
 final class HttpRequestTrafficInterceptorProvider implements HttpClientInterceptorProvider
 {
+    public function __construct(
+        private readonly HttpRequestTrafficMonitor $monitor,
+    ) {
+    }
+
     public function name(): string
     {
         return 'request_traffic';
@@ -17,7 +22,7 @@ final class HttpRequestTrafficInterceptorProvider implements HttpClientIntercept
     public function provide(HttpRequestContext $context): array
     {
         return [
-            new HttpRequestTrafficInterceptor(),
+            new HttpRequestTrafficInterceptor($this->monitor),
         ];
     }
 }

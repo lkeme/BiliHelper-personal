@@ -9,6 +9,8 @@ use Bhp\Util\Exceptions\LoginException;
 
 class LoginCaptchaService
 {
+    private ?ApiCaptcha $captchaApi = null;
+
     public function __construct(protected AppContext $context)
     {
     }
@@ -84,6 +86,11 @@ class LoginCaptchaService
      */
     protected function requestCaptchaFetch(string $challenge): array
     {
-        return ApiCaptcha::fetch($challenge);
+        return $this->captchaApi()->fetch((string)$this->context->config('login_captcha.url'), $challenge);
+    }
+
+    private function captchaApi(): ApiCaptcha
+    {
+        return $this->captchaApi ??= new ApiCaptcha($this->context->request());
     }
 }

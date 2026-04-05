@@ -17,32 +17,54 @@
 
 namespace Bhp\Api\Vip;
 
+use Bhp\Api\Support\ApiJson;
 use Bhp\Request\Request;
-use Bhp\Sign\Sign;
-use Bhp\User\User;
+use Throwable;
 
 class ApiVipCenter
 {
     /**
-     * @var array|string[]
+     * @var array<string, string>
      */
-    protected static array $headers = [
-        'Referer' => 'https://big.bilibili.com/mobile/index'
+    protected array $headers = [
+        'Referer' => 'https://big.bilibili.com/mobile/index',
     ];
 
+    public function __construct(
+        private readonly Request $request,
+    ) {
+    }
+
     /**
-     * 大会员中心
-     * @return array
+     * @return array<string, mixed>
      */
-    public static function v2(): array
+    public function v2(): array
     {
-        $user = User::parseCookie();
-        //
         $url = 'https://api.bilibili.com/x/vip/web/vip_center/v2';
         $payload = [
-            'csrf' => $user['csrf'],
+            'csrf' => $this->request->csrfValue(),
         ];
-        $headers = array_merge([], self::$headers);
-        return \Bhp\Api\Support\ApiJson::get( 'app', $url, Sign::common($payload), $headers);
+
+        return $this->decodeGet('app', $url, $this->request->signCommonPayload($payload), $this->headers, 'vip.center.v2');
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @param array<string, string> $headers
+     * @return array<string, mixed>
+     */
+    private function decodeGet(string $os, string $url, array $payload, array $headers, string $label): array
+    {
+        try {
+            $raw = $this->request->getText($os, $url, $payload, $headers);
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
+                'data' => [],
+            ];
+        }
+
+        return ApiJson::decode($raw, $label);
     }
 }

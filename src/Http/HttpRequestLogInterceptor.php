@@ -6,6 +6,11 @@ use Bhp\Log\Log;
 
 final class HttpRequestLogInterceptor implements HttpClientInterceptor
 {
+    public function __construct(
+        private readonly Log $log,
+    ) {
+    }
+
     public function beforeSend(HttpRequestContext $context): HttpRequestContext
     {
         return $context;
@@ -18,7 +23,7 @@ final class HttpRequestLogInterceptor implements HttpClientInterceptor
         }
 
         $transport = $this->transportSummary($context);
-        Log::debug(
+        $this->log->recordDebug(
             sprintf('[AMP#%s] %s %s %d %.2fms%s', $context->requestId, strtoupper($context->method), $context->url, $response->getStatusCode(), $response->getDurationMs(), $transport),
             [
                 'request_id' => $context->requestId,
@@ -56,7 +61,7 @@ final class HttpRequestLogInterceptor implements HttpClientInterceptor
         }
 
         $transport = $this->transportSummary($context);
-        Log::warning(
+        $this->log->recordWarning(
             sprintf('[AMP#%s] %s %s failed: %s%s', $context->requestId, strtoupper($context->method), $context->url, $exception->getMessage(), $transport),
             [
                 'request_id' => $context->requestId,

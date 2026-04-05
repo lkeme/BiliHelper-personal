@@ -1,0 +1,8 @@
+{
+  "hook": "DailyGold",
+  "name": "DailyGold",
+  "class_name": "Bhp\\Plugin\\Builtin\\DailyGold\\DailyGoldPlugin",
+  "entry": "src/DailyGoldPlugin.php",
+  "vendor": "official",
+  "source": "bundled"
+}

@@ -17,35 +17,53 @@
 
 namespace Bhp\Api\LinkGroup;
 
+use Bhp\Api\Support\ApiJson;
 use Bhp\Request\Request;
-use Bhp\Sign\Sign;
+use Throwable;
 
 class ApiLoveClub
 {
-    /**
-     * 获取我的友爱社列表
-     * @return array
-     */
-    public static function myGroups(): array
-    {
-        $url = 'https://api.vc.bilibili.com/link_group/v1/member/my_groups';
-        $payload = [];
-        return \Bhp\Api\Support\ApiJson::get( 'app', $url, Sign::common($payload));
+    public function __construct(
+        private readonly Request $request,
+    ) {
     }
 
     /**
-     * @param int $group_id 应援团id
-     * @param int $owner_id 爱豆ID
-     * @return array
+     * @return array<string, mixed>
      */
-    public static function signIn(int $group_id, int $owner_id): array
+    public function myGroups(): array
     {
-        $url = 'https://api.vc.bilibili.com/link_setting/v1/link_setting/sign_in';
-        $payload = [
+        return $this->decodeGet('app', 'https://api.vc.bilibili.com/link_group/v1/member/my_groups', $this->request->signCommonPayload([]), [], 'love_club.groups');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function signIn(int $group_id, int $owner_id): array
+    {
+        return $this->decodeGet('app', 'https://api.vc.bilibili.com/link_setting/v1/link_setting/sign_in', $this->request->signCommonPayload([
             'group_id' => $group_id,
             'owner_id' => $owner_id,
-        ];
-        return \Bhp\Api\Support\ApiJson::get( 'app', $url, Sign::common($payload));
+        ]), [], 'love_club.sign_in');
     }
 
+    /**
+     * @param array<string, mixed> $payload
+     * @param array<string, string> $headers
+     * @return array<string, mixed>
+     */
+    private function decodeGet(string $os, string $url, array $payload, array $headers, string $label): array
+    {
+        try {
+            $raw = $this->request->getText($os, $url, $payload, $headers);
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
+                'data' => [],
+            ];
+        }
+
+        return ApiJson::decode($raw, $label);
+    }
 }

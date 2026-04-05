@@ -17,24 +17,30 @@
 
 namespace Bhp\Api\Video;
 
+use Bhp\Api\Support\ApiJson;
 use Bhp\Request\Request;
-use Bhp\User\User;
+use Throwable;
 
 class ApiVideo
 {
+    public function __construct(
+        private readonly Request $request,
+    ) {
+    }
+
     /**
      * @param int $pn
      * @param int $ps
      * @return array
      */
-    public static function newlist(int $pn, int $ps): array
+    public function newlist(int $pn, int $ps): array
     {
         $url = 'https://api.bilibili.com/x/web-interface/newlist';
         $payload = [
             'pn' => $pn,
             'ps' => $ps
         ];
-        return \Bhp\Api\Support\ApiJson::get( 'other', $url, $payload);
+        return $this->decodeGet('other', $url, $payload, [], 'video.newlist');
     }
 
     /**
@@ -42,7 +48,7 @@ class ApiVideo
      * @param int $ps
      * @return array
      */
-    public static function dynamicRegion(int $ps = 30): array
+    public function dynamicRegion(int $ps = 30): array
     {
         // 动画1 国创168 音乐3 舞蹈129 游戏4 知识36 科技188 汽车223 生活160 美食211 动物圈127 鬼畜119 时尚155 资讯202 娱乐5 影视181
         $rids = [1, 168, 3, 129, 4, 36, 188, 223, 160, 211, 127, 119, 155, 202, 5, 181];
@@ -52,14 +58,14 @@ class ApiVideo
             'ps' => $ps,
             'rid' => $rids[array_rand($rids)],
         ];
-        return \Bhp\Api\Support\ApiJson::get( 'other', $url, $payload);
+        return $this->decodeGet('other', $url, $payload, [], 'video.dynamic_region');
     }
 
     /**
      * 获取榜单稿件
      * @return array
      */
-    public static function ranking(): array
+    public function ranking(): array
     {
         // day: 日榜1 三榜3 周榜7 月榜30
         $url = 'https://api.bilibili.com/x/web-interface/ranking';
@@ -69,7 +75,7 @@ class ApiVideo
             'type' => 1,
             'arc_type' => 0
         ];
-        return \Bhp\Api\Support\ApiJson::get( 'other', $url, $payload);
+        return $this->decodeGet('other', $url, $payload, [], 'video.ranking');
     }
 
     /**
@@ -77,13 +83,32 @@ class ApiVideo
      * @param int $ps
      * @return array
      */
-    public static function topFeedRCMD(int $ps = 30): array
+    public function topFeedRCMD(int $ps = 30): array
     {
         $url = 'https://api.bilibili.com/x/web-interface/wbi/index/top/feed/rcmd';
         $payload = [
             'ps' => $ps,
         ];
-        return \Bhp\Api\Support\ApiJson::get( 'other', $url, $payload);
+        return $this->decodeGet('other', $url, $payload, [], 'video.top_feed_rcmd');
     }
 
+    /**
+     * @param array<string, mixed> $payload
+     * @param array<string, string> $headers
+     * @return array<string, mixed>
+     */
+    private function decodeGet(string $os, string $url, array $payload, array $headers, string $label): array
+    {
+        try {
+            $raw = $this->request->getText($os, $url, $payload, $headers);
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
+                'data' => [],
+            ];
+        }
+
+        return ApiJson::decode($raw, $label);
+    }
 }

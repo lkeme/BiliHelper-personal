@@ -1,0 +1,8 @@
+{
+  "hook": "LoveClub",
+  "name": "LoveClub",
+  "class_name": "Bhp\\Plugin\\Builtin\\LoveClub\\LoveClubPlugin",
+  "entry": "src/LoveClubPlugin.php",
+  "vendor": "official",
+  "source": "bundled"
+}

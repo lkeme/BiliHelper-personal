@@ -1,0 +1,8 @@
+{
+  "hook": "LiveGoldBox",
+  "name": "LiveGoldBox",
+  "class_name": "Bhp\\Plugin\\Builtin\\LiveGoldBox\\LiveGoldBoxPlugin",
+  "entry": "src/LiveGoldBoxPlugin.php",
+  "vendor": "official",
+  "source": "bundled"
+}

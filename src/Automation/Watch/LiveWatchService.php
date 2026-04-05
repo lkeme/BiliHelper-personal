@@ -5,11 +5,12 @@ namespace Bhp\Automation\Watch;
 use Bhp\Api\XLive\DataInterface\V1\X25Kn\ApiTrace;
 use Bhp\Api\XLive\WebRoom\V1\Index\ApiIndex;
 use Bhp\Login\AuthFailureClassifier;
-use Bhp\Runtime\Runtime;
 use Bhp\Util\Fake\Fake;
 
 final class LiveWatchService
 {
+    private readonly ApiIndex $apiIndex;
+    private readonly ApiTrace $apiTrace;
     private \Closure $roomEntryAction;
     private \Closure $enterAction;
     private \Closure $heartbeatAction;
@@ -19,36 +20,38 @@ final class LiveWatchService
     private AuthFailureClassifier $authFailureClassifier;
 
     /**
+     * @param callable():string $userAgentResolver
      * @param null|callable(int):void $roomEntryAction
      * @param null|callable(int, int, int, int, string, string, string):array<string, mixed> $enterAction
      * @param null|callable(array<string, mixed>, string, int):array<string, mixed> $heartbeatAction
-     * @param null|callable():string $userAgentResolver
      * @param null|callable():string $buvidFactory
      * @param null|callable():string $uuidFactory
      */
     public function __construct(
+        ApiIndex $apiIndex,
+        ApiTrace $apiTrace,
+        callable $userAgentResolver,
         ?callable $roomEntryAction = null,
         ?callable $enterAction = null,
         ?callable $heartbeatAction = null,
-        ?callable $userAgentResolver = null,
         ?callable $buvidFactory = null,
         ?callable $uuidFactory = null,
         ?AuthFailureClassifier $authFailureClassifier = null,
     ) {
+        $this->apiIndex = $apiIndex;
+        $this->apiTrace = $apiTrace;
         $this->roomEntryAction = $roomEntryAction !== null
             ? \Closure::fromCallable($roomEntryAction)
-            : static function (int $roomId): void {
-                ApiIndex::roomEntryAction($roomId);
+            : function (int $roomId): void {
+                $this->apiIndex->roomEntryAction($roomId);
             };
         $this->enterAction = $enterAction !== null
             ? \Closure::fromCallable($enterAction)
-            : static fn (int $roomId, int $ruid, int $parentAreaId, int $areaId, string $buvid, string $uuid, string $userAgent): array => ApiTrace::enter($roomId, $ruid, $parentAreaId, $areaId, $buvid, $uuid, $userAgent);
+            : fn (int $roomId, int $ruid, int $parentAreaId, int $areaId, string $buvid, string $uuid, string $userAgent): array => $this->apiTrace->enter($roomId, $ruid, $parentAreaId, $areaId, $buvid, $uuid, $userAgent);
         $this->heartbeatAction = $heartbeatAction !== null
             ? \Closure::fromCallable($heartbeatAction)
-            : static fn (array $session, string $userAgent, int $interval): array => ApiTrace::heartbeat($session, $userAgent, $interval);
-        $this->userAgentResolver = $userAgentResolver !== null
-            ? \Closure::fromCallable($userAgentResolver)
-            : static fn (): string => (string)Runtime::getInstance()->appContext()->device('platform.headers.pc_ua');
+            : fn (array $session, string $userAgent, int $interval): array => $this->apiTrace->heartbeat($session, $userAgent, $interval);
+        $this->userAgentResolver = \Closure::fromCallable($userAgentResolver);
         $this->buvidFactory = $buvidFactory !== null
             ? \Closure::fromCallable($buvidFactory)
             : static fn (): string => Fake::buvid();

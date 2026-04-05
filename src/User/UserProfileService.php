@@ -9,6 +9,12 @@ use Bhp\Util\Common\Common;
 
 class UserProfileService
 {
+    public function __construct(
+        private readonly Log $log,
+        private readonly ApiUser $apiUser,
+    ) {
+    }
+
     /**
      * @var array<string, mixed>|null
      */
@@ -76,7 +82,7 @@ class UserProfileService
         $response = $this->requestVipInfo();
         (new AuthFailureClassifier())->assertNotAuthFailure($response, '用户资料: 账号未登录');
         if (($response['code'] ?? -1) !== 0) {
-            Log::warning(sprintf(
+            $this->log->recordWarning(sprintf(
                 '用户资料: 获取大会员信息失败 %s -> %s',
                 (string)($response['code'] ?? -1),
                 (string)($response['message'] ?? 'invalid response'),
@@ -98,7 +104,7 @@ class UserProfileService
         $response = $this->requestNavInfo();
         (new AuthFailureClassifier())->assertNotAuthFailure($response, '用户资料: 账号未登录');
         if (($response['code'] ?? -1) !== 0) {
-            Log::warning(sprintf(
+            $this->log->recordWarning(sprintf(
                 '用户资料: 获取用户信息失败 %s -> %s',
                 (string)($response['code'] ?? -1),
                 (string)($response['message'] ?? 'invalid response'),
@@ -113,7 +119,7 @@ class UserProfileService
      */
     protected function requestVipInfo(): array
     {
-        return ApiUser::userVipInfo();
+        return $this->apiUser->userVipInfo();
     }
 
     /**
@@ -121,12 +127,12 @@ class UserProfileService
      */
     protected function requestNavInfo(): array
     {
-        return ApiUser::userNavInfo();
+        return $this->apiUser->userNavInfo();
     }
 
     protected function logVipRequirementNotMet(string $title, string $info): void
     {
-        Log::warning(sprintf('%s: 当前账号不是有效的%s，已跳过', $title, $info));
+        $this->log->recordWarning(sprintf('%s: 当前账号不是有效的%s，已跳过', $title, $info));
     }
 
     private function reportVipRequirementMiss(string $title, string $info): void

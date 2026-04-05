@@ -4,7 +4,6 @@ namespace Bhp\Login;
 
 use Bhp\Api\Passport\ApiOauth2;
 use Bhp\Api\Response\LoginTokenBundle;
-use Bhp\Log\Log;
 use Bhp\Runtime\AppContext;
 use Bhp\Util\Exceptions\LoginException;
 use Bhp\Util\Exceptions\NoLoginException;
@@ -14,6 +13,7 @@ class LoginTokenLifecycleService
     public function __construct(
         protected AppContext $context,
         protected LoginCookiePatchService $cookiePatchService,
+        private readonly ApiOauth2 $apiOauth2,
     ) {
     }
 
@@ -23,12 +23,12 @@ class LoginTokenLifecycleService
         callable $loginFallback,
         callable $patchCookie,
     ): bool {
-        Log::info('检查登录令牌有效性');
+        $this->context->log()->recordInfo('检查登录令牌有效性');
         if (!$this->validateToken($token)) {
-            Log::warning('登录令牌失效过期或需要保活');
-            Log::info('申请更换登录令牌中...');
+            $this->context->log()->recordWarning('登录令牌失效过期或需要保活');
+            $this->context->log()->recordInfo('申请更换登录令牌中...');
             if (!$this->refreshToken($token, $refreshToken)) {
-                Log::warning('无效的登录令牌，尝试重新申请...');
+                $this->context->log()->recordWarning('无效的登录令牌，尝试重新申请...');
                 $loginFallback();
             }
         }
@@ -47,11 +47,11 @@ class LoginTokenLifecycleService
         $response = $this->requestTokenInfo($token);
         $this->guardInfrastructureFailure($response, '检查令牌');
         if (isset($response['code']) && $response['code']) {
-            Log::error('检查令牌失败', ['msg' => $response['message']]);
+            $this->context->log()->recordError('检查令牌失败', ['msg' => $response['message']]);
             return false;
         }
 
-        Log::notice('令牌有效期: ' . date('Y-m-d H:i:s', time() + $response['data']['expires_in']));
+        $this->context->log()->recordNotice('令牌有效期: ' . date('Y-m-d H:i:s', time() + $response['data']['expires_in']));
 
         return !$response['data']['refresh'] && $response['data']['expires_in'] > 14400;
     }
@@ -61,13 +61,13 @@ class LoginTokenLifecycleService
         $response = $this->requestTokenRefresh($token, $refreshToken);
         $this->guardInfrastructureFailure($response, '刷新令牌');
         if (isset($response['code']) && $response['code']) {
-            Log::error('重新生成令牌失败', ['msg' => $response['message']]);
+            $this->context->log()->recordError('重新生成令牌失败', ['msg' => $response['message']]);
             return false;
         }
 
-        Log::info('重新令牌生成完毕');
+        $this->context->log()->recordInfo('重新令牌生成完毕');
         $this->persistLoginResponse($response);
-        Log::info('重置信息配置完毕');
+        $this->context->log()->recordInfo('重置信息配置完毕');
 
         return true;
     }
@@ -77,11 +77,11 @@ class LoginTokenLifecycleService
         $response = $this->requestMyInfo($token);
         $this->guardInfrastructureFailure($response, '获取登录信息');
         if (isset($response['code']) && $response['code']) {
-            Log::error('获取登录信息失败', ['msg' => $response['message']]);
+            $this->context->log()->recordError('获取登录信息失败', ['msg' => $response['message']]);
             return false;
         }
 
-        Log::info('登录信息 ' . $this->describeMyInfo($response, $this->requestNavStat($token)));
+        $this->context->log()->recordInfo('登录信息 ' . $this->describeMyInfo($response, $this->requestNavStat($token)));
         return true;
     }
 
@@ -105,7 +105,7 @@ class LoginTokenLifecycleService
      */
     protected function requestTokenInfo(string $token): array
     {
-        return ApiOauth2::tokenInfoNew($token);
+        return $this->apiOauth2->tokenInfoNew($token);
     }
 
     /**
@@ -113,7 +113,7 @@ class LoginTokenLifecycleService
      */
     protected function requestTokenRefresh(string $token, string $refreshToken): array
     {
-        return ApiOauth2::tokenRefreshNew($token, $refreshToken);
+        return $this->apiOauth2->tokenRefreshNew($token, $refreshToken);
     }
 
     /**
@@ -121,7 +121,7 @@ class LoginTokenLifecycleService
      */
     protected function requestMyInfo(string $token): array
     {
-        return ApiOauth2::myInfo($token);
+        return $this->apiOauth2->myInfo($token);
     }
 
     /**
@@ -143,7 +143,7 @@ class LoginTokenLifecycleService
      */
     protected function requestNavStat(string $token): ?array
     {
-        $response = ApiOauth2::navStat($token);
+        $response = $this->apiOauth2->navStat($token);
         if (($response['code'] ?? -1) !== 0) {
             return null;
         }

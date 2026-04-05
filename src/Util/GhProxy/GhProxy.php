@@ -17,22 +17,34 @@
 
 namespace Bhp\Util\GhProxy;
 
-use Bhp\Config\Config;
+use Bhp\Runtime\AppContext;
 
-class GhProxy
+final class GhProxy
 {
+    public function __construct(
+        private readonly AppContext $context,
+    ) {
+    }
+
     /**
      * @param string $url
      * @return string
      */
-    public static function mirror(string $url): string
+    public function mirror(string $url): string
     {
-        if (!Config::getInstance()->get('network_github.enable', false, 'bool') || $url == '') return $url;
-        //
-        if (($mirror = Config::getInstance()->get('network_github.mirror', '')) != '') {
+        if ($url === '') {
+            return $url;
+        }
+
+        if (!$this->context->config('network_github.enable', false, 'bool')) {
+            return $url;
+        }
+
+        $mirror = trim((string)$this->context->config('network_github.mirror', '', 'string'));
+        if ($mirror !== '') {
             return $mirror . $url;
         }
-        //
+
         return $url;
     }
 }

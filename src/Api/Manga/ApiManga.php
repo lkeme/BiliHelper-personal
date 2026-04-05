@@ -17,48 +17,58 @@
 
 namespace Bhp\Api\Manga;
 
+use Bhp\Api\Support\ApiJson;
 use Bhp\Request\Request;
-use Bhp\Sign\Sign;
+use Throwable;
 
 class ApiManga
 {
-
-    /**
-     * 签到
-     * @return array
-     */
-    public static function ClockIn(): array
-    {
-        $url = 'https://manga.bilibili.com/twirp/activity.v1.Activity/ClockIn';
-        $payload = [];
-        // {"code":0,"msg":"","data":{}}
-        // {"code":"invalid_argument","msg":"clockin clockin is duplicate","meta":{"argument":"clockin"}}
-        return \Bhp\Api\Support\ApiJson::post( 'app', $url, Sign::common($payload));
-    }
-
-
-    /**
-     * 分享
-     * @return array
-     */
-    public static function ShareComic(): array
-    {
-        $url = 'https://manga.bilibili.com/twirp/activity.v1.Activity/ShareComic';
-        $payload = [];
-        // {"code":0,"msg":"","data":{"point":5}}
-        // {"code":1,"msg":"","data":{"point":0}}
-        // {"code":0, "msg":"今日已分享"}
-        return \Bhp\Api\Support\ApiJson::post( 'app', $url, Sign::common($payload));
+    public function __construct(
+        private readonly Request $request,
+    ) {
     }
 
     /**
-     * 签到信息
-     * @return array
+     * @return array<string, mixed>
      */
-    public static function GetClockInInfo(): array
+    public function ClockIn(): array
     {
-        $url = 'https://manga.bilibili.com/twirp/activity.v1.Activity/GetClockInInfo';
-        $payload = [];
-        return \Bhp\Api\Support\ApiJson::post( 'app', $url, Sign::common($payload));
+        return $this->decodePost('app', 'https://manga.bilibili.com/twirp/activity.v1.Activity/ClockIn', $this->request->signCommonPayload([]), [], 'manga.clock_in');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function ShareComic(): array
+    {
+        return $this->decodePost('app', 'https://manga.bilibili.com/twirp/activity.v1.Activity/ShareComic', $this->request->signCommonPayload([]), [], 'manga.share');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function GetClockInInfo(): array
+    {
+        return $this->decodePost('app', 'https://manga.bilibili.com/twirp/activity.v1.Activity/GetClockInInfo', $this->request->signCommonPayload([]), [], 'manga.clock_in_info');
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @param array<string, string> $headers
+     * @return array<string, mixed>
+     */
+    private function decodePost(string $os, string $url, array $payload, array $headers, string $label): array
+    {
+        try {
+            $raw = $this->request->postText($os, $url, $payload, $headers);
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
+                'data' => [],
+            ];
+        }
+
+        return ApiJson::decode($raw, $label);
     }
 }

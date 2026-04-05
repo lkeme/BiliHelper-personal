@@ -1,0 +1,8 @@
+{
+  "hook": "Silver2Coin",
+  "name": "Silver2Coin",
+  "class_name": "Bhp\\Plugin\\Builtin\\Silver2Coin\\Silver2CoinPlugin",
+  "entry": "src/Silver2CoinPlugin.php",
+  "vendor": "official",
+  "source": "bundled"
+}

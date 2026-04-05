@@ -1,0 +1,8 @@
+{
+  "hook": "VipPrivilege",
+  "name": "VipPrivilege",
+  "class_name": "Bhp\\Plugin\\Builtin\\VipPrivilege\\VipPrivilegePlugin",
+  "entry": "src/VipPrivilegePlugin.php",
+  "vendor": "official",
+  "source": "bundled"
+}

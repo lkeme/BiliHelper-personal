@@ -9,7 +9,10 @@ use Bhp\Util\Exceptions\LoginException;
 
 class LoginSmsService
 {
-    public function __construct(protected AppContext $context)
+    public function __construct(
+        protected AppContext $context,
+        private readonly ApiLogin $apiLogin,
+    )
     {
     }
 
@@ -48,6 +51,6 @@ class LoginSmsService
 
     protected function requestSendSms(array $payload): string
     {
-        return ApiLogin::sendSms($payload);
+        return $this->apiLogin->sendSms($payload);
     }
 }

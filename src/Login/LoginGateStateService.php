@@ -18,15 +18,15 @@ final class LoginGateStateService
     ];
 
     public function __construct(
-        private readonly ?AppContext $context = null,
-        private readonly ?LoginPendingFlowStore $pendingFlowStore = null,
+        private readonly AppContext $context,
+        private readonly LoginPendingFlowStore $pendingFlowStore,
     ) {
     }
 
     public function authReady(): bool
     {
         foreach (self::REQUIRED_AUTH_KEYS as $key) {
-            if (trim($this->context()->auth($key)) === '') {
+            if (trim($this->context->auth($key)) === '') {
                 return false;
             }
         }
@@ -36,7 +36,7 @@ final class LoginGateStateService
 
     public function hasPendingFlow(): bool
     {
-        return $this->pendingFlowStore()->load() !== null;
+        return $this->pendingFlowStore->load() !== null;
     }
 
     public function shouldBlockBusinessTasks(): bool
@@ -51,15 +51,5 @@ final class LoginGateStateService
         }
 
         return $this->authReady() ? 'auth_ready' : 'missing_auth';
-    }
-
-    private function context(): AppContext
-    {
-        return $this->context ?? new AppContext();
-    }
-
-    private function pendingFlowStore(): LoginPendingFlowStore
-    {
-        return $this->pendingFlowStore ?? new LoginPendingFlowStore();
     }
 }

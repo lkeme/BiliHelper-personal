@@ -1,0 +1,8 @@
+{
+  "hook": "LiveReservation",
+  "name": "LiveReservation",
+  "class_name": "Bhp\\Plugin\\Builtin\\LiveReservation\\LiveReservationPlugin",
+  "entry": "src/LiveReservationPlugin.php",
+  "vendor": "official",
+  "source": "bundled"
+}

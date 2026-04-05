@@ -4,21 +4,17 @@ namespace Bhp\Http;
 
 class HttpClientInterceptorRegistry
 {
-    private static ?self $instance = null;
-
     /**
      * @var array<string, HttpClientInterceptorProvider>
      */
     private array $providers = [];
 
-    public static function getInstance(): self
+    /**
+     * @param HttpClientInterceptorProvider[] $providers
+     */
+    public function __construct(array $providers = [])
     {
-        if (!self::$instance instanceof self) {
-            self::$instance = new self();
-            self::$instance->reset();
-        }
-
-        return self::$instance;
+        $this->replace($providers);
     }
 
     public function register(HttpClientInterceptorProvider $provider): void
@@ -40,18 +36,6 @@ class HttpClientInterceptorRegistry
         foreach ($providers as $provider) {
             $this->register($provider);
         }
-    }
-
-    public function reset(): void
-    {
-        $this->replace([
-            new HttpRequestMetadataInterceptorProvider(),
-            new HttpRequestHeaderPolicyInterceptorProvider(),
-            new HttpRequestAuditInterceptorProvider(),
-            new HttpRequestTrafficInterceptorProvider(),
-            new HttpRequestGovernanceInterceptorProvider(),
-            new HttpRequestLogInterceptorProvider(),
-        ]);
     }
 
     /**

@@ -18,18 +18,18 @@
 namespace Bhp\Plugin;
 
 use Bhp\Config\Config;
-use Bhp\Console\Console;
 use Bhp\Log\Log;
-use Bhp\Login\LoginBuiltinBootstrapper;
+use Bhp\Notice\Notice;
 use Bhp\Plugin\Contract\PluginTaskInterface;
+use Bhp\Runtime\AppContext;
 use Bhp\Scheduler\TaskResult;
 use Bhp\Util\AsciiTable\AsciiTable;
-use Bhp\Util\DesignPattern\SingleTon;
 use Bhp\Util\AppTerminator;
 use ReflectionClass;
+use Stringable;
 use Throwable;
 
-class Plugin extends SingleTon
+class Plugin
 {
     /**
      * 监听插件的启用/关闭|UUID下标
@@ -61,67 +61,98 @@ class Plugin extends SingleTon
      */
     protected array $_instances = [];
 
-    public function init(): void
-    {
+    public function __construct(
+        private readonly Config $config,
+        private readonly string $runtimeMode,
+        private readonly string $appRoot,
+        private readonly AppContext $context,
+        private readonly Notice $notice,
+        private readonly Log $log,
+        private readonly ?CorePluginRegistry $corePluginRegistry = null,
+        private readonly ?ExternalPluginRegistry $externalPluginRegistry = null,
+    ) {
         $this->detector();
     }
 
     /**
      * @return array<string, array<string, mixed>>
      */
-    public static function getPlugins(): array
+    public function plugins(): array
     {
-        return self::getInstance()->_plugins;
+        return $this->_plugins;
     }
 
     /**
      * @return int[]
      */
-    public static function getPluginsPriority(): array
+    public function priorities(): array
     {
-        return self::getInstance()->_priority;
+        return $this->_priority;
     }
 
     /**
      * @return array<string, array<string, array{0:object,1:string}>>
      */
-    public static function getPluginsStaff(): array
+    public function staff(): array
     {
-        return self::getInstance()->_staff;
+        return $this->_staff;
     }
 
     /**
      * @return array<string, array<string, mixed>>
      */
-    public static function getRegistry(): array
+    public function registry(): array
     {
-        return self::getInstance()->_registry;
+        return $this->_registry;
+    }
+
+    public function appContext(): AppContext
+    {
+        return $this->context;
+    }
+
+    public function notice(): Notice
+    {
+        return $this->notice;
+    }
+
+    public function log(): Log
+    {
+        return $this->log;
+    }
+
+    public function hasPlugin(string $hook): bool
+    {
+        return array_key_exists($hook, $this->_plugins);
     }
 
     public function trigger(string $hook, mixed ...$params): string
     {
-        if (isset($this->_staff[$hook]) && is_array($this->_staff[$hook]) && count($this->_staff[$hook]) > 0) {
-            $plugin_func_result = '';
-            foreach ($this->_staff[$hook] as $staff) {
-                $plugin_func_result = '';
-                $class = &$staff[0];
-                $method = $staff[1];
-                if (!method_exists($class, $method)) {
-                    continue;
-                }
-
-                if (!$this->canItRun($class)) {
-                    continue;
-                }
-
-                $func_result = $class->$method(...$params);
-                if (is_numeric($func_result)) {
-                    $plugin_func_result .= $func_result;
-                }
-            }
+        $pluginFuncResult = '';
+        if (!isset($this->_staff[$hook]) || !is_array($this->_staff[$hook]) || $this->_staff[$hook] === []) {
+            return $pluginFuncResult;
         }
 
-        return $plugin_func_result ?? '';
+        foreach ($this->_staff[$hook] as $staff) {
+            $class = $staff[0];
+            $method = $staff[1];
+            if (!method_exists($class, $method)) {
+                continue;
+            }
+
+            if (!$this->canItRun($class)) {
+                continue;
+            }
+
+            $normalizedResult = $this->normalizeTriggerResult($class->$method(...$params));
+            if ($normalizedResult === null) {
+                continue;
+            }
+
+            $pluginFuncResult .= $normalizedResult;
+        }
+
+        return $pluginFuncResult;
     }
 
     public function runTask(string $hook): TaskResult
@@ -136,12 +167,12 @@ class Plugin extends SingleTon
         return TaskResult::keepSchedule();
     }
 
-    public function register(object &$class_obj, string $method): void
+    public function register(object $class_obj, string $method): void
     {
         $info = method_exists($class_obj, 'getPluginInfo') ? (array)$class_obj->getPluginInfo() : [];
         $hook = (string)($info['hook'] ?? $this->shortClassName(get_class($class_obj)));
         $func_class = $hook . '->' . $method;
-        $this->_staff[$hook][$func_class] = [&$class_obj, $method];
+        $this->_staff[$hook][$func_class] = [$class_obj, $method];
         $this->_instances[$hook] = $class_obj;
 
         if (!isset($this->_registry[$hook])) {
@@ -206,39 +237,39 @@ class Plugin extends SingleTon
 
     protected function detector(): void
     {
-        if ($this->runtimeMode() !== 'script' && $this->runtimeMode() !== 'restore') {
-            (new LoginBuiltinBootstrapper())->ensureRegistered($this);
-        }
-
         $plugins = $this->getActivePlugins();
         foreach ($plugins as $plugin) {
-            if (!is_file((string)$plugin['path'])) {
-                $hook = (string)$plugin['name'];
-                $this->_registry[$hook] = [
-                    'hook' => $hook,
-                    'name' => $plugin['name'],
-                    'class_name' => $plugin['class_name'] ?? $plugin['name'],
-                    'path' => $plugin['path'],
-                    'status' => 'missing',
-                    'error' => '插件入口文件不存在',
-                ];
-                $this->_registry[$hook]['status'] = 'missing';
-                $this->_registry[$hook]['error'] = '插件入口文件不存在';
+            $hook = (string)($plugin['hook'] ?? $plugin['name'] ?? '');
+            if ($hook === '') {
                 continue;
             }
 
+            $path = (string)($plugin['path'] ?? '');
+
+            if ($path === '' || !is_file($path)) {
+                $this->_registry[$hook] = [
+                    'hook' => $hook,
+                    'name' => $plugin['name'] ?? $hook,
+                    'class_name' => $plugin['class_name'] ?? $hook,
+                    'path' => $path,
+                    'status' => 'missing',
+                    'error' => '插件入口文件不存在',
+                ];
+                continue;
+            }
+
+            $this->_registry[$hook] = [
+                'hook' => $hook,
+                'name' => $plugin['name'] ?? $hook,
+                'class_name' => $plugin['class_name'] ?? $hook,
+                'path' => $path,
+                'status' => 'pending',
+                'error' => '',
+            ];
+
             try {
-                $hook = (string)$plugin['name'];
-                $class = (string)($plugin['class_name'] ?? $plugin['name']);
-                if (!class_exists($class, true)) {
-                    include_once($plugin['path']);
-                }
-
-                if (!class_exists($class, false)) {
-                    $class = (string)$plugin['name'];
-                }
-
-                if (!class_exists($class, false) && !class_exists($class, true)) {
+                $class = (string)($plugin['class_name'] ?? $hook);
+                if ($class === '' || !class_exists($class)) {
                     $this->_registry[$hook]['status'] = 'failed';
                     $this->_registry[$hook]['error'] = '插件类不存在';
                     continue;
@@ -252,39 +283,24 @@ class Plugin extends SingleTon
                 if ($manifestError !== null) {
                     $this->_registry[$hook]['status'] = 'failed';
                     $this->_registry[$hook]['error'] = $manifestError;
-                    Log::warning("插件 {$hook} 装配失败: {$manifestError}");
+                    $this->log->recordWarning("插件 {$hook} 装配失败: {$manifestError}");
                     continue;
                 }
 
                 if (!$this->shouldLoadPluginForRuntimeMode($manifest)) {
+                    $this->_registry[$hook]['status'] = 'skipped';
+                    $this->_registry[$hook]['error'] = '';
                     continue;
                 }
 
-                $this->_registry[$hook] = [
-                    'hook' => $hook,
-                    'name' => $plugin['name'],
-                    'class_name' => $plugin['class_name'] ?? $plugin['name'],
-                    'path' => $plugin['path'],
-                    'status' => 'discovered',
-                    'error' => '',
-                ];
+                $this->_registry[$hook]['status'] = 'discovered';
+                $this->_registry[$hook]['error'] = '';
 
                 new $class($this);
             } catch (Throwable $throwable) {
-                $hook = (string)$plugin['name'];
-                if (!isset($this->_registry[$hook])) {
-                    $this->_registry[$hook] = [
-                        'hook' => $hook,
-                        'name' => $plugin['name'],
-                        'class_name' => $plugin['class_name'] ?? $plugin['name'],
-                        'path' => $plugin['path'],
-                        'status' => 'failed',
-                        'error' => '',
-                    ];
-                }
                 $this->_registry[$hook]['status'] = 'failed';
                 $this->_registry[$hook]['error'] = $throwable->getMessage();
-                Log::warning("插件 {$hook} 装配失败: {$throwable->getMessage()}");
+                $this->log->recordWarning("插件 {$hook} 装配失败: {$throwable->getMessage()}");
             }
         }
 
@@ -293,11 +309,14 @@ class Plugin extends SingleTon
     }
 
     /**
-     * @return array<int, array{name: string, class_name: string, path: string}>
+     * @return array<int, array{hook: string, name: string, class_name: string, path: string}>
      */
     protected function getActivePlugins(): array
     {
-        return (new PluginDiscovery())->discover(APP_PLUGIN_PATH);
+        return array_merge(
+            ($this->corePluginRegistry ?? new CorePluginRegistry())->all($this->appRoot),
+            ($this->externalPluginRegistry ?? new ExternalPluginRegistry())->all($this->appRoot),
+        );
     }
 
     protected function sortPlugins(string $column_key = 'priority', int $sort_order = SORT_ASC): void
@@ -358,11 +377,47 @@ class Plugin extends SingleTon
 
     protected function isWithinTimeRange(string $start, string $end): bool
     {
-        $startTime = strtotime(date($start));
-        $endTime = strtotime(date($end));
-        $nowTime = time();
+        $nowTime = $this->currentTimestamp();
+        $startTime = $this->parseTimeWindowBoundary($start, $nowTime);
+        $endTime = $this->parseTimeWindowBoundary($end, $nowTime);
+        if ($startTime === null || $endTime === null) {
+            return false;
+        }
+
+        if ($endTime < $startTime) {
+            if ($nowTime < $startTime) {
+                $startTime = strtotime('-1 day', $startTime);
+            } else {
+                $endTime = strtotime('+1 day', $endTime);
+            }
+        }
 
         return $nowTime >= $startTime && $nowTime <= $endTime;
+    }
+
+    protected function currentTimestamp(): int
+    {
+        return time();
+    }
+
+    protected function parseTimeWindowBoundary(string $time, int $referenceTimestamp): ?int
+    {
+        $normalized = trim($time);
+        if (!preg_match('/^\d{2}:\d{2}(?::\d{2})?$/', $normalized)) {
+            return null;
+        }
+
+        $boundary = strtotime(date('Y-m-d', $referenceTimestamp) . ' ' . $normalized);
+        return $boundary === false ? null : $boundary;
+    }
+
+    protected function normalizeTriggerResult(mixed $result): ?string
+    {
+        return match (true) {
+            is_int($result), is_float($result), is_string($result) => (string)$result,
+            $result instanceof Stringable => (string)$result,
+            default => null,
+        };
     }
 
     protected function resolveObjectPath(object $object): string
@@ -380,14 +435,13 @@ class Plugin extends SingleTon
      */
     protected function resolveEnableMark(string $hook, array $plugin): string
     {
-        $config = Config::getInstance();
         foreach ($this->configKeyCandidates($hook) as $key) {
-            $enabled = $config->get($key . '.enable', null);
+            $enabled = $this->config->get($key . '.enable', null);
             if ($enabled === null) {
                 continue;
             }
 
-            return $config->get($key . '.enable', false, 'bool') ? '●' : '○';
+            return $this->config->get($key . '.enable', false, 'bool') ? '●' : '○';
         }
 
         return '◉';
@@ -422,6 +476,6 @@ class Plugin extends SingleTon
 
     protected function runtimeMode(): string
     {
-        return Console::getInstance()->mode();
+        return $this->runtimeMode;
     }
 }

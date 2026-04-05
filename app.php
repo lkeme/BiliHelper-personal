@@ -17,6 +17,11 @@
 
 require 'vendor/autoload.php';
 
-$app = Bhp\Bootstrap\Bootstrap::getInstance(__DIR__, $argv);
-$app->run();
+try {
+    $kernel = new Bhp\App\AppKernel(__DIR__, $argv);
+    $kernel->boot()->console->register();
+} catch (Bhp\Console\Cli\RuntimeException $exception) {
+    fwrite(STDERR, $exception->getMessage() . PHP_EOL);
+    exit(1);
+}
 

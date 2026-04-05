@@ -2,59 +2,57 @@
 
 namespace Bhp\Runtime;
 
-use Bhp\Config\Config;
-use Bhp\Device\Device;
-use Bhp\Env\Env;
-use Bhp\FilterWords\FilterWords;
-use Bhp\Profile\ProfileContext;
-use Bhp\Util\DesignPattern\SingleTon;
+use Bhp\App\ServiceContainer;
+use RuntimeException;
 
-class Runtime extends SingleTon
+final class Runtime
 {
-    private AppContext $context;
+    private static ?self $current = null;
 
-    public function init(
-        ?ProfileContext $profileContext = null,
-        ?Config $configService = null,
-        ?Device $deviceService = null,
-        ?FilterWords $filterWordsService = null,
-        ?Env $envService = null,
-    ): void
-    {
-        $this->context = new RuntimeContext(
-            $profileContext ?? ProfileContext::fromRuntimeConstants($this->resolveAppRoot(), $this->resolveProfileName()),
-            $configService,
-            $deviceService,
-            $filterWordsService,
-            $envService,
-        );
+    public function __construct(
+        private readonly ServiceContainer $container,
+        private readonly AppContext $context,
+    ) {
     }
 
-    public function context(): AppContext
+    public static function activate(self $runtime): self
     {
-        return $this->context;
+        self::$current = $runtime;
+
+        return $runtime;
     }
 
-    public function appContext(): AppContext
+    public static function hasCurrent(): bool
     {
-        return $this->context;
+        return self::$current instanceof self;
     }
 
-    protected function resolveAppRoot(): string
+    public static function current(): self
     {
-        if (defined('APP_RESOURCES_PATH')) {
-            return dirname(rtrim((string)APP_RESOURCES_PATH, "\\/"));
+        if (!self::hasCurrent()) {
+            throw new RuntimeException('Runtime has not been bootstrapped.');
         }
 
-        return getcwd() ?: '';
+        return self::$current;
     }
 
-    protected function resolveProfileName(): string
+    public static function service(string $id): mixed
     {
-        if (defined('PROFILE_CONFIG_PATH')) {
-            return basename(dirname(rtrim((string)PROFILE_CONFIG_PATH, "\\/")));
-        }
+        return self::current()->container->get($id);
+    }
 
-        return 'user';
+    public static function context(): AppContext
+    {
+        return self::current()->context;
+    }
+
+    public static function appContext(): AppContext
+    {
+        return self::current()->context;
+    }
+
+    public function container(): ServiceContainer
+    {
+        return $this->container;
     }
 }

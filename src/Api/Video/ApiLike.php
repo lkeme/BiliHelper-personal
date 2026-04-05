@@ -4,46 +4,66 @@ namespace Bhp\Api\Video;
 
 use Bhp\Api\Support\ApiJson;
 use Bhp\Request\Request;
-use Bhp\User\User;
+use Throwable;
 
 final class ApiLike
 {
-    /**
-     * @return array<string, mixed>
-     */
-    public static function like(string $aid = '', string $bvid = '', int $like = 1): array
-    {
-        $user = User::parseCookie();
-        $url = 'https://api.bilibili.com/x/web-interface/archive/like';
-        $payload = [
-            'aid' => $aid,
-            'bvid' => $bvid,
-            'like' => $like,
-            'csrf' => $user['csrf'],
-        ];
-        $headers = [
-            'origin' => 'https://www.bilibili.com',
-            'referer' => $bvid !== '' ? "https://www.bilibili.com/video/{$bvid}" : "https://www.bilibili.com/video/av{$aid}",
-        ];
-
-        return ApiJson::post('pc', $url, $payload, $headers, 'video.like');
+    public function __construct(
+        private readonly Request $request,
+    ) {
     }
 
     /**
      * @return array<string, mixed>
      */
-    public static function hasLike(string $aid = '', string $bvid = ''): array
+    public function like(string $aid = '', string $bvid = '', int $like = 1): array
     {
-        $url = 'https://api.bilibili.com/x/web-interface/archive/has/like';
-        $payload = [
-            'aid' => $aid,
-            'bvid' => $bvid,
-        ];
-        $headers = [
-            'origin' => 'https://www.bilibili.com',
-            'referer' => $bvid !== '' ? "https://www.bilibili.com/video/{$bvid}" : "https://www.bilibili.com/video/av{$aid}",
-        ];
+        $referer = $bvid !== '' ? "https://www.bilibili.com/video/{$bvid}" : "https://www.bilibili.com/video/av{$aid}";
 
-        return ApiJson::get('pc', $url, $payload, $headers, 'video.has_like');
+        try {
+            $raw = $this->request->postText('pc', 'https://api.bilibili.com/x/web-interface/archive/like', [
+                'aid' => $aid,
+                'bvid' => $bvid,
+                'like' => $like,
+                'csrf' => $this->request->csrfValue(),
+            ], [
+                'origin' => 'https://www.bilibili.com',
+                'referer' => $referer,
+            ]);
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => 'video.like 请求失败: ' . $throwable->getMessage(),
+                'data' => [],
+            ];
+        }
+
+        return ApiJson::decode($raw, 'video.like');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function hasLike(string $aid = '', string $bvid = ''): array
+    {
+        $referer = $bvid !== '' ? "https://www.bilibili.com/video/{$bvid}" : "https://www.bilibili.com/video/av{$aid}";
+
+        try {
+            $raw = $this->request->getText('pc', 'https://api.bilibili.com/x/web-interface/archive/has/like', [
+                'aid' => $aid,
+                'bvid' => $bvid,
+            ], [
+                'origin' => 'https://www.bilibili.com',
+                'referer' => $referer,
+            ]);
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => 'video.has_like 请求失败: ' . $throwable->getMessage(),
+                'data' => [],
+            ];
+        }
+
+        return ApiJson::decode($raw, 'video.has_like');
     }
 }

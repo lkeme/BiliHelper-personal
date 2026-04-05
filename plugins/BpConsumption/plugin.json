@@ -1,0 +1,8 @@
+{
+  "hook": "BpConsumption",
+  "name": "BpConsumption",
+  "class_name": "Bhp\\Plugin\\Builtin\\BpConsumption\\BpConsumptionPlugin",
+  "entry": "src/BpConsumptionPlugin.php",
+  "vendor": "official",
+  "source": "bundled"
+}

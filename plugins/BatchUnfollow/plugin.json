@@ -1,0 +1,8 @@
+{
+  "hook": "BatchUnfollow",
+  "name": "BatchUnfollow",
+  "class_name": "Bhp\\Plugin\\Builtin\\BatchUnfollow\\BatchUnfollowPlugin",
+  "entry": "src/BatchUnfollowPlugin.php",
+  "vendor": "official",
+  "source": "bundled"
+}

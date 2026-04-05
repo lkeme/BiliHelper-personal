@@ -1,0 +1,8 @@
+{
+  "hook": "GameForecast",
+  "name": "GameForecast",
+  "class_name": "Bhp\\Plugin\\Builtin\\GameForecast\\GameForecastPlugin",
+  "entry": "src/GameForecastPlugin.php",
+  "vendor": "official",
+  "source": "bundled"
+}

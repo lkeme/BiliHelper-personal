@@ -9,8 +9,9 @@ use Bhp\Util\AppTerminator;
 final class LoginManualInterventionPolicy
 {
     public function __construct(
-        private readonly ?AppContext $context = null,
-        private readonly ?LoginPendingFlowStore $pendingFlowStore = null,
+        private readonly AppContext $context,
+        private readonly LoginPendingFlowStore $pendingFlowStore,
+        private readonly ?Notice $notice = null,
         private readonly mixed $clock = null,
         private readonly mixed $noticePusher = null,
         private readonly mixed $terminator = null,
@@ -23,7 +24,7 @@ final class LoginManualInterventionPolicy
 
     public function enforce(): void
     {
-        $flow = $this->pendingFlowStore()->load();
+        $flow = $this->pendingFlowStore->load();
         if (!is_array($flow)) {
             return;
         }
@@ -39,7 +40,7 @@ final class LoginManualInterventionPolicy
                 sprintf('登录流程等待人工介入 type=%s 已等待 %d 秒', $type, $age),
             );
             $flow['last_notified_at'] = $now;
-            $this->pendingFlowStore()->save($flow);
+            $this->pendingFlowStore->save($flow);
         }
 
         if (!$this->isUnattended()) {
@@ -71,7 +72,7 @@ final class LoginManualInterventionPolicy
     {
         $mode = $this->modeOverride;
         if ($mode === null || $mode === '') {
-            $mode = (string)$this->context()->config('login_policy.mode', 'auto');
+            $mode = (string)$this->context->config('login_policy.mode', 'auto');
         }
 
         return match ($mode) {
@@ -100,7 +101,7 @@ final class LoginManualInterventionPolicy
             return max(0, $this->notifyAfterSecondsOverride);
         }
 
-        return max(0, (int)$this->context()->config('login_policy.notify_after_seconds', 60));
+        return max(0, (int)$this->context->config('login_policy.notify_after_seconds', 60));
     }
 
     private function notifyIntervalSeconds(): int
@@ -109,7 +110,7 @@ final class LoginManualInterventionPolicy
             return max(1, $this->notifyIntervalSecondsOverride);
         }
 
-        return max(1, (int)$this->context()->config('login_policy.notify_interval_seconds', 300));
+        return max(1, (int)$this->context->config('login_policy.notify_interval_seconds', 300));
     }
 
     private function timeoutSeconds(): int
@@ -118,7 +119,7 @@ final class LoginManualInterventionPolicy
             return max(1, $this->timeoutSecondsOverride);
         }
 
-        return max(1, (int)$this->context()->config('login_policy.pending_timeout_seconds', 900));
+        return max(1, (int)$this->context->config('login_policy.pending_timeout_seconds', 900));
     }
 
     private function notify(string $type, string $message): void
@@ -128,7 +129,12 @@ final class LoginManualInterventionPolicy
             return;
         }
 
-        Notice::push($type, $message);
+        if ($this->notice instanceof Notice) {
+            $this->notice->publish($type, $message);
+            return;
+        }
+
+        throw new \LogicException('LoginManualInterventionPolicy notice dependency is not configured.');
     }
 
     private function terminate(string $message): void
@@ -148,15 +154,5 @@ final class LoginManualInterventionPolicy
         }
 
         return time();
-    }
-
-    private function context(): AppContext
-    {
-        return $this->context ?? new AppContext();
-    }
-
-    private function pendingFlowStore(): LoginPendingFlowStore
-    {
-        return $this->pendingFlowStore ?? new LoginPendingFlowStore();
     }
 }

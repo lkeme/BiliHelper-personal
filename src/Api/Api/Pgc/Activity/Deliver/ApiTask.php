@@ -1,58 +1,54 @@
 <?php declare(strict_types=1);
 
-/**
- *  Website: https://mudew.com/
- *  Author: Lkeme
- *  License: The MIT License
- *  Email: Useri@live.cn
- *  Updated: 2018 ~ 2026
- *
- *   _____   _   _       _   _   _   _____   _       _____   _____   _____
- *  |  _  \ | | | |     | | | | | | | ____| | |     |  _  \ | ____| |  _  \ &   ／l、
- *  | |_| | | | | |     | | | |_| | | |__   | |     | |_| | | |__   | |_| |   （ﾟ､ ｡ ７
- *  |  _  { | | | |     | | |  _  | |  __|  | |     |  ___/ |  __|  |  _  /  　 \、ﾞ ~ヽ   *
- *  | |_| | | | | |___  | | | | | | | |___  | |___  | |     | |___  | | \ \   　じしf_, )ノ
- *  |_____/ |_| |_____| |_| |_| |_| |_____| |_____| |_|     |_____| |_|  \_\
- */
-
 namespace Bhp\Api\Api\Pgc\Activity\Deliver;
 
-use Bhp\Device\Device;
+use Bhp\Api\Support\ApiJson;
 use Bhp\Request\Request;
-use Bhp\Sign\Sign;
-use Bhp\User\User;
+use Throwable;
 
 class ApiTask
 {
     /**
-     * @var array|string[]
+     * @var array<string, string>
      */
-    protected static array $headers = [
-        'Referer' => 'https://big.bilibili.com/mobile/bigPoint/task'
+    private const HEADERS = [
+        'Referer' => 'https://big.bilibili.com/mobile/bigPoint/task',
     ];
 
-    /**
-     * 完成任务  jp：追番页浏览  tv: 影视页浏览
-     * @param string $position
-     * @return array
-     */
-    public static function complete(string $position): array
-    {
-        //
-        $user = User::parseCookie();
-        //
-        $url = 'https://api.bilibili.com/pgc/activity/deliver/task/complete';
-        //
-        $payload = [
-            'disable_rcmd' => '0',
-            'position' => $position,
-            'csrf' => $user['csrf'],
-            'statistics' => Device::getInstance()->get('app.bili_a.statistics'),
-        ];
-        //
-        $headers = array_merge([], self::$headers);
-        return \Bhp\Api\Support\ApiJson::post( 'app', $url, Sign::common($payload), $headers);
+    public function __construct(
+        private readonly Request $request,
+    ) {
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function complete(string $position): array
+    {
+        return $this->decodePost('app', 'https://api.bilibili.com/pgc/activity/deliver/task/complete', $this->request->signCommonPayload([
+            'disable_rcmd' => '0',
+            'position' => $position,
+            'csrf' => $this->request->csrfValue(),
+        ], true), self::HEADERS, 'pgc.deliver.complete');
+    }
 
+    /**
+     * @param array<string, mixed> $payload
+     * @param array<string, string> $headers
+     * @return array<string, mixed>
+     */
+    private function decodePost(string $os, string $url, array $payload, array $headers, string $label): array
+    {
+        try {
+            $raw = $this->request->postText($os, $url, $payload, $headers);
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
+                'data' => [],
+            ];
+        }
+
+        return ApiJson::decode($raw, $label);
+    }
 }

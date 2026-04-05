@@ -3,15 +3,21 @@
 namespace Bhp\Bootstrap;
 
 use Bhp\Profile\ProfileInspector;
-use Bhp\Runtime\Runtime;
+use Bhp\Runtime\AppContext;
 use Bhp\Util\AppTerminator;
 
 final class StartupSelfCheck
 {
+    public function __construct(
+        private readonly AppContext $context,
+        private readonly ?ProfileInspector $profileInspector = null,
+    ) {
+    }
+
     public function run(): void
     {
-        $profile = Runtime::getInstance()->appContext()->profileContext();
-        $result = (new ProfileInspector())->inspect($profile);
+        $profile = $this->context->profileContext();
+        $result = $this->profileInspector()->inspect($profile);
         if ($result->isHealthy()) {
             return;
         }
@@ -26,5 +32,10 @@ final class StartupSelfCheck
         }
 
         AppTerminator::fail('启动自检失败: ' . implode(', ', $details));
+    }
+
+    private function profileInspector(): ProfileInspector
+    {
+        return $this->profileInspector ?? new ProfileInspector();
     }
 }

@@ -2,8 +2,15 @@
 
 namespace Bhp\Http;
 
+use Bhp\Log\Log;
+
 final class HttpRequestLogInterceptorProvider implements HttpClientInterceptorProvider
 {
+    public function __construct(
+        private readonly Log $log,
+    ) {
+    }
+
     public function name(): string
     {
         return 'request_log';
@@ -17,7 +24,7 @@ final class HttpRequestLogInterceptorProvider implements HttpClientInterceptorPr
     public function provide(HttpRequestContext $context): array
     {
         return [
-            new HttpRequestLogInterceptor(),
+            new HttpRequestLogInterceptor($this->log),
         ];
     }
 }

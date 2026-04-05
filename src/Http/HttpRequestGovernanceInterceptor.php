@@ -66,6 +66,6 @@ final class HttpRequestGovernanceInterceptor implements HttpClientInterceptor
 
     private function monitor(): HttpRequestTrafficMonitor
     {
-        return $this->monitor ?? HttpRequestTrafficMonitor::getInstance();
+        return $this->monitor ?? throw new \LogicException('HttpRequestGovernanceInterceptor monitor is not configured.');
     }
 }

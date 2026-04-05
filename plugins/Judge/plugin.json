@@ -1,0 +1,8 @@
+{
+  "hook": "Judge",
+  "name": "Judge",
+  "class_name": "Bhp\\Plugin\\Builtin\\Judge\\JudgePlugin",
+  "entry": "src/JudgePlugin.php",
+  "vendor": "official",
+  "source": "bundled"
+}

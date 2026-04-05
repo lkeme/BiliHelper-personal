@@ -9,18 +9,19 @@ use Amp\Http\Client\Request as AmpRequest;
 use Amp\TimeoutCancellation;
 use Bhp\Log\Log;
 use Bhp\Runtime\AppContext;
-use Bhp\Util\DesignPattern\SingleTon;
 use Bhp\Util\Fake\Fake;
 use function Amp\async;
 
-class HttpClient extends SingleTon
+class HttpClient
 {
     private \Amp\Http\Client\HttpClient $client;
     private \Amp\Http\Client\HttpClient $noRedirectClient;
 
-    public function init(): void
-    {
-        $verifyPeer = $this->appContext()->config('network_ssl.verify', true, 'bool');
+    public function __construct(
+        private readonly AppContext $context,
+        private readonly HttpClientInterceptorRegistry $interceptorRegistry,
+    ) {
+        $verifyPeer = $this->context->config('network_ssl.verify', true, 'bool');
         $this->client = HttpClientFactory::create(true, (bool)$verifyPeer);
         $this->noRedirectClient = HttpClientFactory::create(false, (bool)$verifyPeer);
     }
@@ -186,12 +187,12 @@ class HttpClient extends SingleTon
 
     protected function interceptorRegistry(): HttpClientInterceptorRegistry
     {
-        return HttpClientInterceptorRegistry::getInstance();
+        return $this->interceptorRegistry;
     }
 
     protected function appContext(): AppContext
     {
-        return \Bhp\Runtime\Runtime::getInstance()->appContext();
+        return $this->context;
     }
 
     /**

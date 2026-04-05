@@ -18,24 +18,29 @@
 namespace Bhp\Api\Passport;
 
 use Bhp\Api\Support\ApiJson;
-use Bhp\Log\Log;
-use Bhp\Sign\Sign;
+use Bhp\Request\Request;
+use Throwable;
 
 class ApiOauth2
 {
+    public function __construct(
+        private readonly Request $request,
+    ) {
+    }
+
     /**
      * 获取令牌信息
      * @param string $token
      * @return array
      */
-    public static function tokenInfo(string $token): array
+    public function tokenInfo(string $token): array
     {
         $url = 'https://passport.bilibili.com/api/v2/oauth2/info';
         $payload = [
             'access_token' => $token,
         ];
         // {"ts":1234,"code":0,"data":{"mid":1234,"access_token":"1234","expires_in":7759292}}
-        return \Bhp\Api\Support\ApiJson::get( 'app', $url, Sign::common($payload));
+        return $this->decodeGet('app', $url, $this->request->signCommonPayload($payload), [], 'oauth2.info.legacy');
     }
 
     /**
@@ -43,14 +48,14 @@ class ApiOauth2
      * @param string $token
      * @return array
      */
-    public static function tokenInfoNew(string $token): array
+    public function tokenInfoNew(string $token): array
     {
         $url = 'https://passport.bilibili.com/x/passport-login/oauth2/info';
         $payload = [
             'access_key' => $token,
         ];
         // {"code":0,"message":"0","ttl":1,"data":{"mid":"<user mid>","access_token":"<current token>","expires_in":9787360,"refresh":true}}
-        return ApiJson::get('app', $url, Sign::common($payload), [
+        return $this->decodeGet('app', $url, $this->request->signCommonPayload($payload), [
             'Accept-Encoding' => 'identity',
         ], 'oauth2.info.new');
     }
@@ -61,7 +66,7 @@ class ApiOauth2
      * @param string $r_token
      * @return array
      */
-    public static function tokenRefreshNew(string $token, string $r_token): array
+    public function tokenRefreshNew(string $token, string $r_token): array
     {
         $url = 'https://passport.bilibili.com/x/passport-login/oauth2/refresh_token';
         $payload = [
@@ -69,12 +74,11 @@ class ApiOauth2
             'refresh_token' => $r_token,
         ];
         // {"message":"user not login","ts":1593111694,"code":-101}
-        $response = ApiJson::post('app', $url, Sign::login($payload), [
+        $response = $this->decodePost('app', $url, $this->request->signLoginPayload($payload), [
             'Accept-Encoding' => 'identity',
         ], 'oauth2.refresh_token.new');
         if (!self::isValidRefreshResponse($response)) {
-            Log::warning('新登录令牌刷新接口响应异常，已自动回退旧刷新接口');
-            return self::tokenRefresh($token, $r_token);
+            return $this->tokenRefresh($token, $r_token);
         }
 
         return $response;
@@ -86,7 +90,7 @@ class ApiOauth2
      * @param string $r_token
      * @return array
      */
-    public static function tokenRefresh(string $token, string $r_token): array
+    public function tokenRefresh(string $token, string $r_token): array
     {
         $url = 'https://passport.bilibili.com/api/v2/oauth2/refresh_token';
         $payload = [
@@ -94,7 +98,7 @@ class ApiOauth2
             'refresh_token' => $r_token,
         ];
         // {"message":"user not login","ts":1593111694,"code":-101}
-        return ApiJson::post('app', $url, Sign::common($payload), [
+        return $this->decodePost('app', $url, $this->request->signCommonPayload($payload), [
             'Accept-Encoding' => 'identity',
         ], 'oauth2.refresh_token.legacy');
     }
@@ -104,13 +108,13 @@ class ApiOauth2
      * @param string $token
      * @return array
      */
-    public static function myInfo(string $token): array
+    public function myInfo(string $token): array
     {
         $url = 'https://app.bilibili.com/x/v2/account/myinfo';
         $payload = [
             'access_key' => $token,
         ];
-        return ApiJson::get('app', $url, Sign::common($payload), [
+        return $this->decodeGet('app', $url, $this->request->signCommonPayload($payload), [
             'Accept-Encoding' => 'identity',
         ], 'oauth2.myinfo');
     }
@@ -119,12 +123,12 @@ class ApiOauth2
      * 获取公钥
      * @return array
      */
-    public static function getKey(): array
+    public function getKey(): array
     {
         // $url = 'https://passport.bilibili.com/api/oauth2/getKey';
         $url = 'https://passport.bilibili.com/x/passport-login/web/key';
         $payload = [];
-        return ApiJson::get('app', $url, Sign::login($payload), [
+        return $this->decodeGet('app', $url, $this->request->signLoginPayload($payload), [
             'Accept-Encoding' => 'identity',
         ], 'oauth2.get_key');
     }
@@ -134,14 +138,14 @@ class ApiOauth2
      * @param string $token
      * @return array<string, mixed>
      */
-    public static function navStat(string $token): array
+    public function navStat(string $token): array
     {
         $url = 'https://api.bilibili.com/x/web-interface/nav/stat';
         $payload = [
             'access_key' => $token,
         ];
 
-        return ApiJson::get('pc', $url, $payload, [
+        return $this->decodeGet('pc', $url, $payload, [
             'Accept-Encoding' => 'identity',
         ], 'oauth2.nav_stat');
     }
@@ -151,14 +155,14 @@ class ApiOauth2
      * @param string $token
      * @return array
      */
-    public static function token2Cookie(string $token): array
+    public function token2Cookie(string $token): array
     {
         $url = 'https://passport.bilibili.com/api/login/sso';
         $payload = [
             'access_key' => $token,
             'gourl' => 'https%3A%2F%2Faccount.bilibili.com%2Faccount%2Fhome'
         ];
-        return Request::headers('app', $url, Sign::common($payload));
+        return $this->request->fetchHeaders('app', $url, $this->request->signCommonPayload($payload));
     }
 
     /**
@@ -171,6 +175,46 @@ class ApiOauth2
         }
 
         return isset($response['data']) && is_array($response['data']);
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @param array<string, string> $headers
+     * @return array<string, mixed>
+     */
+    private function decodeGet(string $os, string $url, array $payload, array $headers, string $label): array
+    {
+        try {
+            $raw = $this->request->getText($os, $url, $payload, $headers);
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
+                'data' => [],
+            ];
+        }
+
+        return ApiJson::decode($raw, $label);
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @param array<string, string> $headers
+     * @return array<string, mixed>
+     */
+    private function decodePost(string $os, string $url, array $payload, array $headers, string $label): array
+    {
+        try {
+            $raw = $this->request->postText($os, $url, $payload, $headers);
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
+                'data' => [],
+            ];
+        }
+
+        return ApiJson::decode($raw, $label);
     }
 
 }

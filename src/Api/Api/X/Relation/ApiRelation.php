@@ -17,8 +17,9 @@
 
 namespace Bhp\Api\Api\X\Relation;
 
+use Bhp\Api\Support\ApiJson;
 use Bhp\Request\Request;
-use Bhp\User\User;
+use Throwable;
 
 class ApiRelation
 {
@@ -29,6 +30,11 @@ class ApiRelation
     public const SOURCE_CREATOR_INCENTIVE = 192;
     public const SOURCE_ACTIVITY_PAGE = 222;
 
+    public function __construct(
+        private readonly Request $request,
+    ) {
+    }
+
     /**
      * 关注列表
      * @param int $pn
@@ -37,24 +43,23 @@ class ApiRelation
      * @param string $order_type
      * @return array
      */
-    public static function followings(int $pn = 1, int $ps = 20, string $order = 'desc', string $order_type = 'order_type'): array
+    public function followings(int $pn = 1, int $ps = 20, string $order = 'desc', string $order_type = 'order_type'): array
     {
-        $user = User::parseCookie();
-        //
         $url = 'https://api.bilibili.com/x/relation/followings';
+        $uid = $this->request->uidValue();
         $headers = [
             'origin' => 'https://space.bilibili.com',
-            'referer' => "https://space.bilibili.com/{$user['uid']}/fans/follow"
+            'referer' => "https://space.bilibili.com/{$uid}/fans/follow",
         ];
         $payload = [
-            'vmid' => $user['uid'],
+            'vmid' => $uid,
             'pn' => $pn,
             'ps' => $ps,
             'order' => $order,
             'order_type' => $order_type,
         ];
-        //
-        return \Bhp\Api\Support\ApiJson::get( 'pc', $url, $payload, $headers);
+
+        return $this->decodeGet('pc', $url, $payload, $headers, 'relation.followings');
     }
 
 
@@ -62,18 +67,16 @@ class ApiRelation
      * 获取关注分组列表
      * @return array
      */
-    public static function tags(): array
+    public function tags(): array
     {
-        $user = User::parseCookie();
-        //
+        $uid = $this->request->uidValue();
         $url = 'https://api.bilibili.com/x/relation/tags';
         $headers = [
             'origin' => 'https://space.bilibili.com',
-            'referer' => "https://space.bilibili.com/{$user['uid']}/fans/follow"
+            'referer' => "https://space.bilibili.com/{$uid}/fans/follow",
         ];
-        $payload = [];
-        //
-        return \Bhp\Api\Support\ApiJson::get( 'pc', $url, $payload, $headers);
+
+        return $this->decodeGet('pc', $url, [], $headers, 'relation.tags');
     }
 
     /**
@@ -83,23 +86,22 @@ class ApiRelation
      * @param int $ps
      * @return array
      */
-    public static function tag(int $tag_id, int $pn = 1, int $ps = 20): array
+    public function tag(int $tag_id, int $pn = 1, int $ps = 20): array
     {
-        $user = User::parseCookie();
-        //
+        $uid = $this->request->uidValue();
         $url = 'https://api.bilibili.com/x/relation/tag';
         $headers = [
             'origin' => 'https://space.bilibili.com',
-            'referer' => "https://space.bilibili.com/{$user['uid']}/fans/follow"
+            'referer' => "https://space.bilibili.com/{$uid}/fans/follow",
         ];
         $payload = [
-            'mid' => $user['uid'],
+            'mid' => $uid,
             'tagid' => $tag_id,
             'pn' => $pn,
             'ps' => $ps,
         ];
-        //
-        return \Bhp\Api\Support\ApiJson::get( 'pc', $url, $payload, $headers);
+
+        return $this->decodeGet('pc', $url, $payload, $headers, 'relation.tag');
     }
 
 
@@ -108,9 +110,9 @@ class ApiRelation
      * @param int $uid
      * @return array
      */
-    public static function modify(int $uid): array
+    public function modify(int $uid): array
     {
-        return self::act($uid, self::ACTION_UNFOLLOW, self::SOURCE_DEFAULT);
+        return $this->act($uid, self::ACTION_UNFOLLOW, self::SOURCE_DEFAULT);
     }
 
     /**
@@ -119,9 +121,9 @@ class ApiRelation
      * @param int $source
      * @return array
      */
-    public static function follow(int $uid, int $source = self::SOURCE_ACTIVITY_PAGE): array
+    public function follow(int $uid, int $source = self::SOURCE_ACTIVITY_PAGE): array
     {
-        return self::act($uid, self::ACTION_FOLLOW, $source);
+        return $this->act($uid, self::ACTION_FOLLOW, $source);
     }
 
     /**
@@ -130,22 +132,61 @@ class ApiRelation
      * @param int $source
      * @return array
      */
-    protected static function act(int $uid, int $act, int $source): array
+    protected function act(int $uid, int $act, int $source): array
     {
-        $user = User::parseCookie();
-        //
+        $currentUid = $this->request->uidValue();
         $url = 'https://api.bilibili.com/x/relation/modify';
         $headers = [
             'origin' => 'https://space.bilibili.com',
-            'referer' => "https://space.bilibili.com/{$user['uid']}/fans/follow"
+            'referer' => "https://space.bilibili.com/{$currentUid}/fans/follow",
         ];
         $payload = [
             'fid' => $uid,
             'act' => $act,
             're_src' => $source,
-            'csrf' => $user['csrf'],
+            'csrf' => $this->request->csrfValue(),
         ];
-        //
-        return \Bhp\Api\Support\ApiJson::post( 'pc', $url, $payload, $headers);
+
+        return $this->decodePost('pc', $url, $payload, $headers, 'relation.modify');
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @param array<string, string> $headers
+     * @return array<string, mixed>
+     */
+    private function decodeGet(string $os, string $url, array $payload, array $headers, string $label): array
+    {
+        try {
+            $raw = $this->request->getText($os, $url, $payload, $headers);
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
+                'data' => [],
+            ];
+        }
+
+        return ApiJson::decode($raw, $label);
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @param array<string, string> $headers
+     * @return array<string, mixed>
+     */
+    private function decodePost(string $os, string $url, array $payload, array $headers, string $label): array
+    {
+        try {
+            $raw = $this->request->postText($os, $url, $payload, $headers);
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
+                'data' => [],
+            ];
+        }
+
+        return ApiJson::decode($raw, $label);
     }
 }

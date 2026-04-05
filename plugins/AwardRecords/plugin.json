@@ -1,0 +1,8 @@
+{
+  "hook": "AwardRecords",
+  "name": "AwardRecords",
+  "class_name": "Bhp\\Plugin\\Builtin\\AwardRecords\\AwardRecordsPlugin",
+  "entry": "src/AwardRecordsPlugin.php",
+  "vendor": "official",
+  "source": "bundled"
+}

@@ -14,6 +14,7 @@ final class LoginAuthenticationService
         private readonly LoginModeExecutor $modeExecutor,
         private readonly LoginSmsService $smsService,
         private readonly LoginResponseService $responseService,
+        private readonly ApiLogin $apiLogin,
     ) {
     }
 
@@ -39,7 +40,7 @@ final class LoginAuthenticationService
             $validate,
             $challenge,
             $mode,
-            static fn (string $username, string $password, string $validate, string $challenge): array => ApiLogin::passwordLogin($username, $password, $validate, $challenge),
+            fn (string $username, string $password, string $validate, string $challenge): array => $this->apiLogin->passwordLogin($username, $password, $validate, $challenge),
             $completeLogin,
         );
     }
@@ -98,5 +99,14 @@ final class LoginAuthenticationService
     public function completeLogin(string $mode, array $data, callable $applyDecision): void
     {
         $applyDecision($this->responseService->decide($mode, $data), $data);
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @return array<string, mixed>
+     */
+    public function submitSmsLogin(array $payload, string $code): array
+    {
+        return $this->apiLogin->smsLogin($payload, $code);
     }
 }

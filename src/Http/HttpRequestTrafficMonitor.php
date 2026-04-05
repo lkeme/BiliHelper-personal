@@ -6,17 +6,10 @@ class HttpRequestTrafficMonitor
 {
     private const DEFAULT_WINDOW_SECONDS = 300;
 
-    private static ?self $instance = null;
-
     /**
      * @var array<int, array{timestamp: float, host: string, success: bool}>
      */
     private array $samples = [];
-
-    public static function getInstance(): self
-    {
-        return self::$instance ??= new self();
-    }
 
     public function init(): void
     {

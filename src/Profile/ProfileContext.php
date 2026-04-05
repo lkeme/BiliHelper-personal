@@ -29,34 +29,6 @@ final class ProfileContext
         );
     }
 
-    public static function fromRuntimeConstants(?string $fallbackAppRoot = null, ?string $fallbackName = null): self
-    {
-        $appRoot = defined('APP_RESOURCES_PATH')
-            ? dirname(rtrim(str_replace('\\', '/', (string)APP_RESOURCES_PATH), '/'))
-            : ($fallbackAppRoot ?: (getcwd() ?: ''));
-
-        if (defined('PROFILE_CONFIG_PATH')) {
-            $configPath = self::normalizePath((string)PROFILE_CONFIG_PATH);
-            $profileRoot = self::normalizePath(dirname(rtrim($configPath, '/')));
-            $name = basename(rtrim($profileRoot, '/')) ?: ($fallbackName ?: 'user');
-
-            if (basename(dirname(rtrim($profileRoot, '/'))) === 'profile') {
-                $appRoot = dirname(dirname(rtrim($profileRoot, '/')));
-            }
-
-            return new self(
-                self::normalizeRoot($appRoot),
-                $name,
-                $profileRoot,
-                $configPath,
-                defined('PROFILE_LOG_PATH') ? self::normalizePath((string)PROFILE_LOG_PATH) : self::normalizePath($profileRoot . 'log'),
-                defined('PROFILE_CACHE_PATH') ? self::normalizePath((string)PROFILE_CACHE_PATH) : self::normalizePath($profileRoot . 'cache'),
-            );
-        }
-
-        return self::fromAppRoot($appRoot, $fallbackName ?: 'user');
-    }
-
     public function appRoot(): string
     {
         return $this->appRoot;
@@ -87,22 +59,9 @@ final class ProfileContext
         return $this->cachePath;
     }
 
-    public static function resolveResourcesPath(?string $fallbackAppRoot = null): string
+    public function resourcesPath(): string
     {
-        if (defined('APP_RESOURCES_PATH')) {
-            return self::normalizePath((string) APP_RESOURCES_PATH);
-        }
-
-        return self::normalizePath(self::normalizeRoot($fallbackAppRoot ?? (getcwd() ?: '')) . 'resources');
-    }
-
-    public static function resolvePluginPath(?string $fallbackAppRoot = null): string
-    {
-        if (defined('APP_PLUGIN_PATH')) {
-            return self::normalizePath((string) APP_PLUGIN_PATH);
-        }
-
-        return self::normalizePath(self::normalizeRoot($fallbackAppRoot ?? (getcwd() ?: '')) . 'plugin');
+        return self::normalizePath($this->appRoot . 'resources');
     }
 
     private static function normalizeRoot(string $path): string

@@ -17,9 +17,7 @@
 
 namespace Bhp\LiveSign;
 
-use Bhp\Util\DesignPattern\SingleTon;
-
-class LiveSign extends SingleTon
+class LiveSign
 {
 
     // ["sha512", "sha3_512", "sha384", "sha3_384", "blake2b"]:
@@ -51,14 +49,6 @@ class LiveSign extends SingleTon
      * @var string
      */
     protected string $default_pc_benchmark = '';
-
-    /**
-     * @return void
-     */
-    public function init(): void
-    {
-
-    }
 
     /**
      * APP

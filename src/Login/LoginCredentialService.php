@@ -3,13 +3,15 @@
 namespace Bhp\Login;
 
 use Bhp\Api\Passport\ApiOauth2;
-use Bhp\Log\Log;
 use Bhp\Runtime\AppContext;
 use Bhp\Util\Exceptions\LoginException;
 
 class LoginCredentialService
 {
-    public function __construct(protected AppContext $context)
+    public function __construct(
+        protected AppContext $context,
+        private readonly ApiOauth2 $apiOauth2,
+    )
     {
     }
 
@@ -44,13 +46,13 @@ class LoginCredentialService
 
     public function encryptPassword(string $plaintext): string
     {
-        Log::info('正在载入公钥');
-        $response = ApiOauth2::getKey();
+        $this->context->log()->recordInfo('正在载入公钥');
+        $response = $this->apiOauth2->getKey();
         if (isset($response['code']) && $response['code']) {
             throw new LoginException('公钥载入失败: ' . $response['message'], 600);
         }
 
-        Log::info('公钥载入完毕');
+        $this->context->log()->recordInfo('公钥载入完毕');
         $publicKey = $response['data']['key'];
         $hash = $response['data']['hash'];
         openssl_public_encrypt($hash . $plaintext, $crypt, $publicKey);
