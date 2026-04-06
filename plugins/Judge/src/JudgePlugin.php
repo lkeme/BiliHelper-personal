@@ -19,15 +19,6 @@ class JudgePlugin extends BasePlugin implements PluginTaskInterface
      *
      * @var array<string, int|string>
      */
-    public ?array $info = [
-        'hook' => 'Judge',
-        'name' => 'Judge',
-        'version' => '0.0.1',
-        'desc' => '風機委員',
-        'author' => 'Lkeme',
-        'priority' => 1106,
-        'cycle' => '15-30(分钟)',
-    ];
 
     /**
      * @var array<int, array{id: string, vote: int}>

@@ -17,4 +17,5 @@ final class RequestOptions
     public float $timeout = 30.0;
     public ?Cancellation $cancellation = null;
     public bool $quiet = false;
+    public bool $retryable = false;
 }

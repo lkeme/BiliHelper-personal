@@ -14,6 +14,8 @@ use Bhp\Scheduler\TaskResult;
 
 class AwardRecordsPlugin extends BasePlugin implements PluginTaskInterface
 {
+    private const CACHE_SCOPE = 'AwardRecords';
+
     private AuthFailureClassifier $authFailureClassifier;
     private ?ApiWallet $operationWalletApi = null;
     private ?ApiAward $awardApi = null;
@@ -40,15 +42,6 @@ class AwardRecordsPlugin extends BasePlugin implements PluginTaskInterface
      *
      * @var array<string, int|string>
      */
-    public ?array $info = [
-        'hook' => 'AwardRecords',
-        'name' => 'AwardRecords',
-        'version' => '0.0.1',
-        'desc' => '获奖记录',
-        'author' => 'Lkeme',
-        'priority' => 1111,
-        'cycle' => '5(分钟)',
-    ];
 
     public function __construct(Plugin &$plugin)
     {
@@ -69,7 +62,7 @@ class AwardRecordsPlugin extends BasePlugin implements PluginTaskInterface
 
     protected function awardRecordsTask(): void
     {
-        $this->records = ($tmp = $this->cacheGet('records')) ? $tmp : $this->initRecords();
+        $this->records = ($tmp = $this->cacheGet('records', self::CACHE_SCOPE, null)) ? $tmp : $this->initRecords();
 
         if ($this->locks['operation'] < time()) {
             $this->operation();
@@ -84,7 +77,7 @@ class AwardRecordsPlugin extends BasePlugin implements PluginTaskInterface
             $this->bonus();
         }
 
-        $this->cacheSet('records', $this->records);
+        $this->cacheSet('records', $this->records, self::CACHE_SCOPE);
     }
 
     protected function operation(string $title = '运营奖惩'): bool

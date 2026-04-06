@@ -28,15 +28,6 @@ class VipPrivilegePlugin extends BasePlugin implements PluginTaskInterface
      *
      * @var array<string, int|string>
      */
-    public ?array $info = [
-        'hook' => 'VipPrivilege',
-        'name' => 'VipPrivilege',
-        'version' => '0.0.1',
-        'desc' => '领取大会员权益',
-        'author' => 'Lkeme',
-        'priority' => 1107,
-        'cycle' => '24(小时)',
-    ];
 
     public function __construct(Plugin &$plugin)
     {
@@ -248,12 +239,12 @@ class VipPrivilegePlugin extends BasePlugin implements PluginTaskInterface
     protected function loadPendingPrivileges(): array
     {
         $today = date('Y-m-d');
-        $savedDate = $this->cacheGet(self::CACHE_DATE_KEY, null, self::CACHE_SCOPE);
+        $savedDate = $this->cacheGet(self::CACHE_DATE_KEY, self::CACHE_SCOPE, null);
         if (!is_string($savedDate) || $savedDate !== $today) {
             return [];
         }
 
-        $privileges = $this->cacheGet(self::CACHE_KEY, null, self::CACHE_SCOPE);
+        $privileges = $this->cacheGet(self::CACHE_KEY, self::CACHE_SCOPE, null);
 
         return is_array($privileges) ? array_values($privileges) : [];
     }
@@ -279,12 +270,12 @@ class VipPrivilegePlugin extends BasePlugin implements PluginTaskInterface
     protected function loadHandledPrivilegeTokens(): array
     {
         $today = date('Y-m-d');
-        $savedDate = $this->cacheGet(self::HANDLED_CACHE_DATE_KEY, null, self::CACHE_SCOPE);
+        $savedDate = $this->cacheGet(self::HANDLED_CACHE_DATE_KEY, self::CACHE_SCOPE, null);
         if (!is_string($savedDate) || $savedDate !== $today) {
             return [];
         }
 
-        $tokens = $this->cacheGet(self::HANDLED_CACHE_KEY, null, self::CACHE_SCOPE);
+        $tokens = $this->cacheGet(self::HANDLED_CACHE_KEY, self::CACHE_SCOPE, null);
         if (!is_array($tokens)) {
             return [];
         }

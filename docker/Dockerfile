@@ -1,6 +1,6 @@
 FROM composer:2 AS composer-bin
 
-FROM php:8.4-alpine
+FROM php:8.5-alpine
 
 LABEL AUTHOR="Lkeme <Useri@live.cn>"
 

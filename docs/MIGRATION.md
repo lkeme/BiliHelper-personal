@@ -43,7 +43,7 @@ php app.php m:d -p VipPoint --reset-cache
 php app.php m:s --plugin ActivityInfoUpdate --reset-cache
 ```
 
-`mode:doctor`、`mode:profiles`、`mode:restore` 已不再提供。
+`mode:doctor`、`mode:profiles`、`mode:restore` 已不再提供，也不会回归。
 
 ### 3. `SingleTon` 与运行时路径常量已移除
 
@@ -53,29 +53,41 @@ php app.php m:s --plugin ActivityInfoUpdate --reset-cache
 
 - `ProfileContext`
 - `AppContext`
-- `Runtime::appContext()`
+- `ServiceContainer`
+
+同时不再新增 `Runtime::service()`、`Runtime::appContext()` 这类静态运行态入口。
 
 ### 4. 插件运行时改为核心 + 第三方插件注册表
 
 当前插件来源分为两类：
 
-- `src/Plugin/CorePluginRegistry.php` 中的核心插件条目（当前只有 `Login`）
+- `src/Plugin/CorePluginRegistry.php` 中的核心插件条目，当前只有 `Login`
 - `plugins/<plugin>/plugin.json` 声明的第三方插件，由 `src/Plugin/ExternalPluginRegistry.php` 发现
 
 当前规则：
 
 - `Plugin` 统一消费核心条目和第三方插件 manifest
 - 官方随仓库分发的第三方插件位于 `plugins/*`
+- `plugin.json` 是插件元数据唯一真源
 - manifest 校验仍保留，用于筛掉不兼容插件
-- `mode:script` 只装配脚本插件；`mode:app` 和 `mode:debug` 装配非脚本插件
+- `mode:script` 只装配脚本插件
+- `mode:app` 和 `mode:debug` 装配非脚本插件
 
 ### 5. Docker 生产运行时改为默认不可变
 
-当前生产容器启动时不会执行远程代码同步。更新方式固定为：
+当前生产容器启动时不会执行远程代码同步或依赖刷新，profile 初始化改为显式动作。
+
+更新方式固定为：
 
 ```bash
 docker compose pull
 docker compose up -d
+```
+
+首次生成 profile 需要单独执行：
+
+```bash
+entrypoint.sh init_profile
 ```
 
 ### 6. ActivityLottery 改为行级 SQLite 持久化
@@ -86,7 +98,17 @@ docker compose up -d
 
 - 每条记录按 `scope + biz_date + flow_id` 唯一键存储
 - 同一日内多个 flow 可以独立 upsert
-- 不再使用“按天一个大对象”的持久化模型
+- 不再使用按天聚合的大对象持久化模型
+
+### 7. SQLite schema 管理已统一
+
+当前通用缓存库和 `ActivityFlowStore` 的建表逻辑都统一交给 `SqliteSchemaManager`。
+
+当前行为：
+
+- 统一创建 `schema_versions`
+- 统一登记 schema version
+- 不再由每个存储类各自维护独立建表逻辑
 
 ## 旧 profile 升级说明
 
@@ -128,7 +150,9 @@ php app.php m:s --plugin ActivityInfoUpdate --reset-cache
 新增代码时，至少满足以下规则：
 
 - 不再新增 `SingleTon`、运行时路径常量或新的全局 helper
-- 业务插件必须来自 `plugins/<plugin>/plugin.json`，核心只保留系统级插件
+- 不再新增静态 runtime facade
+- 业务插件必须来自 `plugins/<plugin>/plugin.json`
+- 核心只保留系统级插件
 - 优先通过 `AppContext` 访问配置、设备、认证态和路径
 - 运行态状态优先进入 SQLite 或独立状态仓
 - 文档必须描述当前真实行为，不保留已经失效的控制台模式和部署方式

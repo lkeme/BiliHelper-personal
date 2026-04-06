@@ -22,15 +22,6 @@ class DailyGoldPlugin extends BasePlugin implements PluginTaskInterface
      *
      * @var array<string, int|string>
      */
-    public ?array $info = [
-        'hook' => 'DailyGold',
-        'name' => 'DailyGold',
-        'version' => '0.0.1',
-        'desc' => '每日电池(APP)',
-        'author' => 'Lkeme',
-        'priority' => 1114,
-        'cycle' => '24(小时)',
-    ];
 
     public function __construct(Plugin &$plugin)
     {

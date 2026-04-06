@@ -24,15 +24,6 @@ class LotteryPlugin extends BasePlugin implements PluginTaskInterface
     /**
      * @var array<string, int|string>
      */
-    public ?array $info = [
-        'hook' => 'Lottery',
-        'name' => 'Lottery',
-        'version' => '0.0.2',
-        'desc' => '抽奖',
-        'author' => 'MoeHero/Lkeme',
-        'priority' => 1113,
-        'cycle' => '10-25(分钟)',
-    ];
 
     /**
      * @var array<string, array<int|string, mixed>>

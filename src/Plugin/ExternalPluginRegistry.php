@@ -2,12 +2,10 @@
 
 namespace Bhp\Plugin;
 
-use RuntimeException;
-
 final class ExternalPluginRegistry
 {
     /**
-     * @return array<int, array{hook: string, name: string, class_name: string, path: string, source: string, vendor: string}>
+     * @return array<int, array<string, mixed>>
      */
     public function all(string $appRoot): array
     {
@@ -18,10 +16,7 @@ final class ExternalPluginRegistry
 
         $entries = [];
         foreach (glob($pluginsRoot . '/*/plugin.json') ?: [] as $manifestPath) {
-            $entry = $this->parseManifest($manifestPath);
-            if ($entry !== null) {
-                $entries[] = $entry;
-            }
+            $entries[] = $this->parseManifest($manifestPath);
         }
 
         usort($entries, static function (array $left, array $right): int {
@@ -32,23 +27,43 @@ final class ExternalPluginRegistry
     }
 
     /**
-     * @return array{hook: string, name: string, class_name: string, path: string, source: string, vendor: string}|null
+     * @return array<string, mixed>
      */
-    private function parseManifest(string $manifestPath): ?array
+    private function parseManifest(string $manifestPath): array
     {
+        $pluginDirectory = basename(dirname($manifestPath));
+        $fallback = [
+            'hook' => $pluginDirectory,
+            'name' => $pluginDirectory,
+            'class_name' => '',
+            'path' => '',
+            'autoload_root' => '',
+            'namespace_prefix' => '',
+            'source' => 'external',
+            'vendor' => 'unknown',
+            'manifest' => [],
+            'manifest_error' => '',
+        ];
+
         $raw = file_get_contents($manifestPath);
         if (!is_string($raw) || trim($raw) === '') {
-            return null;
+            $fallback['manifest_error'] = "插件 manifest 为空: {$manifestPath}";
+
+            return $fallback;
         }
 
         try {
             $decoded = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
         } catch (\JsonException $exception) {
-            throw new RuntimeException("插件 manifest 解析失败 {$manifestPath}: {$exception->getMessage()}", 0, $exception);
+            $fallback['manifest_error'] = "插件 manifest 解析失败 {$manifestPath}: {$exception->getMessage()}";
+
+            return $fallback;
         }
 
         if (!is_array($decoded)) {
-            return null;
+            $fallback['manifest_error'] = "插件 manifest 顶层结构非法: {$manifestPath}";
+
+            return $fallback;
         }
 
         $hook = trim((string)($decoded['hook'] ?? ''));
@@ -57,19 +72,33 @@ final class ExternalPluginRegistry
         $entry = trim((string)($decoded['entry'] ?? ''));
         $vendor = trim((string)($decoded['vendor'] ?? ''));
         $source = trim((string)($decoded['source'] ?? 'external'));
-        if ($hook === '' || $name === '' || $className === '' || $entry === '') {
-            return null;
-        }
-
         $basePath = str_replace('\\', '/', dirname($manifestPath)) . '/';
 
+        $entryPath = $entry !== ''
+            ? $basePath . ltrim(str_replace('\\', '/', $entry), '/')
+            : '';
+
         return [
-            'hook' => $hook,
-            'name' => $name,
+            'hook' => $hook !== '' ? $hook : $pluginDirectory,
+            'name' => $name !== '' ? $name : ($hook !== '' ? $hook : $pluginDirectory),
             'class_name' => $className,
-            'path' => $basePath . ltrim(str_replace('\\', '/', $entry), '/'),
-            'source' => $source,
+            'path' => $entryPath,
+            'autoload_root' => $entryPath !== '' ? rtrim(str_replace('\\', '/', dirname($entryPath)), '/') . '/' : '',
+            'namespace_prefix' => $this->namespacePrefix($className),
+            'source' => $source !== '' ? $source : 'external',
             'vendor' => $vendor !== '' ? $vendor : 'unknown',
+            'manifest' => $decoded,
+            'manifest_error' => '',
         ];
+    }
+
+    private function namespacePrefix(string $className): string
+    {
+        $position = strrpos($className, '\\');
+        if ($position === false) {
+            return '';
+        }
+
+        return substr($className, 0, $position + 1);
     }
 }

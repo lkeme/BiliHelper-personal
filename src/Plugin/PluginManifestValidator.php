@@ -2,38 +2,8 @@
 
 namespace Bhp\Plugin;
 
-use ReflectionClass;
-
 final class PluginManifestValidator
 {
-    /**
-     * @return array<string, mixed>
-     */
-    public function readManifest(string $class): array
-    {
-        $typedManifest = $this->readTypedManifestCandidate($class);
-        if ($typedManifest instanceof PluginManifest) {
-            return $typedManifest->toArray();
-        }
-
-        if (method_exists($class, 'discoverManifest')) {
-            $manifest = $class::discoverManifest();
-
-            return is_array($manifest) ? $manifest : [];
-        }
-
-        $reflection = new ReflectionClass($class);
-        $defaults = $reflection->getDefaultProperties();
-        $manifest = $defaults['info'] ?? [];
-
-        return is_array($manifest) ? $manifest : [];
-    }
-
-    public function readTypedManifest(string $class): PluginManifest
-    {
-        return $this->readTypedManifestCandidate($class) ?? PluginManifest::fromArray($this->readManifest($class));
-    }
-
     /**
      * @return array<string, mixed>
      */
@@ -42,20 +12,19 @@ final class PluginManifestValidator
         return PluginManifest::fromArray($manifest)->toArray();
     }
 
-    public function validateManifest(string $hook, array $manifest): ?string
+    /**
+     * @param array<string, mixed>|PluginManifest $manifest
+     */
+    public function validateManifest(string $hook, array|PluginManifest $manifest): ?string
     {
-        return $this->validateTypedManifest($hook, PluginManifest::fromArray($manifest));
-    }
-
-    public function validateTypedManifest(string $hook, PluginManifest $manifest): ?string
-    {
+        $typedManifest = $this->toTypedManifest($manifest);
         $fillable = [
-            'hook' => $manifest->hook,
-            'name' => $manifest->name,
-            'version' => $manifest->version,
-            'desc' => $manifest->desc,
-            'priority' => $manifest->priority,
-            'cycle' => $manifest->cycle,
+            'hook' => $typedManifest->hook,
+            'name' => $typedManifest->name,
+            'version' => $typedManifest->version,
+            'desc' => $typedManifest->desc,
+            'priority' => $typedManifest->priority,
+            'cycle' => $typedManifest->cycle,
         ];
 
         foreach ($fillable as $key => $value) {
@@ -70,7 +39,7 @@ final class PluginManifestValidator
         }
 
         $allowedHooks = [$hook, $this->shortClassName($hook)];
-        if (!in_array($manifest->hook, $allowedHooks, true)) {
+        if (!in_array($typedManifest->hook, $allowedHooks, true)) {
             return "插件 {$hook} manifest.hook 必须与类名保持一致";
         }
 
@@ -95,7 +64,7 @@ final class PluginManifestValidator
     }
 
     /**
-     * @param array<string, mixed> $manifest
+     * @param array<string, mixed>|PluginManifest $manifest
      */
     public function validatePhpCompatibility(string $hook, array|PluginManifest $manifest): ?string
     {
@@ -113,7 +82,7 @@ final class PluginManifestValidator
     }
 
     /**
-     * @param array<string, mixed> $manifest
+     * @param array<string, mixed>|PluginManifest $manifest
      */
     public function validateRequiredExtensions(string $hook, array|PluginManifest $manifest): ?string
     {
@@ -133,7 +102,7 @@ final class PluginManifestValidator
     }
 
     /**
-     * @param array<string, mixed> $manifest
+     * @param array<string, mixed>|PluginManifest $manifest
      * @param string[] $availableCapabilities
      */
     public function validateRequiredCapabilities(string $hook, array|PluginManifest $manifest, array $availableCapabilities): ?string
@@ -156,17 +125,6 @@ final class PluginManifestValidator
     private function toTypedManifest(array|PluginManifest $manifest): PluginManifest
     {
         return $manifest instanceof PluginManifest ? $manifest : PluginManifest::fromArray($manifest);
-    }
-
-    private function readTypedManifestCandidate(string $class): ?PluginManifest
-    {
-        if (!method_exists($class, 'discoverManifest')) {
-            return null;
-        }
-
-        $manifest = $class::discoverManifest();
-
-        return $manifest instanceof PluginManifest ? $manifest : null;
     }
 
     private function shortClassName(string $className): string

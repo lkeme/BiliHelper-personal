@@ -11,6 +11,8 @@ use Bhp\Util\Exceptions\NoLoginException;
 
 class LiveGoldBoxPlugin extends BasePlugin implements PluginTaskInterface
 {
+    private const CACHE_SCOPE = 'LiveGoldBox';
+
     private ?ApiBox $boxApi = null;
 
     /**
@@ -18,15 +20,6 @@ class LiveGoldBoxPlugin extends BasePlugin implements PluginTaskInterface
      *
      * @var array<string, int|string>
      */
-    public ?array $info = [
-        'hook' => 'LiveGoldBox',
-        'name' => 'LiveGoldBox',
-        'version' => '0.0.1',
-        'desc' => '直播金色宝箱(实物抽奖)',
-        'author' => 'Lkeme',
-        'priority' => 1110,
-        'cycle' => '6-10(分钟)',
-    ];
 
     protected int $start_aid = 0;
 
@@ -116,7 +109,7 @@ class LiveGoldBoxPlugin extends BasePlugin implements PluginTaskInterface
      */
     protected function fetchLotteryList(): array
     {
-        $this->invalid_aids = ($tmp = $this->cacheGet('invalid_aids')) ? $tmp : [];
+        $this->invalid_aids = ($tmp = $this->cacheGet('invalid_aids', self::CACHE_SCOPE, null)) ? $tmp : [];
 
         $lotteryList = [];
         $maxProbe = 10;
@@ -155,7 +148,7 @@ class LiveGoldBoxPlugin extends BasePlugin implements PluginTaskInterface
                 'num' => $roundNum,
             ];
         }
-        $this->cacheSet('invalid_aids', $this->invalid_aids);
+        $this->cacheSet('invalid_aids', $this->invalid_aids, self::CACHE_SCOPE);
         $this->info('金色宝箱: 获取到有效抽奖列表 ' . count($lotteryList));
 
         return $lotteryList;

@@ -18,15 +18,6 @@ class Silver2CoinPlugin extends BasePlugin implements PluginTaskInterface
      *
      * @var array<string, int|string>
      */
-    public ?array $info = [
-        'hook' => 'Silver2Coin',
-        'name' => 'Silver2Coin',
-        'version' => '0.0.1',
-        'desc' => '银瓜子兑换硬币',
-        'author' => 'Lkeme',
-        'priority' => 1105,
-        'cycle' => '24(小时)',
-    ];
 
     public function __construct(Plugin &$plugin)
     {

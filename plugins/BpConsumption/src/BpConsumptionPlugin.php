@@ -21,15 +21,6 @@ class BpConsumptionPlugin extends BasePlugin implements PluginTaskInterface
      *
      * @var array<string, int|string>
      */
-    public ?array $info = [
-        'hook' => 'BpConsumption',
-        'name' => 'BpConsumption',
-        'version' => '0.0.1',
-        'desc' => '大会员B币券消费',
-        'author' => 'Lkeme',
-        'priority' => 1108,
-        'cycle' => '24(小时)',
-    ];
 
     public function __construct(Plugin &$plugin)
     {

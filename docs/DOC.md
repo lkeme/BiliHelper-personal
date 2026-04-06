@@ -1,17 +1,17 @@
-<p align=center><img width="300px" src="https://user-images.githubusercontent.com/19500576/118621710-36428180-b7f9-11eb-891d-3f5697347cef.png" alt=""></p>
+# 使用说明
 
 ## 环境依赖
 
-通常使用 `composer` 会自动检测以下依赖：
+通常使用 `composer` 会自动检查以下依赖：
 
-| Requirement  |
-|--------------|
-| PHP >=8.4    |
-| php_openssl  |
-| php_json     |
-| php_zlib     |
-| php_mbstring |
-| php_sqlite3  |
+| Requirement |
+|-------------|
+| PHP >= 8.5  |
+| ext-openssl |
+| ext-json    |
+| ext-zlib    |
+| ext-mbstring |
+| ext-sqlite3 |
 
 ## 目录约定
 
@@ -24,6 +24,8 @@
 默认状态库为 `profile/<name>/cache/cache.sqlite3`。
 
 ## 安装与初始化
+
+### 源码运行
 
 1. 克隆项目并复制示例配置：
 
@@ -38,9 +40,19 @@ cp -r profile/example profile/user
 composer install
 ```
 
-3. 编辑 `profile/user/config/user.ini`。
+3. 编辑 `profile/user/config/user.ini`
 
 默认只需填写账号密码，再按需开启插件功能。
+
+### Docker 初始化
+
+当前 Docker 运行时默认不可变。首次生成 profile 需要显式执行：
+
+```shell
+entrypoint.sh init_profile
+```
+
+或者直接挂载已经准备好的 `profile/user`。
 
 ## 设备配置
 
@@ -73,8 +85,8 @@ composer install
 php app.php --help
 
 mode:app     m:a    [主要模式] 默认功能
-mode:debug   m:d    [Debug模式] 开发测试使用
-mode:script  m:s    [脚本模式] 使用一些额外功能脚本
+mode:debug   m:d    [Debug 模式] 开发测试使用
+mode:script  m:s    [脚本模式] 使用额外功能脚本
 ```
 
 ### `mode:app`
@@ -126,7 +138,7 @@ php app.php m:s --plugin ActivityInfoUpdate --reset-cache
 - `--list`：列出当前脚本插件
 - `-p / --plugin`：执行单个脚本插件
 - `-P / --plugins`：执行多个脚本插件，逗号分隔
-- 同样支持 `--reset-cache` 与 `--purge-auth`
+- 同样支持 `--reset-cache` 和 `--purge-auth`
 
 ## ActivityLottery 持久化
 
@@ -142,24 +154,19 @@ php app.php m:s --plugin ActivityInfoUpdate --reset-cache
 
 ### 生产环境
 
-生产 Docker 运行时默认不可变，容器启动时不会再同步远程代码。更新方式为：
+生产 Docker 运行时默认不可变，容器启动时不会再同步远程代码或刷新依赖。
+
+更新方式：
 
 ```shell
 docker compose pull
 docker compose up -d
 ```
 
-环境变量示例：
+如需显式初始化 profile：
 
 ```shell
-docker run -itd --rm -e USER_NAME=你的B站登录账号 -e USER_PASSWORD=你的B站密码 lkeme/bilihelper-personal
-docker run -itd --rm -e BRANCH=dev -e USER_NAME=你的B站登录账号 -e USER_PASSWORD=你的B站密码 lkeme/bilihelper-personal
-```
-
-如果使用配置目录挂载：
-
-```shell
-docker run -itd --rm -v /path/to/your/profile/user:/app/profile/user lkeme/bilihelper-personal
+docker run --rm IMAGE entrypoint.sh init_profile
 ```
 
 ## 升级指南
@@ -179,7 +186,7 @@ git pull
 composer install
 ```
 
-如果使用 `systemd`、Supervisor 等进程管理器，请在更新后重启服务。
+如果使用 `systemd`、`Supervisor` 等进程管理器，请在更新后重启服务。
 
 ## 部署指南
 

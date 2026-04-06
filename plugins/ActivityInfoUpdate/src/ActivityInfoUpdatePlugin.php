@@ -9,16 +9,6 @@ use Bhp\Plugin\Builtin\ActivityInfoUpdate\Internal\ActivityInfoUpdateRunner;
 
 final class ActivityInfoUpdatePlugin extends BasePlugin
 {
-    public ?array $info = [
-        'hook' => 'ActivityInfoUpdate',
-        'name' => 'ActivityInfoUpdate',
-        'version' => '0.0.1',
-        'desc' => '更新活动索引',
-        'author' => 'Lkeme',
-        'priority' => 1900,
-        'cycle' => 'manual',
-        'mode' => 'script',
-    ];
 
     public function __construct(Plugin &$plugin)
     {

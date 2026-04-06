@@ -5,7 +5,6 @@ APP_ROOT="/app"
 CONFIG_PATH="${CONFIG_PATH:-${APP_ROOT}/profile/user/config/user.ini}"
 PROFILE_ROOT="$(dirname "$(dirname "${CONFIG_PATH}")")"
 EXAMPLE_PROFILE="${APP_ROOT}/profile/example"
-DEPENDENCY_HASH_FILE="${APP_ROOT}/vendor/.composer-lock.hash"
 INFO_LABEL="${Info:-[INFO]}"
 FONT_RESET="${Font:-}"
 GREEN_BG="${GreenBG:-}"
@@ -94,66 +93,59 @@ escape_ini_value() {
   printf '%s' "${1:-}" | tr -d '\r\n' | sed 's/\\/\\\\/g; s/"/\\"/g'
 }
 
-refresh_dependencies() {
-  if [ ! -f "${APP_ROOT}/composer.lock" ]; then
-    return
-  fi
-
-  current_hash="$(sha1sum "${APP_ROOT}/composer.lock" | awk '{print $1}')"
-  stored_hash=""
-  if [ -f "${DEPENDENCY_HASH_FILE}" ]; then
-    stored_hash="$(cat "${DEPENDENCY_HASH_FILE}")"
-  fi
-
-  if [ ! -f "${APP_ROOT}/vendor/autoload.php" ] || [ "${current_hash}" != "${stored_hash}" ]; then
-    print_block "${GREEN_BG} composer.lock 发生变化，正在同步依赖 ${FONT_RESET}"
-    composer install --no-interaction --no-progress --prefer-dist --optimize-autoloader
-    mkdir -p "$(dirname "${DEPENDENCY_HASH_FILE}")"
-    echo "${current_hash}" > "${DEPENDENCY_HASH_FILE}"
-    return
-  fi
-
-  print_block "${GREEN_BG} 依赖无需更新 ${FONT_RESET}"
-}
-
-prepare_profile() {
-  print_block "${GREEN_BG} 正在使用当前 profile 目录方案 ${FONT_RESET}"
+init_profile() {
+  print_block "${GREEN_BG} 正在初始化 profile ${FONT_RESET}"
   assert_profile_root_safe
 
-  if [ ! -f "${CONFIG_PATH}" ]; then
-    print_block "${GREEN_BG} 未检测到外部配置，正在生成默认 profile ${FONT_RESET}"
-    mkdir -p "$(dirname "${PROFILE_ROOT}")"
-    rm -rf "${PROFILE_ROOT}"
-    cp -r "${EXAMPLE_PROFILE}" "${PROFILE_ROOT}"
-
-    escaped_user="$(escape_ini_value "${USER_NAME:-}")"
-    escaped_password="$(escape_ini_value "${USER_PASSWORD:-}")"
-    escaped_branch="$(escape_ini_value "${BRANCH}")"
-    awk -v username="${escaped_user}" -v password="${escaped_password}" -v branch="${escaped_branch}" '
-      BEGIN { section = "" }
-      /^\[.*\]$/ {
-        section = $0
-        print
-        next
-      }
-      section == "[login_account]" && $0 ~ /^username[[:space:]]*=/ {
-        print "username = \"" username "\""
-        next
-      }
-      section == "[login_account]" && $0 ~ /^password[[:space:]]*=/ {
-        print "password = \"" password "\""
-        next
-      }
-      section == "[app]" && $0 ~ /^branch[[:space:]]*=/ {
-        print "branch = " branch
-        next
-      }
-      { print }
-    ' "${CONFIG_PATH}" > "${CONFIG_PATH}.tmp"
-    mv "${CONFIG_PATH}.tmp" "${CONFIG_PATH}"
-  else
-    print_block "${GREEN_BG} 正在使用外部配置文件 ${FONT_RESET}"
+  if [ -f "${CONFIG_PATH}" ]; then
+    print_block "${GREEN_BG} profile 已存在，跳过初始化 ${FONT_RESET}"
+    return 0
   fi
+
+  mkdir -p "$(dirname "${PROFILE_ROOT}")"
+  rm -rf "${PROFILE_ROOT}"
+  cp -r "${EXAMPLE_PROFILE}" "${PROFILE_ROOT}"
+
+  escaped_user="$(escape_ini_value "${USER_NAME:-}")"
+  escaped_password="$(escape_ini_value "${USER_PASSWORD:-}")"
+  escaped_branch="$(escape_ini_value "${BRANCH}")"
+
+  awk -v username="${escaped_user}" -v password="${escaped_password}" -v branch="${escaped_branch}" '
+    BEGIN { section = "" }
+    /^\[.*\]$/ {
+      section = $0
+      print
+      next
+    }
+    section == "[login_account]" && $0 ~ /^username[[:space:]]*=/ {
+      print "username = \"" username "\""
+      next
+    }
+    section == "[login_account]" && $0 ~ /^password[[:space:]]*=/ {
+      print "password = \"" password "\""
+      next
+    }
+    section == "[app]" && $0 ~ /^branch[[:space:]]*=/ {
+      print "branch = " branch
+      next
+    }
+    { print }
+  ' "${CONFIG_PATH}" > "${CONFIG_PATH}.tmp"
+  mv "${CONFIG_PATH}.tmp" "${CONFIG_PATH}"
+
+  print_block "${GREEN_BG} profile 初始化完成 ${FONT_RESET}"
+}
+
+require_profile() {
+  assert_profile_root_safe
+
+  if [ -f "${CONFIG_PATH}" ]; then
+    return 0
+  fi
+
+  print_block "${RED_BG} profile configuration not found: ${CONFIG_PATH} ${FONT_RESET}"
+  print_block "${RED_BG} run 'entrypoint.sh init_profile' first or mount an existing profile ${FONT_RESET}"
+  exit 1
 }
 
 start_application() {
@@ -166,14 +158,34 @@ start_application() {
       cd "${APP_ROOT}/captcha"
       php -S "${CAPTCHA_HOST}:${CAPTCHA_PORT}"
     ) &
-    php "${APP_ROOT}/app.php" m:a
-    return
   fi
 
-  php "${APP_ROOT}/app.php"
+  if [ "$#" -gt 0 ]; then
+    exec "$@"
+  fi
+
+  exec php "${APP_ROOT}/app.php"
 }
 
-initialize_branch
-refresh_dependencies
-prepare_profile
-start_application
+main() {
+  initialize_branch
+
+  mode="${1:-run}"
+  case "${mode}" in
+    init_profile)
+      shift || true
+      init_profile
+      ;;
+    run)
+      shift || true
+      require_profile
+      start_application "$@"
+      ;;
+    *)
+      require_profile
+      exec "$@"
+      ;;
+  esac
+}
+
+main "$@"

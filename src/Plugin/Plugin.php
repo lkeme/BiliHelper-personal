@@ -1,20 +1,5 @@
 <?php declare(strict_types=1);
 
-/**
- *  Website: https://mudew.com/
- *  Author: Lkeme
- *  License: The MIT License
- *  Email: Useri@live.cn
- *  Updated: 2018 ~ 2026
- *
- *   _____   _   _       _   _   _   _____   _       _____   _____   _____
- *  |  _  \ | | | |     | | | | | | | ____| | |     |  _  \ | ____| |  _  \ &   ／l、
- *  | |_| | | | | |     | | | |_| | | |__   | |     | |_| | | |__   | |_| |   （ﾟ､ ｡ ７
- *  |  _  { | | | |     | | |  _  | |  __|  | |     |  ___/ |  __|  |  _  /  　 \、ﾞ ~ヽ   *
- *  | |_| | | | | |___  | | | | | | | |___  | |___  | |     | |___  | | \ \   　じしf_, )ノ
- *  |_____/ |_| |_____| |_| |_| |_| |_____| |_____| |_|     |_____| |_|  \_\
- */
-
 namespace Bhp\Plugin;
 
 use Bhp\Config\Config;
@@ -24,42 +9,49 @@ use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Runtime\AppContext;
 use Bhp\Scheduler\TaskResult;
 use Bhp\Util\AsciiTable\AsciiTable;
-use Bhp\Util\AppTerminator;
 use ReflectionClass;
+use RuntimeException;
 use Stringable;
 use Throwable;
 
 class Plugin
 {
     /**
-     * 监听插件的启用/关闭|UUID下标
-     * @var array<string, array<string, array{0:object,1:string}>>
+     * @var array<string, array<string, array{0:object, 1:string}>>
      */
     protected array $_staff = [];
 
     /**
-     * 保存所有插件信息
      * @var array<string, array<string, mixed>>
      */
     protected array $_plugins = [];
 
     /**
-     * 保存插件优先级信息
      * @var int[]
      */
     protected array $_priority = [];
 
     /**
-     * 插件注册表
      * @var array<string, array<string, mixed>>
      */
     protected array $_registry = [];
 
     /**
-     * 插件实例
      * @var array<string, object>
      */
     protected array $_instances = [];
+
+    /**
+     * @var array<string, array<string, mixed>>
+     */
+    private array $pendingManifests = [];
+
+    /**
+     * @var array<string, string>
+     */
+    private array $pluginNamespaceRoots = [];
+
+    private bool $pluginNamespaceAutoloaderRegistered = false;
 
     public function __construct(
         private readonly Config $config,
@@ -129,18 +121,17 @@ class Plugin
     public function trigger(string $hook, mixed ...$params): string
     {
         $pluginFuncResult = '';
-        if (!isset($this->_staff[$hook]) || !is_array($this->_staff[$hook]) || $this->_staff[$hook] === []) {
+        $handlers = $this->_staff[$hook] ?? [];
+        if ($handlers === []) {
             return $pluginFuncResult;
         }
 
-        foreach ($this->_staff[$hook] as $staff) {
-            $class = $staff[0];
-            $method = $staff[1];
-            if (!method_exists($class, $method)) {
-                continue;
-            }
+        if (!$this->canItRun($hook)) {
+            return $pluginFuncResult;
+        }
 
-            if (!$this->canItRun($class)) {
+        foreach ($handlers as [$class, $method]) {
+            if (!method_exists($class, $method)) {
                 continue;
             }
 
@@ -167,32 +158,47 @@ class Plugin
         return TaskResult::keepSchedule();
     }
 
-    public function register(object $class_obj, string $method): void
+    public function register(object $classObject, string $method): void
     {
-        $info = method_exists($class_obj, 'getPluginInfo') ? (array)$class_obj->getPluginInfo() : [];
-        $hook = (string)($info['hook'] ?? $this->shortClassName(get_class($class_obj)));
-        $func_class = $hook . '->' . $method;
-        $this->_staff[$hook][$func_class] = [$class_obj, $method];
-        $this->_instances[$hook] = $class_obj;
+        $className = get_class($classObject);
+        $hook = $this->resolveHookForClass($className);
+        $funcClass = $hook . '->' . $method;
+
+        $this->_staff[$hook][$funcClass] = [$classObject, $method];
+        $this->_instances[$hook] = $classObject;
 
         if (!isset($this->_registry[$hook])) {
             $this->_registry[$hook] = [
                 'hook' => $hook,
-                'name' => (string)($info['name'] ?? $hook),
-                'class_name' => get_class($class_obj),
-                'path' => $this->resolveObjectPath($class_obj),
+                'name' => $hook,
+                'class_name' => $className,
+                'path' => $this->resolveObjectPath($classObject),
+                'source' => '',
+                'vendor' => '',
                 'status' => 'registered',
                 'error' => '',
+                'manifest' => [],
             ];
         }
 
-        if ($info !== []) {
-            $this->addPluginInfo($hook, $info);
+        $manifest = $this->resolveManifestForHook($hook);
+        if ($manifest === []) {
+            throw new RuntimeException("插件 {$hook} 缺少 manifest 元数据");
         }
 
-        if (isset($this->_registry[$hook])) {
-            $this->_registry[$hook]['status'] = 'registered';
+        if (!isset($this->_plugins[$hook])) {
+            $this->addPluginInfo($hook, $manifest);
         }
+
+        $this->_registry[$hook]['name'] = (string)($manifest['name'] ?? $hook);
+        $this->_registry[$hook]['class_name'] = $className;
+        $this->_registry[$hook]['path'] = $this->resolveObjectPath($classObject);
+        $this->_registry[$hook]['source'] = (string)($manifest['source'] ?? ($this->_registry[$hook]['source'] ?? ''));
+        $this->_registry[$hook]['vendor'] = (string)($manifest['vendor'] ?? ($this->_registry[$hook]['vendor'] ?? ''));
+        $this->_registry[$hook]['status'] = 'registered';
+        $this->_registry[$hook]['error'] = '';
+        $this->_registry[$hook]['manifest'] = $manifest;
+        unset($this->pendingManifests[$hook]);
     }
 
     /**
@@ -211,23 +217,23 @@ class Plugin
      */
     protected function validatePlugins(string $hook, array $info): array
     {
-        $fillable = ['hook', 'name', 'version', 'desc', 'priority', 'cycle'];
-        foreach ($fillable as $val) {
-            if (!array_key_exists($val, $info)) {
-                AppTerminator::fail("加载 {$hook} 插件错误，插件信息缺失，请检查修正.");
+        $required = ['hook', 'name', 'version', 'desc', 'priority', 'cycle'];
+        foreach ($required as $key) {
+            if (!array_key_exists($key, $info)) {
+                throw new RuntimeException("加载 {$hook} 插件错误，插件信息缺失字段 {$key}");
             }
         }
 
         if (array_key_exists($hook, $this->_plugins)) {
-            AppTerminator::fail("加载 {$hook} 插件错误，插件名冲突，请检查修正.");
+            throw new RuntimeException("加载 {$hook} 插件错误，插件名冲突");
         }
 
         if (in_array((int)$info['priority'], $this->_priority, true)) {
-            AppTerminator::fail("加载 {$hook} 插件错误，插件优先级冲突，请检查修正.");
+            throw new RuntimeException("加载 {$hook} 插件错误，插件优先级冲突");
         }
 
         if ((int)$info['priority'] < 1000) {
-            AppTerminator::fail("加载 {$hook} 插件错误，插件优先级定义错误，请检查修正.");
+            throw new RuntimeException("加载 {$hook} 插件错误，插件优先级定义错误");
         }
 
         $info['status'] = $info['status'] ?? '√';
@@ -237,67 +243,81 @@ class Plugin
 
     protected function detector(): void
     {
-        $plugins = $this->getActivePlugins();
-        foreach ($plugins as $plugin) {
-            $hook = (string)($plugin['hook'] ?? $plugin['name'] ?? '');
+        $validator = new PluginManifestValidator();
+
+        foreach ($this->getActivePlugins() as $plugin) {
+            $hook = trim((string)($plugin['hook'] ?? $plugin['name'] ?? ''));
             if ($hook === '') {
                 continue;
             }
 
-            $path = (string)($plugin['path'] ?? '');
-
-            if ($path === '' || !is_file($path)) {
-                $this->_registry[$hook] = [
-                    'hook' => $hook,
-                    'name' => $plugin['name'] ?? $hook,
-                    'class_name' => $plugin['class_name'] ?? $hook,
-                    'path' => $path,
-                    'status' => 'missing',
-                    'error' => '插件入口文件不存在',
-                ];
-                continue;
-            }
+            $manifest = is_array($plugin['manifest'] ?? null)
+                ? $validator->normalize($plugin['manifest'])
+                : [];
+            $class = trim((string)($plugin['class_name'] ?? ($manifest['class_name'] ?? '')));
+            $path = trim((string)($plugin['path'] ?? ''));
+            $name = trim((string)($plugin['name'] ?? ($manifest['name'] ?? $hook)));
 
             $this->_registry[$hook] = [
                 'hook' => $hook,
-                'name' => $plugin['name'] ?? $hook,
-                'class_name' => $plugin['class_name'] ?? $hook,
+                'name' => $name !== '' ? $name : $hook,
+                'class_name' => $class,
                 'path' => $path,
+                'source' => (string)($plugin['source'] ?? ''),
+                'vendor' => (string)($plugin['vendor'] ?? ''),
                 'status' => 'pending',
                 'error' => '',
+                'manifest' => $manifest,
             ];
 
+            $manifestError = trim((string)($plugin['manifest_error'] ?? ''));
+            if ($manifestError !== '') {
+                $this->_registry[$hook]['status'] = 'failed';
+                $this->_registry[$hook]['error'] = $manifestError;
+                $this->log->recordWarning("插件 {$hook} 装配失败: {$manifestError}");
+                continue;
+            }
+
+            $validationError = $validator->validateManifest($hook, $manifest)
+                ?? $validator->validatePhpCompatibility($hook, $manifest)
+                ?? $validator->validateRequiredExtensions($hook, $manifest);
+            if ($validationError !== null) {
+                $this->_registry[$hook]['status'] = 'failed';
+                $this->_registry[$hook]['error'] = $validationError;
+                $this->log->recordWarning("插件 {$hook} 装配失败: {$validationError}");
+                continue;
+            }
+
+            if (!$this->shouldLoadPluginForRuntimeMode($manifest)) {
+                $this->_registry[$hook]['status'] = 'skipped';
+                continue;
+            }
+
+            $this->registerPluginNamespaceAutoload($plugin);
+
+            if ($path === '' || !is_file($path)) {
+                $this->_registry[$hook]['status'] = 'missing';
+                $this->_registry[$hook]['error'] = '插件入口文件不存在';
+                continue;
+            }
+
+            if ($class === '' || !class_exists($class)) {
+                $this->_registry[$hook]['status'] = 'failed';
+                $this->_registry[$hook]['error'] = '插件类不存在';
+                continue;
+            }
+
+            $this->pendingManifests[$hook] = $manifest;
+            $this->_registry[$hook]['status'] = 'discovered';
+
             try {
-                $class = (string)($plugin['class_name'] ?? $hook);
-                if ($class === '' || !class_exists($class)) {
-                    $this->_registry[$hook]['status'] = 'failed';
-                    $this->_registry[$hook]['error'] = '插件类不存在';
-                    continue;
-                }
-
-                $validator = new PluginManifestValidator();
-                $manifest = $validator->readManifest($class);
-                $manifestError = $validator->validateManifest($hook, $manifest)
-                    ?? $validator->validatePhpCompatibility($hook, $manifest)
-                    ?? $validator->validateRequiredExtensions($hook, $manifest);
-                if ($manifestError !== null) {
-                    $this->_registry[$hook]['status'] = 'failed';
-                    $this->_registry[$hook]['error'] = $manifestError;
-                    $this->log->recordWarning("插件 {$hook} 装配失败: {$manifestError}");
-                    continue;
-                }
-
-                if (!$this->shouldLoadPluginForRuntimeMode($manifest)) {
-                    $this->_registry[$hook]['status'] = 'skipped';
-                    $this->_registry[$hook]['error'] = '';
-                    continue;
-                }
-
-                $this->_registry[$hook]['status'] = 'discovered';
-                $this->_registry[$hook]['error'] = '';
-
                 new $class($this);
+
+                if (!isset($this->_staff[$hook])) {
+                    throw new RuntimeException("插件 {$hook} 未完成注册");
+                }
             } catch (Throwable $throwable) {
+                unset($this->_staff[$hook], $this->_instances[$hook], $this->_plugins[$hook], $this->pendingManifests[$hook]);
                 $this->_registry[$hook]['status'] = 'failed';
                 $this->_registry[$hook]['error'] = $throwable->getMessage();
                 $this->log->recordWarning("插件 {$hook} 装配失败: {$throwable->getMessage()}");
@@ -309,7 +329,7 @@ class Plugin
     }
 
     /**
-     * @return array<int, array{hook: string, name: string, class_name: string, path: string}>
+     * @return array<int, array<string, mixed>>
      */
     protected function getActivePlugins(): array
     {
@@ -319,12 +339,12 @@ class Plugin
         );
     }
 
-    protected function sortPlugins(string $column_key = 'priority', int $sort_order = SORT_ASC): void
+    protected function sortPlugins(string $columnKey = 'priority', int $sortOrder = SORT_ASC): void
     {
-        uasort($this->_plugins, static function (array $left, array $right) use ($column_key, $sort_order): int {
-            $result = (($left[$column_key] ?? 0) <=> ($right[$column_key] ?? 0));
+        uasort($this->_plugins, static function (array $left, array $right) use ($columnKey, $sortOrder): int {
+            $result = (($left[$columnKey] ?? 0) <=> ($right[$columnKey] ?? 0));
 
-            return $sort_order === SORT_DESC ? -$result : $result;
+            return $sortOrder === SORT_DESC ? -$result : $result;
         });
     }
 
@@ -341,6 +361,7 @@ class Plugin
         if ($visiblePlugins === []) {
             return;
         }
+
         $rows = array_map(function (array $plugin): array {
             return [
                 'name' => (string)($plugin['name'] ?? ''),
@@ -349,23 +370,29 @@ class Plugin
                 'cycle' => (string)($plugin['cycle'] ?? ''),
                 'start' => (string)($plugin['start'] ?? ''),
                 'end' => (string)($plugin['end'] ?? ''),
-                'enable' => $this->resolveEnableMark((string)($plugin['hook'] ?? ''), $plugin),
+                'enable' => $this->resolveEnableMark((string)($plugin['hook'] ?? '')),
             ];
         }, $visiblePlugins);
 
-        $th_list = AsciiTable::array2table($rows, '预加载插件列表');
-        foreach ($th_list as $item) {
+        foreach (AsciiTable::array2table($rows, '预加载插件列表') as $item) {
             echo $item . PHP_EOL;
         }
     }
 
-    protected function canItRun(mixed $class): bool
+    protected function canItRun(string $hook): bool
     {
-        if (!isset($class->info['start']) || !isset($class->info['end'])) {
+        $plugin = $this->_plugins[$hook] ?? null;
+        if (!is_array($plugin)) {
+            return false;
+        }
+
+        $start = trim((string)($plugin['start'] ?? ''));
+        $end = trim((string)($plugin['end'] ?? ''));
+        if ($start === '' || $end === '') {
             return true;
         }
 
-        return $this->isWithinTimeRange((string)$class->info['start'], (string)$class->info['end']);
+        return $this->isWithinTimeRange($start, $end);
     }
 
     protected function shortClassName(string $className): string
@@ -408,6 +435,7 @@ class Plugin
         }
 
         $boundary = strtotime(date('Y-m-d', $referenceTimestamp) . ' ' . $normalized);
+
         return $boundary === false ? null : $boundary;
     }
 
@@ -424,16 +452,14 @@ class Plugin
     {
         try {
             $reflection = new ReflectionClass($object);
+
             return (string)($reflection->getFileName() ?: '');
         } catch (\ReflectionException) {
             return '';
         }
     }
 
-    /**
-     * @param array<string, mixed> $plugin
-     */
-    protected function resolveEnableMark(string $hook, array $plugin): string
+    protected function resolveEnableMark(string $hook): string
     {
         foreach ($this->configKeyCandidates($hook) as $key) {
             $enabled = $this->config->get($key . '.enable', null);
@@ -477,5 +503,72 @@ class Plugin
     protected function runtimeMode(): string
     {
         return $this->runtimeMode;
+    }
+
+    private function resolveHookForClass(string $className): string
+    {
+        foreach ($this->_registry as $hook => $entry) {
+            if (($entry['class_name'] ?? '') === $className) {
+                return $hook;
+            }
+        }
+
+        return $this->shortClassName($className);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function resolveManifestForHook(string $hook): array
+    {
+        if (isset($this->pendingManifests[$hook])) {
+            return $this->pendingManifests[$hook];
+        }
+
+        $manifest = $this->_registry[$hook]['manifest'] ?? [];
+
+        return is_array($manifest) ? $manifest : [];
+    }
+
+    /**
+     * @param array<string, mixed> $plugin
+     */
+    private function registerPluginNamespaceAutoload(array $plugin): void
+    {
+        $prefix = trim((string)($plugin['namespace_prefix'] ?? ''));
+        $root = trim((string)($plugin['autoload_root'] ?? ''));
+        if ($prefix === '' || $root === '') {
+            return;
+        }
+
+        $normalizedPrefix = rtrim($prefix, '\\') . '\\';
+        $normalizedRoot = rtrim(str_replace('\\', '/', $root), '/') . '/';
+        $this->pluginNamespaceRoots[$normalizedPrefix] = $normalizedRoot;
+
+        if ($this->pluginNamespaceAutoloaderRegistered) {
+            return;
+        }
+
+        spl_autoload_register(function (string $class): void {
+            foreach ($this->pluginNamespaceRoots as $prefix => $root) {
+                if (!str_starts_with($class, $prefix)) {
+                    continue;
+                }
+
+                $relative = substr($class, strlen($prefix));
+                if ($relative === false || $relative === '') {
+                    return;
+                }
+
+                $path = $root . str_replace('\\', '/', $relative) . '.php';
+                if (is_file($path)) {
+                    require_once $path;
+                }
+
+                return;
+            }
+        });
+
+        $this->pluginNamespaceAutoloaderRegistered = true;
     }
 }

@@ -19,15 +19,6 @@ class LiveReservationPlugin extends BasePlugin implements PluginTaskInterface
      *
      * @var array<string, int|string>
      */
-    public ?array $info = [
-        'hook' => 'LiveReservation',
-        'name' => 'LiveReservation',
-        'version' => '0.0.1',
-        'desc' => '预约直播有奖',
-        'author' => 'Lkeme',
-        'priority' => 1109,
-        'cycle' => '1-3(小时)',
-    ];
 
     public function __construct(Plugin &$plugin)
     {

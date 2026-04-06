@@ -17,15 +17,6 @@ class LoveClubPlugin extends BasePlugin implements PluginTaskInterface
      *
      * @var array<string, int|string>
      */
-    public ?array $info = [
-        'hook' => 'LoveClub',
-        'name' => 'LoveClub',
-        'version' => '0.0.1',
-        'desc' => '友爱社签到',
-        'author' => 'Lkeme',
-        'priority' => 1102,
-        'cycle' => '24(小时)',
-    ];
 
     public function __construct(Plugin &$plugin)
     {

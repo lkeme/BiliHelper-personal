@@ -16,13 +16,10 @@ use Bhp\Notice\Channel\TelegramNoticeChannel;
 use Bhp\Notice\Channel\WeComAppNoticeChannel;
 use Bhp\Notice\Channel\WeComNoticeChannel;
 use Bhp\Runtime\AppContext;
-use Bhp\Runtime\Runtime;
 use Bhp\Util\Exceptions\RequestException;
 
 final class Notice
 {
-    private static ?self $current = null;
-
     /**
      * @var list<NoticeChannel>
      */
@@ -39,14 +36,8 @@ final class Notice
         ?NoticeMessageFactory $messageFactory = null,
         ?array $channels = null,
     ) {
-        self::$current = $this;
         $this->messageFactory = $messageFactory ?? new NoticeMessageFactory($this->context);
         $this->channels = $channels ?? self::defaultChannels($this->context);
-    }
-
-    public static function push(string $type, string $msg = ''): void
-    {
-        self::service()->publish($type, $msg);
     }
 
     public function publish(string $type, string $msg = ''): void
@@ -127,14 +118,5 @@ final class Notice
             new BarkNoticeChannel($context),
             new PushDeerNoticeChannel($context),
         ];
-    }
-
-    private static function service(): self
-    {
-        if (self::$current instanceof self) {
-            return self::$current;
-        }
-
-        throw new \RuntimeException('Notice has not been bootstrapped.');
     }
 }

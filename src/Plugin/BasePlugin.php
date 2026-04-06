@@ -29,8 +29,6 @@ use LogicException;
 
 abstract class BasePlugin
 {
-    use BasePluginInfo;
-
     protected ?TaskResult $taskResult = null;
     private ?AppContext $context = null;
     private ?Notice $notice = null;
@@ -139,19 +137,19 @@ abstract class BasePlugin
         return $this->appContext()->cache();
     }
 
-    protected function initializeCache(?string $scope = null): void
+    protected function initializeCache(string $scope): void
     {
         $this->cache()->initializeScope($scope);
     }
 
-    protected function cacheGet(string $key, mixed $default = null, ?string $scope = null): mixed
+    protected function cacheGet(string $key, string $scope, mixed $default = null): mixed
     {
         $value = $this->cache()->pull($key, $scope);
 
         return $value === null ? $default : $value;
     }
 
-    protected function cacheSet(string $key, mixed $value, ?string $scope = null): void
+    protected function cacheSet(string $key, mixed $value, string $scope): void
     {
         $this->cache()->put($key, $value, $scope);
     }

@@ -14,6 +14,7 @@ final class ProfileInspectionResult
         public readonly bool $cacheDir,
         public readonly bool $logWritable = false,
         public readonly bool $cacheWritable = false,
+        public readonly bool $cacheDatabase = false,
     ) {
     }
 
@@ -44,6 +45,7 @@ final class ProfileInspectionResult
             'log_writable' => $this->formatBool($this->logWritable),
             'cache_dir' => $this->formatBool($this->cacheDir),
             'cache_writable' => $this->formatBool($this->cacheWritable),
+            'cache_database' => $this->formatBool($this->cacheDatabase),
         ];
     }
 

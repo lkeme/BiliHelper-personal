@@ -9,6 +9,7 @@ class ProfileInspector
         $logWritable = $this->isDirectoryWritable($profile->logPath());
         $cacheWritable = $this->isDirectoryWritable($profile->cachePath());
         $deviceDefault = is_file($this->defaultDevicePath($profile));
+        $cacheDatabase = is_file($profile->cachePath() . 'cache.sqlite3');
 
         return new ProfileInspectionResult(
             $profile->name(),
@@ -20,6 +21,7 @@ class ProfileInspector
             is_dir($profile->cachePath()),
             $logWritable,
             $cacheWritable,
+            $cacheDatabase,
         );
     }
 

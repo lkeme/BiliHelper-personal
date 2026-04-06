@@ -1,8 +1,19 @@
 {
-  "hook": "ActivityInfoUpdate",
-  "name": "ActivityInfoUpdate",
-  "class_name": "Bhp\\Plugin\\Builtin\\ActivityInfoUpdate\\ActivityInfoUpdatePlugin",
-  "entry": "src/ActivityInfoUpdatePlugin.php",
-  "vendor": "official",
-  "source": "bundled"
+    "hook": "ActivityInfoUpdate",
+    "name": "ActivityInfoUpdate",
+    "version": "0.0.1",
+    "desc": "更新活动索引",
+    "author": "Lkeme",
+    "priority": 1900,
+    "cycle": "manual",
+    "mode": "script",
+    "php_min": "8.5.0",
+    "php_max": null,
+    "required_extensions": [],
+    "provides_capabilities": [],
+    "requires_capabilities": [],
+    "class_name": "Bhp\\Plugin\\Builtin\\ActivityInfoUpdate\\ActivityInfoUpdatePlugin",
+    "entry": "src/ActivityInfoUpdatePlugin.php",
+    "vendor": "official",
+    "source": "bundled"
 }

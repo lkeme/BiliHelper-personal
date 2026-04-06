@@ -5,9 +5,11 @@ namespace Bhp\Cache;
 final class SqliteCacheStore implements CacheStoreInterface
 {
     private ?\SQLite3 $connection = null;
+    private readonly SqliteSchemaManager $schemaManager;
 
     public function __construct(private readonly string $databasePath)
     {
+        $this->schemaManager = new SqliteSchemaManager();
     }
 
     public function databasePath(): string
@@ -119,30 +121,14 @@ final class SqliteCacheStore implements CacheStoreInterface
         $connection->enableExceptions(true);
         $connection->exec('PRAGMA journal_mode = WAL');
         $connection->exec('PRAGMA synchronous = NORMAL');
-        $connection->exec(
-            'CREATE TABLE IF NOT EXISTS cache_entries (
-                scope TEXT NOT NULL,
-                cache_key TEXT NOT NULL,
-                value TEXT NOT NULL,
-                updated_at INTEGER NOT NULL,
-                PRIMARY KEY (scope, cache_key)
-            )'
-        );
+        $this->schemaManager->ensureCacheSchema($connection);
 
         return $this->connection = $connection;
     }
 
     private function purgeEntries(\SQLite3 $connection): void
     {
-        $connection->exec(
-            'CREATE TABLE IF NOT EXISTS cache_entries (
-                scope TEXT NOT NULL,
-                cache_key TEXT NOT NULL,
-                value TEXT NOT NULL,
-                updated_at INTEGER NOT NULL,
-                PRIMARY KEY (scope, cache_key)
-            )'
-        );
+        $this->schemaManager->ensureCacheSchema($connection);
         $connection->exec('BEGIN IMMEDIATE TRANSACTION');
 
         try {

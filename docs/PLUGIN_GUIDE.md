@@ -47,6 +47,7 @@
 
 - 入口类只负责 `enabled()` 判断和 runtime 装配
 - runtime 负责窗口判断、建流、落库、调度和单步推进
+- 生命周期日志由独立的 `ActivityLotteryLifecycleLogger` 负责
 - 公共观看能力放在 `src/Automation/Watch/*`，避免插件内部重复造轮子
 
 ## 插件 manifest
@@ -56,60 +57,69 @@
 - `plugin.json`
 - `src/`
 
-发现阶段先读取 `plugin.json`，运行态元数据仍可在类属性 `info` 中声明，并可通过 `discoverManifest()` 返回。
+发现阶段和运行态都只认 `plugin.json`。类属性 `info`、`getPluginInfo()`、`discoverManifest()` 都不再作为元数据来源。
 
-装配阶段现在会先把数组 manifest 收敛为 `PluginManifest` DTO，再做校验和默认值补齐。插件侧暂时仍然声明数组，这是当前迁移中的兼容边界。
+装配阶段会先把 `plugin.json` 收敛为 `PluginManifest` DTO，再做校验和默认值补齐。
 
 最少字段：
 
-```php
-public ?array $info = [
-    'hook' => __CLASS__,
-    'name' => 'DemoPlugin',
-    'version' => '0.0.1',
-    'desc' => '示例插件',
-    'author' => 'YourName',
-    'priority' => 1200,
-    'cycle' => '5(分钟)',
-];
+```json
+{
+  "hook": "DemoPlugin",
+  "name": "DemoPlugin",
+  "version": "0.0.1",
+  "desc": "示例插件",
+  "author": "YourName",
+  "priority": 1200,
+  "cycle": "5(分钟)",
+  "class_name": "Bhp\\Plugin\\Builtin\\Demo\\DemoPlugin",
+  "entry": "src/DemoPlugin.php",
+  "vendor": "official",
+  "source": "bundled"
+}
 ```
 
 推荐补全字段：
 
-```php
-public ?array $info = [
-    'hook' => __CLASS__,
-    'name' => 'DemoPlugin',
-    'version' => '0.0.1',
-    'desc' => '示例插件',
-    'author' => 'YourName',
-    'priority' => 1200,
-    'cycle' => '5(分钟)',
-    'interval_seconds' => 300,
-    'max_concurrency' => 1,
-    'overrun_policy' => 'skip',
-    'timeout_seconds' => 30.0,
-    'bootstrap_first' => false,
-    'governance_hosts' => [],
-    'governance_window_seconds' => 0,
-    'governance_max_requests_per_host' => 0,
-    'governance_cooldown_seconds' => 0,
-    'governance_group' => '',
-    'governance_group_max_concurrency' => 0,
-    'governance_profile' => '',
-    'governance_group_backoff_seconds' => 0.0,
-    'governance_cooldown_multiplier' => 0.0,
-    'php_min' => '8.2.0',
-    'php_max' => null,
-    'required_extensions' => [],
-    'provides_capabilities' => [],
-    'requires_capabilities' => [],
-];
+```json
+{
+  "hook": "DemoPlugin",
+  "name": "DemoPlugin",
+  "version": "0.0.1",
+  "desc": "示例插件",
+  "author": "YourName",
+  "priority": 1200,
+  "cycle": "5(分钟)",
+  "mode": "app",
+  "interval_seconds": 300,
+  "max_concurrency": 1,
+  "overrun_policy": "skip",
+  "timeout_seconds": 30.0,
+  "bootstrap_first": false,
+  "governance_hosts": [],
+  "governance_window_seconds": 0,
+  "governance_max_requests_per_host": 0,
+  "governance_cooldown_seconds": 0,
+  "governance_group": "",
+  "governance_group_max_concurrency": 0,
+  "governance_profile": "",
+  "governance_group_backoff_seconds": 0.0,
+  "governance_cooldown_multiplier": 0.0,
+  "php_min": "8.5.0",
+  "php_max": null,
+  "required_extensions": [],
+  "provides_capabilities": [],
+  "requires_capabilities": [],
+  "class_name": "Bhp\\Plugin\\Builtin\\Demo\\DemoPlugin",
+  "entry": "src/DemoPlugin.php",
+  "vendor": "official",
+  "source": "bundled"
+}
 ```
 
 当前默认值由 `PluginManifest` 自动补齐：
 
-- `php_min = 8.2.0`
+- `php_min = 8.5.0`
 - `php_max = null`
 - `required_extensions = []`
 - `provides_capabilities = []`
@@ -117,10 +127,10 @@ public ?array $info = [
 
 治理元数据说明：
 
-- `governance_group` / `governance_group_max_concurrency`: 对同一治理组做并发预算控制
-- `governance_profile`: 使用内建治理画像，当前支持 `auth`、`interactive`
-- `governance_group_backoff_seconds`: 显式覆盖治理组预算耗尽后的回退秒数
-- `governance_cooldown_multiplier`: 显式放大 host 冷却窗口回退时间
+- `governance_group` / `governance_group_max_concurrency`：对同一治理组做并发预算控制
+- `governance_profile`：使用内建治理画像，当前支持 `auth`、`interactive`
+- `governance_group_backoff_seconds`：显式覆盖治理组预算耗尽后的回退秒数
+- `governance_cooldown_multiplier`：显式放大 host 冷却窗口回退时间
 
 ## 插件注册
 
@@ -231,8 +241,8 @@ Cache::set('records', $records);
 插件内仍应尽量写清业务语义：
 
 ```php
-Log::info('示例插件: 开始执行');
-Log::warning('示例插件: 请求失败');
+$this->info('示例插件: 开始执行');
+$this->warning('示例插件: 请求失败');
 ```
 
 不要输出：
@@ -243,10 +253,10 @@ Log::warning('示例插件: 请求失败');
 
 ## 通知规范
 
-业务层只调用：
+业务层只通过插件基类或注入后的 `Notice` 服务发通知：
 
 ```php
-Notice::push('update', '发现新版本');
+$this->notify('update', '发现新版本');
 ```
 
 不要在插件里拼接具体渠道 URL，也不要直接调用通知渠道实现。

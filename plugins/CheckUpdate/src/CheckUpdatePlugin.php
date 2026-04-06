@@ -16,16 +16,6 @@ class CheckUpdatePlugin extends BasePlugin implements PluginTaskInterface
      * 插件信息
      * @var array<string, int|string|bool>
      */
-    public ?array $info = [
-        'hook' => 'CheckUpdate',
-        'name' => 'CheckUpdate',
-        'version' => '0.0.1',
-        'desc' => '检查版本更新',
-        'author' => 'Lkeme',
-        'priority' => 1001,
-        'cycle' => '24(小时)',
-        'requires_auth' => false,
-    ];
 
     public function __construct(Plugin $plugin)
     {

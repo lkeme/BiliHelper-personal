@@ -73,6 +73,12 @@ final class ConfigTemplateSynchronizer
         $lines = $this->splitLines($body, $newline);
         foreach ($lines as $index => $line) {
             $trimmed = trim($line);
+            $legacySection = $this->extractTrailingSectionHeader($trimmed);
+            if ($legacySection !== null) {
+                $section = $legacySection;
+                continue;
+            }
+
             if ($trimmed === '' || str_starts_with($trimmed, ';') || str_starts_with($trimmed, '#')) {
                 continue;
             }

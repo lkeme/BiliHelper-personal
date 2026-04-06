@@ -40,17 +40,6 @@ use Bhp\Scheduler\TaskResult;
 
 final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterface
 {
-    public ?array $info = [
-        'hook' => 'ActivityLottery',
-        'name' => 'ActivityLottery',
-        'version' => '0.0.2',
-        'desc' => '转盘活动',
-        'author' => 'Lkeme',
-        'priority' => 1117,
-        'cycle' => '1-5(分钟)',
-        'start' => '06:00:00',
-        'end' => '23:00:00',
-    ];
 
     private ?ActivityLotteryRuntime $runtimeInstance = null;
 

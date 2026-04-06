@@ -19,15 +19,6 @@ class GameForecastPlugin extends BasePlugin implements PluginTaskInterface
      *
      * @var array<string, int|string>
      */
-    public ?array $info = [
-        'hook' => 'GameForecast',
-        'name' => 'GameForecast',
-        'version' => '0.0.1',
-        'desc' => '赛事预测(破产机)',
-        'author' => 'Lkeme',
-        'priority' => 1104,
-        'cycle' => '24(小时)',
-    ];
 
     public function __construct(Plugin &$plugin)
     {

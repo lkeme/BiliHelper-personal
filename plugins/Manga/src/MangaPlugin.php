@@ -17,15 +17,6 @@ class MangaPlugin extends BasePlugin implements PluginTaskInterface
      *
      * @var array<string, int|string>
      */
-    public ?array $info = [
-        'hook' => 'Manga',
-        'name' => 'Manga',
-        'version' => '0.0.1',
-        'desc' => '漫画签到/分享',
-        'author' => 'Lkeme',
-        'priority' => 1101,
-        'cycle' => '24(小时)',
-    ];
 
     public function __construct(Plugin &$plugin)
     {

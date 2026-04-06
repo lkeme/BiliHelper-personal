@@ -25,15 +25,6 @@ class PolishMedalPlugin extends BasePlugin implements PluginTaskInterface
      *
      * @var array<string, int|string>
      */
-    public ?array $info = [
-        'hook' => 'PolishMedal',
-        'name' => 'PolishMedal',
-        'version' => '0.0.1',
-        'desc' => '点亮徽章',
-        'author' => 'possible318/Lkeme',
-        'priority' => 1115,
-        'cycle' => '1(小时)',
-    ];
 
     /**
      * @var array<int, array{uid: mixed, roomid: mixed, medal_id: mixed, medal_name: string, anchor_name: string}>
@@ -124,7 +115,7 @@ class PolishMedalPlugin extends BasePlugin implements PluginTaskInterface
 
     private function fetchGreyMedalList(bool $all = false): void
     {
-        $this->black_list = ($tmp = $this->cacheGet('black_list', [], self::CACHE_SCOPE)) ? $tmp : [];
+        $this->black_list = ($tmp = $this->cacheGet('black_list', self::CACHE_SCOPE, [])) ? $tmp : [];
         $data = $this->fetchMedalList();
         $invalidMedals = $this->loadInvalidMedals();
         $greyFansMedals = [];
@@ -236,7 +227,7 @@ class PolishMedalPlugin extends BasePlugin implements PluginTaskInterface
      */
     private function loadInvalidMedals(): array
     {
-        $invalid = $this->cacheGet(self::INVALID_MEDALS_CACHE_KEY, [], self::CACHE_SCOPE);
+        $invalid = $this->cacheGet(self::INVALID_MEDALS_CACHE_KEY, self::CACHE_SCOPE, []);
         return is_array($invalid) ? $invalid : [];
     }
 

@@ -4,9 +4,8 @@ on:
   workflow_dispatch:
     inputs:
       docker_image_tag:
-        description: "docker镜像tag(多个tag用英文逗号分隔，如 latest,master,2.0.0)"
-        required: false
-        default: ""
+        description: "docker镜像tag，只构建并推送这一项"
+        required: true
 
 jobs:
   build:
@@ -30,39 +29,6 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Prepare tags
-        id: prep
-        shell: bash
-        run: |
-          ref_name="${GITHUB_REF_NAME}"
-          sanitized_ref="${ref_name//\//-}"
-          tags=()
-
-          if [[ "${ref_name}" == "master" ]]; then
-            tags+=("lkeme/bilihelper-personal:latest")
-            tags+=("lkeme/bilihelper-personal:master")
-          else
-            tags+=("lkeme/bilihelper-personal:${sanitized_ref}")
-          fi
-
-          tags+=("lkeme/bilihelper-personal:${sanitized_ref}-${GITHUB_SHA::7}")
-
-          if [[ -n "${{ github.event.inputs.docker_image_tag }}" ]]; then
-            IFS=',' read -ra custom_tags <<< "${{ github.event.inputs.docker_image_tag }}"
-            for tag in "${custom_tags[@]}"; do
-              cleaned="$(echo "${tag}" | xargs)"
-              if [[ -n "${cleaned}" ]]; then
-                tags+=("lkeme/bilihelper-personal:${cleaned}")
-              fi
-            done
-          fi
-
-          {
-            echo "tags<<EOF"
-            printf '%s\n' "${tags[@]}" | awk '!seen[$0]++'
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
-
       - name: Build and push image
         uses: docker/build-push-action@v6
         with:
@@ -70,6 +36,6 @@ jobs:
           file: docker/Dockerfile
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           push: true
-          tags: ${{ steps.prep.outputs.tags }}
+          tags: lkeme/bilihelper-personal:${{ github.event.inputs.docker_image_tag }}
           build-args: |
             DEFAULT_BRANCH=${{ github.ref_name }}

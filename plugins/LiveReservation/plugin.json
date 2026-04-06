@@ -1,8 +1,19 @@
 {
-  "hook": "LiveReservation",
-  "name": "LiveReservation",
-  "class_name": "Bhp\\Plugin\\Builtin\\LiveReservation\\LiveReservationPlugin",
-  "entry": "src/LiveReservationPlugin.php",
-  "vendor": "official",
-  "source": "bundled"
+    "hook": "LiveReservation",
+    "name": "LiveReservation",
+    "version": "0.0.1",
+    "desc": "预约直播有奖",
+    "author": "Lkeme",
+    "priority": 1109,
+    "cycle": "1-3(小时)",
+    "mode": "app",
+    "php_min": "8.5.0",
+    "php_max": null,
+    "required_extensions": [],
+    "provides_capabilities": [],
+    "requires_capabilities": [],
+    "class_name": "Bhp\\Plugin\\Builtin\\LiveReservation\\LiveReservationPlugin",
+    "entry": "src/LiveReservationPlugin.php",
+    "vendor": "official",
+    "source": "bundled"
 }

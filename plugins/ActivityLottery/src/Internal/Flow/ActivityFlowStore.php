@@ -2,6 +2,7 @@
 
 namespace Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow;
 
+use Bhp\Cache\SqliteSchemaManager;
 use RuntimeException;
 use SQLite3;
 use SQLite3Result;
@@ -12,6 +13,7 @@ final class ActivityFlowStore
     private const TABLE_NAME = 'activity_flow_entries';
 
     private ?SQLite3 $connection = null;
+    private readonly SqliteSchemaManager $schemaManager;
 
     public function __construct(
         private readonly string $databasePath,
@@ -23,6 +25,7 @@ final class ActivityFlowStore
         if (trim($this->scope) === '') {
             throw new RuntimeException('ActivityFlowStore scope 不能为空');
         }
+        $this->schemaManager = new SqliteSchemaManager();
     }
 
     /**
@@ -203,16 +206,7 @@ final class ActivityFlowStore
         $connection->enableExceptions(true);
         $connection->exec('PRAGMA journal_mode = WAL');
         $connection->exec('PRAGMA synchronous = NORMAL');
-        $connection->exec(
-            'CREATE TABLE IF NOT EXISTS ' . self::TABLE_NAME . ' (
-                scope TEXT NOT NULL,
-                biz_date TEXT NOT NULL,
-                flow_id TEXT NOT NULL,
-                payload_json TEXT NOT NULL,
-                updated_at INTEGER NOT NULL,
-                PRIMARY KEY (scope, biz_date, flow_id)
-            )'
-        );
+        $this->schemaManager->ensureActivityFlowSchema($connection, self::TABLE_NAME);
 
         return $this->connection = $connection;
     }

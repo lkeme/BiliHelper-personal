@@ -17,16 +17,6 @@ class BatchUnfollowPlugin extends BasePlugin
      *
      * @var array<string, int|string>
      */
-    public ?array $info = [
-        'hook' => 'BatchUnfollow',
-        'name' => 'BatchUnfollow',
-        'version' => '0.0.1',
-        'desc' => '批量取消关注',
-        'author' => 'Lkeme',
-        'priority' => 1116,
-        'cycle' => 'manual',
-        'mode' => 'script',
-    ];
 
     /**
      * @var array<int, array{mid: mixed, uname: mixed}>

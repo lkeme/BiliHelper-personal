@@ -37,6 +37,7 @@ use Bhp\Profile\ProfileCacheResetService;
 use Bhp\Profile\ProfileContext;
 use Bhp\Profile\ProfileInspector;
 use Bhp\Request\Request;
+use Bhp\Request\RequestRetryPolicy;
 use Bhp\Runtime\AppContext;
 use Bhp\Runtime\Runtime;
 use Bhp\Runtime\RuntimeContext;
@@ -89,8 +90,9 @@ final class AppKernel
         $container->set(ProfileInspector::class, static fn (ServiceContainer $services): ProfileInspector => new ProfileInspector());
         $container->set(HttpRequestTrafficMonitor::class, static fn (ServiceContainer $services): HttpRequestTrafficMonitor => new HttpRequestTrafficMonitor());
         $container->set(AppContext::class, static fn (ServiceContainer $services): AppContext => new RuntimeContext($profileContext, $services));
-        $container->set(Runtime::class, static fn (ServiceContainer $services): Runtime => Runtime::activate(
-            new Runtime($services, $services->get(AppContext::class))
+        $container->set(Runtime::class, static fn (ServiceContainer $services): Runtime => new Runtime(
+            $services,
+            $services->get(AppContext::class)
         ));
         $container->set(HttpClientInterceptorRegistry::class, static fn (ServiceContainer $services): HttpClientInterceptorRegistry => new HttpClientInterceptorRegistry([
             new HttpRequestMetadataInterceptorProvider(),
@@ -117,6 +119,7 @@ final class AppKernel
             $services->get(HttpClient::class),
             $services->get(AppContext::class),
             $services->get(Cache::class),
+            new RequestRetryPolicy(),
         ));
         $container->set(\Bhp\Api\Vip\ApiUser::class, static fn (ServiceContainer $services): \Bhp\Api\Vip\ApiUser => new \Bhp\Api\Vip\ApiUser(
             $services->get(Request::class),
@@ -137,6 +140,9 @@ final class AppKernel
         $container->set(StartupSelfCheck::class, static fn (ServiceContainer $services): StartupSelfCheck => new StartupSelfCheck(
             $services->get(AppContext::class),
             $services->get(ProfileInspector::class),
+            $services->get(Plugin::class),
+            $services->get(LoginGateStateService::class),
+            $services->get(HttpRequestTrafficMonitor::class),
         ));
         $container->set(Notice::class, static fn (ServiceContainer $services): Notice => new Notice(
             $services->get(AppContext::class),

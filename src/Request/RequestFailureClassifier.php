@@ -10,9 +10,19 @@ use Amp\TimeoutException as AmpTimeoutException;
 use Bhp\Util\Exceptions\RequestException;
 use Bhp\Util\Exceptions\ResponseEmptyException;
 use Exception;
+use Throwable;
 
 final class RequestFailureClassifier
 {
+    public function classifyThrowable(Throwable $throwable): string
+    {
+        if ($throwable instanceof Exception) {
+            return $this->classify($throwable);
+        }
+
+        return $this->classifyMessage($throwable->getMessage());
+    }
+
     public function classify(Exception $exception): string
     {
         return match (true) {

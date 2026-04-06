@@ -31,15 +31,6 @@ class MainSitePlugin extends BasePlugin implements PluginTaskInterface
     /**
      * @var array<string, int|string>
      */
-    public ?array $info = [
-        'hook' => 'MainSite',
-        'name' => 'MainSite',
-        'version' => '0.0.1',
-        'desc' => '主站任务(观看|分享|投币)',
-        'author' => 'Lkeme',
-        'priority' => 1100,
-        'cycle' => '24(小时)',
-    ];
 
     public function __construct(Plugin &$plugin)
     {

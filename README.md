@@ -30,7 +30,7 @@
 <p align=center>
 
 <img src="https://img.shields.io/badge/Version-2.5.1.250904-orange.svg?longCache=true&style=for-the-badge" alt="">
-<img src="https://img.shields.io/badge/PHP-8.4+-green.svg?longCache=true&style=for-the-badge" alt="">
+<img src="https://img.shields.io/badge/PHP-8.5+-green.svg?longCache=true&style=for-the-badge" alt="">
 <img src="https://img.shields.io/badge/Composer-latest-blueviolet.svg?longCache=true&style=for-the-badge" alt="">
 <img src="https://img.shields.io/badge/License-mit-blue.svg?longCache=true&style=for-the-badge" alt="">
 
@@ -75,7 +75,9 @@
 
 ## Docker 提示
 
-- 生产环境 Docker 运行时默认保持镜像不可变，更新镜像请使用 `docker compose pull && docker compose up -d`
+- 生产环境 Docker 运行时默认保持镜像不可变，容器启动时不会再执行依赖刷新。
+- 首次生成 profile 请显式执行 `entrypoint.sh init_profile`，或直接挂载已经准备好的 profile。
+- 更新镜像请使用 `docker compose pull && docker compose up -d`
 
 
 ## 🎁 打赏支持

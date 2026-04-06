@@ -2,6 +2,8 @@
 
 namespace Bhp\Profile;
 
+use InvalidArgumentException;
+
 final class ProfileContext
 {
     public function __construct(
@@ -17,11 +19,15 @@ final class ProfileContext
     public static function fromAppRoot(string $appRoot, string $name): self
     {
         $normalizedAppRoot = self::normalizeRoot($appRoot);
-        $profileRoot = self::normalizePath($normalizedAppRoot . 'profile/' . $name);
+        $normalizedName = self::normalizeName($name);
+        $profileBase = self::normalizePath($normalizedAppRoot . 'profile');
+        $profileRoot = self::normalizePath($profileBase . $normalizedName);
+
+        self::assertPathWithinBase($profileRoot, $profileBase, $normalizedName);
 
         return new self(
             $normalizedAppRoot,
-            $name,
+            $normalizedName,
             $profileRoot,
             self::normalizePath($profileRoot . 'config'),
             self::normalizePath($profileRoot . 'log'),
@@ -62,6 +68,30 @@ final class ProfileContext
     public function resourcesPath(): string
     {
         return self::normalizePath($this->appRoot . 'resources');
+    }
+
+    private static function normalizeName(string $name): string
+    {
+        $normalized = trim($name);
+        if ($normalized === '') {
+            throw new InvalidArgumentException('Profile name cannot be empty.');
+        }
+
+        if (preg_match('/^[A-Za-z0-9](?:[A-Za-z0-9_-]{0,63})$/', $normalized) !== 1) {
+            throw new InvalidArgumentException(sprintf('Unsafe profile name "%s".', $name));
+        }
+
+        return $normalized;
+    }
+
+    private static function assertPathWithinBase(string $path, string $basePath, string $profileName): void
+    {
+        if (!str_starts_with($path, $basePath)) {
+            throw new InvalidArgumentException(sprintf(
+                'Profile "%s" resolves outside the profile root.',
+                $profileName,
+            ));
+        }
     }
 
     private static function normalizeRoot(string $path): string

@@ -45,15 +45,6 @@ class VipPointPlugin extends BasePlugin implements PluginTaskInterface
     /**
      * @var array<string, int|string>
      */
-    public ?array $info = [
-        'hook' => 'VipPoint',
-        'name' => 'VipPoint',
-        'version' => '0.0.1',
-        'desc' => '大会员积分',
-        'author' => 'Lkeme',
-        'priority' => 1112,
-        'cycle' => '5(分钟)',
-    ];
 
     protected string $home_task = 'https://big.bilibili.com/mobile/bigPoint/task';
 

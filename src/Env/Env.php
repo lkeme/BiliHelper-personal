@@ -98,8 +98,8 @@ class Env extends BaseResource
         if (PHP_SAPI != 'cli') {
             AppTerminator::fail('Please run this script from command line .');
         }
-        if (version_compare(PHP_VERSION, '8.4.0', '<')) {
-            AppTerminator::fail('Please upgrade PHP version >= 8.4.0 .');
+        if (version_compare(PHP_VERSION, '8.5.0', '<')) {
+            AppTerminator::fail('Please upgrade PHP version >= 8.5.0 .');
         }
         return $this;
     }

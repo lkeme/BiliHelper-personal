@@ -10,10 +10,10 @@ namespace Bhp\Login;
  *  Updated: 2018 ~ 2026
  *
  *   _____   _   _       _   _   _   _____   _       _____   _____   _____
- *  |  _  \ | | | |     | | | | | | | ____| | |     |  _  \ | ____| |  _  \ &   ／l、
- *  | |_| | | | | |     | | | |_| | | |__   | |     | |_| | | |__   | |_| |   （ﾟ､ ｡ ７
- *  |  _  { | | | |     | | |  _  | |  __|  | |     |  ___/ |  __|  |  _  /  　 \、ﾞ ~ヽ   *
- *  | |_| | | | | |___  | | | | | | | |___  | |___  | |     | |___  | | \ \   　じしf_, )ノ
+ *  |  _  \ | | | |     | | | | | | | ____| | |     |  _  \ | ____| |  _  \ &   锛弆銆?
+ *  | |_| | | | | |     | | | |_| | | |__   | |     | |_| | | |__   | |_| |   锛堬緹锝?锝?锛?
+ *  |  _  { | | | |     | | |  _  | |  __|  | |     |  ___/ |  __|  |  _  /  銆€ \銆侊緸 ~銉?  *
+ *  | |_| | | | | |___  | | | | | | | |___  | |___  | |     | |___  | | \ \   銆€銇樸仐f_, )銉?
  *  |_____/ |_| |_____| |_| |_| |_| |_____| |_____| |_|     |_____| |_|  \_\
  */
 
@@ -36,23 +36,9 @@ use Bhp\Util\Qrcode\Qrcode;
 class Login extends BasePlugin implements PluginTaskInterface
 {
     /**
-     * 插件信息
+     * 鎻掍欢淇℃伅
      * @var array<string, mixed>|null
      */
-    public ?array $info = [
-        'hook' => 'Login', // hook
-        'name' => 'Login', // 插件名称
-        'version' => '0.0.1', // 插件版本
-        'desc' => '登录', // 插件描述
-        'author' => 'Lkeme', // 作者
-        'priority' => 1000, // 插件优先级
-        'cycle' => '2(小时)', // 运行周期
-        'interval_seconds' => 7200,
-        'max_concurrency' => 1,
-        'overrun_policy' => 'serialize',
-        'timeout_seconds' => 180.0,
-        'bootstrap_first' => true,
-    ];
 
     /**
      * @var string|null
@@ -124,7 +110,7 @@ class Login extends BasePlugin implements PluginTaskInterface
                     return $this->resolveTaskResult(\Bhp\Scheduler\TaskResult::after(2.0));
                 }
 
-                $this->assertLoginReady('未获取到有效登录状态');
+                $this->assertLoginReady('No valid login state available');
                 return $this->resolveTaskResult(\Bhp\Scheduler\TaskResult::after(7200));
             }
 
@@ -176,12 +162,12 @@ class Login extends BasePlugin implements PluginTaskInterface
     }
 
     /**
-     * 初始化登录
+     * 鍒濆鍖栫櫥褰?
      */
     protected function initLogin(): void
     {
         if (!$this->hasConfiguredLoginFallback()) {
-            throw new NoLoginException('未配置可用登录方式');
+            throw new NoLoginException('No login method is configured');
         }
 
         $this->info('启动登录程序');
@@ -192,7 +178,7 @@ class Login extends BasePlugin implements PluginTaskInterface
         }
 
         if (!$this->hasLoginTokens()) {
-            throw new NoLoginException('未获取到有效登录状态');
+            throw new NoLoginException('No valid login state available');
         }
 
         $this->keepLogin();
@@ -218,6 +204,7 @@ class Login extends BasePlugin implements PluginTaskInterface
     }
 
     /**
+     * 淇濇寔璁よ瘉
      * 保持认证
      */
     protected function keepLogin(): void
@@ -228,16 +215,16 @@ class Login extends BasePlugin implements PluginTaskInterface
             $this->tokenLifecycleService(),
             function (): void {
                 if (!$this->hasConfiguredLoginFallback()) {
-                    throw new NoLoginException('登录令牌已失效，且未配置可回退登录方式');
+                    throw new NoLoginException('鐧诲綍浠ょ墝宸插け鏁堬紝涓旀湭閰嶇疆鍙洖閫€鐧诲綍鏂瑰紡');
                 }
 
                 $this->login();
                 if ($this->hasPendingLoginFlow()) {
-                    throw new LoginException('登录流程待完成', 2);
+                    throw new LoginException('Login flow is still pending', 2);
                 }
 
                 if (!$this->hasLoginTokens()) {
-                    throw new NoLoginException('未获取到有效登录状态');
+                    throw new NoLoginException('No valid login state available');
                 }
             },
             function (): void {
@@ -299,28 +286,14 @@ class Login extends BasePlugin implements PluginTaskInterface
                 $challenge,
                 $recaptchaToken,
                 function (string $phone, string $cid, string $targetUrl): void {
-                    $this->warning("此次请求需要行为验证码");
+                    $this->warning("姝ゆ璇锋眰闇€瑕佽涓洪獙璇佺爜");
                     $this->beginSmsCaptchaLogin($phone, $cid, $targetUrl);
                 },
             ),
             fn (string $message): string => $this->cliInput($message),
             function (array $payload, string $code): void {
                 $response = $this->authenticationService()->submitSmsLogin($payload, $code);
-                $this->authenticationService()->completeLogin('短信模式', $response, function (LoginDecision $decision, array $rawResponse): void {
-                    $this->decisionApplierService()->apply(
-                        $decision,
-                        $rawResponse,
-                        function (array $successResponse, string $message): void {
-                            $this->info($message);
-                            $this->updateLoginInfo($successResponse);
-                            $this->info('生成信息配置完毕');
-                        },
-                        function (string $captchaUrl, string $message): void {
-                            $this->warning($message);
-                            $this->beginCaptchaLogin($captchaUrl);
-                        },
-                    );
-                });
+                $this->completeLoginResponse('短信模式', $response);
             },
             function (string $authCode): bool {
                 $result = $this->qrCoordinator()->pollAuthCode($authCode, function (array $response): void {
@@ -348,10 +321,7 @@ class Login extends BasePlugin implements PluginTaskInterface
             time() + 120,
         );
         $this->syncRuntimeState();
-        $this->info('请在浏览器中打开以下链接，完成验证码识别');
-        $this->info($result['display_url']);
-        $this->info('请在2分钟内完成识别操作');
-        $this->scheduleAfter($result['delay_seconds']);
+        $this->announcePendingCaptcha((string)$result['display_url'], (float)$result['delay_seconds']);
     }
 
     protected function beginSmsCaptchaLogin(string $phone, string $cid, string $targetUrl): void
@@ -366,10 +336,7 @@ class Login extends BasePlugin implements PluginTaskInterface
             time() + 120,
         );
         $this->syncRuntimeState();
-        $this->info('请在浏览器中打开以下链接，完成验证码识别');
-        $this->info($result['display_url']);
-        $this->info('请在2分钟内完成识别操作');
-        $this->scheduleAfter($result['delay_seconds']);
+        $this->announcePendingCaptcha((string)$result['display_url'], (float)$result['delay_seconds']);
     }
 
     protected function beginQrcodeLoginPolling(QrAuthCode $qrData): void
@@ -377,15 +344,15 @@ class Login extends BasePlugin implements PluginTaskInterface
         $this->invalidateSessionAuth();
         $result = $this->pendingFlowLifecycleService()->beginQrcodePolling($this->state(), $qrData, time() + 180);
         $this->syncRuntimeState();
-        $this->info("1.终端直接显示(输入:1)");
-        $this->info("2.浏览器链接访问(输入:2)");
-        $option = $this->cliInput("请输入二维码显示方式: ");
+        $this->info('1. Display in terminal (input: 1)');
+        $this->info('2. Open in browser (input: 2)');
+        $option = $this->cliInput('Choose QR display mode: ');
         $display = $this->qrCoordinator()->resolveDisplay($option, $result['qr_url']);
         if ($display['mode'] === 'terminal') {
-            $this->cliInput("请尝试放大窗口，以确保二维码完整显示，回车继续");
+            $this->cliInput('Try enlarging the terminal window so the QR code is fully visible, then press Enter');
             Qrcode::show($display['url']);
         } else {
-            $this->info("请使用浏览器访问下面的链接，以确保二维码完整显示");
+            $this->info('Open the link below in a browser to ensure the QR code is fully visible');
             $this->info($display['url']);
         }
         $this->scheduleAfter($result['delay_seconds']);
@@ -398,7 +365,7 @@ class Login extends BasePlugin implements PluginTaskInterface
     {
         $response = $this->pendingFlowLifecycleService()->fetchCaptchaResult($this->state(), $challenge);
         if ($response !== null) {
-            $this->notice('验证码识别成功');
+            $this->notice('Captcha recognized successfully');
             return $response;
         }
 
@@ -640,6 +607,38 @@ class Login extends BasePlugin implements PluginTaskInterface
      * @param string $challenge
      * @param string $mode
      */
+    protected function completeLoginResponse(string $mode, array $response): void
+    {
+        $this->authenticationService()->completeLogin($mode, $response, function (LoginDecision $decision, array $rawResponse): void {
+            $this->decisionApplierService()->apply(
+                $decision,
+                $rawResponse,
+                function (array $successResponse, string $message): void {
+                    $this->info($message);
+                    $this->updateLoginInfo($successResponse);
+                    $this->info('生成信息配置完毕');
+                },
+                function (string $captchaUrl, string $message): void {
+                    $this->handleCaptchaChallenge($captchaUrl, $message);
+                },
+            );
+        });
+    }
+
+    protected function handleCaptchaChallenge(string $captchaUrl, string $message): void
+    {
+        $this->warning($message);
+        $this->beginCaptchaLogin($captchaUrl);
+    }
+
+    protected function announcePendingCaptcha(string $displayUrl, float $delaySeconds): void
+    {
+        $this->info('请在浏览器中打开以下链接，完成验证码识别');
+        $this->info($displayUrl);
+        $this->info('Please finish captcha verification within 2 minutes');
+        $this->scheduleAfter($delaySeconds);
+    }
+
     protected function accountLogin(string $validate = '', string $challenge = '', string $mode = '账密模式'): void
     {
         $this->info("尝试 $mode 登录");
@@ -649,21 +648,7 @@ class Login extends BasePlugin implements PluginTaskInterface
             $validate,
             $challenge,
             function (string $mode, array $response): void {
-                $this->authenticationService()->completeLogin($mode, $response, function (LoginDecision $decision, array $rawResponse): void {
-                    $this->decisionApplierService()->apply(
-                        $decision,
-                        $rawResponse,
-                        function (array $successResponse, string $message): void {
-                            $this->info($message);
-                            $this->updateLoginInfo($successResponse);
-                            $this->info('生成信息配置完毕');
-                        },
-                        function (string $captchaUrl, string $message): void {
-                            $this->warning($message);
-                            $this->beginCaptchaLogin($captchaUrl);
-                        },
-                    );
-                });
+                $this->completeLoginResponse($mode, $response);
             },
         );
     }
@@ -685,27 +670,13 @@ class Login extends BasePlugin implements PluginTaskInterface
             fn (string $message): string => $this->cliInput($message),
             function (array $payload, string $code) use ($mode): void {
                 $response = $this->authenticationService()->submitSmsLogin($payload, $code);
-                $this->authenticationService()->completeLogin($mode, $response, function (LoginDecision $decision, array $rawResponse): void {
-                    $this->decisionApplierService()->apply(
-                        $decision,
-                        $rawResponse,
-                        function (array $successResponse, string $message): void {
-                            $this->info($message);
-                            $this->updateLoginInfo($successResponse);
-                            $this->info('生成信息配置完毕');
-                        },
-                        function (string $captchaUrl, string $message): void {
-                            $this->warning($message);
-                            $this->beginCaptchaLogin($captchaUrl);
-                        },
-                    );
-                });
+                $this->completeLoginResponse($mode, $response);
             },
         );
     }
 
     /**
-     * 检查登录
+     * 妫€鏌ョ櫥褰?
      */
     protected function checkLogin(int $mode_id): void
     {
@@ -714,7 +685,7 @@ class Login extends BasePlugin implements PluginTaskInterface
     }
 
     /**
-     * 输入短信验证码
+     * 杈撳叆鐭俊楠岃瘉鐮?
      * @param string $msg
      * @param int $max_char
      * @return string
@@ -789,3 +760,4 @@ class Login extends BasePlugin implements PluginTaskInterface
     }
 
 }
+

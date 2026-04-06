@@ -2,13 +2,13 @@
 
 namespace Bhp\Console;
 
-use LogicException;
 use Bhp\Console\Cli\Application;
 use Bhp\Console\Cli\RuntimeException as CliRuntimeException;
 use Bhp\Console\Command\AppCommand;
 use Bhp\Console\Command\DebugCommand;
 use Bhp\Console\Command\ScriptCommand;
 use Bhp\Env\Env;
+use LogicException;
 
 class Console
 {
@@ -24,9 +24,6 @@ class Console
         'm:s',
     ];
 
-    /**
-     * @var string
-     */
     protected string $logo = <<<LOGO
  ________  ___  ___       ___  ___  ___  _______   ___       ________  _______   ________
 |\   __  \|\  \|\  \     |\  \|\  \|\  \|\  ___ \ |\  \     |\   __  \|\  ___ \ |\   __  \
@@ -43,9 +40,6 @@ LOGO;
      */
     protected array $argv;
 
-    /**
-     * @var Application
-     */
     protected Application $app;
 
     /**
@@ -70,13 +64,20 @@ LOGO;
     {
         self::assertNoUnknownCommandToken($argv);
 
-        $filename = $default;
+        $filename = trim($default);
         $first = (string)($argv[1] ?? '');
         if ($first !== '' && !str_starts_with($first, '-') && !self::isCommandToken($first)) {
-            $filename = $first;
+            $filename = trim($first);
         }
 
-        // 保留关键字
+        if ($filename === '') {
+            throw new CliRuntimeException('profile 名称不能为空');
+        }
+
+        if (!self::isSafeProfileName($filename)) {
+            throw new CliRuntimeException("profile 名称非法: {$filename}");
+        }
+
         if (in_array($filename, $reserved, true)) {
             throw new CliRuntimeException("不能使用程序保留关键字 {$filename}");
         }
@@ -123,9 +124,9 @@ LOGO;
 
         $this->app = new Application($env->app_name, $env->app_version);
         $this->app
-            ->add($this->appCommand, 'm:a', true) // 模式1
-            ->add($this->debugCommand, 'm:d')  // 模式2
-            ->add($this->scriptCommand, 'm:s') // 模式3
+            ->add($this->appCommand, 'm:a', true)
+            ->add($this->debugCommand, 'm:d')
+            ->add($this->scriptCommand, 'm:s')
             ->logo($this->logo)
             ->handle($this->transArgv($this->argv));
     }
@@ -205,4 +206,8 @@ LOGO;
             && !self::isCommandToken($token);
     }
 
+    private static function isSafeProfileName(string $name): bool
+    {
+        return preg_match('/^[A-Za-z0-9](?:[A-Za-z0-9_-]{0,63})$/', $name) === 1;
+    }
 }
