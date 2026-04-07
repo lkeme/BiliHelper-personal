@@ -4,7 +4,7 @@
     "version": "0.0.2",
     "desc": "转盘活动",
     "author": "Lkeme",
-    "priority": 1117,
+    "priority": 1112,
     "cycle": "1-5(分钟)",
     "mode": "app",
     "start": "06:00:00",

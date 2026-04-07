@@ -4,7 +4,7 @@
     "version": "0.0.1",
     "desc": "领取大会员权益",
     "author": "Lkeme",
-    "priority": 1107,
+    "priority": 1104,
     "cycle": "24(小时)",
     "mode": "app",
     "php_min": "8.5.0",

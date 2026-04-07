@@ -4,7 +4,7 @@
     "version": "0.0.1",
     "desc": "大会员B币券消费",
     "author": "Lkeme",
-    "priority": 1108,
+    "priority": 1105,
     "cycle": "24(小时)",
     "mode": "app",
     "php_min": "8.5.0",

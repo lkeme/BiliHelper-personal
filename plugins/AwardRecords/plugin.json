@@ -4,7 +4,7 @@
     "version": "0.0.1",
     "desc": "获奖记录",
     "author": "Lkeme",
-    "priority": 1111,
+    "priority": 1113,
     "cycle": "5(分钟)",
     "mode": "app",
     "php_min": "8.5.0",

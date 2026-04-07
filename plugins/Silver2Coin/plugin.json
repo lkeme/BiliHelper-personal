@@ -4,7 +4,7 @@
     "version": "0.0.1",
     "desc": "银瓜子兑换硬币",
     "author": "Lkeme",
-    "priority": 1105,
+    "priority": 1102,
     "cycle": "24(小时)",
     "mode": "app",
     "php_min": "8.5.0",

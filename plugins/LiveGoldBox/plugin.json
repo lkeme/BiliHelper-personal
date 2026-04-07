@@ -4,7 +4,7 @@
     "version": "0.0.1",
     "desc": "直播金色宝箱(实物抽奖)",
     "author": "Lkeme",
-    "priority": 1110,
+    "priority": 1107,
     "cycle": "6-10(分钟)",
     "mode": "app",
     "php_min": "8.5.0",

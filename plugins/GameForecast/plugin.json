@@ -4,7 +4,7 @@
     "version": "0.0.1",
     "desc": "赛事预测(破产机)",
     "author": "Lkeme",
-    "priority": 1104,
+    "priority": 1101,
     "cycle": "24(小时)",
     "mode": "app",
     "php_min": "8.5.0",

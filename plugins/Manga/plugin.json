@@ -4,7 +4,7 @@
     "version": "0.0.1",
     "desc": "漫画签到/分享",
     "author": "Lkeme",
-    "priority": 1101,
+    "priority": 1108,
     "cycle": "24(小时)",
     "mode": "app",
     "php_min": "8.5.0",
