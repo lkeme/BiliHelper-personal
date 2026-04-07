@@ -11,9 +11,6 @@ use Bhp\Scheduler\TaskResult;
 
 class GameForecastPlugin extends BasePlugin implements PluginTaskInterface
 {
-    private const CACHE_SCOPE = 'GameForecast';
-    private const HANDLED_CACHE_KEY = 'handled_questions';
-    private const HANDLED_CACHE_DATE_KEY = 'handled_questions_date';
     /** @var int[] */
     private const NON_FATAL_HANDLED_CODES = [75207];
 
@@ -121,8 +118,6 @@ class GameForecastPlugin extends BasePlugin implements PluginTaskInterface
         }
 
         $questions = $this->fetchCollectionQuestions();
-        $handledQuestions = $this->loadHandledQuestions();
-        $handledChanged = false;
         $processed = 0;
 
         foreach ($questions as $question) {
@@ -130,22 +125,14 @@ class GameForecastPlugin extends BasePlugin implements PluginTaskInterface
                 break;
             }
 
-            $questionKey = $this->questionKey($question);
-            if ($questionKey !== '' && isset($handledQuestions[$questionKey])) {
-                $this->info('赛事预测: 跳过今日已处理赛事 ' . $this->questionLabel($question));
+            if ($this->questionAlreadyGuessed($question)) {
+                $this->info('赛事预测: 跳过已投注赛事 ' . $this->questionLabel($question));
                 continue;
             }
 
             $guess = $this->parseQuestion($question);
-            if ($this->addGuess($guess) && $questionKey !== '') {
-                $handledQuestions[$questionKey] = true;
-                $handledChanged = true;
-            }
+            $this->addGuess($guess);
             $processed++;
-        }
-
-        if ($handledChanged) {
-            $this->saveHandledQuestions($handledQuestions);
         }
     }
 
@@ -175,60 +162,34 @@ class GameForecastPlugin extends BasePlugin implements PluginTaskInterface
     }
 
     /**
-     * @return array<string, true>
-     */
-    private function loadHandledQuestions(): array
-    {
-        $today = date('Y-m-d');
-        $cacheDate = (string)$this->cacheGet(self::HANDLED_CACHE_DATE_KEY, self::CACHE_SCOPE, '');
-        $handled = $this->cacheGet(self::HANDLED_CACHE_KEY, self::CACHE_SCOPE, []);
-        if ($cacheDate !== $today || !is_array($handled)) {
-            return [];
-        }
-
-        $normalized = [];
-        foreach ($handled as $key => $value) {
-            if (is_string($key)) {
-                $normalized[$key] = true;
-                continue;
-            }
-            if (is_string($value)) {
-                $normalized[$value] = true;
-            }
-        }
-
-        return $normalized;
-    }
-
-    /**
-     * @param array<string, true> $handledQuestions
-     */
-    private function saveHandledQuestions(array $handledQuestions): void
-    {
-        $this->cacheSet(self::HANDLED_CACHE_DATE_KEY, date('Y-m-d'), self::CACHE_SCOPE);
-        $this->cacheSet(self::HANDLED_CACHE_KEY, $handledQuestions, self::CACHE_SCOPE);
-    }
-
-    /**
-     * @param array<string, mixed> $question
-     */
-    private function questionKey(array $question): string
-    {
-        $oid = (int)($question['contest']['id'] ?? 0);
-        $mainId = (int)($question['questions'][0]['id'] ?? 0);
-        if ($oid <= 0 || $mainId <= 0) {
-            return '';
-        }
-
-        return $oid . ':' . $mainId;
-    }
-
-    /**
      * @param array<string, mixed> $question
      */
     private function questionLabel(array $question): string
     {
         return trim((string)($question['questions'][0]['title'] ?? '未命名赛事')) ?: '未命名赛事';
+    }
+
+    /**
+     * @param array<string, mixed> $question
+     */
+    protected function questionAlreadyGuessed(array $question): bool
+    {
+        $details = $question['questions'][0]['details'] ?? null;
+        if (!is_array($details)) {
+            return false;
+        }
+
+        foreach ($details as $detail) {
+            if (!is_array($detail)) {
+                continue;
+            }
+
+            if ((int)($detail['stake'] ?? 0) > 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function guessApi(): ApiGuess
