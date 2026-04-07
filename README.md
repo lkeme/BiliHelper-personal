@@ -78,6 +78,10 @@
 - 生产环境 Docker 运行时默认保持镜像不可变，容器启动时不会再执行依赖刷新。
 - 首次生成 profile 请显式执行 `entrypoint.sh init_profile`，或直接挂载已经准备好的 profile。
 - 更新镜像请使用 `docker compose pull && docker compose up -d`
+- 如需在 Docker 默认启动前清理缓存，可设置环境变量：
+  - `RESET_CACHE=1`：等价于追加 `--reset-cache`
+  - `RESET_CACHE=1` 且 `PURGE_AUTH=1`：等价于追加 `--reset-cache --purge-auth`
+- 上述环境变量只对默认 `entrypoint.sh run` 启动路径生效，不会改写用户自定义命令
 
 
 ## 🎁 打赏支持
