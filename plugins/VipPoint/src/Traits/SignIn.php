@@ -29,7 +29,7 @@ trait SignIn
             return false;
         }
 
-        $this->notic("大会员积分@{$name}: 签到成功");
+        $this->notice("大会员积分@{$name}: 签到成功");
 
         return true;
     }
