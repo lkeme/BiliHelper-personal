@@ -35,12 +35,6 @@ class BatchUnfollowPlugin extends BasePlugin
      */
     public function execute(array $options = [], array $argv = []): void
     {
-        if (!$this->enabled('batch_unfollow')) {
-            $this->info('批量取关: 插件已关闭');
-
-            return;
-        }
-
         $this->fetchFollows();
         if (empty($this->wait_unfollows)) {
             $this->info('批量取关: 没有待处理关注');

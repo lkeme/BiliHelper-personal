@@ -4,7 +4,7 @@
     "version": "0.0.2",
     "desc": "抽奖",
     "author": "MoeHero/Lkeme",
-    "priority": 1110,
+    "priority": 2011,
     "cycle": "10-25(分钟)",
     "mode": "app",
     "php_min": "8.5.0",

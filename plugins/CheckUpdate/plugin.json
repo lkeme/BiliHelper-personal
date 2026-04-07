@@ -4,7 +4,7 @@
     "version": "0.0.1",
     "desc": "检查版本更新",
     "author": "Lkeme",
-    "priority": 1001,
+    "priority": 2000,
     "cycle": "24(小时)",
     "mode": "app",
     "php_min": "8.5.0",

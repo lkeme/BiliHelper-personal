@@ -4,7 +4,7 @@
     "version": "0.0.1",
     "desc": "点亮徽章",
     "author": "possible318/Lkeme",
-    "priority": 1111,
+    "priority": 2012,
     "cycle": "1(小时)",
     "mode": "app",
     "php_min": "8.5.0",

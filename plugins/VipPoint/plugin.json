@@ -4,7 +4,7 @@
     "version": "0.0.1",
     "desc": "大会员积分",
     "author": "Lkeme",
-    "priority": 1109,
+    "priority": 2010,
     "cycle": "5(分钟)",
     "mode": "app",
     "php_min": "8.5.0",

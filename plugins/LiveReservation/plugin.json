@@ -4,7 +4,7 @@
     "version": "0.0.1",
     "desc": "预约直播有奖",
     "author": "Lkeme",
-    "priority": 1106,
+    "priority": 2007,
     "cycle": "1-3(小时)",
     "mode": "app",
     "php_min": "8.5.0",

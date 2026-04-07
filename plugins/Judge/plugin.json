@@ -4,7 +4,7 @@
     "version": "0.0.1",
     "desc": "風機委員",
     "author": "Lkeme",
-    "priority": 1103,
+    "priority": 2004,
     "cycle": "15-30(分钟)",
     "mode": "app",
     "php_min": "8.5.0",

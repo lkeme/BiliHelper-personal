@@ -4,7 +4,7 @@
     "version": "0.0.1",
     "desc": "更新活动索引",
     "author": "Lkeme",
-    "priority": 1900,
+    "priority": 3001,
     "cycle": "manual",
     "mode": "script",
     "php_min": "8.5.0",

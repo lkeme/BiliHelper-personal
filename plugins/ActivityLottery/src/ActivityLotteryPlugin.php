@@ -40,6 +40,11 @@ use Bhp\Scheduler\TaskResult;
 
 final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterface
 {
+    private const WINDOW_START = '06:00:00';
+    private const WINDOW_END = '23:00:00';
+    private const MAX_FLOWS_PER_TICK = 4;
+    private const MAX_STEPS_PER_TICK = 6;
+    private const MAX_RUNTIME_MS_PER_TICK = 3000;
 
     private ?ActivityLotteryRuntime $runtimeInstance = null;
 
@@ -63,16 +68,8 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
             return $this->runtimeInstance;
         }
 
-        $windowStart = trim((string)$this->config('activity_lottery.window_start', '06:00:00', 'string'));
-        $windowEnd = trim((string)$this->config('activity_lottery.window_end', '23:00:00', 'string'));
-        $remoteCatalogUrl = trim((string)$this->config('activity_lottery.remote_catalog_url', '', 'string'));
-        $remoteCatalogUrls = [];
         $remoteResourceResolver = new RemoteResourceResolver($this->appContext());
-        if ($remoteCatalogUrl === '') {
-            $remoteCatalogUrls = $remoteResourceResolver->resourceRawUrls('activity_infos.json');
-        } else {
-            $remoteCatalogUrls = [$remoteCatalogUrl];
-        }
+        $remoteCatalogUrls = $remoteResourceResolver->resourceRawUrls('activity_infos.json');
         $logger = function (string $level, string $message, array $context = []): void {
             $context = array_replace(['caller' => 'ActivityLottery'], $context);
             switch (strtolower(trim($level))) {
@@ -163,14 +160,14 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
             ],
             new ActivityFlowPlanner(),
             new ActivityFlowPool(new ActivityFlowBudget(
-                max(1, (int)$this->config('activity_lottery.max_flows_per_tick', 4, 'int')),
-                max(1, (int)$this->config('activity_lottery.max_steps_per_tick', 6, 'int')),
-                max(1, (int)$this->config('activity_lottery.max_runtime_ms_per_tick', 3000, 'int')),
+                self::MAX_FLOWS_PER_TICK,
+                self::MAX_STEPS_PER_TICK,
+                self::MAX_RUNTIME_MS_PER_TICK,
             )),
             new ActivityLotteryClock(),
-            new ActivityLotteryWindow($windowStart, $windowEnd),
-            $windowStart,
-            $windowEnd,
+            new ActivityLotteryWindow(self::WINDOW_START, self::WINDOW_END),
+            self::WINDOW_START,
+            self::WINDOW_END,
             $logger,
         );
 
