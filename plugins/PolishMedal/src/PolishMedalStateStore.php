@@ -1,0 +1,30 @@
+<?php declare(strict_types=1);
+
+namespace Bhp\Plugin\Builtin\PolishMedal;
+
+use Bhp\Cache\Cache;
+
+final class PolishMedalStateStore
+{
+    private const CACHE_SCOPE = 'PolishMedal';
+    private const CACHE_KEY = 'state';
+
+    public function __construct(
+        private readonly Cache $cache,
+    ) {
+    }
+
+    public function load(): PolishMedalRuntimeState
+    {
+        $this->cache->initializeScope(self::CACHE_SCOPE);
+        $state = $this->cache->pull(self::CACHE_KEY, self::CACHE_SCOPE);
+
+        return PolishMedalRuntimeState::bootstrap(is_array($state) ? $state : []);
+    }
+
+    public function save(PolishMedalRuntimeState $state): void
+    {
+        $this->cache->initializeScope(self::CACHE_SCOPE);
+        $this->cache->put(self::CACHE_KEY, $state->all(), self::CACHE_SCOPE);
+    }
+}
