@@ -197,6 +197,39 @@ class Request
         return $this->postResponseInstance($os, $url, $params, $headers, $timeout)->getBody();
     }
 
+    public function postTextWithQuery(
+        string $os,
+        string $url,
+        array $formParams = [],
+        array $query = [],
+        array $headers = [],
+        float $timeout = 30.0,
+    ): string {
+        $requestId = $this->startRequest();
+        $this->context->log()->recordDebug("[POST_QUERY#{$requestId}] {$url}", [
+            'query' => $query,
+            'form' => $formParams,
+        ]);
+
+        try {
+            $response = $this
+                ->withUrl($requestId, $url)
+                ->withMethod($requestId, 'post')
+                ->withHeaders($requestId, $os, $headers)
+                ->withOptions($requestId, [
+                    'query' => $query,
+                    'form_params' => $formParams,
+                ], $timeout)
+                ->handle($requestId);
+
+            $this->context->log()->recordDebug("[POST_QUERY#{$requestId}] " . $response->getBody());
+
+            return $response->getBody();
+        } finally {
+            $this->stopRequest($requestId);
+        }
+    }
+
     public function postJsonBodyText(string $os, string $url, array $params = [], array $headers = [], float $timeout = 30.0): string
     {
         $requestId = $this->startRequest();

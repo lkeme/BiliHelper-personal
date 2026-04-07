@@ -10,12 +10,23 @@ use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
 use Bhp\Scheduler\TaskResult;
 use Bhp\Util\ArrayR\ArrayR;
-use Bhp\Util\Fake\Fake;
 
 class PolishMedalPlugin extends BasePlugin implements PluginTaskInterface
 {
     private const CACHE_SCOPE = 'PolishMedal';
     private const INVALID_MEDALS_CACHE_KEY = 'invalid_medals';
+    /** @var string[] */
+    private const DEFAULT_REPLY_WORDS = [
+        '打卡',
+        '签到',
+        '来了',
+        '支持一下',
+        '加油',
+        '晚上好',
+        '路过',
+        '前排',
+    ];
+
     private AuthFailureClassifier $authFailureClassifier;
     private ?ApiFansMedal $fansMedalApi = null;
     private ?ApiMsg $msgApi = null;
@@ -164,8 +175,7 @@ class PolishMedalPlugin extends BasePlugin implements PluginTaskInterface
 
         $progress = $this->progressLabel($remainingBeforePop);
         $this->info("开始点亮{$progress}直播间@{$medal['roomid']}的勋章 [{$medal['anchor_name']} / {$medal['medal_name']}]");
-        $words = (string)$this->config('polish_medal.reply_words', '');
-        $customWord = $words === '' ? Fake::emoji() : ArrayR::toRand(explode(',', $words));
+        $customWord = $this->resolveReplyWord();
         $res = $this->msgApi()->sendBarrageAPP((int)$medal['roomid'], $customWord);
         $this->authFailureClassifier->assertNotAuthFailure($res, "点亮徽章: 在直播间@{$medal['roomid']}发送弹幕时账号未登录");
         if (isset($res['code']) && $res['code'] == 0) {
@@ -276,6 +286,20 @@ class PolishMedalPlugin extends BasePlugin implements PluginTaskInterface
     private function cleanupInvalidMedalEnabled(): bool
     {
         return $this->config('polish_medal.cleanup_invalid_medal', false, 'bool');
+    }
+
+    private function resolveReplyWord(): string
+    {
+        $configured = array_values(array_filter(array_map(
+            static fn (string $word): string => trim($word),
+            explode(',', (string)$this->config('polish_medal.reply_words', ''))
+        ), static fn (string $word): bool => $word !== ''));
+
+        if ($configured !== []) {
+            return ArrayR::toRand($configured);
+        }
+
+        return ArrayR::toRand(self::DEFAULT_REPLY_WORDS);
     }
 
     private function progressLabel(int $remainingBeforePop): string

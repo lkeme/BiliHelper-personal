@@ -1,5 +1,6 @@
-# Update image first: docker compose pull && docker compose up -d
-version: '3'
+# Update image first: 
+# docker compose pull && docker compose up -d
+
 services:
     bhp:
         container_name: bhp
@@ -8,7 +9,7 @@ services:
         tty: true        # docker run -t 终端模式
         restart: on-failure:5 # 重启策略 / on-failure:5 重启次数5次 / always 一直重启 / unless-stopped 除非停止 / no 从不重启
         volumes:
-            - /opt/bhp/profile/user:/app/profile/user  # /opt/bhp/profile/user替换为自己的路径
+            - ./profile/user:/app/profile/user  # ./profile/user替换为自己的相对或绝对路径
         network_mode: bridge # host
         ports:
             - "50001:50001" # 50001替换为自己的端口 user.ini->login_captcha->url

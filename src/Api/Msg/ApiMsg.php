@@ -19,6 +19,7 @@ namespace Bhp\Api\Msg;
 
 use Bhp\Api\Support\ApiJson;
 use Bhp\Request\Request;
+use Bhp\WbiSign\WbiSign;
 use Throwable;
 
 class ApiMsg
@@ -56,29 +57,54 @@ class ApiMsg
      */
     public function sendBarrageAPP(int $room_id, string $content): array
     {
+        $csrf = $this->request->csrfValue();
         $payload = [
-            'color' => '16777215',
-            'fontsize' => 25,
-            'mode' => 1,
+            'bubble' => 0,
             'msg' => $content,
-            'rnd' => 0,
+            'color' => 16777215,
+            'mode' => 1,
+            'room_type' => 0,
+            'jumpfrom' => 0,
+            'reply_mid' => 0,
+            'reply_attr' => 0,
+            'replay_dmid' => '',
+            'statistics' => '{"appId":100,"platform":5}',
+            'reply_type' => 0,
+            'reply_uname' => '',
+            'fontsize' => 25,
+            'rnd' => time(),
             'roomid' => $room_id,
-            'csrf' => $this->request->csrfValue(),
-            'csrf_token' => $this->request->csrfValue(),
+            'csrf' => $csrf,
+            'csrf_token' => $csrf,
         ];
 
-        return $this->decodePost('app', 'https://api.live.bilibili.com/msg/send', $this->request->signCommonPayload($payload), [], 'msg.barrage.app');
+        return $this->decodePost(
+            'pc',
+            'https://api.live.bilibili.com/msg/send',
+            $payload,
+            [
+                'origin' => 'https://live.bilibili.com',
+                'referer' => "https://live.bilibili.com/{$room_id}",
+            ],
+            'msg.barrage.app',
+            WbiSign::encryption([
+                'web_location' => '444.8',
+            ]),
+        );
     }
 
     /**
      * @param array<string, mixed> $payload
      * @param array<string, string> $headers
+     * @param array<string, mixed> $query
      * @return array<string, mixed>
      */
-    private function decodePost(string $os, string $url, array $payload, array $headers, string $label): array
+    private function decodePost(string $os, string $url, array $payload, array $headers, string $label, array $query = []): array
     {
         try {
-            $raw = $this->request->postText($os, $url, $payload, $headers);
+            $raw = $query === []
+                ? $this->request->postText($os, $url, $payload, $headers)
+                : $this->request->postTextWithQuery($os, $url, $payload, $query, $headers);
         } catch (Throwable $throwable) {
             return [
                 'code' => -500,
