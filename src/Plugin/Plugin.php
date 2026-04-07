@@ -9,6 +9,8 @@ use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Runtime\AppContext;
 use Bhp\Scheduler\TaskResult;
 use Bhp\Util\AsciiTable\AsciiTable;
+use DateTimeImmutable;
+use DateTimeZone;
 use ReflectionClass;
 use RuntimeException;
 use Stringable;
@@ -148,6 +150,12 @@ class Plugin
 
     public function runTask(string $hook): TaskResult
     {
+        if ($this->isPluginExpiredNow($hook)) {
+            $this->markPluginExpired($hook, 'run');
+
+            return TaskResult::after(3153600000.0, 'plugin expired');
+        }
+
         $instance = $this->_instances[$hook] ?? null;
         if ($instance instanceof PluginTaskInterface) {
             return $instance->runOnce();
@@ -288,6 +296,14 @@ class Plugin
                 continue;
             }
 
+            if ($this->isManifestExpired($manifest)) {
+                $message = $this->expiredMessage($manifest);
+                $this->_registry[$hook]['status'] = 'expired';
+                $this->_registry[$hook]['error'] = $message;
+                $this->log->recordWarning("插件 {$hook} 已过期，跳过装配: {$message}");
+                continue;
+            }
+
             if (!$this->shouldLoadPluginForRuntimeMode($manifest)) {
                 $this->_registry[$hook]['status'] = 'skipped';
                 continue;
@@ -386,6 +402,11 @@ class Plugin
             return false;
         }
 
+        if ($this->isPluginExpiredNow($hook)) {
+            $this->markPluginExpired($hook, 'trigger');
+            return false;
+        }
+
         $start = trim((string)($plugin['start'] ?? ''));
         $end = trim((string)($plugin['end'] ?? ''));
         if ($start === '' || $end === '') {
@@ -420,6 +441,67 @@ class Plugin
         }
 
         return $nowTime >= $startTime && $nowTime <= $endTime;
+    }
+
+    private function isPluginExpiredNow(string $hook): bool
+    {
+        $manifest = $this->_registry[$hook]['manifest'] ?? null;
+
+        return is_array($manifest) && $this->isManifestExpired($manifest);
+    }
+
+    /**
+     * @param array<string, mixed> $manifest
+     */
+    private function isManifestExpired(array $manifest): bool
+    {
+        $validUntil = PluginManifest::parseManifestDateTime(
+            (string)($manifest['valid_until'] ?? ''),
+            $this->manifestTimezone(),
+        );
+        if (!$validUntil instanceof DateTimeImmutable) {
+            return false;
+        }
+
+        return $this->currentDateTime() > $validUntil;
+    }
+
+    /**
+     * @param array<string, mixed> $manifest
+     */
+    private function expiredMessage(array $manifest): string
+    {
+        return 'valid_until=' . (string)($manifest['valid_until'] ?? '');
+    }
+
+    private function markPluginExpired(string $hook, string $source): void
+    {
+        $status = (string)($this->_registry[$hook]['status'] ?? '');
+        if ($status === 'expired') {
+            return;
+        }
+
+        $manifest = $this->_registry[$hook]['manifest'] ?? [];
+        $message = is_array($manifest) ? $this->expiredMessage($manifest) : '';
+        if (isset($this->_registry[$hook])) {
+            $this->_registry[$hook]['status'] = 'expired';
+            $this->_registry[$hook]['error'] = $message;
+        }
+        if (isset($this->_plugins[$hook]) && is_array($this->_plugins[$hook])) {
+            $this->_plugins[$hook]['status'] = 'expired';
+        }
+
+        $this->log->recordWarning("插件 {$hook} 已过期，跳过执行 [{$source}]: {$message}");
+    }
+
+    private function currentDateTime(): DateTimeImmutable
+    {
+        return new DateTimeImmutable('now', $this->manifestTimezone());
+    }
+
+    private function manifestTimezone(): DateTimeZone
+    {
+        return new DateTimeZone('Asia/Shanghai');
     }
 
     protected function currentTimestamp(): int

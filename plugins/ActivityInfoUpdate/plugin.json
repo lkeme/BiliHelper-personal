@@ -7,6 +7,7 @@
     "priority": 3001,
     "cycle": "manual",
     "mode": "script",
+    "valid_until": "2099-12-31 23:59:59",
     "php_min": "8.5.0",
     "php_max": null,
     "required_extensions": [],

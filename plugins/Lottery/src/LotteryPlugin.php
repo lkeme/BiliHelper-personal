@@ -354,7 +354,7 @@ class LotteryPlugin extends BasePlugin implements PluginTaskInterface
 
     protected function filterContentWords(string $content): bool
     {
-        $sensitiveWords = $this->filterWords('LiveGoldBox.sensitive', [], 'array');
+        $sensitiveWords = $this->filterWords('Lottery.sensitive', [], 'array');
         foreach ($sensitiveWords as $word) {
             if (is_string($word) && str_contains($content, $word)) {
                 return true;

@@ -2,6 +2,9 @@
 
 namespace Bhp\Plugin;
 
+use DateTimeImmutable;
+use DateTimeZone;
+
 final class PluginManifest
 {
     /**
@@ -17,6 +20,7 @@ final class PluginManifest
         public readonly string $desc,
         public readonly int $priority,
         public readonly string $cycle,
+        public readonly string $validUntil,
         public readonly string $phpMin = '8.5.0',
         public readonly ?string $phpMax = null,
         public readonly array $requiredExtensions = [],
@@ -39,6 +43,7 @@ final class PluginManifest
             'desc',
             'priority',
             'cycle',
+            'valid_until',
             'php_min',
             'php_max',
             'required_extensions',
@@ -55,6 +60,7 @@ final class PluginManifest
             (string)($manifest['desc'] ?? ''),
             (int)($manifest['priority'] ?? 0),
             (string)($manifest['cycle'] ?? ''),
+            (string)($manifest['valid_until'] ?? ''),
             (string)($manifest['php_min'] ?? '8.5.0'),
             array_key_exists('php_max', $manifest) && $manifest['php_max'] === null ? null : (isset($manifest['php_max']) ? (string)$manifest['php_max'] : null),
             self::normalizeStringList($manifest['required_extensions'] ?? []),
@@ -77,6 +83,7 @@ final class PluginManifest
             'desc' => $this->desc,
             'priority' => $this->priority,
             'cycle' => $this->cycle,
+            'valid_until' => $this->validUntil,
             'php_min' => $this->phpMin,
             'php_max' => $this->phpMax,
             'required_extensions' => $this->requiredExtensions,
@@ -95,5 +102,26 @@ final class PluginManifest
         }
 
         return array_values(array_filter($value, 'is_string'));
+    }
+
+    public static function parseManifestDateTime(string $value, ?DateTimeZone $timezone = null): ?DateTimeImmutable
+    {
+        $normalized = trim($value);
+        if ($normalized === '') {
+            return null;
+        }
+
+        $timezone ??= new DateTimeZone('Asia/Shanghai');
+        $dateTime = DateTimeImmutable::createFromFormat('!Y-m-d H:i:s', $normalized, $timezone);
+        if (!$dateTime instanceof DateTimeImmutable) {
+            return null;
+        }
+
+        $errors = DateTimeImmutable::getLastErrors();
+        if (is_array($errors) && (($errors['warning_count'] ?? 0) > 0 || ($errors['error_count'] ?? 0) > 0)) {
+            return null;
+        }
+
+        return $dateTime->format('Y-m-d H:i:s') === $normalized ? $dateTime : null;
     }
 }

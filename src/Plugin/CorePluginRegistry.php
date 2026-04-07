@@ -27,6 +27,7 @@ final class CorePluginRegistry
                     'author' => 'Lkeme',
                     'priority' => 1000,
                     'cycle' => '2(小时)',
+                    'valid_until' => '2099-12-31 23:59:59',
                     'interval_seconds' => 7200,
                     'max_concurrency' => 1,
                     'overrun_policy' => 'serialize',

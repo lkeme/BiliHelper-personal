@@ -25,6 +25,7 @@ final class PluginManifestValidator
             'desc' => $typedManifest->desc,
             'priority' => $typedManifest->priority,
             'cycle' => $typedManifest->cycle,
+            'valid_until' => $typedManifest->validUntil,
         ];
 
         foreach ($fillable as $key => $value) {
@@ -41,6 +42,10 @@ final class PluginManifestValidator
         $allowedHooks = [$hook, $this->shortClassName($hook)];
         if (!in_array($typedManifest->hook, $allowedHooks, true)) {
             return "插件 {$hook} manifest.hook 必须与类名保持一致";
+        }
+
+        if (PluginManifest::parseManifestDateTime($typedManifest->validUntil) === null) {
+            return "插件 {$hook} manifest.valid_until 必须为 Y-m-d H:i:s";
         }
 
         return null;

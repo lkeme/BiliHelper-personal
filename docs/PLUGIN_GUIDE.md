@@ -72,6 +72,7 @@
   "author": "YourName",
   "priority": 1200,
   "cycle": "5(分钟)",
+  "valid_until": "2099-12-31 23:59:59",
   "class_name": "Bhp\\Plugin\\Builtin\\Demo\\DemoPlugin",
   "entry": "src/DemoPlugin.php",
   "vendor": "official",
@@ -90,6 +91,7 @@
   "author": "YourName",
   "priority": 1200,
   "cycle": "5(分钟)",
+  "valid_until": "2099-12-31 23:59:59",
   "mode": "app",
   "interval_seconds": 300,
   "max_concurrency": 1,
@@ -120,6 +122,7 @@
 当前默认值由 `PluginManifest` 自动补齐：
 
 - `php_min = 8.5.0`
+- `valid_until = 2099-12-31 23:59:59`
 - `php_max = null`
 - `required_extensions = []`
 - `provides_capabilities = []`
