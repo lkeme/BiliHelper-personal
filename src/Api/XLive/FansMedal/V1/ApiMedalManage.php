@@ -157,6 +157,7 @@ final class ApiMedalManage
         return [
             'medal_id' => $medalId,
             'target_id' => $targetId,
+            'level' => (int)($medal['level'] ?? 0),
             'medal_name' => trim((string)($medal['medal_name'] ?? '')),
             'anchor_name' => trim((string)($anchorInfo['nick_name'] ?? $medal['target_name'] ?? '')),
             'room_id' => (int)($roomInfo['room_id'] ?? 0),

@@ -311,11 +311,10 @@ final class PolishMedalPlugin extends BasePlugin implements PluginTaskInterface
      */
     private function medalLabel(array $medal): string
     {
-        return sprintf(
-            '%s / %s',
-            trim((string)($medal['anchor_name'] ?? '未命名主播')),
-            trim((string)($medal['medal_name'] ?? '未命名勋章')),
-        );
+        $level = max(0, (int)($medal['level'] ?? 0));
+        $medalName = trim((string)($medal['medal_name'] ?? '未命名勋章'));
+
+        return sprintf('Lv.%d %s', $level, $medalName);
     }
 
     private function lightProgressLabel(int $remainingBeforePop): string
