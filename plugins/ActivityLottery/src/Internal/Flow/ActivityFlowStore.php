@@ -11,6 +11,8 @@ use SQLite3Stmt;
 final class ActivityFlowStore
 {
     private const TABLE_NAME = 'activity_flow_entries';
+    private const VACUUM_MIN_FREE_PAGES = 128;
+    private const VACUUM_MIN_FREE_RATIO = 0.05;
 
     private ?SQLite3 $connection = null;
     private readonly SqliteSchemaManager $schemaManager;
@@ -70,6 +72,7 @@ final class ActivityFlowStore
         }
 
         $connection->exec('BEGIN IMMEDIATE TRANSACTION');
+        $deletedRows = 0;
         try {
             foreach ($grouped as $bizDate => $items) {
                 foreach ($items as $flow) {
@@ -89,11 +92,15 @@ final class ActivityFlowStore
                     }
                 }
             }
+            $deletedRows = $this->deleteObsoleteBizDates($connection, array_keys($grouped));
             $connection->exec('COMMIT');
         } catch (\Throwable $throwable) {
             $connection->exec('ROLLBACK');
             throw $throwable;
         }
+
+        unset($statement);
+        $this->compactDatabaseIfNeeded($connection, $deletedRows);
     }
 
     /**
@@ -209,6 +216,74 @@ final class ActivityFlowStore
         $this->schemaManager->ensureActivityFlowSchema($connection, self::TABLE_NAME);
 
         return $this->connection = $connection;
+    }
+
+    /**
+     * @param string[] $keptBizDates
+     */
+    private function deleteObsoleteBizDates(SQLite3 $connection, array $keptBizDates): int
+    {
+        if ($keptBizDates === []) {
+            return 0;
+        }
+
+        $placeholders = [];
+        foreach (array_values($keptBizDates) as $index => $_bizDate) {
+            $placeholders[] = ':biz_date_' . $index;
+        }
+
+        $statement = $connection->prepare(
+            'DELETE FROM ' . self::TABLE_NAME . '
+             WHERE scope = :scope
+               AND biz_date NOT IN (' . implode(', ', $placeholders) . ')'
+        );
+        if (!$statement instanceof SQLite3Stmt) {
+            throw new RuntimeException('无法准备 ActivityFlowStore SQLite 清理语句');
+        }
+
+        $statement->bindValue(':scope', $this->scope, SQLITE3_TEXT);
+        foreach (array_values($keptBizDates) as $index => $bizDate) {
+            $statement->bindValue(':biz_date_' . $index, $bizDate, SQLITE3_TEXT);
+        }
+
+        $result = $statement->execute();
+        if ($result instanceof SQLite3Result) {
+            $result->finalize();
+        }
+
+        return $connection->changes();
+    }
+
+    private function compactDatabaseIfNeeded(SQLite3 $connection, int $deletedRows): void
+    {
+        if ($deletedRows <= 0) {
+            return;
+        }
+
+        try {
+            $this->checkpointWal($connection);
+
+            $freelistPages = (int)$connection->querySingle('PRAGMA freelist_count');
+            if ($freelistPages < self::VACUUM_MIN_FREE_PAGES) {
+                return;
+            }
+
+            $pageCount = max(1, (int)$connection->querySingle('PRAGMA page_count'));
+            $freeRatio = $freelistPages / $pageCount;
+            if ($freeRatio < self::VACUUM_MIN_FREE_RATIO) {
+                return;
+            }
+
+            $connection->exec('VACUUM');
+            $this->checkpointWal($connection);
+        } catch (\Throwable) {
+            // Maintenance must not break the main flow persistence path.
+        }
+    }
+
+    private function checkpointWal(SQLite3 $connection): void
+    {
+        @$connection->exec('PRAGMA wal_checkpoint(TRUNCATE)');
     }
 
     private function assertFlowBizDateMatchesBucket(
