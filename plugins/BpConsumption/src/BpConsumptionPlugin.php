@@ -36,7 +36,7 @@ class BpConsumptionPlugin extends BasePlugin implements PluginTaskInterface
 
         $this->consumptionTask();
 
-        return TaskResult::nextAt(14, 0, 0, 1, 120);
+        return TaskResult::nextDayAt(14, 0, 0, 1, 120);
     }
 
     protected function consumptionTask(): void

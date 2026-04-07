@@ -61,7 +61,7 @@ class MainSitePlugin extends BasePlugin implements PluginTaskInterface
         $this->persistState();
 
         return $this->resolveTaskResult(
-            $success ? TaskResult::nextAt(10) : TaskResult::after(mt_rand(60, 180) * 60)
+            $success ? TaskResult::nextDayAt(10, 0, 0, 1, 60) : TaskResult::after(mt_rand(60, 180) * 60)
         );
     }
 

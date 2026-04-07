@@ -37,7 +37,7 @@ class MangaPlugin extends BasePlugin implements PluginTaskInterface
             return TaskResult::after(3600);
         }
 
-        return $success ? TaskResult::nextAt(10) : TaskResult::after(3600);
+        return $success ? TaskResult::nextDayAt(10, 0, 0, 1, 60) : TaskResult::after(3600);
     }
 
     protected function signInTask(): bool

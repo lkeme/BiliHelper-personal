@@ -49,7 +49,7 @@ class VipPrivilegePlugin extends BasePlugin implements PluginTaskInterface
             return TaskResult::after(3600);
         }
 
-        return $this->resolveTaskResult(TaskResult::nextAt(23, 0, 0, 10, 30));
+        return $this->resolveTaskResult(TaskResult::nextDayAt(23, 0, 0, 10, 30));
     }
 
     /**

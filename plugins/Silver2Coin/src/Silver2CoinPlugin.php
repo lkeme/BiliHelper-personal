@@ -32,7 +32,7 @@ class Silver2CoinPlugin extends BasePlugin implements PluginTaskInterface
 
         try {
             if (!$this->before()) {
-                return TaskResult::nextAt(10, 0, 0, 1, 60);
+                return TaskResult::nextDayAt(10, 0, 0, 1, 60);
             }
 
             if (!$this->exchangeTask()) {
@@ -46,7 +46,7 @@ class Silver2CoinPlugin extends BasePlugin implements PluginTaskInterface
             return TaskResult::after(3600);
         }
 
-        return TaskResult::nextAt(10, 0, 0, 1, 60);
+        return TaskResult::nextDayAt(10, 0, 0, 1, 60);
     }
 
     protected function after(): void

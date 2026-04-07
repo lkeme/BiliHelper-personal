@@ -49,9 +49,9 @@ class DailyGoldPlugin extends BasePlugin implements PluginTaskInterface
                 : TaskResult::after(mt_rand(30, 60) * 60),
             -1 => TaskResult::after(10 * 60),
             -2 => $this->userTaskReceiveRewards($upUid)
-                ? TaskResult::nextAt(7, 0, 0, 1, 60)
+                ? TaskResult::nextDayAt(7, 0, 0, 1, 60)
                 : TaskResult::after(10 * 60),
-            -3 => TaskResult::nextAt(7, 0, 0, 1, 60),
+            -3 => TaskResult::nextDayAt(7, 0, 0, 1, 60),
             default => TaskResult::keepSchedule(),
         };
     }
