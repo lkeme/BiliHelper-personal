@@ -2,54 +2,34 @@
 
 namespace Bhp\Plugin\Builtin\PolishMedal;
 
-use Bhp\Api\Msg\ApiMsg;
-use Bhp\Api\XLive\AppUcenter\V1\ApiFansMedal;
+use Bhp\Api\XLive\AppUcenter\V1\ApiLikeInfoV3;
+use Bhp\Api\XLive\FansMedal\V1\ApiMedalManage;
+use Bhp\Cache\Cache;
 use Bhp\Login\AuthFailureClassifier;
 use Bhp\Plugin\BasePlugin;
 use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
 use Bhp\Scheduler\TaskResult;
-use Bhp\Util\ArrayR\ArrayR;
 
-class PolishMedalPlugin extends BasePlugin implements PluginTaskInterface
+final class PolishMedalPlugin extends BasePlugin implements PluginTaskInterface
 {
-    private const CACHE_SCOPE = 'PolishMedal';
-    private const INVALID_MEDALS_CACHE_KEY = 'invalid_medals';
-    /** @var string[] */
-    private const DEFAULT_REPLY_WORDS = [
-        '打卡',
-        '签到',
-        '来了',
-        '支持一下',
-        '加油',
-        '晚上好',
-        '路过',
-        '前排',
-    ];
+    private const WINDOW_START = '08:00:00';
+    private const WINDOW_END = '02:00:00';
+    private const MAX_LIGHT_QUEUE_PER_ROUND = 30;
+    private const MIN_ACTION_DELAY_SECONDS = 30;
+    private const MAX_ACTION_DELAY_SECONDS = 60;
+    private const MIN_IDLE_DELAY_SECONDS = 10 * 60;
+    private const MAX_IDLE_DELAY_SECONDS = 20 * 60;
+    private const PANEL_PAGE_SIZE = 50;
+    private const MAX_FETCH_PAGES = 20;
+    private const MAX_FETCH_ITEMS = 1000;
 
     private AuthFailureClassifier $authFailureClassifier;
-    private ?ApiFansMedal $fansMedalApi = null;
-    private ?ApiMsg $msgApi = null;
-
-    /**
-     * 插件信息
-     *
-     * @var array<string, int|string>
-     */
-
-    /**
-     * @var array<int, array{uid: mixed, roomid: mixed, medal_id: mixed, medal_name: string, anchor_name: string}>
-     */
-    private array $grey_fans_medals = [];
-    private int $medal_batch_total = 0;
-
-    private int $metal_lock = 0;
-    private int $next_polish_at = 0;
-
-    /**
-     * @var array<int, mixed>
-     */
-    private array $black_list = [];
+    private ?ApiMedalManage $medalManageApi = null;
+    private ?ApiLikeInfoV3 $likeInfoApi = null;
+    private ?PolishMedalStateStore $stateStore = null;
+    private ?PolishMedalWindow $window = null;
+    private ?PolishMedalRoundPlanner $roundPlanner = null;
 
     public function __construct(Plugin &$plugin)
     {
@@ -63,263 +43,287 @@ class PolishMedalPlugin extends BasePlugin implements PluginTaskInterface
             return TaskResult::keepSchedule();
         }
 
-        $now = time();
-        if ($this->metal_lock < $now) {
-            if (empty($this->grey_fans_medals)) {
-                if ($this->config('polish_medal.everyday', false, 'bool')) {
-                    $this->fetchGreyMedalList(true);
-                    $this->metal_lock = $now + (int)TaskResult::secondsUntilNextAt(7, 0, 0, 1, 60);
-                } else {
-                    $this->fetchGreyMedalList();
-                    $this->metal_lock = $now + 10 * 60 * 60;
-                }
-            } else {
-                $this->metal_lock = $now + 60 * 60;
+        $now = $this->now();
+        $state = $this->loadState();
+        if (!$this->cleanupInvalidMedalEnabled() && $state->hasDeleteQueue()) {
+            $state->setRound($state->roundRefreshedAt(), [], $state->roundLightQueue(), $state->roundStats());
+            $this->saveState($state);
+        }
+
+        if (!$this->window()->contains($now)) {
+            return $this->handleOutsideWindow($state, $now);
+        }
+
+        if (!$state->hasDeleteQueue() && !$state->hasLightQueue()) {
+            $state = $this->refreshRoundState($state, $now);
+            if (!$state->hasDeleteQueue() && !$state->hasLightQueue()) {
+                $state->clearRound();
+                $this->saveState($state);
+
+                return TaskResult::after($this->randomInt(self::MIN_IDLE_DELAY_SECONDS, self::MAX_IDLE_DELAY_SECONDS));
             }
         }
 
-        if (!empty($this->grey_fans_medals) && $this->next_polish_at <= $now) {
-            $this->polishTheMedal();
-            $this->next_polish_at = time() + mt_rand(4, 10) * 60;
+        if ($this->cleanupInvalidMedalEnabled() && $state->hasDeleteQueue()) {
+            $medal = $state->popDeleteQueue();
+            $this->saveState($state);
+            if (is_array($medal)) {
+                $this->executeDelete($medal);
+            }
+
+            return TaskResult::after($this->randomInt(self::MIN_ACTION_DELAY_SECONDS, self::MAX_ACTION_DELAY_SECONDS));
         }
 
-        if (!empty($this->grey_fans_medals)) {
-            return TaskResult::after(max(60, $this->next_polish_at - time()));
+        if ($state->hasLightQueue()) {
+            $remainingBeforePop = count($state->roundLightQueue());
+            $medal = $state->popLightQueue();
+            $this->saveState($state);
+            if (is_array($medal)) {
+                $this->executeLight($medal, $remainingBeforePop);
+            }
+
+            return TaskResult::after($this->randomInt(self::MIN_ACTION_DELAY_SECONDS, self::MAX_ACTION_DELAY_SECONDS));
         }
 
-        return TaskResult::after(max(60, $this->metal_lock - time()));
+        $state->clearRound();
+        $this->saveState($state);
+
+        return TaskResult::after($this->randomInt(self::MIN_IDLE_DELAY_SECONDS, self::MAX_IDLE_DELAY_SECONDS));
+    }
+
+    protected function now(): int
+    {
+        return time();
+    }
+
+    protected function randomInt(int $min, int $max): int
+    {
+        return mt_rand($min, $max);
+    }
+
+    protected function loadState(): PolishMedalRuntimeState
+    {
+        return $this->stateStore()->load();
+    }
+
+    protected function saveState(PolishMedalRuntimeState $state): void
+    {
+        $this->stateStore()->save($state);
+    }
+
+    protected function refreshRoundState(PolishMedalRuntimeState $state, int $now): PolishMedalRuntimeState
+    {
+        $medals = $this->fetchMedals();
+        $planned = $this->roundPlanner()->plan($medals, $this->cleanupInvalidMedalEnabled());
+        $state->setRound(
+            $now,
+            $planned['delete_queue'],
+            $planned['light_queue'],
+            $planned['stats'],
+        );
+
+        $stats = $state->roundStats();
+        $this->info(sprintf(
+            '点亮徽章: 刷新完成，总勋章 %d，已注销 %d，开播未点亮 %d，本轮删除 %d，本轮点亮 %d',
+            $stats['total_medal_count'] ?? 0,
+            $stats['logged_off_count'] ?? 0,
+            $stats['live_unlit_count'] ?? 0,
+            count($state->roundDeleteQueue()),
+            count($state->roundLightQueue()),
+        ));
+
+        return $state;
     }
 
     /**
      * @return array<int, array<string, mixed>>
      */
-    private function fetchMedalList(): array
+    protected function fetchMedals(): array
     {
-        $medalList = [];
-        for ($i = 1; $i <= 100; $i++) {
-            $deRaw = $this->fansMedalApi()->panel($i, 50);
-            $this->authFailureClassifier->assertNotAuthFailure($deRaw, '点亮徽章: 获取徽章列表时账号未登录');
-            if (isset($deRaw['code']) && $deRaw['code']) {
-                $this->warning("获取徽章列表失败 => {$deRaw['message']} => {$deRaw['code']}");
-            }
-            foreach (['list', 'special_list'] as $key) {
-                if (isset($deRaw['data'][$key])) {
-                    foreach ($deRaw['data'][$key] as $vo) {
-                        if (isset($vo['medal']) && is_array($vo['medal'])) {
-                            $vo['medal']['roomid'] = isset($vo['room_info']['room_id']) ? $vo['room_info']['room_id'] : 0;
-                        }
-                        $medalList[] = $vo;
-                    }
-                }
-            }
-            if (count($medalList) >= $deRaw['data']['total_number'] || empty($medalList)) {
+        $medalsById = [];
+        $page = 1;
+        $reportedTotal = 0;
+
+        while ($page <= self::MAX_FETCH_PAGES && count($medalsById) < self::MAX_FETCH_ITEMS) {
+            $response = $this->medalManageApi()->listPage($page, self::PANEL_PAGE_SIZE);
+            $this->authFailureClassifier->assertNotAuthFailure($response, '点亮徽章: 获取勋章列表时账号未登录');
+
+            if ((int)($response['code'] ?? -1) !== 0) {
+                $this->warning(sprintf(
+                    '点亮徽章: 获取勋章列表失败 page=%d -> %s',
+                    $page,
+                    (string)($response['message'] ?? '')
+                ));
                 break;
             }
-        }
-        if (!empty($medalList)) {
-            $num = count($medalList);
-            $this->info("勋章列表获取成功, 共获取到 $num 个!");
+
+            $reportedTotal = max($reportedTotal, (int)($response['total'] ?? 0));
+            foreach ($response['items'] ?? [] as $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+
+                $medalId = (int)($item['medal_id'] ?? 0);
+                if ($medalId <= 0) {
+                    continue;
+                }
+
+                $medalsById[$medalId] = $item;
+                if (count($medalsById) >= self::MAX_FETCH_ITEMS) {
+                    break;
+                }
+            }
+
+            if (!(bool)($response['has_more'] ?? false)) {
+                break;
+            }
+
+            $nextPage = max($page + 1, (int)($response['next_page'] ?? ($page + 1)));
+            if ($nextPage === $page) {
+                break;
+            }
+            $page = $nextPage;
         }
 
-        return $medalList;
+        if ($reportedTotal > self::MAX_FETCH_ITEMS) {
+            $this->warning(sprintf(
+                '点亮徽章: 勋章总数 %d 超出处理上限 %d，仅处理前 %d 个',
+                $reportedTotal,
+                self::MAX_FETCH_ITEMS,
+                self::MAX_FETCH_ITEMS,
+            ));
+        }
+
+        return array_values($medalsById);
     }
 
-    private function fetchGreyMedalList(bool $all = false): void
+    /**
+     * @param array<string, mixed> $medal
+     */
+    protected function executeDelete(array $medal): void
     {
-        $this->black_list = ($tmp = $this->cacheGet('black_list', self::CACHE_SCOPE, [])) ? $tmp : [];
-        $data = $this->fetchMedalList();
-        $invalidMedals = $this->loadInvalidMedals();
-        $greyFansMedals = [];
-        foreach ($data as $vo) {
-            $candidate = $this->normalizeMedalCandidate($vo);
-            if ($candidate === null) {
-                continue;
-            }
-            $medal = is_array($vo['medal'] ?? null) ? $vo['medal'] : $vo;
-            if (in_array($candidate['roomid'], $this->black_list, true)) {
-                continue;
-            }
-            if ($this->isInvalidMedal($candidate, $invalidMedals)) {
-                continue;
-            }
-            if ($this->cleanupInvalidMedalEnabled() && $candidate['anchor_name'] === '账号已注销') {
-                $this->markInvalidMedal($candidate, '账号已注销');
-                continue;
-            }
-            if ($all) {
-                $greyFansMedals[] = $candidate;
-                continue;
-            }
-            if (($medal['medal_color_start'] ?? null) == 12632256 && ($medal['medal_color_end'] ?? null) == 12632256 && ($medal['medal_color_border'] ?? null) == 12632256) {
-                $greyFansMedals[] = $candidate;
-            }
-        }
-        $this->grey_fans_medals = $greyFansMedals;
-        $this->medal_batch_total = count($this->grey_fans_medals);
-        if ($this->medal_batch_total > 0) {
-            $this->info("点亮徽章: 待处理 {$this->medal_batch_total} 个");
-        }
-        shuffle($this->grey_fans_medals);
-    }
-
-    private function polishTheMedal(): void
-    {
-        $remainingBeforePop = count($this->grey_fans_medals);
-        $medal = array_pop($this->grey_fans_medals);
-        if (is_null($medal)) {
-            return;
-        }
-        if (in_array($medal['roomid'], [21686237, 0], true)) {
+        $medalId = (int)($medal['medal_id'] ?? 0);
+        if ($medalId <= 0) {
             return;
         }
 
-        $progress = $this->progressLabel($remainingBeforePop);
-        $this->info("开始点亮{$progress}直播间@{$medal['roomid']}的勋章 [{$medal['anchor_name']} / {$medal['medal_name']}]");
-        $customWord = $this->resolveReplyWord();
-        $res = $this->msgApi()->sendBarrageAPP((int)$medal['roomid'], $customWord);
-        $this->authFailureClassifier->assertNotAuthFailure($res, "点亮徽章: 在直播间@{$medal['roomid']}发送弹幕时账号未登录");
-        if (isset($res['code']) && $res['code'] == 0) {
-            $this->notice("点亮徽章{$progress}: 在直播间@{$medal['roomid']}发送点亮弹幕成功");
-        } else {
-            $this->triggerException($medal, $res, $progress);
-        }
-    }
+        $response = $this->medalManageApi()->deleteMedals([$medalId]);
+        $this->authFailureClassifier->assertNotAuthFailure($response, '点亮徽章: 删除已注销勋章时账号未登录');
 
-    /**
-     * @param array{uid: mixed, roomid: mixed, medal_id: mixed, medal_name: string, anchor_name: string} $medal
-     * @param array<string, mixed> $res
-     */
-    protected function triggerException(array $medal, array $res, string $progress = ''): void
-    {
-        $this->warning("点亮徽章{$progress}: 在直播间@{$medal['roomid']}发送点亮弹幕失败, CODE -> {$res['code']} MSG -> {$res['message']} ");
-        switch ($res['code']) {
-            case 1003:
-                $this->info("直播间@{$medal['roomid']}已被禁言, 加入黑名单");
-                $this->black_list[] = $medal['roomid'];
-                $this->cacheSet('black_list', $this->black_list, self::CACHE_SCOPE);
-                break;
-            case 10033:
-                if ($this->cleanupInvalidMedalEnabled()) {
-                    $this->markInvalidMedal($medal, '房间已封禁');
-                }
-                break;
-            default:
-                break;
-        }
-    }
-
-    /**
-     * @param array<string, mixed> $item
-     * @return array{uid: mixed, roomid: mixed, medal_id: mixed, medal_name: string, anchor_name: string}|null
-     */
-    private function normalizeMedalCandidate(array $item): ?array
-    {
-        $medal = is_array($item['medal'] ?? null) ? $item['medal'] : $item;
-        $roomInfo = is_array($item['room_info'] ?? null) ? $item['room_info'] : [];
-        $anchorInfo = is_array($item['anchor_info'] ?? null) ? $item['anchor_info'] : [];
-
-        $roomId = (int)($medal['roomid'] ?? $roomInfo['room_id'] ?? 0);
-        if ($roomId === 0) {
-            return null;
+        $label = $this->medalLabel($medal);
+        if ((int)($response['code'] ?? -1) === 0) {
+            $this->notice(sprintf('点亮徽章: 删除已注销勋章成功 [%s]', $label));
+            return;
         }
 
-        return [
-            'uid' => $medal['target_id'] ?? 0,
-            'roomid' => $roomId,
-            'medal_id' => $medal['medal_id'] ?? 0,
-            'medal_name' => trim((string)($medal['medal_name'] ?? '')),
-            'anchor_name' => trim((string)($anchorInfo['nick_name'] ?? $medal['target_name'] ?? '')),
-        ];
+        $this->warning(sprintf(
+            '点亮徽章: 删除已注销勋章失败 [%s] CODE -> %s MSG -> %s',
+            $label,
+            (string)($response['code'] ?? ''),
+            (string)($response['message'] ?? ''),
+        ));
     }
 
     /**
-     * @return array<string, array<string, mixed>>
+     * @param array<string, mixed> $medal
      */
-    private function loadInvalidMedals(): array
+    protected function executeLight(array $medal, int $remainingBeforePop): void
     {
-        $invalid = $this->cacheGet(self::INVALID_MEDALS_CACHE_KEY, self::CACHE_SCOPE, []);
-        return is_array($invalid) ? $invalid : [];
-    }
-
-    /**
-     * @param array{uid: mixed, roomid: mixed, medal_id: mixed, medal_name: string, anchor_name: string} $medal
-     */
-    private function markInvalidMedal(array $medal, string $reason): void
-    {
-        $invalid = $this->loadInvalidMedals();
-        $key = $this->invalidMedalKey($medal);
-        $invalid[$key] = [
-            'roomid' => (int)$medal['roomid'],
-            'uid' => (int)$medal['uid'],
-            'medal_id' => (int)$medal['medal_id'],
-            'medal_name' => $medal['medal_name'],
-            'anchor_name' => $medal['anchor_name'],
-            'reason' => $reason,
-            'updated_at' => date('Y-m-d H:i:s'),
-        ];
-        $this->cacheSet(self::INVALID_MEDALS_CACHE_KEY, $invalid, self::CACHE_SCOPE);
-        $this->notice("点亮徽章: 标记无效勋章 [{$medal['anchor_name']} / {$medal['medal_name']}] -> {$reason}");
-    }
-
-    /**
-     * @param array{uid: mixed, roomid: mixed, medal_id: mixed, medal_name: string, anchor_name: string} $medal
-     * @param array<string, array<string, mixed>> $invalidMedals
-     */
-    private function isInvalidMedal(array $medal, array $invalidMedals): bool
-    {
-        return array_key_exists($this->invalidMedalKey($medal), $invalidMedals);
-    }
-
-    /**
-     * @param array{uid: mixed, roomid: mixed, medal_id: mixed, medal_name: string, anchor_name: string} $medal
-     */
-    private function invalidMedalKey(array $medal): string
-    {
-        $medalId = (int)$medal['medal_id'];
-        if ($medalId > 0) {
-            return 'medal_' . $medalId;
+        $roomId = (int)($medal['room_id'] ?? 0);
+        $targetId = (int)($medal['target_id'] ?? 0);
+        if ($roomId <= 0 || $targetId <= 0) {
+            return;
         }
 
-        return 'room_' . (int)$medal['roomid'];
+        $clickTime = $this->randomInt(30, 35);
+        $response = $this->likeInfoApi()->likeReportV3($roomId, $targetId, $clickTime);
+        $this->authFailureClassifier->assertNotAuthFailure($response, "点亮徽章: 在直播间@{$roomId}点赞时账号未登录");
+
+        $label = $this->medalLabel($medal);
+        $progress = $this->lightProgressLabel($remainingBeforePop);
+
+        if ((int)($response['code'] ?? -1) === 0) {
+            $this->notice(sprintf(
+                '点亮徽章%s: 直播间@%d [%s] 点赞 %d 次成功',
+                $progress,
+                $roomId,
+                $label,
+                $clickTime,
+            ));
+            return;
+        }
+
+        $this->warning(sprintf(
+            '点亮徽章%s: 直播间@%d [%s] 点赞 %d 次失败 CODE -> %s MSG -> %s',
+            $progress,
+            $roomId,
+            $label,
+            $clickTime,
+            (string)($response['code'] ?? ''),
+            (string)($response['message'] ?? ''),
+        ));
     }
 
-    private function cleanupInvalidMedalEnabled(): bool
+    protected function handleOutsideWindow(PolishMedalRuntimeState $state, int $now): TaskResult
+    {
+        $hadPendingRound = $state->roundRefreshedAt() > 0 || $state->hasDeleteQueue() || $state->hasLightQueue();
+        if ($hadPendingRound) {
+            $state->clearRound();
+            $this->saveState($state);
+            $this->info('点亮徽章: 当前不在运行窗口内，已丢弃未完成轮次，等待 08:00 重新获取');
+        }
+
+        return TaskResult::after($this->window()->secondsUntilNextStart($now));
+    }
+
+    protected function medalManageApi(): ApiMedalManage
+    {
+        return $this->medalManageApi ??= new ApiMedalManage($this->appContext()->request());
+    }
+
+    protected function likeInfoApi(): ApiLikeInfoV3
+    {
+        return $this->likeInfoApi ??= new ApiLikeInfoV3($this->appContext()->request());
+    }
+
+    protected function stateStore(): PolishMedalStateStore
+    {
+        return $this->stateStore ??= new PolishMedalStateStore($this->appContext()->cache());
+    }
+
+    protected function window(): PolishMedalWindow
+    {
+        return $this->window ??= new PolishMedalWindow(self::WINDOW_START, self::WINDOW_END);
+    }
+
+    protected function roundPlanner(): PolishMedalRoundPlanner
+    {
+        return $this->roundPlanner ??= new PolishMedalRoundPlanner(self::MAX_LIGHT_QUEUE_PER_ROUND);
+    }
+
+    protected function cleanupInvalidMedalEnabled(): bool
     {
         return $this->config('polish_medal.cleanup_invalid_medal', false, 'bool');
     }
 
-    private function resolveReplyWord(): string
+    /**
+     * @param array<string, mixed> $medal
+     */
+    private function medalLabel(array $medal): string
     {
-        $configured = array_values(array_filter(array_map(
-            static fn (string $word): string => trim($word),
-            explode(',', (string)$this->config('polish_medal.reply_words', ''))
-        ), static fn (string $word): bool => $word !== ''));
-
-        if ($configured !== []) {
-            return ArrayR::toRand($configured);
-        }
-
-        return ArrayR::toRand(self::DEFAULT_REPLY_WORDS);
+        return sprintf(
+            '%s / %s',
+            trim((string)($medal['anchor_name'] ?? '未命名主播')),
+            trim((string)($medal['medal_name'] ?? '未命名勋章')),
+        );
     }
 
-    private function progressLabel(int $remainingBeforePop): string
+    private function lightProgressLabel(int $remainingBeforePop): string
     {
-        if ($this->medal_batch_total <= 0) {
+        if ($remainingBeforePop <= 0) {
             return '';
         }
 
-        $current = max(1, $this->medal_batch_total - $remainingBeforePop + 1);
-
-        return "({$current}/{$this->medal_batch_total}) ";
-    }
-
-    private function msgApi(): ApiMsg
-    {
-        return $this->msgApi ??= new ApiMsg($this->appContext()->request());
-    }
-
-    private function fansMedalApi(): ApiFansMedal
-    {
-        return $this->fansMedalApi ??= new ApiFansMedal($this->appContext()->request());
+        return sprintf('(本轮剩余 %d) ', $remainingBeforePop);
     }
 }
