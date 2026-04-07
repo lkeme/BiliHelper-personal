@@ -10,8 +10,8 @@ final class Core
     public function __construct(
         private readonly ProfileContext $profileContext,
     ) {
-        $this->initSystemConstant();
         $this->initSystemPath();
+        $this->initSystemConstant();
     }
 
     protected function initSystemConstant(): void
