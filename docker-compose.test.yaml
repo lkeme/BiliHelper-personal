@@ -16,3 +16,5 @@ services:
     environment:
       BRANCH: dev
       CAPTCHA: 1
+      RESET_CACHE: 0
+      PURGE_AUTH: 0

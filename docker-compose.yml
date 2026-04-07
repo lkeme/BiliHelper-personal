@@ -16,4 +16,6 @@ services:
         environment:
             BRANCH: master # 远程资源分支。优先于 profile 里的 app.branch
             CAPTCHA: 1 # docs/CAPTCHA.md
+            RESET_CACHE: 0 # 1 等价于追加 --reset-cache
+            PURGE_AUTH: 0 # 仅与 RESET_CACHE=1 联用，等价于追加 --purge-auth
 

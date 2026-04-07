@@ -17,6 +17,18 @@ print_block() {
   printf ' ======== \n'
 }
 
+is_truthy() {
+  value="$(printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]')"
+  case "${value}" in
+    1|true|yes|on)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
 validate_branch() {
   case "${1}" in
     ''|*[!A-Za-z0-9._/-]*)
@@ -164,7 +176,21 @@ start_application() {
     exec "$@"
   fi
 
-  exec php "${APP_ROOT}/app.php"
+  set -- php "${APP_ROOT}/app.php"
+
+  if is_truthy "${RESET_CACHE:-0}"; then
+    set -- "$@" --reset-cache
+    if is_truthy "${PURGE_AUTH:-0}"; then
+      set -- "$@" --purge-auth
+      print_block "${GREEN_BG} Docker 启动参数: 附加 --reset-cache --purge-auth ${FONT_RESET}"
+    else
+      print_block "${GREEN_BG} Docker 启动参数: 附加 --reset-cache ${FONT_RESET}"
+    fi
+  elif is_truthy "${PURGE_AUTH:-0}"; then
+    print_block "${RED_BG} PURGE_AUTH 已忽略：需与 RESET_CACHE=1 一起使用 ${FONT_RESET}"
+  fi
+
+  exec "$@"
 }
 
 main() {

@@ -169,6 +169,26 @@ docker compose up -d
 docker run --rm IMAGE entrypoint.sh init_profile
 ```
 
+Docker 默认启动路径支持用环境变量映射现有 CLI 缓存参数：
+
+- `RESET_CACHE=1`：等价于 `--reset-cache`
+- `RESET_CACHE=1` 且 `PURGE_AUTH=1`：等价于 `--reset-cache --purge-auth`
+
+例如：
+
+```yaml
+environment:
+  BRANCH: master
+  CAPTCHA: 1
+  RESET_CACHE: 1
+  PURGE_AUTH: 0
+```
+
+说明：
+
+- 该映射只在默认 `entrypoint.sh run` 路径生效
+- 如果传入自定义命令，入口脚本不会自动改写命令参数
+
 ## 升级指南
 
 ### Docker 生产环境
