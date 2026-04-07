@@ -45,9 +45,16 @@ final class ActivityLotteryLifecycleLogger
         $taskName = trim((string)($context['task_name'] ?? ''));
         $label = $taskName !== '' ? sprintf('任务「%s」', $taskName) : sprintf('节点「%s」', $this->nodeLabel($beforeNode->type()));
         $message = $this->buildDetailedNodeResultMessage($beforeNode->type(), $afterNode, $context);
+        $segments = array_values(array_filter([
+            $this->buildCompactProgressPrefix($context),
+            $label,
+        ], static fn (string $value): bool => $value !== ''));
+        $head = implode('，', $segments);
 
         return [
-            sprintf('活动「%s」%s结果: %s', $activityTitle, $label, $message),
+            $head !== ''
+                ? sprintf('活动「%s」%s: %s', $activityTitle, $head, $message)
+                : sprintf('活动「%s」: %s', $activityTitle, $message),
             $context,
         ];
     }
@@ -218,6 +225,20 @@ final class ActivityLotteryLifecycleLogger
         }
 
         return sprintf('（进度 %d/%d）', $position, $total);
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private function buildCompactProgressPrefix(array $context): string
+    {
+        $position = max(0, (int)($context['node_position'] ?? 0));
+        $total = max(0, (int)($context['node_total'] ?? 0));
+        if ($position <= 0 || $total <= 0) {
+            return '';
+        }
+
+        return sprintf('进度 %d/%d', $position, $total);
     }
 
     /**

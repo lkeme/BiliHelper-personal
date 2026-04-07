@@ -76,11 +76,6 @@ final class ActivityLotteryRuntime
     {
         $now = $this->clock->now();
         $bizDate = $this->bizDate();
-        $this->log('debug', 'ActivityLottery 开始执行本轮 tick', [
-            'event' => 'tick.start',
-            'biz_date' => $bizDate,
-            'timestamp' => $now,
-        ]);
         if (!$this->window->contains($now)) {
             $delay = $this->secondsUntilWindowStart($now);
             $this->log('info', 'ActivityLottery 当前不在运行窗口内，跳过本轮', [
@@ -98,12 +93,7 @@ final class ActivityLotteryRuntime
         }
 
         $catalog = $this->catalogLoader->load();
-        $this->log('debug', 'ActivityLottery 目录加载完成', [
-            'event' => 'catalog.loaded',
-            'biz_date' => $bizDate,
-            'catalog_count' => count($catalog),
-            'existing_flow_count' => count($flows),
-        ]);
+        $existingFlowCount = count($flows);
 
         $newFlowCount = 0;
         foreach ($catalog as $item) {
@@ -116,34 +106,9 @@ final class ActivityLotteryRuntime
 
         $tickStartedAtMs = (int)round(microtime(true) * 1000);
         $pickedFlows = $this->flowPool->pick(array_values($flows), $now, $tickStartedAtMs);
-        $this->log('debug', 'ActivityLottery 本轮调度完成 flow 选取', [
-            'event' => 'tick.pick',
-            'biz_date' => $bizDate,
-            'flow_count' => count($flows),
-            'new_flow_count' => $newFlowCount,
-            'picked_flow_count' => count($pickedFlows),
-        ]);
         foreach ($pickedFlows as $flow) {
             $startedAt = microtime(true);
             $currentNode = $flow->nodes()[$flow->currentNodeIndex()];
-            [$executeMessage, $executeContext] = $this->lifecycleLogger->buildNodeExecuteLog($flow, $currentNode);
-            $executeLogContext = array_replace([
-                'event' => 'node.execute',
-                'biz_date' => $bizDate,
-                'flow_id' => $flow->id(),
-                'node_type' => $currentNode->type(),
-                'node_index' => $flow->currentNodeIndex(),
-            ], $executeContext);
-            if ($this->lifecycleLogger->shouldEmitLifecycleLog(
-                'node.execute',
-                $flow->id(),
-                $currentNode->type(),
-                $currentNode->status(),
-                $executeLogContext,
-                $now,
-            )) {
-                $this->log('info', $executeMessage, $executeLogContext);
-            }
             $updated = $this->executeFlow($flow, $now);
             $flows[$updated->id()] = $updated;
             $this->flowPool->noteStepExecuted($tickStartedAtMs, $flow->id(), (microtime(true) - $startedAt) * 1000);
@@ -175,34 +140,23 @@ final class ActivityLotteryRuntime
             )) {
                 $this->log($this->lifecycleLogger->resolveNodeResultLogLevel($currentNode->type(), $executedNode, $resultLogContext), $resultMessage, $resultLogContext);
             }
-            [$summaryMessage, $summaryContext] = $this->lifecycleLogger->buildFlowSummaryLog($flow, $currentNode, $updated, $executedNode);
-            if ($summaryMessage !== '' && $this->lifecycleLogger->shouldEmitLifecycleLog(
-                'flow.summary',
-                $updated->id(),
-                $currentNode->type(),
-                $executedNode->status(),
-                $summaryContext,
-                $now,
-            )) {
-                $summaryLogContext = array_replace([
-                    'event' => 'flow.summary',
-                    'biz_date' => $bizDate,
-                    'flow_id' => $updated->id(),
-                    'node_type' => $currentNode->type(),
-                    'node_status' => $executedNode->status(),
-                    'flow_status' => $updated->status(),
-                    'current_node_index' => $updated->currentNodeIndex(),
-                ], $summaryContext);
-                $this->log($this->lifecycleLogger->resolveFlowSummaryLogLevel($currentNode->type(), $executedNode, $summaryLogContext), $summaryMessage, $summaryLogContext);
-            }
         }
 
         $this->flowStore->save(array_values($flows));
 
         $delay = $this->resolveNextDelaySeconds(array_values($flows), $now);
-        $this->log('debug', 'ActivityLottery 本轮执行完成', [
+        $this->log('debug', sprintf(
+            'ActivityLottery 本轮完成: 目录 %d 个，已有 flow %d 个，新增 %d 个，本轮执行 %d 个，下次 %s后继续',
+            count($catalog),
+            $existingFlowCount,
+            $newFlowCount,
+            count($pickedFlows),
+            $this->formatDelayLabel($delay),
+        ), [
             'event' => 'tick.finish',
             'biz_date' => $bizDate,
+            'catalog_count' => count($catalog),
+            'existing_flow_count' => $existingFlowCount,
             'flow_count' => count($flows),
             'new_flow_count' => $newFlowCount,
             'picked_flow_count' => count($pickedFlows),
@@ -393,6 +347,19 @@ final class ActivityLotteryRuntime
         }
 
         return max(1.0, (float)($target - $now));
+    }
+
+    private function formatDelayLabel(float $seconds): string
+    {
+        $delay = max(1, (int)ceil($seconds));
+        if ($delay % 3600 === 0 && $delay >= 3600) {
+            return sprintf('%d 小时', (int)($delay / 3600));
+        }
+        if ($delay % 60 === 0 && $delay >= 60) {
+            return sprintf('%d 分钟', (int)($delay / 60));
+        }
+
+        return sprintf('%d 秒', $delay);
     }
 
     /**
