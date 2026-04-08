@@ -1,0 +1,5 @@
+Metadata-Version: 2.4
+Name: activity-index
+Version: 0.1.0
+Summary: Unified activity index generator for BiliHelper-personal
+Requires-Python: >=3.12
