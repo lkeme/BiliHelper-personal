@@ -10,10 +10,10 @@ namespace Bhp\Login;
  *  Updated: 2018 ~ 2026
  *
  *   _____   _   _       _   _   _   _____   _       _____   _____   _____
- *  |  _  \ | | | |     | | | | | | | ____| | |     |  _  \ | ____| |  _  \ &   锛弆銆?
- *  | |_| | | | | |     | | | |_| | | |__   | |     | |_| | | |__   | |_| |   锛堬緹锝?锝?锛?
- *  |  _  { | | | |     | | |  _  | |  __|  | |     |  ___/ |  __|  |  _  /  銆€ \銆侊緸 ~銉?  *
- *  | |_| | | | | |___  | | | | | | | |___  | |___  | |     | |___  | | \ \   銆€銇樸仐f_, )銉?
+ *  |  _  \ | | | |     | | | | | | | ____| | |     |  _  \ | ____| |  _  \ &   ／l、
+ *  | |_| | | | | |     | | | |_| | | |__   | |     | |_| | | |__   | |_| |   （ﾟ､ ｡ ７
+ *  |  _  { | | | |     | | |  _  | |  __|  | |     |  ___/ |  __|  |  _  /  　 \、ﾞ ~ヽ   *
+ *  | |_| | | | | |___  | | | | | | | |___  | |___  | |     | |___  | | \ \   　じしf_, )ノ
  *  |_____/ |_| |_____| |_| |_| |_| |_____| |_____| |_|     |_____| |_|  \_\
  */
 
@@ -36,7 +36,7 @@ use Bhp\Util\Qrcode\Qrcode;
 class Login extends BasePlugin implements PluginTaskInterface
 {
     /**
-     * 鎻掍欢淇℃伅
+     * 插件信息
      * @var array<string, mixed>|null
      */
 
@@ -162,7 +162,7 @@ class Login extends BasePlugin implements PluginTaskInterface
     }
 
     /**
-     * 鍒濆鍖栫櫥褰?
+     * 初始化登录
      */
     protected function initLogin(): void
     {
@@ -204,7 +204,6 @@ class Login extends BasePlugin implements PluginTaskInterface
     }
 
     /**
-     * 淇濇寔璁よ瘉
      * 保持认证
      */
     protected function keepLogin(): void
@@ -215,7 +214,7 @@ class Login extends BasePlugin implements PluginTaskInterface
             $this->tokenLifecycleService(),
             function (): void {
                 if (!$this->hasConfiguredLoginFallback()) {
-                    throw new NoLoginException('鐧诲綍浠ょ墝宸插け鏁堬紝涓旀湭閰嶇疆鍙洖閫€鐧诲綍鏂瑰紡');
+                    throw new NoLoginException('登录令牌已失效，且未配置可回退登录方式');
                 }
 
                 $this->login();
@@ -286,7 +285,7 @@ class Login extends BasePlugin implements PluginTaskInterface
                 $challenge,
                 $recaptchaToken,
                 function (string $phone, string $cid, string $targetUrl): void {
-                    $this->warning("姝ゆ璇锋眰闇€瑕佽涓洪獙璇佺爜");
+                    $this->warning("此次请求需要行为验证码");
                     $this->beginSmsCaptchaLogin($phone, $cid, $targetUrl);
                 },
             ),
@@ -676,7 +675,7 @@ class Login extends BasePlugin implements PluginTaskInterface
     }
 
     /**
-     * 妫€鏌ョ櫥褰?
+     * 检查登录
      */
     protected function checkLogin(int $mode_id): void
     {
@@ -685,7 +684,7 @@ class Login extends BasePlugin implements PluginTaskInterface
     }
 
     /**
-     * 杈撳叆鐭俊楠岃瘉鐮?
+     * 输入短信验证码
      * @param string $msg
      * @param int $max_char
      * @return string
