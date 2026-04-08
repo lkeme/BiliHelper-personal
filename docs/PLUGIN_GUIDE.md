@@ -73,6 +73,8 @@
   "priority": 1200,
   "cycle": "5(分钟)",
   "valid_until": "2099-12-31 23:59:59",
+  "activity_url": "",
+  "reference_links": [],
   "class_name": "Bhp\\Plugin\\Builtin\\Demo\\DemoPlugin",
   "entry": "src/DemoPlugin.php",
   "vendor": "official",
@@ -92,6 +94,8 @@
   "priority": 1200,
   "cycle": "5(分钟)",
   "valid_until": "2099-12-31 23:59:59",
+  "activity_url": "",
+  "reference_links": [],
   "mode": "app",
   "interval_seconds": 300,
   "max_concurrency": 1,
@@ -127,6 +131,13 @@
 - `required_extensions = []`
 - `provides_capabilities = []`
 - `requires_capabilities = []`
+
+Link metadata:
+
+- `activity_url`: main activity link for the plugin; write `""` when unknown or not applicable
+- `reference_links`: developer reference link list; write `[]` when empty
+- each `reference_links` item is `{"url": "...", "comment": "..."}`
+- these fields are manifest metadata only and do not participate in runtime behavior
 
 治理元数据说明：
 

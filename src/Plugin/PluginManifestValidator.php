@@ -9,7 +9,21 @@ final class PluginManifestValidator
      */
     public function normalize(array $manifest): array
     {
-        return PluginManifest::fromArray($manifest)->toArray();
+        $normalized = PluginManifest::fromArray($manifest)->toArray();
+
+        if (array_key_exists('activity_url', $manifest)) {
+            $normalized['activity_url'] = $manifest['activity_url'];
+        } else {
+            unset($normalized['activity_url']);
+        }
+
+        if (array_key_exists('reference_links', $manifest)) {
+            $normalized['reference_links'] = $manifest['reference_links'];
+        } else {
+            unset($normalized['reference_links']);
+        }
+
+        return $normalized;
     }
 
     /**
@@ -46,6 +60,11 @@ final class PluginManifestValidator
 
         if (PluginManifest::parseManifestDateTime($typedManifest->validUntil) === null) {
             return "插件 {$hook} manifest.valid_until 必须为 Y-m-d H:i:s";
+        }
+
+        $linkMetadataError = $this->validateLinkMetadata($hook, $manifest, $typedManifest);
+        if ($linkMetadataError !== null) {
+            return $linkMetadataError;
         }
 
         return null;
@@ -130,6 +149,74 @@ final class PluginManifestValidator
     private function toTypedManifest(array|PluginManifest $manifest): PluginManifest
     {
         return $manifest instanceof PluginManifest ? $manifest : PluginManifest::fromArray($manifest);
+    }
+
+    /**
+     * @param array<string, mixed>|PluginManifest $manifest
+     */
+    private function validateLinkMetadata(string $hook, array|PluginManifest $manifest, PluginManifest $typedManifest): ?string
+    {
+        if (!$typedManifest->activityUrlDeclared) {
+            return "插件 {$hook} manifest 缺少关键字段 activity_url";
+        }
+
+        if (!$typedManifest->referenceLinksDeclared) {
+            return "插件 {$hook} manifest 缺少关键字段 reference_links";
+        }
+
+        if ($manifest instanceof PluginManifest) {
+            return $this->validateReferenceLinkItems($hook, $typedManifest->referenceLinks);
+        }
+
+        $activityUrl = $manifest['activity_url'] ?? null;
+        if (!is_string($activityUrl)) {
+            return "插件 {$hook} manifest.activity_url 必须为字符串";
+        }
+
+        $referenceLinks = $manifest['reference_links'] ?? null;
+        if (!is_array($referenceLinks)) {
+            return "插件 {$hook} manifest.reference_links 必须为数组";
+        }
+
+        return $this->validateReferenceLinkItems($hook, $referenceLinks);
+    }
+
+    /**
+     * @param mixed $referenceLinks
+     */
+    private function validateReferenceLinkItems(string $hook, mixed $referenceLinks): ?string
+    {
+        if (!is_array($referenceLinks)) {
+            return "插件 {$hook} manifest.reference_links 必须为数组";
+        }
+
+        foreach ($referenceLinks as $index => $item) {
+            if (!is_array($item)) {
+                return "插件 {$hook} manifest.reference_links[{$index}] 必须为对象";
+            }
+
+            if (!array_key_exists('url', $item)) {
+                return "插件 {$hook} manifest.reference_links[{$index}] 缺少字段 url";
+            }
+
+            if (!array_key_exists('comment', $item)) {
+                return "插件 {$hook} manifest.reference_links[{$index}] 缺少字段 comment";
+            }
+
+            if (!is_string($item['url'])) {
+                return "插件 {$hook} manifest.reference_links[{$index}].url 必须为字符串";
+            }
+
+            if (!is_string($item['comment'])) {
+                return "插件 {$hook} manifest.reference_links[{$index}].comment 必须为字符串";
+            }
+
+            if (trim($item['url']) === '') {
+                return "插件 {$hook} manifest.reference_links[{$index}].url 不能为空";
+            }
+        }
+
+        return null;
     }
 
     private function shortClassName(string $className): string

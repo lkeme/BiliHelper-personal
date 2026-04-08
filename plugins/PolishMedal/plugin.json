@@ -10,6 +10,8 @@
     "end": "02:00:00",
     "mode": "app",
     "valid_until": "2099-12-31 23:59:59",
+    "activity_url": "",
+    "reference_links": [],
     "php_min": "8.5.0",
     "php_max": null,
     "required_extensions": [],

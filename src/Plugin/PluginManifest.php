@@ -11,6 +11,7 @@ final class PluginManifest
      * @param string[] $requiredExtensions
      * @param string[] $providesCapabilities
      * @param string[] $requiresCapabilities
+     * @param array<int, array{url: string, comment: string}> $referenceLinks
      * @param array<string, mixed> $extra
      */
     public function __construct(
@@ -21,12 +22,16 @@ final class PluginManifest
         public readonly int $priority,
         public readonly string $cycle,
         public readonly string $validUntil,
+        public readonly string $activityUrl = '',
+        public readonly array $referenceLinks = [],
         public readonly string $phpMin = '8.5.0',
         public readonly ?string $phpMax = null,
         public readonly array $requiredExtensions = [],
         public readonly array $providesCapabilities = [],
         public readonly array $requiresCapabilities = [],
         public readonly array $extra = [],
+        public readonly bool $activityUrlDeclared = true,
+        public readonly bool $referenceLinksDeclared = true,
         public readonly bool $declared = true,
     ) {
     }
@@ -44,6 +49,8 @@ final class PluginManifest
             'priority',
             'cycle',
             'valid_until',
+            'activity_url',
+            'reference_links',
             'php_min',
             'php_max',
             'required_extensions',
@@ -61,12 +68,16 @@ final class PluginManifest
             (int)($manifest['priority'] ?? 0),
             (string)($manifest['cycle'] ?? ''),
             (string)($manifest['valid_until'] ?? ''),
+            is_string($manifest['activity_url'] ?? null) ? (string)$manifest['activity_url'] : '',
+            self::normalizeReferenceLinks($manifest['reference_links'] ?? []),
             (string)($manifest['php_min'] ?? '8.5.0'),
             array_key_exists('php_max', $manifest) && $manifest['php_max'] === null ? null : (isset($manifest['php_max']) ? (string)$manifest['php_max'] : null),
             self::normalizeStringList($manifest['required_extensions'] ?? []),
             self::normalizeStringList($manifest['provides_capabilities'] ?? []),
             self::normalizeStringList($manifest['requires_capabilities'] ?? []),
             $extra,
+            array_key_exists('activity_url', $manifest),
+            array_key_exists('reference_links', $manifest),
             $manifest !== [],
         );
     }
@@ -84,6 +95,8 @@ final class PluginManifest
             'priority' => $this->priority,
             'cycle' => $this->cycle,
             'valid_until' => $this->validUntil,
+            'activity_url' => $this->activityUrl,
+            'reference_links' => $this->referenceLinks,
             'php_min' => $this->phpMin,
             'php_max' => $this->phpMax,
             'required_extensions' => $this->requiredExtensions,
@@ -102,6 +115,30 @@ final class PluginManifest
         }
 
         return array_values(array_filter($value, 'is_string'));
+    }
+
+    /**
+     * @return array<int, array{url: string, comment: string}>
+     */
+    private static function normalizeReferenceLinks(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $normalized = [];
+        foreach ($value as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $normalized[] = [
+                'url' => is_string($item['url'] ?? null) ? (string)$item['url'] : '',
+                'comment' => is_string($item['comment'] ?? null) ? (string)$item['comment'] : '',
+            ];
+        }
+
+        return array_values($normalized);
     }
 
     public static function parseManifestDateTime(string $value, ?DateTimeZone $timezone = null): ?DateTimeImmutable
