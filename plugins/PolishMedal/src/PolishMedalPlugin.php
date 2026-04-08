@@ -114,12 +114,15 @@ final class PolishMedalPlugin extends BasePlugin implements PluginTaskInterface
     protected function refreshRoundState(PolishMedalRuntimeState $state, int $now): PolishMedalRuntimeState
     {
         $medals = $this->fetchMedals();
-        $planned = $this->roundPlanner()->plan($medals, $this->cleanupInvalidMedalEnabled());
+        $planned = $this->roundPlanner()->plan($medals, false);
+        $deleteMedals = $this->cleanupInvalidMedalEnabled() ? $this->fetchDeleteMedals() : [];
+        $stats = $planned['stats'];
+        $stats['logged_off_count'] = count($deleteMedals);
         $state->setRound(
             $now,
-            $planned['delete_queue'],
+            $deleteMedals,
             $planned['light_queue'],
-            $planned['stats'],
+            $stats,
         );
 
         $stats = $state->roundStats();
@@ -188,6 +191,71 @@ final class PolishMedalPlugin extends BasePlugin implements PluginTaskInterface
         if ($reportedTotal > self::MAX_FETCH_ITEMS) {
             $this->warning(sprintf(
                 '点亮徽章: 勋章总数 %d 超出处理上限 %d，仅处理前 %d 个',
+                $reportedTotal,
+                self::MAX_FETCH_ITEMS,
+                self::MAX_FETCH_ITEMS,
+            ));
+        }
+
+        return array_values($medalsById);
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    protected function fetchDeleteMedals(): array
+    {
+        $medalsById = [];
+        $page = 1;
+        $reportedTotal = 0;
+
+        while ($page <= self::MAX_FETCH_PAGES && count($medalsById) < self::MAX_FETCH_ITEMS) {
+            $response = $this->medalManageApi()->receivedMedalsPage($page);
+            $this->authFailureClassifier->assertNotAuthFailure($response, '点亮徽章: 获取删除勋章列表时账号未登录');
+
+            if ((int)($response['code'] ?? -1) !== 0) {
+                $this->warning(sprintf(
+                    '点亮徽章: 获取删除勋章列表失败 page=%d -> %s',
+                    $page,
+                    (string)($response['message'] ?? '')
+                ));
+                break;
+            }
+
+            $reportedTotal = max($reportedTotal, (int)($response['total'] ?? 0));
+            foreach ($response['items'] ?? [] as $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+                if (trim((string)($item['anchor_name'] ?? '')) !== '账号已注销') {
+                    continue;
+                }
+
+                $medalId = (int)($item['medal_id'] ?? 0);
+                if ($medalId <= 0 || !(bool)($item['can_delete'] ?? true)) {
+                    continue;
+                }
+
+                $medalsById[$medalId] = $item;
+                if (count($medalsById) >= self::MAX_FETCH_ITEMS) {
+                    break;
+                }
+            }
+
+            if (!(bool)($response['has_more'] ?? false)) {
+                break;
+            }
+
+            $nextPage = max($page + 1, (int)($response['next_page'] ?? ($page + 1)));
+            if ($nextPage === $page) {
+                break;
+            }
+            $page = $nextPage;
+        }
+
+        if ($reportedTotal > self::MAX_FETCH_ITEMS) {
+            $this->warning(sprintf(
+                '点亮徽章: 删除勋章总数 %d 超出处理上限 %d，仅处理前 %d 个',
                 $reportedTotal,
                 self::MAX_FETCH_ITEMS,
                 self::MAX_FETCH_ITEMS,
