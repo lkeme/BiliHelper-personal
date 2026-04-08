@@ -24,7 +24,7 @@ jobs:
         run: python -m pip install -e ./tools/activity_index
 
       - name: Refresh activity indexes
-        run: python -m activity_index.main
+        run: python -c "from activity_index.main import main; main()"
 
       - name: Commit updated resources
         run: |

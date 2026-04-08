@@ -47,9 +47,19 @@ class SpaceArticleCollector:
             if cv_id == "":
                 continue
 
-            details = {"summary": "", "content": "", "dyn_id_str": ""}
+            details = {
+                "summary": str(item.get("summary", "")).strip(),
+                "content": "",
+                "dyn_id_str": "",
+            }
             if fetch_detail_types is None or article_type in fetch_detail_types:
-                details = self._fetch_article_details(cv_id)
+                fetched = self._fetch_article_details(cv_id)
+                if fetched.get("summary"):
+                    details["summary"] = fetched["summary"]
+                if fetched.get("content"):
+                    details["content"] = fetched["content"]
+                if fetched.get("dyn_id_str"):
+                    details["dyn_id_str"] = fetched["dyn_id_str"]
                 time.sleep(self.request_delay_seconds)
 
             collected.append(

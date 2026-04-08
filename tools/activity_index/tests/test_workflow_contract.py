@@ -8,6 +8,6 @@ def test_activity_index_workflow_contract():
     assert "workflow_dispatch:" in text
     assert "40 16 * * *" in text
     assert "40 4 * * *" in text
-    assert "python -m activity_index.main" in text
+    assert 'from activity_index.main import main; main()' in text
     assert "chore: refresh remote activity indexes" in text
     assert "git diff --quiet" in text or "git diff --cached --quiet" in text

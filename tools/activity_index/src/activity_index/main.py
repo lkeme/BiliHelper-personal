@@ -67,11 +67,13 @@ def build_payloads() -> dict[str, dict[str, object]]:
         wrap_payload(charge_records),
     )
 
-    return preserve_existing_payload_if_empty(
+    payloads["activity_lottery_infos.json"] = preserve_existing_payload_if_empty(
         resources_root,
         "activity_lottery_infos.json",
         payloads["activity_lottery_infos.json"],
     )
+
+    return payloads
 
 
 def preserve_existing_payload_if_empty(
