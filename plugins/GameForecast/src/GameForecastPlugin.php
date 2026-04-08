@@ -126,7 +126,7 @@ class GameForecastPlugin extends BasePlugin implements PluginTaskInterface
             }
 
             if ($this->questionAlreadyGuessed($question)) {
-                $this->info('赛事预测: 跳过已投注赛事 ' . $this->questionLabel($question));
+                $this->info($this->alreadyGuessedMessage($question));
                 continue;
             }
 
@@ -167,6 +167,31 @@ class GameForecastPlugin extends BasePlugin implements PluginTaskInterface
     private function questionLabel(array $question): string
     {
         return trim((string)($question['questions'][0]['title'] ?? '未命名赛事')) ?: '未命名赛事';
+    }
+
+    /**
+     * @param array<string, mixed> $question
+     */
+    private function alreadyGuessedMessage(array $question): string
+    {
+        $stakedOptions = [];
+        $details = $question['questions'][0]['details'] ?? null;
+        if (is_array($details)) {
+            foreach ($details as $detail) {
+                if (!is_array($detail) || (int)($detail['stake'] ?? 0) <= 0) {
+                    continue;
+                }
+
+                $option = trim((string)($detail['option'] ?? ''));
+                if ($option !== '') {
+                    $stakedOptions[] = $option;
+                }
+            }
+        }
+
+        $suffix = $stakedOptions === [] ? '' : ' [已投注: ' . implode('、', array_values(array_unique($stakedOptions))) . ']';
+
+        return '赛事预测: 跳过已投注赛事 ' . $this->questionLabel($question) . $suffix;
     }
 
     /**
