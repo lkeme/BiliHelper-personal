@@ -114,15 +114,12 @@ final class PolishMedalPlugin extends BasePlugin implements PluginTaskInterface
     protected function refreshRoundState(PolishMedalRuntimeState $state, int $now): PolishMedalRuntimeState
     {
         $medals = $this->fetchMedals();
-        $planned = $this->roundPlanner()->plan($medals, false);
-        $deleteMedals = $this->cleanupInvalidMedalEnabled() ? $this->fetchDeleteMedals() : [];
-        $stats = $planned['stats'];
-        $stats['logged_off_count'] = count($deleteMedals);
+        $planned = $this->roundPlanner()->plan($medals, $this->cleanupInvalidMedalEnabled());
         $state->setRound(
             $now,
-            $deleteMedals,
+            $planned['delete_queue'],
             $planned['light_queue'],
-            $stats,
+            $planned['stats'],
         );
 
         $stats = $state->roundStats();
@@ -201,71 +198,6 @@ final class PolishMedalPlugin extends BasePlugin implements PluginTaskInterface
     }
 
     /**
-     * @return array<int, array<string, mixed>>
-     */
-    protected function fetchDeleteMedals(): array
-    {
-        $medalsById = [];
-        $page = 1;
-        $reportedTotal = 0;
-
-        while ($page <= self::MAX_FETCH_PAGES && count($medalsById) < self::MAX_FETCH_ITEMS) {
-            $response = $this->medalManageApi()->receivedMedalsPage($page);
-            $this->authFailureClassifier->assertNotAuthFailure($response, '点亮徽章: 获取删除勋章列表时账号未登录');
-
-            if ((int)($response['code'] ?? -1) !== 0) {
-                $this->warning(sprintf(
-                    '点亮徽章: 获取删除勋章列表失败 page=%d -> %s',
-                    $page,
-                    (string)($response['message'] ?? '')
-                ));
-                break;
-            }
-
-            $reportedTotal = max($reportedTotal, (int)($response['total'] ?? 0));
-            foreach ($response['items'] ?? [] as $item) {
-                if (!is_array($item)) {
-                    continue;
-                }
-                if (trim((string)($item['anchor_name'] ?? '')) !== '账号已注销') {
-                    continue;
-                }
-
-                $medalId = (int)($item['medal_id'] ?? 0);
-                if ($medalId <= 0 || !(bool)($item['can_delete'] ?? true)) {
-                    continue;
-                }
-
-                $medalsById[$medalId] = $item;
-                if (count($medalsById) >= self::MAX_FETCH_ITEMS) {
-                    break;
-                }
-            }
-
-            if (!(bool)($response['has_more'] ?? false)) {
-                break;
-            }
-
-            $nextPage = max($page + 1, (int)($response['next_page'] ?? ($page + 1)));
-            if ($nextPage === $page) {
-                break;
-            }
-            $page = $nextPage;
-        }
-
-        if ($reportedTotal > self::MAX_FETCH_ITEMS) {
-            $this->warning(sprintf(
-                '点亮徽章: 删除勋章总数 %d 超出处理上限 %d，仅处理前 %d 个',
-                $reportedTotal,
-                self::MAX_FETCH_ITEMS,
-                self::MAX_FETCH_ITEMS,
-            ));
-        }
-
-        return array_values($medalsById);
-    }
-
-    /**
      * @param array<string, mixed> $medal
      */
     protected function executeDelete(array $medal): void
@@ -275,21 +207,74 @@ final class PolishMedalPlugin extends BasePlugin implements PluginTaskInterface
             return;
         }
 
-        $response = $this->medalManageApi()->deleteMedals([$medalId]);
-        $this->authFailureClassifier->assertNotAuthFailure($response, '点亮徽章: 删除已注销勋章时账号未登录');
+        $response = $this->medalManageApi()->deleteMedal($medalId);
+        $this->authFailureClassifier->assertNotAuthFailure($response, '清理徽章: 删除已注销勋章时账号未登录');
 
         $label = $this->medalLabel($medal);
         if ((int)($response['code'] ?? -1) === 0) {
-            $this->notice(sprintf('点亮徽章: 删除已注销勋章成功 [%s]', $label));
+            $existsInPanel = $this->medalExistsInPanel($medalId);
+            if ($existsInPanel === true) {
+                $this->warning(sprintf('清理徽章: 删除已注销勋章返回成功但列表仍存在 [%s]', $label));
+                return;
+            }
+            if ($existsInPanel === null) {
+                $this->notice(sprintf('清理徽章: 删除已注销勋章成功 [%s]，但删后校验失败', $label));
+                return;
+            }
+            $this->notice(sprintf('清理徽章: 删除已注销勋章成功 [%s]', $label));
             return;
         }
 
         $this->warning(sprintf(
-            '点亮徽章: 删除已注销勋章失败 [%s] CODE -> %s MSG -> %s',
+            '清理徽章: 删除已注销勋章失败 [%s] CODE -> %s MSG -> %s',
             $label,
             (string)($response['code'] ?? ''),
             (string)($response['message'] ?? ''),
         ));
+    }
+
+    protected function medalExistsInPanel(int $medalId): ?bool
+    {
+        if ($medalId <= 0) {
+            return false;
+        }
+
+        $page = 1;
+        while ($page <= self::MAX_FETCH_PAGES) {
+            $response = $this->medalManageApi()->listPage($page, self::PANEL_PAGE_SIZE);
+            $this->authFailureClassifier->assertNotAuthFailure($response, '点亮徽章: 删除后校验勋章列表时账号未登录');
+
+            if ((int)($response['code'] ?? -1) !== 0) {
+                $this->warning(sprintf(
+                    '点亮徽章: 删除后校验勋章列表失败 page=%d -> %s',
+                    $page,
+                    (string)($response['message'] ?? '')
+                ));
+                return null;
+            }
+
+            foreach ($response['items'] ?? [] as $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+
+                if ((int)($item['medal_id'] ?? 0) === $medalId) {
+                    return true;
+                }
+            }
+
+            if (!(bool)($response['has_more'] ?? false)) {
+                return false;
+            }
+
+            $nextPage = max($page + 1, (int)($response['next_page'] ?? ($page + 1)));
+            if ($nextPage === $page) {
+                return false;
+            }
+            $page = $nextPage;
+        }
+
+        return false;
     }
 
     /**
