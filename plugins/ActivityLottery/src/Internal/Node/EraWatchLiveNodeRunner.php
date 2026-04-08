@@ -10,8 +10,6 @@ use Bhp\Plugin\Builtin\ActivityLottery\Internal\Gateway\WatchLiveGateway;
 
 final class EraWatchLiveNodeRunner implements NodeRunnerInterface
 {
-    private const EMPTY_ROOM_RETRY_SECONDS = 600;
-
     public function __construct(
         private readonly WatchLiveGateway $watchGateway = new WatchLiveGateway(),
     ) {
@@ -52,9 +50,8 @@ final class EraWatchLiveNodeRunner implements NodeRunnerInterface
         if ($session === null) {
             $session = $this->watchGateway->start($task->targetRoomIds(), $task->targetAreaId(), $task->targetParentAreaId());
             if ($session === null) {
-                return new ActivityNodeResult(true, '当前没有可观看的直播间，稍后重试', [
-                    'node_status' => ActivityNodeStatus::WAITING,
-                    'next_run_at' => $now + self::EMPTY_ROOM_RETRY_SECONDS,
+                return new ActivityNodeResult(true, '当前没有可观看的直播间，按完成处理', [
+                    'node_status' => ActivityNodeStatus::SUCCEEDED,
                     'context_patch' => $taskView->replaceTaskRuntime($state),
                 ], $now);
             }

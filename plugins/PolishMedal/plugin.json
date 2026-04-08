@@ -10,8 +10,21 @@
     "end": "02:00:00",
     "mode": "app",
     "valid_until": "2099-12-31 23:59:59",
-    "activity_url": "",
-    "reference_links": [],
+    "activity_url": "https://link.bilibili.com/p/center/index#/user-center/wearing-center/my-medal",
+    "reference_links": [
+        {
+            "url": "https://live.bilibili.com/p/html/live-app-fanspanel/index.html?anchor_id=6580464#/fans/",
+            "comment": "点亮规则页面"
+        },
+        {
+            "url": "https://api.live.bilibili.com/xlive/general-interface/v1/reward/GetDocContent?id=2707",
+            "comment": "点亮规则接口"
+        },
+        {
+            "url": "https://live.bilibili.com/p/html/live-app-fansmedal-manange/index.html",
+            "comment": "勋章列表获取页面"
+        }
+    ],
     "php_min": "8.5.0",
     "php_max": null,
     "required_extensions": [],
