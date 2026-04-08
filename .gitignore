@@ -15,7 +15,9 @@ gen
 /Todo
 /backup
 /vendor
+.venv/
 .worktrees/
+worktrees/
 /build/
 /reference/
 /tools/local/

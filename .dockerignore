@@ -1,5 +1,6 @@
 .git
 .git/
+.venv/
 .worktrees/
 worktrees/
 build/
