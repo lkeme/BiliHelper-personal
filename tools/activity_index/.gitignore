@@ -1,0 +1,5 @@
+.pytest_cache/
+src/*.egg-info/
+src/activity_index.egg-info/
+**/__pycache__/
+*.pyc

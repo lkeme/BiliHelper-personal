@@ -9,16 +9,11 @@ use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
 use Bhp\Scheduler\TaskResult;
 
-class LiveReservationPlugin extends BasePlugin implements PluginTaskInterface
+final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterface
 {
     private AuthFailureClassifier $authFailureClassifier;
     private ?ApiReservation $reservationApi = null;
-
-    /**
-     * 插件信息
-     *
-     * @var array<string, int|string>
-     */
+    private ?LiveReservationRemoteIndexLoader $remoteIndexLoader = null;
 
     public function __construct(Plugin &$plugin)
     {
@@ -39,10 +34,13 @@ class LiveReservationPlugin extends BasePlugin implements PluginTaskInterface
 
     protected function reservationTask(): void
     {
-        $vmids = (string)$this->config('live_reservation.vmids', '');
-        $vmids = explode(',', $vmids);
-        foreach ($vmids as $vmid) {
-            $reservationList = $this->fetchReservation($vmid);
+        $targets = $this->mergeReservationTargets(
+            $this->remoteIndexLoader()->load(),
+            $this->parseConfiguredVmids((string)$this->config('live_reservation.vmids', '')),
+        );
+
+        foreach ($targets as $target) {
+            $reservationList = $this->fetchReservation((string)$target['up_mid'], $target['sids']);
             foreach ($reservationList as $reservation) {
                 $this->reserve($reservation);
             }
@@ -50,9 +48,62 @@ class LiveReservationPlugin extends BasePlugin implements PluginTaskInterface
     }
 
     /**
+     * @param array<int, array<string, mixed>> $remoteTargets
+     * @param string[] $configuredVmids
+     * @return array<int, array{up_mid:string,sids:array<int,string>}>
+     */
+    protected function mergeReservationTargets(array $remoteTargets, array $configuredVmids): array
+    {
+        $merged = [];
+        foreach ($remoteTargets as $target) {
+            if (!is_array($target)) {
+                continue;
+            }
+
+            $upMid = trim((string)($target['up_mid'] ?? ''));
+            if ($upMid === '') {
+                continue;
+            }
+
+            $key = 'up_mid:' . $upMid;
+            $merged[$key] = [
+                'up_mid' => $upMid,
+                'sids' => array_values(array_filter(array_map(
+                    static fn (mixed $sid): string => trim((string)$sid),
+                    is_array($target['sids'] ?? null) ? $target['sids'] : [],
+                ), static fn (string $sid): bool => $sid !== '')),
+            ];
+        }
+
+        foreach ($configuredVmids as $vmid) {
+            $key = 'up_mid:' . $vmid;
+            if (!isset($merged[$key])) {
+                $merged[$key] = [
+                    'up_mid' => $vmid,
+                    'sids' => [],
+                ];
+            }
+        }
+
+        return array_values($merged);
+    }
+
+    /**
+     * @return string[]
+     */
+    protected function parseConfiguredVmids(string $vmids): array
+    {
+        return array_values(array_filter(array_map(
+            static fn (string $value): string => trim($value),
+            preg_split('/[|,]/', $vmids, -1, PREG_SPLIT_NO_EMPTY) ?: [],
+        ), static fn (string $value): bool => $value !== ''));
+    }
+
+    /**
+     * @param string[] $allowedSids
      * @return array<int, array{sid: mixed, name: mixed, vmid: mixed, jump_url: mixed, text: mixed}>
      */
-    protected function fetchReservation(string $vmid): array
+    protected function fetchReservation(string $vmid, array $allowedSids = []): array
     {
         $reservationList = [];
         $response = $this->reservationApi()->reservation($vmid);
@@ -62,7 +113,7 @@ class LiveReservationPlugin extends BasePlugin implements PluginTaskInterface
         } else {
             $deData = $response['data'] ?: [];
             foreach ($deData as $data) {
-                $result = self::checkLottery($data);
+                $result = $this->checkLottery($data, $allowedSids);
                 if (!$result) {
                     continue;
                 }
@@ -76,14 +127,18 @@ class LiveReservationPlugin extends BasePlugin implements PluginTaskInterface
 
     /**
      * @param array<string, mixed> $data
+     * @param string[] $allowedSids
      * @return array{sid: mixed, name: mixed, vmid: mixed, jump_url: mixed, text: mixed}|false
      */
-    protected function checkLottery(array $data): bool|array
+    protected function checkLottery(array $data, array $allowedSids = []): bool|array
     {
         if ($data['etime'] <= time()) {
             return false;
         }
         if ($data['is_follow']) {
+            return false;
+        }
+        if ($allowedSids !== [] && !in_array((string)($data['sid'] ?? ''), $allowedSids, true)) {
             return false;
         }
         if (array_key_exists('lottery_prize_info', $data) && array_key_exists('lottery_type', $data)) {
@@ -117,8 +172,14 @@ class LiveReservationPlugin extends BasePlugin implements PluginTaskInterface
             $this->notice("预约直播: 尝试预约并抽奖成功 {$response['message']}");
         }
     }
+
     private function reservationApi(): ApiReservation
     {
         return $this->reservationApi ??= new ApiReservation($this->appContext()->request());
+    }
+
+    private function remoteIndexLoader(): LiveReservationRemoteIndexLoader
+    {
+        return $this->remoteIndexLoader ??= new LiveReservationRemoteIndexLoader($this->appContext());
     }
 }
