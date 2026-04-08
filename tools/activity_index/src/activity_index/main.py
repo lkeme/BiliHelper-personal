@@ -1,3 +1,7 @@
+import json
+from pathlib import Path
+
+
 def build_empty_payloads() -> dict[str, dict[str, object]]:
     names = [
         "activity_lottery_infos.json",
@@ -14,3 +18,22 @@ def build_empty_payloads() -> dict[str, dict[str, object]]:
         }
         for name in names
     }
+
+
+def write_payloads(base_path: Path) -> None:
+    base_path.mkdir(parents=True, exist_ok=True)
+    for name, payload in build_empty_payloads().items():
+        target = base_path / name
+        target.write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+
+
+def main() -> None:
+    resources_root = Path(__file__).resolve().parents[4] / "resources"
+    write_payloads(resources_root)
+
+
+if __name__ == "__main__":
+    main()
