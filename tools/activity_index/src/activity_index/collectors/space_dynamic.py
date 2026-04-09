@@ -63,7 +63,7 @@ class SpaceArticleCollector:
                     details["summary"] = fetched["summary"]
                 if fetched.get("content"):
                     details["content"] = fetched["content"]
-                elif article_type == "activity_lottery":
+                elif article_type in {"activity_lottery", "interactive_lottery", "reservation_lottery", "charge_lottery"}:
                     fallback_content = self._fetch_article_page_html(cv_id)
                     if fallback_content != "":
                         details["content"] = fallback_content
