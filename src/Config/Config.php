@@ -40,6 +40,7 @@ class Config extends BaseResource
         }
 
         $this->loadResource($filename, 'ini');
+        (new ConfigRuntimeValidator($this, $schema))->validate();
     }
 
     /**
