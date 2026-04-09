@@ -13,6 +13,12 @@ class SpaceArticleCollector:
     def __init__(self, logger: ActivityIndexLogger | None = None, client: HttpClient | None = None) -> None:
         self.logger = logger or get_logger()
         self.client = client or HttpClient(self.logger)
+        self.raw_article_count = 0
+        self.skipped_older_than_threshold = 0
+        self.skipped_unsupported_type = 0
+        self.skipped_missing_cv_id = 0
+        self.detail_fetch_failures = 0
+        self.detail_fetch_successes = 0
 
     def collect_recent_articles(
         self,
@@ -22,23 +28,27 @@ class SpaceArticleCollector:
         fetch_detail_types: set[str] | None = None,
     ) -> list[SpaceArticle]:
         raw_articles = self._fetch_article_list(host_mid, page=1, page_size=limit)
+        self.raw_article_count = len(raw_articles)
         threshold = datetime.now() - timedelta(hours=hours)
 
         collected: list[SpaceArticle] = []
         for item in raw_articles:
             publish_time = datetime.fromtimestamp(int(item.get("publish_time", 0)))
             if publish_time < threshold:
+                self.skipped_older_than_threshold += 1
                 self.logger.debug("article skipped because it is older than threshold", publish_time=publish_time.isoformat())
                 continue
 
             title = str(item.get("title", "")).strip()
             article_type = classify_article_title(title)
             if article_type is None:
+                self.skipped_unsupported_type += 1
                 self.logger.debug("article skipped because no supported type matched", title=title)
                 continue
 
             cv_id = str(item.get("id", "")).strip()
             if cv_id == "":
+                self.skipped_missing_cv_id += 1
                 self.logger.debug("article skipped because cv_id is empty", title=title)
                 continue
 
@@ -115,6 +125,7 @@ class SpaceArticleCollector:
             return {"summary": "", "content": "", "dyn_id_str": ""}
 
         if payload.get("code") == 0 and isinstance(payload.get("data"), dict):
+            self.detail_fetch_successes += 1
             article = payload["data"]
             return {
                 "summary": str(article.get("summary", "")).strip(),
@@ -122,12 +133,24 @@ class SpaceArticleCollector:
                 "dyn_id_str": str(article.get("dyn_id_str", "")).strip(),
             }
 
+        self.detail_fetch_failures += 1
         self.logger.warning(
             "article detail API returned non-zero code",
             cv_id=cv_id,
             code=payload.get("code"),
         )
         return {"summary": "", "content": "", "dyn_id_str": ""}
+
+    def diagnostics(self, collected_count: int) -> dict[str, int]:
+        return {
+            "raw_article_count": self.raw_article_count,
+            "collected_count": collected_count,
+            "skipped_older_than_threshold": self.skipped_older_than_threshold,
+            "skipped_unsupported_type": self.skipped_unsupported_type,
+            "skipped_missing_cv_id": self.skipped_missing_cv_id,
+            "detail_fetch_successes": self.detail_fetch_successes,
+            "detail_fetch_failures": self.detail_fetch_failures,
+        }
 
 
 def extract_urls(pattern: str, text: str) -> list[str]:

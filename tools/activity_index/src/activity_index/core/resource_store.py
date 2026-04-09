@@ -26,12 +26,20 @@ class PayloadGenerationResult:
         return len(data) if isinstance(data, list) else 0
 
 
+@dataclass(slots=True)
+class ResourceWriteResult:
+    filename: str
+    action: str
+    records: int
+    reason: str = ""
+
+
 class ResourceStore:
     def __init__(self, base_path: Path, logger: ActivityIndexLogger) -> None:
         self.base_path = base_path
         self.logger = logger
 
-    def write(self, result: PayloadGenerationResult) -> None:
+    def write(self, result: PayloadGenerationResult) -> ResourceWriteResult:
         self.base_path.mkdir(parents=True, exist_ok=True)
         target = self.base_path / result.filename
         existing_payload = self._read_existing_payload(target)
@@ -46,24 +54,28 @@ class ResourceStore:
                 records=result.record_count,
                 action="overwrite",
             )
-            return
+            return ResourceWriteResult(result.filename, "overwrite", result.record_count)
 
         if existing_payload is not None:
+            reason = result.reason or invalid_reason or "invalid payload"
             self.logger.warning(
                 "resource generation failed, keeping existing file",
                 filename=result.filename,
-                reason=result.reason or invalid_reason or "invalid payload",
+                reason=reason,
                 action="keep_existing",
             )
-            return
+            records = len(existing_payload.get("data", [])) if isinstance(existing_payload.get("data"), list) else 0
+            return ResourceWriteResult(result.filename, "keep_existing", records, reason)
 
         self._write_payload(target, empty_payload())
+        reason = result.reason or invalid_reason or "invalid payload"
         self.logger.warning(
             "resource generation failed, wrote empty payload because no existing file was found",
             filename=result.filename,
-            reason=result.reason or invalid_reason or "invalid payload",
+            reason=reason,
             action="write_empty",
         )
+        return ResourceWriteResult(result.filename, "write_empty", 0, reason)
 
     def _read_existing_payload(self, path: Path) -> dict[str, Any] | None:
         if not path.is_file():

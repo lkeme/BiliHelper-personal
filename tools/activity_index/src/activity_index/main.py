@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from activity_index.core import PayloadGenerationResult, ResourceStore, get_logger
+from activity_index.core import PayloadGenerationResult, ResourceStore, ResourceWriteResult, get_logger
 from activity_index.collectors.space_dynamic import SpaceArticleCollector
 from activity_index.parsers.activity_lottery_parser import parse_activity_article
 from activity_index.parsers.charge_lottery_parser import parse_charge_article
@@ -47,6 +47,8 @@ def build_payload_results(logger=None) -> list[PayloadGenerationResult]:
         ]
 
     logger.info("recent articles collected", articles=len(articles))
+    logger.info("collector diagnostics", **collector.diagnostics(len(articles)))
+    logger.info("http diagnostics", **collector.client.diagnostics())
 
     for article in articles:
         logger.debug(
@@ -121,14 +123,22 @@ def main() -> None:
     store = ResourceStore(resources_root, logger)
 
     results = build_payload_results(logger)
+    write_results: list[ResourceWriteResult] = []
     for result in results:
-        store.write(result)
+        write_results.append(store.write(result))
 
     logger.info(
         "activity index generation finished",
         files=len(results),
         succeeded=sum(1 for result in results if result.success),
         failed=sum(1 for result in results if not result.success),
+    )
+    logger.info(
+        "resource write summary",
+        overwritten=sum(1 for item in write_results if item.action == "overwrite"),
+        kept_existing=sum(1 for item in write_results if item.action == "keep_existing"),
+        wrote_empty=sum(1 for item in write_results if item.action == "write_empty"),
+        total_records=sum(item.records for item in write_results),
     )
 
 
