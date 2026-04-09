@@ -7,11 +7,15 @@ from urllib.parse import parse_qs, urlparse, urlunparse
 from activity_index.collectors.space_dynamic import extract_urls
 from activity_index.models.article import SpaceArticle
 from activity_index.models.activity_lottery import build_activity_lottery_record
+from activity_index.parsers.common import extract_end_of_day_timestamp, normalize_article_text
 
 ACTIVITY_URL_PATTERN = (
     r"https?://(?:www\.)?bilibili\.com/blackboard/era/[A-Za-z0-9_-]+(?:\.html)?(?:\?[^\s\"'<]*)?"
 )
-DATE_PATTERN = re.compile(r"(20\d{2})(?:-|/|\u5e74)(\d{1,2})(?:-|/|\u6708)(\d{1,2})")
+PAGE_ID_PATTERN = re.compile(
+    r"(?:page[_-]?id)[=:\uFF1A\s\"']*([A-Za-z0-9_-]+)",
+    re.IGNORECASE,
+)
 ACTIVITY_ID_PATTERN = re.compile(
     r"(?:activity[_-]?id|act[_-]?id)[=:\uFF1A\s\"']*([A-Za-z0-9_-]+)",
     re.IGNORECASE,
@@ -19,6 +23,12 @@ ACTIVITY_ID_PATTERN = re.compile(
 LOTTERY_ID_PATTERN = re.compile(
     r"(?:lottery[_-]?id|sid)[=:\uFF1A\s\"']*([A-Za-z0-9_-]+)",
     re.IGNORECASE,
+)
+START_TIME_PATTERN = re.compile(
+    r"(20\d{2})(?:-|/|\u5e74)(\d{1,2})(?:-|/|\u6708)(\d{1,2})(?:\s*(\d{1,2})(?::|点|时)?(\d{1,2})?)?\s*(?:开始|上线|开放|开启)",
+)
+END_TIME_PATTERN = re.compile(
+    r"(20\d{2})(?:-|/|\u5e74)(\d{1,2})(?:-|/|\u6708)(\d{1,2})(?:\s*(\d{1,2})(?::|点|时)?(\d{1,2})?)?\s*(?:结束|截止|开奖)",
 )
 
 
@@ -30,11 +40,13 @@ def parse_activity_lottery(payload: dict[str, object]) -> dict[str, object]:
 
 
 def parse_activity_article(article: SpaceArticle) -> list[dict[str, object]]:
-    text = article.content or article.summary
+    text = normalize_article_text(article.content or article.summary)
     activity_urls = _extract_activity_urls(text)
     if not activity_urls:
         return []
 
+    start_time = _extract_start_time(article.source_title, text, article.publish_time)
+    end_time = _extract_end_time(article.source_title, text)
     records: list[dict[str, object]] = []
     for activity_url in activity_urls:
         record = build_activity_lottery_record()
@@ -42,11 +54,11 @@ def parse_activity_article(article: SpaceArticle) -> list[dict[str, object]]:
             {
                 "title": article.source_title,
                 "url": activity_url,
-                "page_id": _extract_page_id(activity_url),
+                "page_id": _extract_page_id(text, activity_url),
                 "activity_id": _extract_activity_id(text, activity_url),
                 "lottery_id": _extract_lottery_id(text, activity_url),
-                "start_time": int(article.publish_time.timestamp()),
-                "end_time": _extract_end_time(article.source_title, text),
+                "start_time": start_time,
+                "end_time": end_time,
                 "source_cv_id": article.cv_id,
                 "source_url": article.source_url,
                 "publish_time": article.publish_time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -106,7 +118,11 @@ def _normalize_activity_url(url: str) -> str:
     return urlunparse(normalized)
 
 
-def _extract_page_id(url: str) -> str:
+def _extract_page_id(text: str, url: str) -> str:
+    match = PAGE_ID_PATTERN.search(text)
+    if match:
+        return match.group(1).strip()
+
     path = urlparse(url).path.rstrip("/")
     if not path:
         return ""
@@ -142,9 +158,24 @@ def _extract_lottery_id(text: str, url: str) -> str:
 
 def _extract_end_time(title: str, text: str) -> int:
     source = f"{title}\n{text}"
-    match = DATE_PATTERN.search(source)
+    match = END_TIME_PATTERN.search(source)
     if match is None:
-        return 0
+        return extract_end_of_day_timestamp(source)
 
+    return _build_timestamp(match)
+
+
+def _extract_start_time(title: str, text: str, publish_time: datetime) -> int:
+    source = f"{title}\n{text}"
+    match = START_TIME_PATTERN.search(source)
+    if match is None:
+        return int(publish_time.timestamp())
+
+    return _build_timestamp(match)
+
+
+def _build_timestamp(match: re.Match[str]) -> int:
     year, month, day = (int(match.group(index)) for index in range(1, 4))
-    return int(datetime(year, month, day, 23, 59, 59).timestamp())
+    hour = int(match.group(4) or 0)
+    minute = int(match.group(5) or 0)
+    return int(datetime(year, month, day, hour, minute, 0).timestamp())
