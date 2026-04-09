@@ -19,8 +19,6 @@ final class LoginFlowController
             case 2:
                 $smsLogin();
                 return;
-            case 3:
-                throw new LoginException('已不支持扫码登录模式，当前推荐短信登录模式', 6 * 3600);
             default:
                 throw new LoginException('登录模式配置错误', 6 * 3600);
         }
@@ -36,7 +34,6 @@ final class LoginFlowController
      * @param callable(string, string, string, string, string):(?array<string, mixed>) $sendSms
      * @param callable(string):string $promptCode
      * @param callable(array<string, mixed>, string):void $completeSmsLogin
-     * @param callable(string):bool $validateQrAuthCode
      */
     public function resume(
         array $flow,
@@ -48,7 +45,6 @@ final class LoginFlowController
         callable $sendSms,
         callable $promptCode,
         callable $completeSmsLogin,
-        callable $validateQrAuthCode,
     ): void {
         switch ($flow['type'] ?? null) {
             case 'account_captcha':
@@ -87,19 +83,6 @@ final class LoginFlowController
 
                 $completeSmsLogin($payload, $code);
                 $finalizePendingFlow($flow);
-                return;
-            case 'qrcode_poll':
-                if ((int) ($flow['expires_at'] ?? 0) < time()) {
-                    $clearPendingFlow();
-                    throw new LoginException('扫码失败 二维码已失效', 300);
-                }
-
-                if ($validateQrAuthCode((string) $flow['auth_code'])) {
-                    $clearPendingFlow();
-                    return;
-                }
-
-                $scheduleAfter(3.0);
                 return;
             default:
                 $clearPendingFlow();

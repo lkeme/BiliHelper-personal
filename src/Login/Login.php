@@ -21,8 +21,6 @@ use Bhp\Api\Passport\ApiLogin;
 use Bhp\Api\Passport\ApiOauth2;
 use Bhp\Api\Response\LoginDecision;
 use Bhp\Api\Response\LoginTokenBundle;
-use Bhp\Api\Response\QrAuthCode;
-use Bhp\Api\PassportTv\ApiQrcode;
 use Bhp\Api\WWW\ApiMain;
 use Bhp\Plugin\BasePlugin;
 use Bhp\Plugin\Contract\PluginTaskInterface;
@@ -31,7 +29,6 @@ use Bhp\Util\Common\Common;
 use Bhp\Util\Exceptions\LoginException;
 use Bhp\Util\Exceptions\NoLoginException;
 use Bhp\Util\Exceptions\RequestException;
-use Bhp\Util\Qrcode\Qrcode;
 
 class Login extends BasePlugin implements PluginTaskInterface
 {
@@ -59,11 +56,9 @@ class Login extends BasePlugin implements PluginTaskInterface
     private ?LoginCredentialService $credentialService = null;
     private ?LoginFlowController $flowController = null;
     private ?LoginAuthenticationService $authenticationService = null;
-    private ?LoginQrCoordinator $qrCoordinator = null;
     private ?LoginDecisionApplierService $decisionApplierService = null;
     private ?LoginModeExecutor $modeExecutor = null;
     private ?LoginPromptService $promptService = null;
-    private ?LoginQrService $qrService = null;
     private ?LoginResponseService $responseService = null;
     private ?LoginSmsService $smsService = null;
     private ?LoginPendingFlowFactory $pendingFlowFactory = null;
@@ -77,7 +72,6 @@ class Login extends BasePlugin implements PluginTaskInterface
     private ?LoginGateStateService $gateStateService = null;
     private ?ApiLogin $apiLogin = null;
     private ?ApiOauth2 $apiOauth2 = null;
-    private ?ApiQrcode $apiQrcode = null;
     private ?ApiMain $apiMain = null;
 
     /**
@@ -294,19 +288,6 @@ class Login extends BasePlugin implements PluginTaskInterface
                 $response = $this->authenticationService()->submitSmsLogin($payload, $code);
                 $this->completeLoginResponse('短信模式', $response);
             },
-            function (string $authCode): bool {
-                $result = $this->qrCoordinator()->pollAuthCode($authCode, function (array $response): void {
-                    $this->updateLoginInfo($response);
-                });
-                if (!$result['confirmed']) {
-                    $this->info("等待扫码 {$result['message']}");
-                    return false;
-                }
-
-                $this->notice("扫码成功 {$result['message']}");
-
-                return true;
-            },
         );
     }
 
@@ -336,25 +317,6 @@ class Login extends BasePlugin implements PluginTaskInterface
         );
         $this->syncRuntimeState();
         $this->announcePendingCaptcha((string)$result['display_url'], (float)$result['delay_seconds']);
-    }
-
-    protected function beginQrcodeLoginPolling(QrAuthCode $qrData): void
-    {
-        $this->invalidateSessionAuth();
-        $result = $this->pendingFlowLifecycleService()->beginQrcodePolling($this->state(), $qrData, time() + 180);
-        $this->syncRuntimeState();
-        $this->info('1. Display in terminal (input: 1)');
-        $this->info('2. Open in browser (input: 2)');
-        $option = $this->cliInput('Choose QR display mode: ');
-        $display = $this->qrCoordinator()->resolveDisplay($option, $result['qr_url']);
-        if ($display['mode'] === 'terminal') {
-            $this->cliInput('Try enlarging the terminal window so the QR code is fully visible, then press Enter');
-            Qrcode::show($display['url']);
-        } else {
-            $this->info('Open the link below in a browser to ensure the QR code is fully visible');
-            $this->info($display['url']);
-        }
-        $this->scheduleAfter($result['delay_seconds']);
     }
 
     /**
@@ -426,22 +388,9 @@ class Login extends BasePlugin implements PluginTaskInterface
         return $this->promptService ??= new LoginPromptService();
     }
 
-    protected function qrService(): LoginQrService
-    {
-        return $this->qrService ??= new LoginQrService($this->apiQrcode());
-    }
-
     protected function responseService(): LoginResponseService
     {
         return $this->responseService ??= new LoginResponseService();
-    }
-
-    protected function qrCoordinator(): LoginQrCoordinator
-    {
-        return $this->qrCoordinator ??= new LoginQrCoordinator(
-            $this->qrService(),
-            $this->promptService(),
-        );
     }
 
     protected function decisionApplierService(): LoginDecisionApplierService
@@ -532,12 +481,6 @@ class Login extends BasePlugin implements PluginTaskInterface
         $this->updateInfo('uid', $bundle->uid, false);
         $this->updateInfo('csrf', $bundle->csrf, false);
         $this->updateInfo('sid', $bundle->sid, false);
-        //
-        // $this->updateInfo('username',$this->username);
-        // $this->updateInfo('password',$this->password);
-        // 转换 TODO: 扫码无效
-        // $access_token = $this->tvConvert();
-        // $this->updateInfo('access_token', $access_token);
     }
 
     /**
@@ -746,11 +689,6 @@ class Login extends BasePlugin implements PluginTaskInterface
     private function apiOauth2(): ApiOauth2
     {
         return $this->apiOauth2 ??= new ApiOauth2($this->appContext()->request());
-    }
-
-    private function apiQrcode(): ApiQrcode
-    {
-        return $this->apiQrcode ??= new ApiQrcode($this->appContext()->request());
     }
 
     private function apiMain(): ApiMain

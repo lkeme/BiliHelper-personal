@@ -21,7 +21,6 @@ final class LoginPendingFlowResumeService
      * @param callable(string, string, string, string, string):(?array<string, mixed>) $sendSms
      * @param callable(string):string $promptCode
      * @param callable(array<string, mixed>, string):void $completeSmsLogin
-     * @param callable(string):bool $validateQrAuthCode
      */
     public function resume(
         array $flow,
@@ -33,7 +32,6 @@ final class LoginPendingFlowResumeService
         callable $sendSms,
         callable $promptCode,
         callable $completeSmsLogin,
-        callable $validateQrAuthCode,
     ): void {
         $this->flowController->resume(
             $flow,
@@ -45,7 +43,6 @@ final class LoginPendingFlowResumeService
             $sendSms,
             $promptCode,
             $completeSmsLogin,
-            $validateQrAuthCode,
         );
     }
 }

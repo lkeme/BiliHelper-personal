@@ -2,7 +2,6 @@
 
 namespace Bhp\Login;
 
-use Bhp\Api\Response\QrAuthCode;
 use Bhp\Login\LoginPendingFlowFactory;
 use Bhp\Login\LoginRuntimeState;
 use Bhp\Log\Log;
@@ -61,22 +60,6 @@ final class LoginPendingFlowLifecycleService
         return [
             'display_url' => $captchaBaseUrl . '/geetest?gt=' . $captchaInfo['gt'] . '&challenge=' . $captchaInfo['challenge'],
             'delay_seconds' => 2,
-        ];
-    }
-
-    /**
-     * @return array{qr_url: string, delay_seconds: int}
-     */
-    public function beginQrcodePolling(LoginRuntimeState $state, QrAuthCode $qrData, int $expiresAt): array
-    {
-        $this->pendingFlowStateService->set(
-            $state,
-            $this->pendingFlowFactory->qrcodePoll($qrData, $expiresAt),
-        );
-
-        return [
-            'qr_url' => $qrData->url,
-            'delay_seconds' => 3,
         ];
     }
 

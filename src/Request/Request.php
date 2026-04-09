@@ -103,22 +103,8 @@ class Request
     {
         return match ((int)$this->context->config('login_mode.mode')) {
             1, 2 => $this->signAndroidPayload($payload),
-            3 => $this->signTvPayload($payload),
             default => $this->signCommonPayload($payload),
         };
-    }
-
-    public function signTvPayload(array $payload): array
-    {
-        $appKey = base64_decode((string)$this->context->device('app.bili_t.app_key'));
-        $appSecret = base64_decode((string)$this->context->device('app.bili_t.secret_key'));
-        $default = [
-            'appkey' => $appKey,
-            'local_id' => 0,
-            'ts' => time(),
-        ];
-
-        return self::signPayload(array_merge($payload, $default), (string)$appSecret);
     }
 
     public function signCommonPayload(array $payload, bool $includeStatistics = false): array

@@ -2,8 +2,6 @@
 
 namespace Bhp\Login;
 
-use Bhp\Api\Response\QrAuthCode;
-
 final class LoginPendingFlowFactory
 {
     /**
@@ -37,22 +35,6 @@ final class LoginPendingFlowFactory
             'cid' => $cid,
             'challenge' => $captchaInfo['challenge'],
             'recaptcha_token' => $this->extractRecaptchaToken($targetUrl),
-            'expires_at' => $expiresAt,
-            'started_at' => $startedAt,
-            'last_progress_log_at' => 0,
-        ];
-    }
-
-    /**
-     * @return array{type: string, auth_code: string, expires_at: int, started_at: int, last_progress_log_at: int}
-     */
-    public function qrcodePoll(QrAuthCode $qrData, int $expiresAt): array
-    {
-        $startedAt = time();
-
-        return [
-            'type' => 'qrcode_poll',
-            'auth_code' => $qrData->authCode,
             'expires_at' => $expiresAt,
             'started_at' => $startedAt,
             'last_progress_log_at' => 0,
