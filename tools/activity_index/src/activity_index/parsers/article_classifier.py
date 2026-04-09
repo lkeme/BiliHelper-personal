@@ -1,9 +1,16 @@
-TITLE_PREFIX_TO_TYPE: dict[str, str] = {
-    "活动抽奖圆盘抽奖": "activity_lottery",
-    "互动抽奖": "interactive_lottery",
-    "预约抽奖": "reservation_lottery",
-    "充电抽奖": "charge_lottery",
-}
+TITLE_MATCHERS: tuple[tuple[tuple[str, ...], str], ...] = (
+    (
+        (
+            "\u6d3b\u52a8\u62bd\u5956\u5706\u76d8\u62bd\u5956",
+            "\u6d3b\u52a8\u62bd\u5956",
+            "\u5706\u76d8\u62bd\u5956",
+        ),
+        "activity_lottery",
+    ),
+    (("\u4e92\u52a8\u62bd\u5956",), "interactive_lottery"),
+    (("\u9884\u7ea6\u62bd\u5956",), "reservation_lottery"),
+    (("\u5145\u7535\u62bd\u5956",), "charge_lottery"),
+)
 
 
 def classify_article_title(title: str) -> str | None:
@@ -11,8 +18,8 @@ def classify_article_title(title: str) -> str | None:
     if not normalized:
         return None
 
-    for prefix, article_type in TITLE_PREFIX_TO_TYPE.items():
-        if normalized.startswith(prefix):
+    for markers, article_type in TITLE_MATCHERS:
+        if any(normalized.startswith(marker) or marker in normalized for marker in markers):
             return article_type
 
     return None
