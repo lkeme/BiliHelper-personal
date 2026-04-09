@@ -5,18 +5,6 @@ namespace Bhp\Config;
 final class ConfigSchemaDefinition
 {
     /**
-     * @return array<string, string[]>
-     */
-    public function legacyEnvMap(): array
-    {
-        return [
-            'login_account.username' => ['USER_NAME'],
-            'login_account.password' => ['USER_PASSWORD'],
-            'log.callback' => ['APP' . '_CALLBACK'],
-        ];
-    }
-
-    /**
      * @return array<string, ConfigFieldRule>
      */
     public function fieldRules(): array
@@ -83,11 +71,6 @@ final class ConfigSchemaDefinition
                 invalidMessage: 'log.callback 不是有效的 URL',
             ),
         ];
-    }
-
-    public function fieldRule(string $key): ?ConfigFieldRule
-    {
-        return $this->fieldRules()[$key] ?? null;
     }
 
     public function exampleConfigPath(): string
