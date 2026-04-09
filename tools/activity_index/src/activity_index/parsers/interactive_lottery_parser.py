@@ -1,34 +1,37 @@
-from datetime import datetime
-import re
+from __future__ import annotations
 
-from activity_index.collectors.space_dynamic import extract_urls
+import re
+from datetime import datetime
+
 from activity_index.models.article import SpaceArticle
 from activity_index.models.interactive_lottery import build_interactive_lottery_record
+from activity_index.parsers.common import extract_draw_time, extract_last_prize, normalize_article_text, resolve_update_time
+
+DYNAMIC_URL_PATTERN = re.compile(r"https://t\.bilibili\.com/\d+")
 
 
 def parse_interactive_lottery(payload: dict[str, object]) -> dict[str, object]:
     record = build_interactive_lottery_record()
     record.update(payload)
-    record["update_time"] = _resolve_update_time(payload)
+    record["update_time"] = resolve_update_time(payload)
     return record
 
 
-def _resolve_update_time(payload: dict[str, object]) -> str:
-    update_time = str(payload.get("update_time", "")).strip()
-    if update_time != "":
-        return update_time
-
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-
 def parse_interactive_article(article: SpaceArticle) -> list[dict[str, object]]:
-    dynamic_urls = extract_urls(r"https://t\.bilibili\.com/\d+", article.content or article.summary)
-    draw_time = _extract_draw_time(article.source_title)
-    prize_summaries = _extract_prize_summaries(article.content or article.summary)
+    text = normalize_article_text(article.content or article.summary)
+    matches = list(DYNAMIC_URL_PATTERN.finditer(text))
+    if not matches:
+        return []
 
+    draw_time = extract_draw_time(article.source_title)
     records: list[dict[str, object]] = []
-    for index, dynamic_url in enumerate(dynamic_urls):
+
+    for index, match in enumerate(matches):
+        previous_end = matches[index - 1].end() if index > 0 else 0
+        segment = text[previous_end:match.start()]
+        dynamic_url = match.group(0)
         dynamic_id = dynamic_url.rstrip("/").split("/")[-1]
+
         record = build_interactive_lottery_record()
         record.update(
             {
@@ -44,22 +47,10 @@ def parse_interactive_article(article: SpaceArticle) -> list[dict[str, object]]:
                 "requires_follow": False,
                 "requires_repost": False,
                 "requires_comment": False,
-                "prize_summary": prize_summaries[index] if index < len(prize_summaries) else "",
+                "prize_summary": extract_last_prize(segment),
                 "update_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             }
         )
         records.append(record)
 
     return records
-
-
-def _extract_draw_time(title: str) -> str:
-    match = re.search(r"(\d{4}-\d{2}-\d{2})开奖", title)
-    if match is None:
-        return ""
-
-    return match.group(1) + " 00:00:00"
-
-
-def _extract_prize_summaries(text: str) -> list[str]:
-    return [value.strip() for value in re.findall(r"奖品：([^<\n]+)", text)]

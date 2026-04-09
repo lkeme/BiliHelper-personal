@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from activity_index.core.logger import ActivityIndexLogger
+from activity_index.validators import validate_payload
 from activity_index.writers.json_writer import empty_payload
 
 
@@ -34,8 +35,9 @@ class ResourceStore:
         self.base_path.mkdir(parents=True, exist_ok=True)
         target = self.base_path / result.filename
         existing_payload = self._read_existing_payload(target)
+        valid_payload, invalid_reason = validate_payload(result.filename, result.payload)
 
-        if result.success and self._is_valid_payload(result.payload):
+        if result.success and valid_payload:
             assert result.payload is not None
             self._write_payload(target, result.payload)
             self.logger.info(
@@ -50,7 +52,7 @@ class ResourceStore:
             self.logger.warning(
                 "resource generation failed, keeping existing file",
                 filename=result.filename,
-                reason=result.reason or "invalid payload",
+                reason=result.reason or invalid_reason or "invalid payload",
                 action="keep_existing",
             )
             return
@@ -59,7 +61,7 @@ class ResourceStore:
         self.logger.warning(
             "resource generation failed, wrote empty payload because no existing file was found",
             filename=result.filename,
-            reason=result.reason or "invalid payload",
+            reason=result.reason or invalid_reason or "invalid payload",
             action="write_empty",
         )
 
@@ -73,16 +75,6 @@ class ResourceStore:
             return None
 
         return decoded if isinstance(decoded, dict) else None
-
-    def _is_valid_payload(self, payload: dict[str, Any] | None) -> bool:
-        if not isinstance(payload, dict):
-            return False
-
-        data = payload.get("data")
-        remarks = payload.get("remarks")
-        code = payload.get("code")
-
-        return isinstance(data, list) and isinstance(remarks, str) and isinstance(code, int)
 
     def _write_payload(self, path: Path, payload: dict[str, Any]) -> None:
         path.write_text(

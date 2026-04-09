@@ -1,34 +1,40 @@
-from datetime import datetime
+from __future__ import annotations
+
 import re
+from datetime import datetime
 
 from activity_index.models.article import SpaceArticle
 from activity_index.models.reservation_lottery import build_reservation_lottery_record
+from activity_index.parsers.common import extract_draw_time, extract_last_prize, normalize_article_text, resolve_update_time
+
+UP_MID_PATTERN = re.compile(r"space\.bilibili\.com/(\d+)")
+SID_PATTERN = re.compile(r"business_id=(\d+)")
 
 
 def parse_reservation_lottery(payload: dict[str, object]) -> dict[str, object]:
     record = build_reservation_lottery_record()
     record.update(payload)
-    record["update_time"] = _resolve_update_time(payload)
+    record["update_time"] = resolve_update_time(payload)
     return record
 
 
-def _resolve_update_time(payload: dict[str, object]) -> str:
-    update_time = str(payload.get("update_time", "")).strip()
-    if update_time != "":
-        return update_time
-
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-
 def parse_reservation_article(article: SpaceArticle) -> list[dict[str, object]]:
-    text = article.content or article.summary
-    draw_time = _extract_draw_time(article.source_title)
-    up_mids = re.findall(r"space\.bilibili\.com/(\d+)", text)
-    sids = re.findall(r"business_id=(\d+)", text)
-    prizes = [value.strip() for value in re.findall(r"奖品：([^<\n]+)", text)]
+    text = normalize_article_text(article.content or article.summary)
+    matches = list(UP_MID_PATTERN.finditer(text))
+    if not matches:
+        return []
 
+    draw_time = extract_draw_time(article.source_title)
     records: list[dict[str, object]] = []
-    for index, up_mid in enumerate(up_mids):
+
+    for index, match in enumerate(matches):
+        previous_end = matches[index - 1].end() if index > 0 else 0
+        next_start = matches[index + 1].start() if index + 1 < len(matches) else len(text)
+        before_segment = text[previous_end:match.start()]
+        after_segment = text[match.end():next_start]
+        up_mid = match.group(1)
+        sid_match = SID_PATTERN.search(after_segment)
+
         record = build_reservation_lottery_record()
         record.update(
             {
@@ -39,10 +45,10 @@ def parse_reservation_article(article: SpaceArticle) -> list[dict[str, object]]:
                 "draw_time": draw_time,
                 "up_mid": up_mid,
                 "up_name": "",
-                "sid": sids[index] if index < len(sids) else "",
+                "sid": sid_match.group(1) if sid_match else "",
                 "name": article.source_title,
                 "jump_url": f"https://space.bilibili.com/{up_mid}",
-                "text": prizes[index] if index < len(prizes) else "",
+                "text": extract_last_prize(before_segment),
                 "requires_follow": False,
                 "requires_reserve": True,
                 "update_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -51,11 +57,3 @@ def parse_reservation_article(article: SpaceArticle) -> list[dict[str, object]]:
         records.append(record)
 
     return records
-
-
-def _extract_draw_time(title: str) -> str:
-    match = re.search(r"(\d{4}-\d{2}-\d{2})开奖", title)
-    if match is None:
-        return ""
-
-    return match.group(1) + " 00:00:00"
