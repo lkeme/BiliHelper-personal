@@ -34,6 +34,9 @@ def parse_reservation_article(article: SpaceArticle) -> list[dict[str, object]]:
         after_segment = text[match.end():next_start]
         up_mid = match.group(1)
         sid_match = SID_PATTERN.search(after_segment)
+        sid = sid_match.group(1) if sid_match else ""
+        if sid == "":
+            continue
 
         record = build_reservation_lottery_record()
         record.update(
@@ -45,7 +48,7 @@ def parse_reservation_article(article: SpaceArticle) -> list[dict[str, object]]:
                 "draw_time": draw_time,
                 "up_mid": up_mid,
                 "up_name": "",
-                "sid": sid_match.group(1) if sid_match else "",
+                "sid": sid,
                 "name": article.source_title,
                 "jump_url": f"https://space.bilibili.com/{up_mid}",
                 "text": extract_last_prize(before_segment),

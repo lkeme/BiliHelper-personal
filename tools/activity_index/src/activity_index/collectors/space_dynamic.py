@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import time
 import urllib.parse
 from datetime import datetime, timedelta
 
@@ -10,6 +11,8 @@ from activity_index.parsers.article_classifier import classify_article_title
 
 
 class SpaceArticleCollector:
+    ARTICLE_DETAIL_RETRYABLE_CODES = {-509, -352}
+
     def __init__(self, logger: ActivityIndexLogger | None = None, client: HttpClient | None = None) -> None:
         self.logger = logger or get_logger()
         self.client = client or HttpClient(self.logger)
@@ -63,7 +66,7 @@ class SpaceArticleCollector:
                     details["summary"] = fetched["summary"]
                 if fetched.get("content"):
                     details["content"] = fetched["content"]
-                elif article_type in {"activity_lottery", "interactive_lottery", "reservation_lottery", "charge_lottery"}:
+                elif article_type == "activity_lottery":
                     fallback_content = self._fetch_article_page_html(cv_id)
                     if fallback_content != "":
                         details["content"] = fallback_content
@@ -111,38 +114,55 @@ class SpaceArticleCollector:
         return [item for item in articles if isinstance(item, dict)]
 
     def _fetch_article_details(self, cv_id: str) -> dict[str, str]:
-        try:
-            payload = self.client.get_json(
-                f"https://api.bilibili.com/x/article/view?id={cv_id}",
-                headers={
-                    "Origin": "https://www.bilibili.com",
-                    "Referer": f"https://www.bilibili.com/read/cv{cv_id}/",
-                },
-                context="space.article_detail",
-            )
-        except Exception as exc:
-            self.logger.warning(
-                "article detail request failed, falling back to summary only",
-                cv_id=cv_id,
-                error=type(exc).__name__,
-            )
-            return {"summary": "", "content": "", "dyn_id_str": ""}
+        for attempt in range(1, 4):
+            try:
+                payload = self.client.get_json(
+                    f"https://api.bilibili.com/x/article/view?id={cv_id}",
+                    headers={
+                        "Origin": "https://www.bilibili.com",
+                        "Referer": f"https://www.bilibili.com/read/cv{cv_id}/",
+                    },
+                    context="space.article_detail",
+                )
+            except Exception as exc:
+                self.logger.warning(
+                    "article detail request failed, falling back to summary only",
+                    cv_id=cv_id,
+                    error=type(exc).__name__,
+                )
+                self.detail_fetch_failures += 1
+                return {"summary": "", "content": "", "dyn_id_str": ""}
 
-        if payload.get("code") == 0 and isinstance(payload.get("data"), dict):
-            self.detail_fetch_successes += 1
-            article = payload["data"]
-            return {
-                "summary": str(article.get("summary", "")).strip(),
-                "content": str(article.get("content", "")).strip(),
-                "dyn_id_str": str(article.get("dyn_id_str", "")).strip(),
-            }
+            if payload.get("code") == 0 and isinstance(payload.get("data"), dict):
+                self.detail_fetch_successes += 1
+                article = payload["data"]
+                return {
+                    "summary": str(article.get("summary", "")).strip(),
+                    "content": str(article.get("content", "")).strip(),
+                    "dyn_id_str": str(article.get("dyn_id_str", "")).strip(),
+                }
+
+            code = int(payload.get("code") or 0)
+            if code not in self.ARTICLE_DETAIL_RETRYABLE_CODES or attempt >= 3:
+                self.detail_fetch_failures += 1
+                self.logger.warning(
+                    "article detail API returned non-zero code",
+                    cv_id=cv_id,
+                    code=code,
+                )
+                return {"summary": "", "content": "", "dyn_id_str": ""}
+
+            delay_seconds = 6.0 * attempt
+            self.logger.warning(
+                "article detail API returned retryable code, backing off",
+                cv_id=cv_id,
+                code=code,
+                attempt=attempt,
+                delay_seconds=delay_seconds,
+            )
+            time.sleep(delay_seconds)
 
         self.detail_fetch_failures += 1
-        self.logger.warning(
-            "article detail API returned non-zero code",
-            cv_id=cv_id,
-            code=payload.get("code"),
-        )
         return {"summary": "", "content": "", "dyn_id_str": ""}
 
     def _fetch_article_page_html(self, cv_id: str) -> str:

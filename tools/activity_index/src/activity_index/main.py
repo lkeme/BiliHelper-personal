@@ -25,6 +25,12 @@ def build_payload_results(logger=None) -> list[PayloadGenerationResult]:
     reservation_records: list[dict[str, object]] = []
     charge_records: list[dict[str, object]] = []
     failed_types: set[str] = set()
+    article_counts: dict[str, int] = {
+        "activity_lottery": 0,
+        "interactive_lottery": 0,
+        "reservation_lottery": 0,
+        "charge_lottery": 0,
+    }
 
     try:
         logger.info("collecting recent articles", host_mid=TARGET_HOST_MID)
@@ -51,6 +57,9 @@ def build_payload_results(logger=None) -> list[PayloadGenerationResult]:
     logger.info("http diagnostics", **collector.client.diagnostics())
 
     for article in articles:
+        if article.article_type in article_counts:
+            article_counts[article.article_type] += 1
+
         logger.debug(
             "article classified",
             cv_id=article.cv_id,
@@ -79,10 +88,10 @@ def build_payload_results(logger=None) -> list[PayloadGenerationResult]:
             )
 
     results = [
-        _build_result("activity_lottery_infos.json", "activity_lottery", activity_records, failed_types),
-        _build_result("interactive_lottery_infos.json", "interactive_lottery", interactive_records, failed_types),
-        _build_result("reservation_lottery_infos.json", "reservation_lottery", reservation_records, failed_types),
-        _build_result("charge_lottery_infos.json", "charge_lottery", charge_records, failed_types),
+        _build_result("activity_lottery_infos.json", "activity_lottery", activity_records, failed_types, article_counts),
+        _build_result("interactive_lottery_infos.json", "interactive_lottery", interactive_records, failed_types, article_counts),
+        _build_result("reservation_lottery_infos.json", "reservation_lottery", reservation_records, failed_types, article_counts),
+        _build_result("charge_lottery_infos.json", "charge_lottery", charge_records, failed_types, article_counts),
     ]
 
     for result in results:
@@ -102,12 +111,20 @@ def _build_result(
     article_type: str,
     records: list[dict[str, object]],
     failed_types: set[str],
+    article_counts: dict[str, int],
 ) -> PayloadGenerationResult:
     if article_type in failed_types:
         return PayloadGenerationResult(
             filename=filename,
             success=False,
             reason=f"{article_type} parsing failed",
+        )
+
+    if article_counts.get(article_type, 0) > 0 and records == []:
+        return PayloadGenerationResult(
+            filename=filename,
+            success=False,
+            reason=f"{article_type} matched articles but produced zero records",
         )
 
     return PayloadGenerationResult(
