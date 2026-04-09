@@ -86,6 +86,38 @@ class HttpClient:
 
         raise RuntimeError(f"{context or 'request'} failed after retries: {url}") from last_error
 
+    def get_text(self, url: str, *, headers: dict[str, str] | None = None, context: str = "") -> str:
+        last_error: Exception | None = None
+
+        for attempt in range(1, self.config.max_retries + 1):
+            self.total_requests += 1
+            self._throttle()
+            request = urllib.request.Request(url, headers=self._build_headers(headers or {}))
+
+            try:
+                with urllib.request.urlopen(request, timeout=self.config.timeout_seconds) as response:
+                    body = response.read().decode("utf-8", errors="ignore")
+            except (urllib.error.URLError, TimeoutError, ValueError) as exc:
+                last_error = exc
+                self.failed_requests += 1
+                self.logger.warning(
+                    "HTTP text request failed",
+                    context=context,
+                    attempt=attempt,
+                    url=url,
+                    error=type(exc).__name__,
+                )
+                if attempt >= self.config.max_retries:
+                    break
+                self._sleep_with_backoff(attempt)
+                continue
+
+            self.successful_requests += 1
+            self.logger.debug("HTTP text request succeeded", context=context, attempt=attempt, url=url)
+            return body
+
+        raise RuntimeError(f"{context or 'request'} failed after retries: {url}") from last_error
+
     def diagnostics(self) -> dict[str, int]:
         return {
             "total_requests": self.total_requests,

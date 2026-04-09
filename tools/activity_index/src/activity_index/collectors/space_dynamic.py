@@ -63,6 +63,10 @@ class SpaceArticleCollector:
                     details["summary"] = fetched["summary"]
                 if fetched.get("content"):
                     details["content"] = fetched["content"]
+                elif article_type == "activity_lottery":
+                    fallback_content = self._fetch_article_page_html(cv_id)
+                    if fallback_content != "":
+                        details["content"] = fallback_content
                 if fetched.get("dyn_id_str"):
                     details["dyn_id_str"] = fetched["dyn_id_str"]
 
@@ -140,6 +144,24 @@ class SpaceArticleCollector:
             code=payload.get("code"),
         )
         return {"summary": "", "content": "", "dyn_id_str": ""}
+
+    def _fetch_article_page_html(self, cv_id: str) -> str:
+        try:
+            return self.client.get_text(
+                f"https://www.bilibili.com/read/cv{cv_id}/",
+                headers={
+                    "Origin": "https://www.bilibili.com",
+                    "Referer": f"https://www.bilibili.com/read/cv{cv_id}/",
+                },
+                context="space.article_page",
+            )
+        except Exception as exc:
+            self.logger.warning(
+                "article page fallback request failed",
+                cv_id=cv_id,
+                error=type(exc).__name__,
+            )
+            return ""
 
     def diagnostics(self, collected_count: int) -> dict[str, int]:
         return {

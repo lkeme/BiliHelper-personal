@@ -10,7 +10,7 @@ from activity_index.models.activity_lottery import build_activity_lottery_record
 from activity_index.parsers.common import extract_end_of_day_timestamp, normalize_article_text
 
 ACTIVITY_URL_PATTERN = (
-    r"https?://(?:www\.)?bilibili\.com/blackboard/era/[A-Za-z0-9_-]+(?:\.html)?(?:\?[^\s\"'<]*)?"
+    r"https?://(?:(?:www|live)\.)?bilibili\.com/blackboard/era/[A-Za-z0-9_-]+(?:\.html)?(?:\?[^\s\"'<]*)?"
 )
 PAGE_ID_PATTERN = re.compile(
     r"(?:page[_-]?id)[=:\uFF1A\s\"']*([A-Za-z0-9_-]+)",
@@ -92,7 +92,7 @@ def _normalize_activity_url(url: str) -> str:
     parsed = urlparse(url.strip())
     if parsed.scheme not in {"http", "https"}:
         return ""
-    if parsed.netloc not in {"www.bilibili.com", "bilibili.com"}:
+    if parsed.netloc not in {"www.bilibili.com", "bilibili.com", "live.bilibili.com"}:
         return ""
     if "/blackboard/era/" not in parsed.path:
         return ""
@@ -111,7 +111,7 @@ def _normalize_activity_url(url: str) -> str:
 
     normalized = parsed._replace(
         scheme="https",
-        netloc="www.bilibili.com",
+        netloc="live.bilibili.com" if parsed.netloc == "live.bilibili.com" else "www.bilibili.com",
         fragment="",
         query=query,
     )
