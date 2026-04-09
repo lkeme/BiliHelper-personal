@@ -95,6 +95,23 @@ LOGO;
 
     /**
      * @param string[] $argv
+     */
+    public static function isScriptListRequest(array $argv): bool
+    {
+        return self::resolveMode($argv) === 'script'
+            && (in_array('--list', $argv, true) || in_array('-l', $argv, true));
+    }
+
+    /**
+     * @param string[] $argv
+     */
+    public static function isReadOnlyRequest(array $argv): bool
+    {
+        return self::isHelpRequest($argv) || self::isScriptListRequest($argv);
+    }
+
+    /**
+     * @param string[] $argv
      * @return string[]
      */
     protected function transArgv(array $argv): array

@@ -64,6 +64,7 @@ final class AppKernel
             return $this->bootResult;
         }
 
+        $readOnlyRequest = Console::isReadOnlyRequest($this->argv);
         $profileName = Console::parse($this->argv);
         $runtimeMode = Console::resolveMode($this->argv);
         $profileContext = ProfileContext::fromAppRoot($this->appRoot, $profileName);
@@ -78,6 +79,8 @@ final class AppKernel
         $container->set(Env::class, static fn (ServiceContainer $services): Env => new Env(
             $profileContext,
             $services->get(Log::class),
+            'version.json',
+            $readOnlyRequest,
         ));
         $container->set(Device::class, static fn (ServiceContainer $services): Device => new Device($profileContext));
         $container->set(FilterWords::class, static fn (ServiceContainer $services): FilterWords => new FilterWords($profileContext));
@@ -183,6 +186,7 @@ final class AppKernel
         $container->set(ScriptCommand::class, fn (ServiceContainer $services): ScriptCommand => new ScriptCommand(
             $services->get(Log::class),
             $this->argv,
+            $profileContext->appRoot(),
             static fn (): Plugin => $services->get(Plugin::class),
             static fn (): ProfileCacheResetService => $services->get(ProfileCacheResetService::class)
         ));
@@ -194,8 +198,10 @@ final class AppKernel
             $services->get(ScriptCommand::class),
         ));
 
-        (new Bootstrap($container, Console::isHelpRequest($this->argv)))->boot();
-        WbiSign::bootstrap($container->get(\Bhp\Api\Vip\ApiUser::class));
+        (new Bootstrap($container, $readOnlyRequest))->boot();
+        if (!$readOnlyRequest) {
+            WbiSign::bootstrap($container->get(\Bhp\Api\Vip\ApiUser::class));
+        }
 
         $console = $container->get(Console::class);
 

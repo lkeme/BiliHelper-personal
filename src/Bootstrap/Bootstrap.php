@@ -23,12 +23,17 @@ final class Bootstrap
 {
     public function __construct(
         private readonly ServiceContainer $container,
-        private readonly bool $helpRequest = false,
+        private readonly bool $readOnlyRequest = false,
     ) {
     }
 
     public function boot(): void
     {
+        if ($this->readOnlyRequest) {
+            $this->container->get(Console::class);
+            return;
+        }
+
         $this->container->get(Core::class);
         $this->container->get(Runtime::class);
         $this->container->get(Config::class);
@@ -38,10 +43,6 @@ final class Bootstrap
         $this->container->get(FilterWords::class);
         $this->container->get(Console::class);
         $this->container->get(Env::class);
-
-        if ($this->helpRequest) {
-            return;
-        }
 
         $this->container->get(HttpClient::class);
         $this->container->get(Request::class);

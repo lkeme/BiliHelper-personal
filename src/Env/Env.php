@@ -28,6 +28,7 @@ class Env extends BaseResource
         private readonly ProfileContext $profileContext,
         private readonly Log $log,
         string $filename = 'version.json',
+        private readonly bool $metadataOnly = false,
     )
     {
         set_time_limit(0);
@@ -44,8 +45,9 @@ class Env extends BaseResource
         $overrideBranch = trim((string)getenv('BRANCH'));
         $this->app_branch = $overrideBranch !== '' ? $overrideBranch : $this->resource->get('branch', 'master');
         $this->app_source = $this->resource->get('source', 'https://github.com/lkeme/BiliHelper-personal');
-        //
-        $this->inspectConfigure()->inspectExtension();
+        if (!$this->metadataOnly) {
+            $this->inspectConfigure()->inspectExtension();
+        }
     }
 
     /**
