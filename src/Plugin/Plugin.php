@@ -150,6 +150,10 @@ class Plugin
 
     public function runTask(string $hook): TaskResult
     {
+        if (!$this->canItRun($hook)) {
+            return TaskResult::keepSchedule();
+        }
+
         if ($this->isPluginExpiredNow($hook)) {
             $this->markPluginExpired($hook, 'run');
 
