@@ -17,10 +17,10 @@
 
 namespace Bhp\Env;
 
+use Bhp\Console\Cli\RuntimeException as CliRuntimeException;
 use Bhp\Log\Log;
 use Bhp\Profile\ProfileContext;
 use Bhp\Util\Resource\BaseResource;
-use Bhp\Util\AppTerminator;
 
 class Env extends BaseResource
 {
@@ -79,10 +79,11 @@ class Env extends BaseResource
         $default_extensions = ['openssl', 'json', 'zlib', 'mbstring', 'sqlite3'];
         foreach ($default_extensions as $extension) {
             if (!extension_loaded($extension)) {
-                $this->log->recordError("检查到项目依赖 $extension 扩展未加载。");
-                $this->log->recordError("请在 php.ini中启用 $extension 扩展后重试。");
-                $this->log->recordError("程序常见问题请移步 $this->app_source 文档部分查看。");
-                AppTerminator::fail('');
+                throw new CliRuntimeException(
+                    "检查到项目依赖 {$extension} 扩展未加载。" . PHP_EOL .
+                    "请在 php.ini 中启用 {$extension} 扩展后重试。" . PHP_EOL .
+                    "程序常见问题请移步 {$this->app_source} 文档部分查看。"
+                );
             }
         }
         return $this;
@@ -98,10 +99,10 @@ class Env extends BaseResource
         $this->log->recordInfo("使用说明请移步 $this->app_source 查看");
 
         if (PHP_SAPI != 'cli') {
-            AppTerminator::fail('Please run this script from command line .');
+            throw new CliRuntimeException('Please run this script from command line .');
         }
         if (version_compare(PHP_VERSION, '8.5.0', '<')) {
-            AppTerminator::fail('Please upgrade PHP version >= 8.5.0 .');
+            throw new CliRuntimeException('Please upgrade PHP version >= 8.5.0 .');
         }
         return $this;
     }
