@@ -6,6 +6,8 @@
     "author": "MoeHero/Lkeme",
     "priority": 2010,
     "cycle": "10-25(分钟)",
+    "start": "02:30:00",
+    "end": "23:30:00",
     "mode": "app",
     "valid_until": "2099-12-31 23:59:59",
     "activity_url": "",
