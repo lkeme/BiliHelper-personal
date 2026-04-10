@@ -14,6 +14,12 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
 {
     private const WINDOW_START = '03:30:00';
     private const WINDOW_END = '23:30:00';
+    private const DELAY_AFTER_FETCH_WITH_TASKS_MIN = 45;
+    private const DELAY_AFTER_FETCH_WITH_TASKS_MAX = 120;
+    private const DELAY_AFTER_FETCH_EMPTY_MIN = 120;
+    private const DELAY_AFTER_FETCH_EMPTY_MAX = 300;
+    private const DELAY_AFTER_RESERVE_MIN = 45;
+    private const DELAY_AFTER_RESERVE_MAX = 120;
 
     private AuthFailureClassifier $authFailureClassifier;
     private ?ApiReservation $reservationApi = null;
@@ -52,8 +58,18 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
             );
         }
 
+        if ($state->pendingReservationCount() > 0) {
+            $result = $this->executeReservationTask($state);
+            $this->stateStore()->save($state->all());
+
+            return $result;
+        }
+
         if ($state->pendingUpMidCount() > 0) {
-            $this->reservationTask($state);
+            $result = $this->discoverReservationTasks($state);
+            $this->stateStore()->save($state->all());
+
+            return $result;
         }
 
         $this->stateStore()->save($state->all());
@@ -65,17 +81,58 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
         return TaskResult::after(mt_rand(1, 3) * 60 * 60);
     }
 
-    protected function reservationTask(LiveReservationRuntimeState $state): void
+    protected function discoverReservationTasks(LiveReservationRuntimeState $state): TaskResult
     {
         $upMid = $state->shiftPendingUpMid();
         if ($upMid === null) {
-            return;
+            return TaskResult::nextDayAt(3, 30);
         }
 
         $reservationList = $this->fetchReservation($upMid);
-        foreach ($reservationList as $reservation) {
-            $this->reserve($reservation);
+        $added = $state->enqueueReservations($reservationList);
+        $this->info(sprintf(
+            '预约直播: 获取预约列表成功 %d，总任务 %d，已完成 %d，待执行 %d',
+            $added,
+            $state->discoveredReservationTotal(),
+            $state->processedReservationCount(),
+            $state->pendingReservationCount(),
+        ));
+
+        if ($state->pendingReservationCount() > 0) {
+            return TaskResult::after($this->randomDelay(self::DELAY_AFTER_FETCH_WITH_TASKS_MIN, self::DELAY_AFTER_FETCH_WITH_TASKS_MAX));
         }
+
+        if ($state->pendingUpMidCount() > 0) {
+            return TaskResult::after($this->randomDelay(self::DELAY_AFTER_FETCH_EMPTY_MIN, self::DELAY_AFTER_FETCH_EMPTY_MAX));
+        }
+
+        return TaskResult::nextDayAt(3, 30);
+    }
+
+    protected function executeReservationTask(LiveReservationRuntimeState $state): TaskResult
+    {
+        $reservation = $state->shiftPendingReservation();
+        if (!is_array($reservation)) {
+            return $state->pendingUpMidCount() > 0
+                ? TaskResult::after($this->randomDelay(self::DELAY_AFTER_FETCH_EMPTY_MIN, self::DELAY_AFTER_FETCH_EMPTY_MAX))
+                : TaskResult::nextDayAt(3, 30);
+        }
+
+        $current = $state->processedReservationCount() + 1;
+        $total = max($current, $state->discoveredReservationTotal());
+        $this->info(sprintf('预约直播: 任务进度 (%d/%d)', $current, $total));
+        $this->reserve($reservation);
+        $state->incrementProcessedReservationCount();
+
+        if ($state->pendingReservationCount() > 0) {
+            return TaskResult::after($this->randomDelay(self::DELAY_AFTER_RESERVE_MIN, self::DELAY_AFTER_RESERVE_MAX));
+        }
+
+        if ($state->pendingUpMidCount() > 0) {
+            return TaskResult::after($this->randomDelay(self::DELAY_AFTER_FETCH_EMPTY_MIN, self::DELAY_AFTER_FETCH_EMPTY_MAX));
+        }
+
+        return TaskResult::nextDayAt(3, 30);
     }
 
     /**
@@ -108,7 +165,6 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
                 }
                 $reservationList[] = $result;
             }
-            $this->info('预约直播: 获取预约列表成功 ' . count($reservationList));
         }
 
         return $reservationList;
@@ -189,5 +245,10 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
     protected function bizDate(int $timestamp): string
     {
         return date('Y-m-d', $timestamp);
+    }
+
+    protected function randomDelay(int $minSeconds, int $maxSeconds): int
+    {
+        return mt_rand($minSeconds, $maxSeconds);
     }
 }

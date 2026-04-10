@@ -22,6 +22,10 @@ final class LiveReservationRuntimeState
         $this->state['source_cv_id'] = max(0, (int)($this->state['source_cv_id'] ?? 0));
         $this->state['up_mid_list'] = $this->normalizeStringList($this->state['up_mid_list'] ?? []);
         $this->state['wait_up_mid_list'] = $this->normalizeStringList($this->state['wait_up_mid_list'] ?? []);
+        $this->state['reservation_queue'] = $this->normalizeReservationQueue($this->state['reservation_queue'] ?? []);
+        $this->state['reservation_keys'] = $this->normalizeStringList($this->state['reservation_keys'] ?? []);
+        $this->state['discovered_reservation_total'] = max(0, (int)($this->state['discovered_reservation_total'] ?? 0));
+        $this->state['processed_reservation_count'] = max(0, (int)($this->state['processed_reservation_count'] ?? 0));
     }
 
     /**
@@ -83,9 +87,68 @@ final class LiveReservationRuntimeState
         return count($this->state['wait_up_mid_list']);
     }
 
+    public function pendingReservationCount(): int
+    {
+        return count($this->state['reservation_queue']);
+    }
+
+    public function discoveredReservationTotal(): int
+    {
+        return (int)$this->state['discovered_reservation_total'];
+    }
+
+    public function processedReservationCount(): int
+    {
+        return (int)$this->state['processed_reservation_count'];
+    }
+
+    public function incrementProcessedReservationCount(): void
+    {
+        $this->state['processed_reservation_count'] = $this->processedReservationCount() + 1;
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $reservations
+     * @return int 新增任务数
+     */
+    public function enqueueReservations(array $reservations): int
+    {
+        $added = 0;
+        foreach ($reservations as $reservation) {
+            if (!is_array($reservation)) {
+                continue;
+            }
+
+            $sid = trim((string)($reservation['sid'] ?? ''));
+            if ($sid === '' || in_array($sid, $this->state['reservation_keys'], true)) {
+                continue;
+            }
+
+            $this->state['reservation_keys'][] = $sid;
+            $this->state['reservation_queue'][] = $reservation;
+            $added++;
+        }
+
+        if ($added > 0) {
+            $this->state['discovered_reservation_total'] = $this->discoveredReservationTotal() + $added;
+        }
+
+        return $added;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function shiftPendingReservation(): ?array
+    {
+        $reservation = array_shift($this->state['reservation_queue']);
+
+        return is_array($reservation) ? $reservation : null;
+    }
+
     public function hasWork(): bool
     {
-        return $this->pendingUpMidCount() > 0;
+        return $this->pendingUpMidCount() > 0 || $this->pendingReservationCount() > 0;
     }
 
     /**
@@ -107,5 +170,25 @@ final class LiveReservationRuntimeState
         }
 
         return array_values($list);
+    }
+
+    /**
+     * @param mixed $value
+     * @return array<int, array<string, mixed>>
+     */
+    private function normalizeReservationQueue(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $queue = [];
+        foreach ($value as $item) {
+            if (is_array($item)) {
+                $queue[] = $item;
+            }
+        }
+
+        return array_values($queue);
     }
 }

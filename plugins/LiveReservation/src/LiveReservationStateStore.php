@@ -24,6 +24,10 @@ final class LiveReservationStateStore
             'source_cv_id' => 0,
             'up_mid_list' => [],
             'wait_up_mid_list' => [],
+            'reservation_queue' => [],
+            'reservation_keys' => [],
+            'discovered_reservation_total' => 0,
+            'processed_reservation_count' => 0,
         ];
     }
 
