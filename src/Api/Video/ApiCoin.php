@@ -56,9 +56,7 @@ class ApiCoin extends AbstractApiClient
      */
     public function webCoin(string $aid, int $multiply = 1, int $select_like = 0, string $bvid = ''): array
     {
-        //
         $url = 'https://api.bilibili.com/x/web-interface/coin/add';
-        //
         $payload = [
             'aid' => $aid,
             'bvid' => $bvid,
@@ -90,7 +88,6 @@ class ApiCoin extends AbstractApiClient
     public function appCoin(string $aid, int $multiply = 1, int $select_like = 0): array
     {
         $url = 'https://app.bilibili.com/x/v2/view/coin/add';
-        //
         $payload = [
             'aid' => $aid,
             'multiply' => $multiply, // 投币*1

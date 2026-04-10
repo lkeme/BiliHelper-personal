@@ -299,8 +299,6 @@ class AsciiTable
         if (!isset($this->widths[$key])) {
             $this->widths[$key] = 0;
         }
-        // Deprecated: strlen(): Passing null to parameter #1 ($string) of type string is deprecated
-        // Deprecated: mb_strlen(): Passing null to parameter #1 ($string) of type string is deprecated
         $value = (string)($value ?: '');
         $width = (strlen($value) + mb_strlen($value, 'UTF8')) / 2;
         if ($width > $this->widths[$key]) {
@@ -327,11 +325,6 @@ class AsciiTable
      */
     protected function mbStrPad(string $input, int $pad_length, string $pad_string = ' ', int $pad_type = STR_PAD_RIGHT, ?string $encoding = null): string
     {
-        // $encoding = $encoding === null ? mb_internal_encoding() : $encoding;
-        // $diff = strlen($input) - (strlen($input) + mb_strlen($input, $encoding)) / 2;
-        // return str_pad($input, $pad_length + $diff, $pad_string, $pad_type);
-
-        // https://github.com/viossat/arraytotexttable/blob/6b1af924478cb9c3a903269e304fff006fe0dbf4/src/ArrayToTextTable.php#L255
         $encoding = $encoding === null ? mb_internal_encoding() : $encoding;
         $pad_before = $pad_type === STR_PAD_BOTH || $pad_type === STR_PAD_LEFT;
         $pad_after = $pad_type === STR_PAD_BOTH || $pad_type === STR_PAD_RIGHT;
@@ -374,17 +367,8 @@ class AsciiTable
      */
     protected function asciiColorWrap(string $string, string $color): string
     {
-//        30: 黑
-//        31: 红
-//        32: 绿
-//        33: 黄
-//        34: 蓝
-//        35: 紫
-//        36: 深绿
-//        37: 白色
         return "\033[1;" . $color . 'm' . $string . "\033[0m";
     }
-
 
     /**
      * 数组转表格

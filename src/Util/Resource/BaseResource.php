@@ -75,7 +75,6 @@ abstract class BaseResource
     {
         // 判断是否被修改，否则重新加载文件
         if ($this->getCurrentFileMTime($this->filepath) !== $this->last_modified) {
-            // TODO 此处逻辑好像重复了
             $this->loadResource($this->filename, $this->parser);
         }
         return match ($type) {
@@ -128,7 +127,6 @@ abstract class BaseResource
     protected function saveInfo(string $filename, string $filepath, string $parser, Resource $resource): void
     {
         $this->filename = $filename;
-        // dirname($conf_filepath).DIRECTORY_SEPARATOR.$conf_filename;
         $this->filepath = $filepath;
         $this->resource = $resource;
         $this->parser = $parser;

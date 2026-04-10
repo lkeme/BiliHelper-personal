@@ -32,14 +32,10 @@ class Env extends BaseResource
     )
     {
         set_time_limit(0);
-        // header("Content-Type:text/html; charset=utf-8");
-        // ini_set('date.timezone', 'Asia/Shanghai');
         date_default_timezone_set('Asia/Shanghai');
         ini_set('display_errors', 'on');
         error_reporting(E_ALL);
-        //
         $this->loadResource($filename, 'json');
-        //
         $this->app_name = $this->resource->get('project', 'BiliHelper-personal');
         $this->app_version = $this->resource->get('version', '0.0.0.000000');
         $overrideBranch = trim((string)getenv('BRANCH'));
@@ -134,9 +130,6 @@ class Env extends BaseResource
         if (!is_file('/proc/self/cgroup') || !preg_match('%^\d+:\w+:/(docker|actions_job)/' . preg_quote(gethostname(), '%') . '\w+%sm', file_get_contents('/proc/self/cgroup'))) {
             return false;
         }
-//        $processStack = explode(PHP_EOL, shell_exec('cat /proc/self/cgroup | grep docker'));
-//        $processStack = array_filter($processStack);
-//        return count($processStack) > 0;
         return true;
     }
 }

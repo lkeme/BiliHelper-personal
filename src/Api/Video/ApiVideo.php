@@ -52,7 +52,6 @@ class ApiVideo extends AbstractApiClient
     {
         // 动画1 国创168 音乐3 舞蹈129 游戏4 知识36 科技188 汽车223 生活160 美食211 动物圈127 鬼畜119 时尚155 资讯202 娱乐5 影视181
         $rids = [1, 168, 3, 129, 4, 36, 188, 223, 160, 211, 127, 119, 155, 202, 5, 181];
-        //
         $url = 'https://api.bilibili.com/x/web-interface/dynamic/region';
         $payload = [
             'ps' => $ps,

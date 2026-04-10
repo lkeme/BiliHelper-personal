@@ -44,7 +44,6 @@ final class DebugCommand extends Command
         private readonly ?Closure $cacheResetServiceResolver = null,
     ) {
         parent::__construct('mode:debug', $this->desc);
-        //
         $this
             ->option('-p --plugin', '[默认会同时加载Login；无需登录的插件除外]测试插件')
             ->option('-P --plugins', '[默认会同时加载Login；无需登录的插件除外]测试插件列表')

@@ -50,7 +50,6 @@ class Common
     public static function getUnixTimestamp(): int
     {
         list($t1, $t2) = explode(' ', microtime());
-        // return (float)sprintf('%.0f', (floatval($t1) + floatval($t2)) * 1000);
         return intval(sprintf('%u', (floatval($t1) + floatval($t2)) * 1000));
     }
 
@@ -137,11 +136,6 @@ class Common
      */
     public static function randString(int $length): string
     {
-//        $output='';
-//        for ($a = 0; $a<$length; $a++) {
-//            $output .= chr(mt_rand(33, 126));    //生成php随机数
-//        }
-//        return $output;
         $key = '';
         $pattern = '1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLOMNOPQRSTUVWXYZ';
         for ($i = 0; $i < $length; $i++) {
@@ -163,9 +157,9 @@ class Common
         if ($socket) {
             fclose($socket);
             return true;
-        } else {
-            return false;
         }
+
+        return false;
     }
 
 

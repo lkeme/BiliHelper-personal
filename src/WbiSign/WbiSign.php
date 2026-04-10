@@ -68,11 +68,9 @@ class WbiSign
     protected static function getMixinKey(string $orig): string
     {
         $mixinKey = "";
-        //
         foreach (self::$mixinKeyEncTab as $index) {
             $mixinKey .= $orig[$index];
         }
-        //
         return substr($mixinKey, 0, 32);
     }
 
@@ -86,9 +84,7 @@ class WbiSign
         // 删除payload中的w_rid和wts
         unset($payload['w_rid']);
         unset($payload['wts']);
-        //
         list($img_key, $sub_key) = self::getWbiKeys();
-        //
         $mixin_key = self::getMixinKey($img_key . $sub_key);
         $payload['wts'] = time();
         // 按照 key 重排参数
@@ -112,7 +108,6 @@ class WbiSign
         $data = http_build_query($payload);
         // 计算 w_rid
         $payload['w_rid'] = md5($data . $mixin_key);;
-        //
         return $payload;
     }
 

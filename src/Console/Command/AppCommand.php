@@ -43,7 +43,6 @@ class AppCommand extends Command
         private readonly ?Closure $cacheResetServiceResolver = null,
     ) {
         parent::__construct('mode:app', $this->desc);
-        //
         $this
             ->option('-r --reset-cache', '执行前清理当前 profile 缓存（默认保留登录态）')
             ->option('-p --purge-auth', '清理缓存时同时清空登录态')

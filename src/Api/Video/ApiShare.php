@@ -35,10 +35,7 @@ class ApiShare extends AbstractApiClient
      */
     public function share(string $aid): array
     {
-        //
-        //
         $url = 'https://api.bilibili.com/x/web-interface/share/add';
-        //
         $payload = [
             'aid' => $aid,
             'csrf' => $this->request()->csrfValue(),
