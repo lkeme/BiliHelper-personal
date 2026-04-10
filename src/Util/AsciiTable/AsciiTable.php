@@ -204,6 +204,8 @@ class AsciiTable
      */
     protected function line(?string $left, string $horizontal, string $link, ?string $right): string
     {
+        $left = $left ?? '';
+        $right = $right ?? '';
         $line = $left;
         foreach ($this->keys as $key) {
             $line .= str_repeat($horizontal, $this->widths[$key] + 2) . $link;
