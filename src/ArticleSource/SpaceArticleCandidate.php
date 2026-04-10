@@ -7,6 +7,7 @@ final class SpaceArticleCandidate
     public function __construct(
         public readonly int $cvId,
         public readonly string $title,
+        public readonly string $summary,
         public readonly int $publishTime,
     ) {
     }
@@ -18,11 +19,12 @@ final class SpaceArticleCandidate
     {
         $cvId = (int)($row['id'] ?? 0);
         $title = trim((string)($row['title'] ?? ''));
+        $summary = trim((string)($row['summary'] ?? ''));
         $publishTime = (int)($row['publish_time'] ?? 0);
         if ($cvId <= 0 || $title === '' || $publishTime <= 0) {
             return null;
         }
 
-        return new self($cvId, $title, $publishTime);
+        return new self($cvId, $title, $summary, $publishTime);
     }
 }

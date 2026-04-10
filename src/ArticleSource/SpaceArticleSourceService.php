@@ -12,7 +12,6 @@ final class SpaceArticleSourceService
 {
     /**
      * @param callable():array<int, array<string, mixed>>|null $articleListLoader
-     * @param callable(int):array<string, mixed>|null $articleContentLoader
      * @param callable():int|null $clock
      */
     public function __construct(
@@ -21,14 +20,12 @@ final class SpaceArticleSourceService
         ?SpaceArticleCacheStore $cacheStore = null,
         ?SpaceArticleParseService $parseService = null,
         ?callable $articleListLoader = null,
-        ?callable $articleContentLoader = null,
         ?callable $clock = null,
     ) {
         $this->config = $config ?? new SpaceArticleSourceConfig();
         $this->cacheStore = $cacheStore ?? new SpaceArticleCacheStore($this->cache(), $this->config->retentionDays());
         $this->parseService = $parseService ?? new SpaceArticleParseService();
         $this->articleListLoader = $articleListLoader !== null ? Closure::fromCallable($articleListLoader) : null;
-        $this->articleContentLoader = $articleContentLoader !== null ? Closure::fromCallable($articleContentLoader) : null;
         $this->clock = $clock !== null ? Closure::fromCallable($clock) : null;
     }
 
@@ -36,7 +33,6 @@ final class SpaceArticleSourceService
     private readonly SpaceArticleCacheStore $cacheStore;
     private readonly SpaceArticleParseService $parseService;
     private readonly ?Closure $articleListLoader;
-    private readonly ?Closure $articleContentLoader;
     private readonly ?Closure $clock;
 
     public function snapshotForToday(): SpaceArticleDailySnapshot
@@ -71,14 +67,14 @@ final class SpaceArticleSourceService
 
         if ($reservationCandidate instanceof SpaceArticleCandidate) {
             $reservationIds = $this->parseService->extractIds(
-                $this->loadArticleContent($reservationCandidate->cvId),
+                ['summary' => $reservationCandidate->summary],
                 $this->config->rules()['reservation'],
             );
         }
 
         if ($lotteryCandidate instanceof SpaceArticleCandidate) {
             $lotteryIds = $this->parseService->extractIds(
-                $this->loadArticleContent($lotteryCandidate->cvId),
+                ['summary' => $lotteryCandidate->summary],
                 $this->config->rules()['lottery'],
             );
         }
@@ -138,20 +134,6 @@ final class SpaceArticleSourceService
         $articles = $response['data']['articles'] ?? null;
 
         return is_array($articles) ? array_values(array_filter($articles, 'is_array')) : [];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function loadArticleContent(int $cvId): array
-    {
-        if (is_callable($this->articleContentLoader)) {
-            $loaded = ($this->articleContentLoader)($cvId);
-
-            return is_array($loaded) ? $loaded : [];
-        }
-
-        return $this->articleApi()->view($cvId);
     }
 
     /**
