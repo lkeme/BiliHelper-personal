@@ -122,9 +122,9 @@ final class ConfigTemplateSynchronizer
      */
     private function splitLines(string $content, ?string $newline = null): array
     {
-        $newline ??= $this->detectNewline($content);
+        $lines = preg_split('/\r\n|\r|\n/u', $content);
 
-        return explode($newline, $content);
+        return is_array($lines) ? $lines : [$content];
     }
 
     private function extractTrailingSectionHeader(string $line): ?string
