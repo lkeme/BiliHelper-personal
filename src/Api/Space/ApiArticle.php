@@ -38,4 +38,28 @@ class ApiArticle
 
         return ApiJson::decode($raw, 'space.article');
     }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function view(int $cvId): array
+    {
+        try {
+            $raw = $this->request->getText('pc', 'https://api.bilibili.com/x/article/view', [
+                'id' => $cvId,
+                'gaia_source' => 'main_web',
+            ], [
+                'origin' => 'https://www.bilibili.com',
+                'referer' => 'https://www.bilibili.com/read/cv' . $cvId,
+            ]);
+        } catch (Throwable $throwable) {
+            return [
+                'code' => -500,
+                'message' => 'space.article.view 请求失败: ' . $throwable->getMessage(),
+                'data' => [],
+            ];
+        }
+
+        return ApiJson::decode($raw, 'space.article.view');
+    }
 }
