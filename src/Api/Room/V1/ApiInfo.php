@@ -2,15 +2,15 @@
 
 namespace Bhp\Api\Room\V1;
 
-use Bhp\Api\Support\ApiJson;
+use Bhp\Api\Support\AbstractApiClient;
 use Bhp\Request\Request;
-use Throwable;
 
-class ApiInfo
+class ApiInfo extends AbstractApiClient
 {
     public function __construct(
-        private readonly Request $request,
+        Request $request,
     ) {
+        parent::__construct($request);
     }
 
     /**
@@ -18,19 +18,9 @@ class ApiInfo
      */
     public function getRoomInfoV1(int|string $roomId): array
     {
-        try {
-            $raw = $this->request->getText('other', 'https://api.live.bilibili.com/room/v1/Room/room_init', [
-                'id' => $roomId,
-            ]);
-        } catch (Throwable $throwable) {
-            return [
-                'code' => -500,
-                'message' => 'room.info.v1 请求失败: ' . $throwable->getMessage(),
-                'data' => [],
-            ];
-        }
-
-        return ApiJson::decode($raw, 'room.info.v1');
+        return $this->decodeGet('other', 'https://api.live.bilibili.com/room/v1/Room/room_init', [
+            'id' => $roomId,
+        ], [], 'room.info.v1');
     }
 
     /**
@@ -38,18 +28,8 @@ class ApiInfo
      */
     public function getRoomInfoV2(int|string $roomId): array
     {
-        try {
-            $raw = $this->request->getText('other', 'https://api.live.bilibili.com/room/v1/Room/get_info_by_id', [
-                'ids[]' => $roomId,
-            ]);
-        } catch (Throwable $throwable) {
-            return [
-                'code' => -500,
-                'message' => 'room.info.v2 请求失败: ' . $throwable->getMessage(),
-                'data' => [],
-            ];
-        }
-
-        return ApiJson::decode($raw, 'room.info.v2');
+        return $this->decodeGet('other', 'https://api.live.bilibili.com/room/v1/Room/get_info_by_id', [
+            'ids[]' => $roomId,
+        ], [], 'room.info.v2');
     }
 }

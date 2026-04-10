@@ -17,15 +17,15 @@
 
 namespace Bhp\Api\Video;
 
-use Bhp\Api\Support\ApiJson;
+use Bhp\Api\Support\AbstractApiClient;
 use Bhp\Request\Request;
-use Throwable;
 
-class ApiWatch
+class ApiWatch extends AbstractApiClient
 {
     public function __construct(
-        private readonly Request $request,
+        Request $request,
     ) {
+        parent::__construct($request);
     }
 
     /**
@@ -47,8 +47,8 @@ class ApiWatch
             'part' => 1,
             'ftime' => time(),
             'jsonp' => 'jsonp',
-            'mid' => $this->request->uidValue(),
-            'csrf' => $this->request->csrfValue(),
+            'mid' => $this->request()->uidValue(),
+            'csrf' => $this->request()->csrfValue(),
             'stime' => time(),
             'lv' => '',
             'auto_continued_play' => 0,
@@ -86,8 +86,8 @@ class ApiWatch
             'aid' => $aid,
             'bvid' => $bvid,
             'cid' => $cid,
-            'mid' => $this->request->uidValue(),
-            'csrf' => $this->request->csrfValue(),
+            'mid' => $this->request()->uidValue(),
+            'csrf' => $this->request()->csrfValue(),
             'jsonp' => 'jsonp',
             'played_time' => 0,
             'realtime' => $duration,
@@ -118,19 +118,4 @@ class ApiWatch
      * @param array<string, mixed> $payload
      * @param array<string, string> $headers
      * @return array<string, mixed>
-     */
-    private function decodePost(string $os, string $url, array $payload, array $headers, string $label): array
-    {
-        try {
-            $raw = $this->request->postText($os, $url, $payload, $headers);
-        } catch (Throwable $throwable) {
-            return [
-                'code' => -500,
-                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
-                'data' => [],
-            ];
-        }
-
-        return ApiJson::decode($raw, $label);
-    }
-}
+     */}

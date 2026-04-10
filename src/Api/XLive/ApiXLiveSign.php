@@ -2,15 +2,15 @@
 
 namespace Bhp\Api\XLive;
 
-use Bhp\Api\Support\ApiJson;
+use Bhp\Api\Support\AbstractApiClient;
 use Bhp\Request\Request;
-use Throwable;
 
-class ApiXLiveSign
+class ApiXLiveSign extends AbstractApiClient
 {
     public function __construct(
-        private readonly Request $request,
+        Request $request,
     ) {
+        parent::__construct($request);
     }
 
     /**
@@ -18,7 +18,10 @@ class ApiXLiveSign
      */
     public function webGetSignInfo(): array
     {
-        return $this->decodeGet('https://api.live.bilibili.com/xlive/web-ucenter/v1/sign/WebGetSignInfo', 'xlive.sign.info');
+        return $this->decodeGet('pc', 'https://api.live.bilibili.com/xlive/web-ucenter/v1/sign/WebGetSignInfo', [], [
+            'origin' => 'https://link.bilibili.com',
+            'referer' => 'https://link.bilibili.com/p/center/index',
+        ], 'xlive.sign.info');
     }
 
     /**
@@ -26,27 +29,9 @@ class ApiXLiveSign
      */
     public function doSign(): array
     {
-        return $this->decodeGet('https://api.live.bilibili.com/xlive/web-ucenter/v1/sign/DoSign', 'xlive.sign.do_sign');
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function decodeGet(string $url, string $label): array
-    {
-        try {
-            $raw = $this->request->getText('pc', $url, [], [
-                'origin' => 'https://link.bilibili.com',
-                'referer' => 'https://link.bilibili.com/p/center/index',
-            ]);
-        } catch (Throwable $throwable) {
-            return [
-                'code' => -500,
-                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
-                'data' => [],
-            ];
-        }
-
-        return ApiJson::decode($raw, $label);
+        return $this->decodeGet('pc', 'https://api.live.bilibili.com/xlive/web-ucenter/v1/sign/DoSign', [], [
+            'origin' => 'https://link.bilibili.com',
+            'referer' => 'https://link.bilibili.com/p/center/index',
+        ], 'xlive.sign.do_sign');
     }
 }

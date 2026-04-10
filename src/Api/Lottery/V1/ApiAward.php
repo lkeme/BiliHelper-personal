@@ -2,15 +2,15 @@
 
 namespace Bhp\Api\Lottery\V1;
 
-use Bhp\Api\Support\ApiJson;
+use Bhp\Api\Support\AbstractApiClient;
 use Bhp\Request\Request;
-use Throwable;
 
-class ApiAward
+class ApiAward extends AbstractApiClient
 {
     public function __construct(
-        private readonly Request $request,
+        Request $request,
     ) {
+        parent::__construct($request);
     }
 
     /**
@@ -18,22 +18,12 @@ class ApiAward
      */
     public function awardList(): array
     {
-        try {
-            $raw = $this->request->getText('pc', 'https://api.live.bilibili.com/lottery/v1/Award/award_list', [
-                'page' => 1,
-                'month' => '',
-            ], [
-                'origin' => 'https://link.bilibili.com',
-                'referer' => 'https://link.bilibili.com/p/center/index',
-            ]);
-        } catch (Throwable $throwable) {
-            return [
-                'code' => -500,
-                'message' => 'lottery.award.list 请求失败: ' . $throwable->getMessage(),
-                'data' => [],
-            ];
-        }
-
-        return ApiJson::decode($raw, 'lottery.award.list');
+        return $this->decodeGet('pc', 'https://api.live.bilibili.com/lottery/v1/Award/award_list', [
+            'page' => 1,
+            'month' => '',
+        ], [
+            'origin' => 'https://link.bilibili.com',
+            'referer' => 'https://link.bilibili.com/p/center/index',
+        ], 'lottery.award.list');
     }
 }

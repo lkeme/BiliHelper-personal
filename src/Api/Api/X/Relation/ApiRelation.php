@@ -17,11 +17,10 @@
 
 namespace Bhp\Api\Api\X\Relation;
 
-use Bhp\Api\Support\ApiJson;
+use Bhp\Api\Support\AbstractApiClient;
 use Bhp\Request\Request;
-use Throwable;
 
-class ApiRelation
+class ApiRelation extends AbstractApiClient
 {
     public const ACTION_FOLLOW = 1;
     public const ACTION_UNFOLLOW = 2;
@@ -31,8 +30,9 @@ class ApiRelation
     public const SOURCE_ACTIVITY_PAGE = 222;
 
     public function __construct(
-        private readonly Request $request,
+        Request $request,
     ) {
+        parent::__construct($request);
     }
 
     /**
@@ -46,7 +46,7 @@ class ApiRelation
     public function followings(int $pn = 1, int $ps = 20, string $order = 'desc', string $order_type = 'order_type'): array
     {
         $url = 'https://api.bilibili.com/x/relation/followings';
-        $uid = $this->request->uidValue();
+        $uid = $this->request()->uidValue();
         $headers = [
             'origin' => 'https://space.bilibili.com',
             'referer' => "https://space.bilibili.com/{$uid}/fans/follow",
@@ -69,7 +69,7 @@ class ApiRelation
      */
     public function tags(): array
     {
-        $uid = $this->request->uidValue();
+        $uid = $this->request()->uidValue();
         $url = 'https://api.bilibili.com/x/relation/tags';
         $headers = [
             'origin' => 'https://space.bilibili.com',
@@ -88,7 +88,7 @@ class ApiRelation
      */
     public function tag(int $tag_id, int $pn = 1, int $ps = 20): array
     {
-        $uid = $this->request->uidValue();
+        $uid = $this->request()->uidValue();
         $url = 'https://api.bilibili.com/x/relation/tag';
         $headers = [
             'origin' => 'https://space.bilibili.com',
@@ -134,7 +134,7 @@ class ApiRelation
      */
     protected function act(int $uid, int $act, int $source): array
     {
-        $currentUid = $this->request->uidValue();
+        $currentUid = $this->request()->uidValue();
         $url = 'https://api.bilibili.com/x/relation/modify';
         $headers = [
             'origin' => 'https://space.bilibili.com',
@@ -144,7 +144,7 @@ class ApiRelation
             'fid' => $uid,
             'act' => $act,
             're_src' => $source,
-            'csrf' => $this->request->csrfValue(),
+            'csrf' => $this->request()->csrfValue(),
         ];
 
         return $this->decodePost('pc', $url, $payload, $headers, 'relation.modify');
@@ -154,39 +154,8 @@ class ApiRelation
      * @param array<string, mixed> $payload
      * @param array<string, string> $headers
      * @return array<string, mixed>
-     */
-    private function decodeGet(string $os, string $url, array $payload, array $headers, string $label): array
-    {
-        try {
-            $raw = $this->request->getText($os, $url, $payload, $headers);
-        } catch (Throwable $throwable) {
-            return [
-                'code' => -500,
-                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
-                'data' => [],
-            ];
-        }
-
-        return ApiJson::decode($raw, $label);
-    }
-
-    /**
+     */    /**
      * @param array<string, mixed> $payload
      * @param array<string, string> $headers
      * @return array<string, mixed>
-     */
-    private function decodePost(string $os, string $url, array $payload, array $headers, string $label): array
-    {
-        try {
-            $raw = $this->request->postText($os, $url, $payload, $headers);
-        } catch (Throwable $throwable) {
-            return [
-                'code' => -500,
-                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
-                'data' => [],
-            ];
-        }
-
-        return ApiJson::decode($raw, $label);
-    }
-}
+     */}

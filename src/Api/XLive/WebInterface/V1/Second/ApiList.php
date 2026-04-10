@@ -2,16 +2,16 @@
 
 namespace Bhp\Api\XLive\WebInterface\V1\Second;
 
-use Bhp\Api\Support\ApiJson;
+use Bhp\Api\Support\AbstractApiClient;
 use Bhp\Request\Request;
 use Bhp\WbiSign\WbiSign;
-use Throwable;
 
-final class ApiList
+final class ApiList extends AbstractApiClient
 {
     public function __construct(
-        private readonly Request $request,
+        Request $request,
     ) {
+        parent::__construct($request);
     }
 
     /**
@@ -31,23 +31,13 @@ final class ApiList
             $payload['w_webid'] = $webId;
         }
 
-        try {
-            $raw = $this->request->getText('pc', 'https://api.live.bilibili.com/xlive/web-interface/v1/second/getList', WbiSign::encryption($payload), [
-                'origin' => 'https://live.bilibili.com',
-                'referer' => sprintf(
-                    'https://live.bilibili.com/p/eden/area-tags?areaId=%d&parentAreaId=%d',
-                    $areaId > 0 ? $areaId : $parentAreaId,
-                    $parentAreaId,
-                ),
-            ]);
-        } catch (Throwable $throwable) {
-            return [
-                'code' => -500,
-                'message' => 'xlive.second.get_list 请求失败: ' . $throwable->getMessage(),
-                'data' => [],
-            ];
-        }
-
-        return ApiJson::decode($raw, 'xlive.second.get_list');
+        return $this->decodeGet('pc', 'https://api.live.bilibili.com/xlive/web-interface/v1/second/getList', WbiSign::encryption($payload), [
+            'origin' => 'https://live.bilibili.com',
+            'referer' => sprintf(
+                'https://live.bilibili.com/p/eden/area-tags?areaId=%d&parentAreaId=%d',
+                $areaId > 0 ? $areaId : $parentAreaId,
+                $parentAreaId,
+            ),
+        ], 'xlive.second.get_list');
     }
 }

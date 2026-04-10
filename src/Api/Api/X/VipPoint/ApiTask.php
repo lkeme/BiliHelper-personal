@@ -2,11 +2,10 @@
 
 namespace Bhp\Api\Api\X\VipPoint;
 
-use Bhp\Api\Support\ApiJson;
+use Bhp\Api\Support\AbstractApiClient;
 use Bhp\Request\Request;
-use Throwable;
 
-class ApiTask
+class ApiTask extends AbstractApiClient
 {
     /**
      * @var array<string, string>
@@ -16,8 +15,9 @@ class ApiTask
     ];
 
     public function __construct(
-        private readonly Request $request,
+        Request $request,
     ) {
+        parent::__construct($request);
     }
 
     /**
@@ -25,7 +25,7 @@ class ApiTask
      */
     public function combine(): array
     {
-        return $this->decodeGet('app', 'https://api.bilibili.com/x/vip_point/task/combine', $this->request->signCommonPayload([]), self::HEADERS, 'vip_point.task.combine');
+        return $this->decodeGet('app', 'https://api.bilibili.com/x/vip_point/task/combine', $this->request()->signCommonPayload([]), self::HEADERS, 'vip_point.task.combine');
     }
 
     /**
@@ -33,26 +33,11 @@ class ApiTask
      */
     public function homepageCombine(): array
     {
-        return $this->decodeGet('app', 'https://api.bilibili.com/x/vip_point/homepage/combine', $this->request->signCommonPayload([]), self::HEADERS, 'vip_point.homepage.combine');
+        return $this->decodeGet('app', 'https://api.bilibili.com/x/vip_point/homepage/combine', $this->request()->signCommonPayload([]), self::HEADERS, 'vip_point.homepage.combine');
     }
 
     /**
      * @param array<string, mixed> $payload
      * @param array<string, string> $headers
      * @return array<string, mixed>
-     */
-    private function decodeGet(string $os, string $url, array $payload, array $headers, string $label): array
-    {
-        try {
-            $raw = $this->request->getText($os, $url, $payload, $headers);
-        } catch (Throwable $throwable) {
-            return [
-                'code' => -500,
-                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
-                'data' => [],
-            ];
-        }
-
-        return ApiJson::decode($raw, $label);
-    }
-}
+     */}

@@ -2,15 +2,15 @@
 
 namespace Bhp\Api\Api\X\ActivityComponents;
 
-use Bhp\Api\Support\ApiJson;
+use Bhp\Api\Support\AbstractApiClient;
 use Bhp\Request\Request;
-use Throwable;
 
-final class ApiMission
+final class ApiMission extends AbstractApiClient
 {
     public function __construct(
-        private readonly Request $request,
+        Request $request,
     ) {
+        parent::__construct($request);
     }
 
     /**
@@ -45,7 +45,7 @@ final class ApiMission
             'reward_name' => $rewardName,
             'gaia_vtoken' => $gaiaVToken,
             'receive_from' => 'missionPage',
-            'csrf' => $this->request->csrfValue(),
+            'csrf' => $this->request()->csrfValue(),
         ], [
             'origin' => 'https://www.bilibili.com',
             'referer' => "https://www.bilibili.com/blackboard/era/award-exchange.html?task_id={$taskId}",
@@ -56,39 +56,8 @@ final class ApiMission
      * @param array<string, mixed> $payload
      * @param array<string, string> $headers
      * @return array<string, mixed>
-     */
-    private function decodeGet(string $os, string $url, array $payload, array $headers, string $label): array
-    {
-        try {
-            $raw = $this->request->getText($os, $url, $payload, $headers);
-        } catch (Throwable $throwable) {
-            return [
-                'code' => -500,
-                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
-                'data' => [],
-            ];
-        }
-
-        return ApiJson::decode($raw, $label);
-    }
-
-    /**
+     */    /**
      * @param array<string, mixed> $payload
      * @param array<string, string> $headers
      * @return array<string, mixed>
-     */
-    private function decodePost(string $os, string $url, array $payload, array $headers, string $label): array
-    {
-        try {
-            $raw = $this->request->postText($os, $url, $payload, $headers);
-        } catch (Throwable $throwable) {
-            return [
-                'code' => -500,
-                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
-                'data' => [],
-            ];
-        }
-
-        return ApiJson::decode($raw, $label);
-    }
-}
+     */}

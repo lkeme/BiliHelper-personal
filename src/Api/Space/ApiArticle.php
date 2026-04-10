@@ -2,15 +2,15 @@
 
 namespace Bhp\Api\Space;
 
-use Bhp\Api\Support\ApiJson;
+use Bhp\Api\Support\AbstractApiClient;
 use Bhp\Request\Request;
-use Throwable;
 
-class ApiArticle
+class ApiArticle extends AbstractApiClient
 {
     public function __construct(
-        private readonly Request $request,
+        Request $request,
     ) {
+        parent::__construct($request);
     }
 
     /**
@@ -18,24 +18,14 @@ class ApiArticle
      */
     public function article(string $uid, int $pn = 1, int $ps = 2, string $sort = 'publish_time'): array
     {
-        try {
-            $raw = $this->request->getText('other', 'https://api.bilibili.com/x/space/article', [
-                'mid' => $uid,
-                'pn' => $pn,
-                'ps' => $ps,
-                'sort' => $sort,
-            ], [
-                'origin' => 'https://space.bilibili.com',
-                'referer' => "https://space.bilibili.com/{$uid}/",
-            ]);
-        } catch (Throwable $throwable) {
-            return [
-                'code' => -500,
-                'message' => 'space.article 请求失败: ' . $throwable->getMessage(),
-                'data' => [],
-            ];
-        }
-
-        return ApiJson::decode($raw, 'space.article');
+        return $this->decodeGet('other', 'https://api.bilibili.com/x/space/article', [
+            'mid' => $uid,
+            'pn' => $pn,
+            'ps' => $ps,
+            'sort' => $sort,
+        ], [
+            'origin' => 'https://space.bilibili.com',
+            'referer' => "https://space.bilibili.com/{$uid}/",
+        ], 'space.article');
     }
 }

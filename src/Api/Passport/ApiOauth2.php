@@ -17,15 +17,15 @@
 
 namespace Bhp\Api\Passport;
 
-use Bhp\Api\Support\ApiJson;
+use Bhp\Api\Support\AbstractApiClient;
 use Bhp\Request\Request;
-use Throwable;
 
-class ApiOauth2
+class ApiOauth2 extends AbstractApiClient
 {
     public function __construct(
-        private readonly Request $request,
+        Request $request,
     ) {
+        parent::__construct($request);
     }
 
     /**
@@ -40,7 +40,7 @@ class ApiOauth2
             'access_token' => $token,
         ];
         // {"ts":1234,"code":0,"data":{"mid":1234,"access_token":"1234","expires_in":7759292}}
-        return $this->decodeGet('app', $url, $this->request->signCommonPayload($payload), [], 'oauth2.info.legacy');
+        return $this->decodeGet('app', $url, $this->request()->signCommonPayload($payload), [], 'oauth2.info.legacy');
     }
 
     /**
@@ -55,7 +55,7 @@ class ApiOauth2
             'access_key' => $token,
         ];
         // {"code":0,"message":"0","ttl":1,"data":{"mid":"<user mid>","access_token":"<current token>","expires_in":9787360,"refresh":true}}
-        return $this->decodeGet('app', $url, $this->request->signCommonPayload($payload), [
+        return $this->decodeGet('app', $url, $this->request()->signCommonPayload($payload), [
             'Accept-Encoding' => 'identity',
         ], 'oauth2.info.new');
     }
@@ -74,7 +74,7 @@ class ApiOauth2
             'refresh_token' => $r_token,
         ];
         // {"message":"user not login","ts":1593111694,"code":-101}
-        $response = $this->decodePost('app', $url, $this->request->signLoginPayload($payload), [
+        $response = $this->decodePost('app', $url, $this->request()->signLoginPayload($payload), [
             'Accept-Encoding' => 'identity',
         ], 'oauth2.refresh_token.new');
         if (!self::isValidRefreshResponse($response)) {
@@ -98,7 +98,7 @@ class ApiOauth2
             'refresh_token' => $r_token,
         ];
         // {"message":"user not login","ts":1593111694,"code":-101}
-        return $this->decodePost('app', $url, $this->request->signCommonPayload($payload), [
+        return $this->decodePost('app', $url, $this->request()->signCommonPayload($payload), [
             'Accept-Encoding' => 'identity',
         ], 'oauth2.refresh_token.legacy');
     }
@@ -114,7 +114,7 @@ class ApiOauth2
         $payload = [
             'access_key' => $token,
         ];
-        return $this->decodeGet('app', $url, $this->request->signCommonPayload($payload), [
+        return $this->decodeGet('app', $url, $this->request()->signCommonPayload($payload), [
             'Accept-Encoding' => 'identity',
         ], 'oauth2.myinfo');
     }
@@ -128,7 +128,7 @@ class ApiOauth2
         // $url = 'https://passport.bilibili.com/api/oauth2/getKey';
         $url = 'https://passport.bilibili.com/x/passport-login/web/key';
         $payload = [];
-        return $this->decodeGet('app', $url, $this->request->signLoginPayload($payload), [
+        return $this->decodeGet('app', $url, $this->request()->signLoginPayload($payload), [
             'Accept-Encoding' => 'identity',
         ], 'oauth2.get_key');
     }
@@ -162,7 +162,7 @@ class ApiOauth2
             'access_key' => $token,
             'gourl' => 'https%3A%2F%2Faccount.bilibili.com%2Faccount%2Fhome'
         ];
-        return $this->request->fetchHeaders('app', $url, $this->request->signCommonPayload($payload));
+        return $this->request()->fetchHeaders('app', $url, $this->request()->signCommonPayload($payload));
     }
 
     /**
@@ -181,40 +181,8 @@ class ApiOauth2
      * @param array<string, mixed> $payload
      * @param array<string, string> $headers
      * @return array<string, mixed>
-     */
-    private function decodeGet(string $os, string $url, array $payload, array $headers, string $label): array
-    {
-        try {
-            $raw = $this->request->getText($os, $url, $payload, $headers);
-        } catch (Throwable $throwable) {
-            return [
-                'code' => -500,
-                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
-                'data' => [],
-            ];
-        }
-
-        return ApiJson::decode($raw, $label);
-    }
-
-    /**
+     */    /**
      * @param array<string, mixed> $payload
      * @param array<string, string> $headers
      * @return array<string, mixed>
-     */
-    private function decodePost(string $os, string $url, array $payload, array $headers, string $label): array
-    {
-        try {
-            $raw = $this->request->postText($os, $url, $payload, $headers);
-        } catch (Throwable $throwable) {
-            return [
-                'code' => -500,
-                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
-                'data' => [],
-            ];
-        }
-
-        return ApiJson::decode($raw, $label);
-    }
-
-}
+     */}

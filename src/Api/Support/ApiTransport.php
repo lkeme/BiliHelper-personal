@@ -10,27 +10,48 @@ final class ApiTransport
      * @param array<string, mixed> $payload
      * @param array<string, string> $headers
      */
-    public function getText(Request $request, string $os, string $url, array $payload, array $headers): string
+    public function getText(
+        Request $request,
+        string $os,
+        string $url,
+        array $payload,
+        array $headers,
+        float $timeout = 30.0,
+    ): string
     {
-        return $request->getText($os, $url, $payload, $headers);
+        return $request->getText($os, $url, $payload, $headers, $timeout);
     }
 
     /**
      * @param array<string, mixed> $payload
      * @param array<string, string> $headers
      */
-    public function postText(Request $request, string $os, string $url, array $payload, array $headers): string
+    public function postText(
+        Request $request,
+        string $os,
+        string $url,
+        array $payload,
+        array $headers,
+        float $timeout = 30.0,
+    ): string
     {
-        return $request->postText($os, $url, $payload, $headers);
+        return $request->postText($os, $url, $payload, $headers, $timeout);
     }
 
     /**
      * @param array<string, mixed> $payload
      * @param array<string, string> $headers
      */
-    public function postJsonBodyText(Request $request, string $os, string $url, array $payload, array $headers): string
+    public function postJsonBodyText(
+        Request $request,
+        string $os,
+        string $url,
+        array $payload,
+        array $headers,
+        float $timeout = 30.0,
+    ): string
     {
-        return $request->postJsonBodyText($os, $url, $payload, $headers);
+        return $request->postJsonBodyText($os, $url, $payload, $headers, $timeout);
     }
 
     /**
@@ -45,7 +66,8 @@ final class ApiTransport
         array $payload,
         array $query,
         array $headers,
+        float $timeout = 30.0,
     ): string {
-        return $request->postTextWithQuery($os, $url, $payload, $query, $headers);
+        return $request->postTextWithQuery($os, $url, $payload, $query, $headers, $timeout);
     }
 }

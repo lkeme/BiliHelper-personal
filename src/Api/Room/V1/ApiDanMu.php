@@ -2,15 +2,15 @@
 
 namespace Bhp\Api\Room\V1;
 
-use Bhp\Api\Support\ApiJson;
+use Bhp\Api\Support\AbstractApiClient;
 use Bhp\Request\Request;
-use Throwable;
 
-class ApiDanMu
+class ApiDanMu extends AbstractApiClient
 {
     public function __construct(
-        private readonly Request $request,
+        Request $request,
     ) {
+        parent::__construct($request);
     }
 
     /**
@@ -18,20 +18,10 @@ class ApiDanMu
      */
     public function getRoomConfig(int $roomId): array
     {
-        try {
-            $raw = $this->request->getText('other', 'https://api.live.bilibili.com/room/v1/Danmu/getConf', [
-                'room_id' => $roomId,
-                'platform' => 'pc',
-                'player' => 'web',
-            ]);
-        } catch (Throwable $throwable) {
-            return [
-                'code' => -500,
-                'message' => 'room.danmu.get_conf 请求失败: ' . $throwable->getMessage(),
-                'data' => [],
-            ];
-        }
-
-        return ApiJson::decode($raw, 'room.danmu.get_conf');
+        return $this->decodeGet('other', 'https://api.live.bilibili.com/room/v1/Danmu/getConf', [
+            'room_id' => $roomId,
+            'platform' => 'pc',
+            'player' => 'web',
+        ], [], 'room.danmu.get_conf');
     }
 }

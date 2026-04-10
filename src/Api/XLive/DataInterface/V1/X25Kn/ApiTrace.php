@@ -2,16 +2,16 @@
 
 namespace Bhp\Api\XLive\DataInterface\V1\X25Kn;
 
-use Bhp\Api\Support\ApiJson;
+use Bhp\Api\Support\AbstractApiClient;
 use Bhp\Request\Request;
 use Bhp\WbiSign\WbiSign;
-use Throwable;
 
-final class ApiTrace
+final class ApiTrace extends AbstractApiClient
 {
     public function __construct(
-        private readonly Request $request,
+        Request $request,
     ) {
+        parent::__construct($request);
     }
 
     /**
@@ -35,23 +35,13 @@ final class ApiTrace
             'heart_beat' => '[]',
             'ua' => $userAgent,
             'web_location' => '444.8',
-            'csrf' => $this->request->csrfValue(),
+            'csrf' => $this->request()->csrfValue(),
         ]);
 
-        try {
-            $raw = $this->request->postText('pc', 'https://live-trace.bilibili.com/xlive/data-interface/v1/x25Kn/E?' . http_build_query($query), [], [
-                'origin' => 'https://live.bilibili.com',
-                'referer' => "https://live.bilibili.com/blanc/{$roomId}?liteVersion=true",
-            ]);
-        } catch (Throwable $throwable) {
-            return [
-                'code' => -500,
-                'message' => 'xlive.trace.enter 请求失败: ' . $throwable->getMessage(),
-                'data' => [],
-            ];
-        }
-
-        return ApiJson::decode($raw, 'xlive.trace.enter');
+        return $this->decodePost('pc', 'https://live-trace.bilibili.com/xlive/data-interface/v1/x25Kn/E?' . http_build_query($query), [], [
+            'origin' => 'https://live.bilibili.com',
+            'referer' => "https://live.bilibili.com/blanc/{$roomId}?liteVersion=true",
+        ], 'xlive.trace.enter');
     }
 
     /**
@@ -96,23 +86,13 @@ final class ApiTrace
             'trackid' => -99998,
             'ua' => $userAgent,
             'web_location' => '444.8',
-            'csrf' => $this->request->csrfValue(),
+            'csrf' => $this->request()->csrfValue(),
         ]);
 
-        try {
-            $raw = $this->request->postText('pc', 'https://live-trace.bilibili.com/xlive/data-interface/v1/x25Kn/X?' . http_build_query($query), [], [
-                'origin' => 'https://live.bilibili.com',
-                'referer' => "https://live.bilibili.com/blanc/{$roomId}?liteVersion=true",
-            ]);
-        } catch (Throwable $throwable) {
-            return [
-                'code' => -500,
-                'message' => 'xlive.trace.heartbeat 请求失败: ' . $throwable->getMessage(),
-                'data' => [],
-            ];
-        }
-
-        return ApiJson::decode($raw, 'xlive.trace.heartbeat');
+        return $this->decodePost('pc', 'https://live-trace.bilibili.com/xlive/data-interface/v1/x25Kn/X?' . http_build_query($query), [], [
+            'origin' => 'https://live.bilibili.com',
+            'referer' => "https://live.bilibili.com/blanc/{$roomId}?liteVersion=true",
+        ], 'xlive.trace.heartbeat');
     }
 
     /**

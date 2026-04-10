@@ -31,9 +31,10 @@ abstract class AbstractApiClient
         array $headers,
         string $label,
         ?ApiResponseNormalizerInterface $normalizer = null,
+        float $timeout = 30.0,
     ): array {
         try {
-            $raw = $this->transport()->getText($this->request(), $os, $url, $payload, $headers);
+            $raw = $this->transport()->getText($this->request(), $os, $url, $payload, $headers, $timeout);
         } catch (Throwable $throwable) {
             return $this->transportFailure($label, $throwable);
         }
@@ -53,9 +54,10 @@ abstract class AbstractApiClient
         array $headers,
         string $label,
         ?ApiResponseNormalizerInterface $normalizer = null,
+        float $timeout = 30.0,
     ): array {
         try {
-            $raw = $this->transport()->postText($this->request(), $os, $url, $payload, $headers);
+            $raw = $this->transport()->postText($this->request(), $os, $url, $payload, $headers, $timeout);
         } catch (Throwable $throwable) {
             return $this->transportFailure($label, $throwable);
         }
@@ -75,9 +77,10 @@ abstract class AbstractApiClient
         array $headers,
         string $label,
         ?ApiResponseNormalizerInterface $normalizer = null,
+        float $timeout = 30.0,
     ): array {
         try {
-            $raw = $this->transport()->postJsonBodyText($this->request(), $os, $url, $payload, $headers);
+            $raw = $this->transport()->postJsonBodyText($this->request(), $os, $url, $payload, $headers, $timeout);
         } catch (Throwable $throwable) {
             return $this->transportFailure($label, $throwable);
         }
@@ -99,9 +102,10 @@ abstract class AbstractApiClient
         array $headers,
         string $label,
         ?ApiResponseNormalizerInterface $normalizer = null,
+        float $timeout = 30.0,
     ): array {
         try {
-            $raw = $this->transport()->postTextWithQuery($this->request(), $os, $url, $payload, $query, $headers);
+            $raw = $this->transport()->postTextWithQuery($this->request(), $os, $url, $payload, $query, $headers, $timeout);
         } catch (Throwable $throwable) {
             return $this->transportFailure($label, $throwable);
         }
@@ -119,6 +123,31 @@ abstract class AbstractApiClient
             'message' => "{$label} 请求失败: {$throwable->getMessage()}",
             'data' => [],
         ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function decodeWith(
+        callable $callback,
+        string $label,
+        ?ApiResponseNormalizerInterface $normalizer = null,
+    ): array {
+        try {
+            $raw = $callback();
+        } catch (Throwable $throwable) {
+            return $this->transportFailure($label, $throwable);
+        }
+
+        if (!is_string($raw)) {
+            return [
+                'code' => -500,
+                'message' => "{$label} 响应格式异常",
+                'data' => [],
+            ];
+        }
+
+        return $this->decoder()->decodeJson($raw, $label, $normalizer);
     }
 
     protected function transport(): ApiTransport

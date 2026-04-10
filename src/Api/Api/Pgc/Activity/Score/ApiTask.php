@@ -2,11 +2,10 @@
 
 namespace Bhp\Api\Api\Pgc\Activity\Score;
 
-use Bhp\Api\Support\ApiJson;
+use Bhp\Api\Support\AbstractApiClient;
 use Bhp\Request\Request;
-use Throwable;
 
-class ApiTask
+class ApiTask extends AbstractApiClient
 {
     /**
      * @var array<string, string>
@@ -16,8 +15,9 @@ class ApiTask
     ];
 
     public function __construct(
-        private readonly Request $request,
+        Request $request,
     ) {
+        parent::__construct($request);
     }
 
     /**
@@ -25,10 +25,10 @@ class ApiTask
      */
     public function sign(): array
     {
-        return $this->decodePost('app', 'https://api.bilibili.com/pgc/activity/score/task/sign2', $this->request->signCommonPayload([
+        return $this->decodePost('app', 'https://api.bilibili.com/pgc/activity/score/task/sign2', $this->request()->signCommonPayload([
             'disable_rcmd' => '0',
-            'buvid' => $this->request->buvidValue(),
-            'csrf' => $this->request->csrfValue(),
+            'buvid' => $this->request()->buvidValue(),
+            'csrf' => $this->request()->csrfValue(),
         ], true), self::HEADERS, 'pgc.score.sign');
     }
 
@@ -37,9 +37,9 @@ class ApiTask
      */
     public function receive(string $taskCode): array
     {
-        return $this->decodePost('app', 'https://api.bilibili.com/pgc/activity/score/task/receive', $this->request->signCommonPayload([
+        return $this->decodePost('app', 'https://api.bilibili.com/pgc/activity/score/task/receive', $this->request()->signCommonPayload([
             'taskCode' => $taskCode,
-            'csrf' => $this->request->csrfValue(),
+            'csrf' => $this->request()->csrfValue(),
         ], true), self::HEADERS, 'pgc.score.receive');
     }
 
@@ -48,34 +48,12 @@ class ApiTask
      */
     public function complete(string $taskCode): array
     {
-        return $this->decodePost('app', 'https://api.bilibili.com/pgc/activity/score/task/complete', $this->request->signCommonPayload([
+        return $this->decodePostJson('app', 'https://api.bilibili.com/pgc/activity/score/task/complete', $this->request()->signCommonPayload([
             'taskCode' => $taskCode,
-            'csrf' => $this->request->csrfValue(),
+            'csrf' => $this->request()->csrfValue(),
             'ts' => time(),
         ], true), array_merge([
             'Content-Type' => 'application/json',
         ], self::HEADERS), 'pgc.score.complete');
-    }
-
-    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */
-    private function decodePost(string $os, string $url, array $payload, array $headers, string $label): array
-    {
-        try {
-            $raw = str_contains(strtolower((string)($headers['Content-Type'] ?? $headers['content-type'] ?? '')), 'application/json')
-                ? $this->request->postJsonBodyText($os, $url, $payload, $headers)
-                : $this->request->postText($os, $url, $payload, $headers);
-        } catch (Throwable $throwable) {
-            return [
-                'code' => -500,
-                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
-                'data' => [],
-            ];
-        }
-
-        return ApiJson::decode($raw, $label);
     }
 }

@@ -17,16 +17,16 @@
 
 namespace Bhp\Api\Msg;
 
-use Bhp\Api\Support\ApiJson;
+use Bhp\Api\Support\AbstractApiClient;
 use Bhp\Request\Request;
 use Bhp\WbiSign\WbiSign;
-use Throwable;
 
-class ApiMsg
+class ApiMsg extends AbstractApiClient
 {
     public function __construct(
-        private readonly Request $request,
+        Request $request,
     ) {
+        parent::__construct($request);
     }
 
     /**
@@ -42,8 +42,8 @@ class ApiMsg
             'rnd' => 0,
             'bubble' => 0,
             'roomid' => $room_id,
-            'csrf' => $this->request->csrfValue(),
-            'csrf_token' => $this->request->csrfValue(),
+            'csrf' => $this->request()->csrfValue(),
+            'csrf_token' => $this->request()->csrfValue(),
         ];
 
         return $this->decodePost('pc', 'https://api.live.bilibili.com/msg/send', $payload, [
@@ -57,7 +57,7 @@ class ApiMsg
      */
     public function sendBarrageAPP(int $room_id, string $content): array
     {
-        $csrf = $this->request->csrfValue();
+        $csrf = $this->request()->csrfValue();
         $payload = [
             'bubble' => 0,
             'msg' => $content,
@@ -78,41 +78,18 @@ class ApiMsg
             'csrf_token' => $csrf,
         ];
 
-        return $this->decodePost(
+        return $this->decodePostWithQuery(
             'pc',
             'https://api.live.bilibili.com/msg/send',
             $payload,
+            WbiSign::encryption([
+                'web_location' => '444.8',
+            ]),
             [
                 'origin' => 'https://live.bilibili.com',
                 'referer' => "https://live.bilibili.com/{$room_id}",
             ],
             'msg.barrage.app',
-            WbiSign::encryption([
-                'web_location' => '444.8',
-            ]),
         );
-    }
-
-    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @param array<string, mixed> $query
-     * @return array<string, mixed>
-     */
-    private function decodePost(string $os, string $url, array $payload, array $headers, string $label, array $query = []): array
-    {
-        try {
-            $raw = $query === []
-                ? $this->request->postText($os, $url, $payload, $headers)
-                : $this->request->postTextWithQuery($os, $url, $payload, $query, $headers);
-        } catch (Throwable $throwable) {
-            return [
-                'code' => -500,
-                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
-                'data' => [],
-            ];
-        }
-
-        return ApiJson::decode($raw, $label);
     }
 }

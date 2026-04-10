@@ -2,15 +2,15 @@
 
 namespace Bhp\Api\Room\V1;
 
-use Bhp\Api\Support\ApiJson;
+use Bhp\Api\Support\AbstractApiClient;
 use Bhp\Request\Request;
-use Throwable;
 
-class ApiArea
+class ApiArea extends AbstractApiClient
 {
     public function __construct(
-        private readonly Request $request,
+        Request $request,
     ) {
+        parent::__construct($request);
     }
 
     /**
@@ -18,16 +18,6 @@ class ApiArea
      */
     public function getList(): array
     {
-        try {
-            $raw = $this->request->getText('other', 'https://api.live.bilibili.com/room/v1/Area/getList');
-        } catch (Throwable $throwable) {
-            return [
-                'code' => -500,
-                'message' => 'room.area.get_list 请求失败: ' . $throwable->getMessage(),
-                'data' => [],
-            ];
-        }
-
-        return ApiJson::decode($raw, 'room.area.get_list');
+        return $this->decodeGet('other', 'https://api.live.bilibili.com/room/v1/Area/getList', [], [], 'room.area.get_list');
     }
 }

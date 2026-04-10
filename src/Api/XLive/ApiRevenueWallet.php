@@ -2,15 +2,15 @@
 
 namespace Bhp\Api\XLive;
 
-use Bhp\Api\Support\ApiJson;
+use Bhp\Api\Support\AbstractApiClient;
 use Bhp\Request\Request;
-use Throwable;
 
-class ApiRevenueWallet
+class ApiRevenueWallet extends AbstractApiClient
 {
     public function __construct(
-        private readonly Request $request,
+        Request $request,
     ) {
+        parent::__construct($request);
     }
 
     /**
@@ -21,7 +21,7 @@ class ApiRevenueWallet
         return $this->decodePost(
             'app',
             'https://api.live.bilibili.com/AppExchange/silver2coin',
-            $this->request->signCommonPayload([]),
+            $this->request()->signCommonPayload([]),
             [],
             'xlive.revenue.app_silver2coin',
         );
@@ -33,8 +33,8 @@ class ApiRevenueWallet
     public function pcSilver2coin(): array
     {
         return $this->decodePost('pc', 'https://api.live.bilibili.com/xlive/revenue/v1/wallet/silver2coin', [
-            'csrf_token' => $this->request->csrfValue(),
-            'csrf' => $this->request->csrfValue(),
+            'csrf_token' => $this->request()->csrfValue(),
+            'csrf' => $this->request()->csrfValue(),
             'visit_id' => '',
         ], [], 'xlive.revenue.pc_silver2coin');
     }
@@ -63,39 +63,8 @@ class ApiRevenueWallet
      * @param array<string, mixed> $payload
      * @param array<string, string> $headers
      * @return array<string, mixed>
-     */
-    private function decodeGet(string $os, string $url, array $payload, array $headers, string $label): array
-    {
-        try {
-            $raw = $this->request->getText($os, $url, $payload, $headers);
-        } catch (Throwable $throwable) {
-            return [
-                'code' => -500,
-                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
-                'data' => [],
-            ];
-        }
-
-        return ApiJson::decode($raw, $label);
-    }
-
-    /**
+     */    /**
      * @param array<string, mixed> $payload
      * @param array<string, string> $headers
      * @return array<string, mixed>
-     */
-    private function decodePost(string $os, string $url, array $payload, array $headers, string $label): array
-    {
-        try {
-            $raw = $this->request->postText($os, $url, $payload, $headers);
-        } catch (Throwable $throwable) {
-            return [
-                'code' => -500,
-                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
-                'data' => [],
-            ];
-        }
-
-        return ApiJson::decode($raw, $label);
-    }
-}
+     */}

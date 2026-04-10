@@ -2,15 +2,15 @@
 
 namespace Bhp\Api\Custom;
 
-use Bhp\Api\Support\ApiJson;
+use Bhp\Api\Support\AbstractApiClient;
 use Bhp\Request\Request;
-use Throwable;
 
-class ApiCalcSign
+class ApiCalcSign extends AbstractApiClient
 {
     public function __construct(
-        private readonly Request $request,
+        Request $request,
     ) {
+        parent::__construct($request);
     }
 
     /**
@@ -20,21 +20,11 @@ class ApiCalcSign
      */
     public function heartBeat(string $url, array $t, array $r): array
     {
-        try {
-            $raw = $this->request->postJsonBodyText('other', $url, [
-                't' => $t,
-                'r' => $r,
-            ], [
-                'Content-Type' => 'application/json',
-            ]);
-        } catch (Throwable $throwable) {
-            return [
-                'code' => -500,
-                'message' => 'custom.calc_sign.heartBeat 请求失败: ' . $throwable->getMessage(),
-                'data' => [],
-            ];
-        }
-
-        return ApiJson::decode($raw, 'custom.calc_sign.heartBeat');
+        return $this->decodePostJson('other', $url, [
+            't' => $t,
+            'r' => $r,
+        ], [
+            'Content-Type' => 'application/json',
+        ], 'custom.calc_sign.heartBeat');
     }
 }

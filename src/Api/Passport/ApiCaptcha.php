@@ -2,15 +2,15 @@
 
 namespace Bhp\Api\Passport;
 
-use Bhp\Api\Support\ApiJson;
+use Bhp\Api\Support\AbstractApiClient;
 use Bhp\Request\Request;
-use Throwable;
 
-class ApiCaptcha
+class ApiCaptcha extends AbstractApiClient
 {
     public function __construct(
-        private readonly Request $request,
+        Request $request,
     ) {
+        parent::__construct($request);
     }
 
     /**
@@ -18,19 +18,9 @@ class ApiCaptcha
      */
     public function combine(int $plat = 3): array
     {
-        try {
-            $raw = $this->request->getText('other', 'https://passport.bilibili.com/web/captcha/combine', [
-                'plat' => $plat,
-            ]);
-        } catch (Throwable $throwable) {
-            return [
-                'code' => -500,
-                'message' => 'passport.captcha.combine 请求失败: ' . $throwable->getMessage(),
-                'data' => [],
-            ];
-        }
-
-        return ApiJson::decode($raw, 'passport.captcha.combine');
+        return $this->decodeGet('other', 'https://passport.bilibili.com/web/captcha/combine', [
+            'plat' => $plat,
+        ], [], 'passport.captcha.combine');
     }
 
     /**
@@ -39,24 +29,14 @@ class ApiCaptcha
      */
     public function ocr(array $captcha): array
     {
-        try {
-            $raw = $this->request->postJsonBodyText('other', 'https://captcha-v1.mudew.com:19951/', [
-                'type' => 'gt3',
-                'gt' => $captcha['gt'],
-                'challenge' => $captcha['challenge'],
-                'referer' => 'https://passport.bilibili.com/',
-            ], [
-                'Content-Type' => 'application/json',
-            ]);
-        } catch (Throwable $throwable) {
-            return [
-                'code' => -500,
-                'message' => 'passport.captcha.ocr 请求失败: ' . $throwable->getMessage(),
-                'data' => [],
-            ];
-        }
-
-        return ApiJson::decode($raw, 'passport.captcha.ocr');
+        return $this->decodePostJson('other', 'https://captcha-v1.mudew.com:19951/', [
+            'type' => 'gt3',
+            'gt' => $captcha['gt'],
+            'challenge' => $captcha['challenge'],
+            'referer' => 'https://passport.bilibili.com/',
+        ], [
+            'Content-Type' => 'application/json',
+        ], 'passport.captcha.ocr');
     }
 
     /**
@@ -66,18 +46,8 @@ class ApiCaptcha
     {
         $url = rtrim($url, '/') . '/fetch';
 
-        try {
-            $raw = $this->request->getText('other', $url, [
-                'challenge' => $challenge,
-            ], [], 3);
-        } catch (Throwable $throwable) {
-            return [
-                'code' => -500,
-                'message' => 'captcha.fetch 请求失败: ' . $throwable->getMessage(),
-                'data' => [],
-            ];
-        }
-
-        return ApiJson::decode($raw, 'captcha.fetch');
+        return $this->decodeGet('other', $url, [
+            'challenge' => $challenge,
+        ], [], 'captcha.fetch', null, 3);
     }
 }

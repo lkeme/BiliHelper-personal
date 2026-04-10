@@ -2,15 +2,15 @@
 
 namespace Bhp\Api\Api\X\Player;
 
-use Bhp\Api\Support\ApiJson;
+use Bhp\Api\Support\AbstractApiClient;
 use Bhp\Request\Request;
-use Throwable;
 
-class ApiPlayer
+class ApiPlayer extends AbstractApiClient
 {
     public function __construct(
-        private readonly Request $request,
+        Request $request,
     ) {
+        parent::__construct($request);
     }
 
     /**
@@ -26,16 +26,6 @@ class ApiPlayer
             $payload['bvid'] = $bvid;
         }
 
-        try {
-            $raw = $this->request->getText('other', 'https://api.bilibili.com/x/player/pagelist', $payload);
-        } catch (Throwable $throwable) {
-            return [
-                'code' => -500,
-                'message' => 'x.player.pagelist 请求失败: ' . $throwable->getMessage(),
-                'data' => [],
-            ];
-        }
-
-        return ApiJson::decode($raw, 'x.player.pagelist');
+        return $this->decodeGet('other', 'https://api.bilibili.com/x/player/pagelist', $payload, [], 'x.player.pagelist');
     }
 }

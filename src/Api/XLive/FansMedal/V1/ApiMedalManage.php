@@ -2,19 +2,19 @@
 
 namespace Bhp\Api\XLive\FansMedal\V1;
 
-use Bhp\Api\Support\ApiJson;
+use Bhp\Api\Support\AbstractApiClient;
 use Bhp\Request\Request;
-use Throwable;
 
-final class ApiMedalManage
+final class ApiMedalManage extends AbstractApiClient
 {
     private const PANEL_URL = 'https://api.live.bilibili.com/xlive/app-ucenter/v1/fansMedal/panel';
     private const DELETE_URL = 'https://api.live.bilibili.com/xlive/app-ucenter/v1/fansMedal/web_room/del_medal';
     private const LIST_PAGE_SIZE_MAX = 50;
 
     public function __construct(
-        private readonly Request $request,
+        Request $request,
     ) {
+        parent::__construct($request);
     }
 
     /**
@@ -34,28 +34,13 @@ final class ApiMedalManage
         $page = max(1, $page);
         $pageSize = max(1, min(self::LIST_PAGE_SIZE_MAX, $pageSize));
 
-        try {
-            $raw = $this->request->getText('pc', self::PANEL_URL, [
-                'page' => $page,
-                'page_size' => $pageSize,
-            ], [
-                'origin' => 'https://live.bilibili.com',
-                'referer' => 'https://live.bilibili.com/',
-            ]);
-        } catch (Throwable $throwable) {
-            return [
-                'code' => -500,
-                'message' => 'fans_medal.manage.list 请求失败: ' . $throwable->getMessage(),
-                'items' => [],
-                'total' => 0,
-                'page' => $page,
-                'page_size' => $pageSize,
-                'has_more' => false,
-                'next_page' => $page,
-            ];
-        }
-
-        $decoded = ApiJson::decode($raw, 'fans_medal.manage.list');
+        $decoded = $this->decodeGet('pc', self::PANEL_URL, [
+            'page' => $page,
+            'page_size' => $pageSize,
+        ], [
+            'origin' => 'https://live.bilibili.com',
+            'referer' => 'https://live.bilibili.com/',
+        ], 'fans_medal.manage.list');
         $data = is_array($decoded['data'] ?? null) ? $decoded['data'] : [];
         $pageInfo = is_array($data['page_info'] ?? null) ? $data['page_info'] : [];
 
@@ -85,24 +70,14 @@ final class ApiMedalManage
             ];
         }
 
-        try {
-            $raw = $this->request->postText('pc', self::DELETE_URL, [
-                'medal_id' => $medalId,
-                'csrf' => $this->request->csrfValue(),
-                'csrf_token' => $this->request->csrfValue(),
-            ], [
-                'origin' => 'https://live.bilibili.com',
-                'referer' => 'https://link.bilibili.com/p/center/index',
-            ]);
-        } catch (Throwable $throwable) {
-            return [
-                'code' => -500,
-                'message' => 'fans_medal.manage.delete 请求失败: ' . $throwable->getMessage(),
-                'data' => [],
-            ];
-        }
-
-        return $this->decodeJsonPayload($raw, 'fans_medal.manage.delete');
+        return $this->decodePost('pc', self::DELETE_URL, [
+            'medal_id' => $medalId,
+            'csrf' => $this->request()->csrfValue(),
+            'csrf_token' => $this->request()->csrfValue(),
+        ], [
+            'origin' => 'https://live.bilibili.com',
+            'referer' => 'https://link.bilibili.com/p/center/index',
+        ], 'fans_medal.manage.delete');
     }
 
     /**
@@ -161,22 +136,5 @@ final class ApiMedalManage
             'can_delete' => (bool)($row['can_delete'] ?? true),
             'raw' => $row,
         ];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function decodeJsonPayload(string $raw, string $label): array
-    {
-        try {
-            return ApiJson::decode($raw, $label);
-        } catch (\Throwable $throwable) {
-            $decodedRaw = @gzdecode($raw);
-            if (is_string($decodedRaw) && $decodedRaw !== '') {
-                return ApiJson::decode($decodedRaw, $label);
-            }
-
-            throw $throwable;
-        }
     }
 }

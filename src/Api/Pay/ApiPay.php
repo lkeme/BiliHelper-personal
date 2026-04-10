@@ -17,15 +17,15 @@
 
 namespace Bhp\Api\Pay;
 
-use Bhp\Api\Support\ApiJson;
+use Bhp\Api\Support\AbstractApiClient;
 use Bhp\Request\Request;
-use Throwable;
 
-class ApiPay
+class ApiPay extends AbstractApiClient
 {
     public function __construct(
-        private readonly Request $request,
+        Request $request,
     ) {
+        parent::__construct($request);
     }
 
     /**
@@ -40,8 +40,8 @@ class ApiPay
             'context_type' => 11,
             'goods_id' => 1,
             'goods_num' => $num,
-            'csrf_token' => $this->request->csrfValue(),
-            'csrf' => $this->request->csrfValue(),
+            'csrf_token' => $this->request()->csrfValue(),
+            'csrf' => $this->request()->csrfValue(),
             'visit_id' => '',
         ];
 
@@ -62,7 +62,7 @@ class ApiPay
             'up_mid' => $up_mid,
             'otype' => 'up',
             'oid' => $up_mid,
-            'csrf' => $this->request->csrfValue(),
+            'csrf' => $this->request()->csrfValue(),
         ];
 
         return $this->decodePost('pc', 'https://api.bilibili.com/x/ugcpay/web/v2/trade/elec/pay/quick', $payload, [], 'pay.battery');
@@ -72,19 +72,4 @@ class ApiPay
      * @param array<string, mixed> $payload
      * @param array<string, string> $headers
      * @return array<string, mixed>
-     */
-    private function decodePost(string $os, string $url, array $payload, array $headers, string $label): array
-    {
-        try {
-            $raw = $this->request->postText($os, $url, $payload, $headers);
-        } catch (Throwable $throwable) {
-            return [
-                'code' => -500,
-                'message' => "{$label} 请求失败: {$throwable->getMessage()}",
-                'data' => [],
-            ];
-        }
-
-        return ApiJson::decode($raw, $label);
-    }
-}
+     */}
