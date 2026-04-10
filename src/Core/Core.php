@@ -2,6 +2,7 @@
 
 namespace Bhp\Core;
 
+use Bhp\Console\Cli\RuntimeException as CliRuntimeException;
 use Bhp\Profile\ProfileContext;
 use Bhp\Util\Os\Path;
 
@@ -19,7 +20,7 @@ final class Core
         $this->defineConstant('APP_MICROSECOND', 1000000);
 
         if (!is_dir($this->nativePath($this->profileContext->configPath()))) {
-            die("加载 {$this->profileContext->name()} 用户文档失败，请检查路径！");
+            throw new CliRuntimeException("加载 {$this->profileContext->name()} 用户文档失败，请检查路径！");
         }
     }
 

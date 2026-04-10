@@ -17,6 +17,7 @@
 
 namespace Bhp\Util\Resource;
 
+use Bhp\Console\Cli\RuntimeException as CliRuntimeException;
 use Bhp\Util\Resource\Resource as EResource;
 
 abstract class BaseResourcePoly
@@ -113,7 +114,7 @@ abstract class BaseResourcePoly
     protected function validateFile(string $filepath, string $filename): void
     {
         if (!is_file($filepath)) {
-            die("资源文件 $filename 加载失败，请参照文档查看或添加资源文件！");
+            throw new CliRuntimeException("资源文件 $filename 加载失败，请参照文档查看或添加资源文件！");
         }
     }
 
