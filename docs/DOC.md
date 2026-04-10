@@ -23,6 +23,8 @@
 
 默认状态库为 `profile/<name>/cache/cache.sqlite3`。
 
+`profile/example` 仅作为模板目录使用，不能直接作为运行 profile。
+
 ## 安装与初始化
 
 ### 源码运行
@@ -43,6 +45,11 @@ composer install
 3. 编辑 `profile/user/config/user.ini`
 
 默认只需填写账号密码，再按需开启插件功能。
+
+补充说明：
+
+- `profile/example` 是模板保留目录，不会被命令行直接运行
+- 建议复制为 `profile/user` 或其他合法 profile 名称后再启动
 
 ### Docker 初始化
 
@@ -88,6 +95,11 @@ mode:app     m:a    [主要模式] 默认功能
 mode:debug   m:d    [Debug 模式] 开发测试使用
 mode:script  m:s    [脚本模式] 使用额外功能脚本
 ```
+
+补充说明：
+
+- `--help` 与 `mode:script --list` 属于只读命令
+- 这两类命令不会初始化 profile，也不会生成 `cache`、`log` 或 `user.ini`
 
 ### `mode:app`
 
@@ -139,6 +151,24 @@ php app.php m:s --plugin ActivityInfoUpdate --reset-cache
 - `-p / --plugin`：执行单个脚本插件
 - `-P / --plugins`：执行多个脚本插件，逗号分隔
 - 同样支持 `--reset-cache` 和 `--purge-auth`
+
+## 配置补充
+
+示例配置 `profile/example/config/user.ini` 当前额外包含请求治理区段：
+
+```ini
+[request_governance]
+enable = false
+mode = observe
+window_seconds = 60
+max_requests_per_host = 60
+cooldown_seconds = 30
+```
+
+说明：
+
+- `mode` 仅支持 `observe` 与 `enforce`
+- 关闭时保持观测关闭，不会触发限流拦截
 
 ## ActivityLottery 持久化
 

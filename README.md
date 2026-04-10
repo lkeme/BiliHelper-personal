@@ -69,9 +69,12 @@
 - 入口为 `app.php`，当前启动链为 `AppKernel -> ServiceContainer -> Bootstrap -> Console`
 - 当前只保留 `mode:app`、`mode:debug`、`mode:script`
 - `mode:app`、`mode:debug`、`mode:script` 都支持 `--reset-cache`，需要同时清理登录态时追加 `--purge-auth`
+- `profile/example` 仅作为模板目录使用，不能直接作为运行 profile
+- `--help` 与 `mode:script --list` 属于只读命令，不会初始化 profile 或生成缓存文件
 - 核心只保留 `Login`，其余业务插件统一从 `plugins/<plugin>/plugin.json` 发现并装配
 - 官方随仓库分发的第三方插件位于 `plugins/*`
 - `ActivityLottery` 当前通过 `ActivityFlowStore` 将 flow 行级写入 `profile/<name>/cache/cache.sqlite3`
+- 示例配置当前包含 `request_governance` 区段，`mode` 只支持 `observe` 与 `enforce`
 
 ## Docker 提示
 
