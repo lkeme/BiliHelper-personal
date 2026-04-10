@@ -176,13 +176,4 @@ class ApiOauth2 extends AbstractApiClient
 
         return isset($response['data']) && is_array($response['data']);
     }
-
-    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */}
+}

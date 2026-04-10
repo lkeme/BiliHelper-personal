@@ -38,9 +38,4 @@ final class ApiTask extends AbstractApiClient
             'referer' => 'https://www.bilibili.com/',
         ], 'x.task.totalv2');
     }
-
-    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */}
+}

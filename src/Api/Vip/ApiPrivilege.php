@@ -37,13 +37,4 @@ class ApiPrivilege extends AbstractApiClient
             'referer' => 'https://account.bilibili.com/account/big/myPackage',
         ], 'vip.privilege.receive');
     }
-
-    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */}
+}

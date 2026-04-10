@@ -67,9 +67,4 @@ class ApiPay extends AbstractApiClient
 
         return $this->decodePost('pc', 'https://api.bilibili.com/x/ugcpay/web/v2/trade/elec/pay/quick', $payload, [], 'pay.battery');
     }
-
-    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */}
+}

@@ -51,9 +51,4 @@ class ApiManga extends AbstractApiClient
     {
         return $this->decodePost('app', 'https://manga.bilibili.com/twirp/activity.v1.Activity/GetClockInInfo', $this->request()->signCommonPayload([]), [], 'manga.clock_in_info');
     }
-
-    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */}
+}

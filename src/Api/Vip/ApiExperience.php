@@ -44,9 +44,4 @@ class ApiExperience extends AbstractApiClient
             'referer' => 'https://account.bilibili.com/',
         ], 'vip.experience.add');
     }
-
-    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */}
+}

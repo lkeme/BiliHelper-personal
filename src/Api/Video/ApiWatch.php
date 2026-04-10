@@ -113,9 +113,4 @@ class ApiWatch extends AbstractApiClient
             'Referer' => $referer,
         ], 'video.watch.heartbeat');
     }
-
-    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */}
+}

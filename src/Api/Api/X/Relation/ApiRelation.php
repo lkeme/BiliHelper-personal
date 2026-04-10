@@ -149,13 +149,4 @@ class ApiRelation extends AbstractApiClient
 
         return $this->decodePost('pc', $url, $payload, $headers, 'relation.modify');
     }
-
-    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */}
+}

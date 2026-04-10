@@ -80,13 +80,4 @@ class ApiActivity extends AbstractApiClient
             'referer' => $referer,
         ], 'x.activity.send_points');
     }
-
-    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */}
+}

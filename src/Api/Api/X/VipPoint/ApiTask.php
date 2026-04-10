@@ -35,9 +35,4 @@ class ApiTask extends AbstractApiClient
     {
         return $this->decodeGet('app', 'https://api.bilibili.com/x/vip_point/homepage/combine', $this->request()->signCommonPayload([]), self::HEADERS, 'vip_point.homepage.combine');
     }
-
-    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */}
+}

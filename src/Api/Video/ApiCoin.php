@@ -126,5 +126,4 @@ class ApiCoin extends AbstractApiClient
         $payload = [];
         return $this->decodeGet('pc', $url, $payload, [], 'video.coin.log');
     }
-
 }

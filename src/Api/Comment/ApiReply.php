@@ -29,9 +29,4 @@ final class ApiReply extends AbstractApiClient
             'referer' => "https://www.bilibili.com/video/av{$aid}",
         ], 'comment.reply.add');
     }
-
-    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */}
+}

@@ -31,9 +31,4 @@ class ApiTask extends AbstractApiClient
             'csrf' => $this->request()->csrfValue(),
         ], true), self::HEADERS, 'pgc.deliver.complete');
     }
-
-    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */}
+}

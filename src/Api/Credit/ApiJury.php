@@ -108,13 +108,4 @@ class ApiJury extends AbstractApiClient
             'referer' => 'https://www.bilibili.com/judgement/index',
         ], 'credit.jury.case_list');
     }
-
-    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */}
+}

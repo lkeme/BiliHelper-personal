@@ -47,9 +47,4 @@ class ApiVipCenter extends AbstractApiClient
 
         return $this->decodeGet('app', $url, $this->request()->signCommonPayload($payload), $this->headers, 'vip.center.v2');
     }
-
-    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */}
+}

@@ -58,13 +58,4 @@ class ApiRevenueWallet extends AbstractApiClient
             'platform' => 'pc',
         ], [], 'xlive.revenue.my_wallet');
     }
-
-    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */}
+}

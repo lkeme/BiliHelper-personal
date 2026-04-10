@@ -50,9 +50,4 @@ class ApiShare extends AbstractApiClient
         // {"code":0,"message":"0","ttl":1}
         return $this->decodePost('pc', $url, $payload, $headers, 'video.share');
     }
-
-    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */}
+}

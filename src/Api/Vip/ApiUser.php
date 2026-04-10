@@ -66,9 +66,4 @@ class ApiUser extends AbstractApiClient
             'referer' => 'https://www.bilibili.com/',
         ], 'vip.user.space');
     }
-
-    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */}
+}

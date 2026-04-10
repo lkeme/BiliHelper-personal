@@ -91,9 +91,4 @@ class ApiVideo extends AbstractApiClient
         ];
         return $this->decodeGet('other', $url, $payload, [], 'video.top_feed_rcmd');
     }
-
-    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */}
+}

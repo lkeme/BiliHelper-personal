@@ -51,13 +51,4 @@ final class ApiMission extends AbstractApiClient
             'referer' => "https://www.bilibili.com/blackboard/era/award-exchange.html?task_id={$taskId}",
         ], 'activity_components.mission.receive');
     }
-
-    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */}
+}

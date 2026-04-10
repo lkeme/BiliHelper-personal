@@ -61,13 +61,4 @@ class ApiPrivilegeAssets extends AbstractApiClient
 
         return $this->decodePost('app', $url, $this->request()->signCommonPayload($payload), $this->headers, 'vip.privilege_assets.exchange');
     }
-
-    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */}
+}

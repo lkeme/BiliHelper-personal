@@ -47,13 +47,4 @@ class ApiGuess extends AbstractApiClient
             'referer' => 'https://www.bilibili.com/v/game/match/competition',
         ], 'esports.guess.add');
     }
-
-    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */}
+}

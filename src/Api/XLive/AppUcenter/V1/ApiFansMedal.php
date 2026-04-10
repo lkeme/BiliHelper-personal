@@ -23,9 +23,4 @@ class ApiFansMedal extends AbstractApiClient
             'page_size' => $ps,
         ]), [], 'xlive.fans_medal.panel');
     }
-
-    /**
-     * @param array<string, mixed> $payload
-     * @param array<string, string> $headers
-     * @return array<string, mixed>
-     */}
+}

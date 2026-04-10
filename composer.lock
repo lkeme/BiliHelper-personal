@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2cb369bd82a08700f31853f6a0c0f6f2",
+    "content-hash": "cf8d833c8d5a78c4fcc64db9158566b2",
     "packages": [
         {
             "name": "amphp/amp",
@@ -81,7 +81,7 @@
             "dist": {
                 "type": "zip",
                 "url": "https://mirrors.tencent.com/repository/composer/amphp/byte-stream/2.x-dev/amphp-byte-stream-2.x-dev.zip",
-                "reference": "55a6bd071aec26fa2a3e002618c20c35e3df1b46",
+                "reference": "fd8db31affb68d1f389dde28b3c844499b7912dc",
                 "shasum": ""
             },
             "require": {
@@ -97,7 +97,7 @@
                 "amphp/php-cs-fixer-config": "^2",
                 "amphp/phpunit-util": "^3",
                 "phpunit/phpunit": "^9",
-                "psalm/phar": "5.22.1"
+                "psalm/phar": "6.16.1"
             },
             "type": "library",
             "autoload": {
@@ -134,9 +134,9 @@
             ],
             "support": {
                 "issues": "https://github.com/amphp/byte-stream/issues",
-                "source": "https://github.com/amphp/byte-stream/tree/v2.1.2"
+                "source": "https://github.com/amphp/byte-stream/tree/2.x"
             },
-            "time": "2025-03-16T17:10:27+00:00"
+            "time": "2026-04-05T17:50:12+00:00"
         },
         {
             "name": "amphp/cache",
@@ -635,7 +635,7 @@
             "dist": {
                 "type": "zip",
                 "url": "https://mirrors.tencent.com/repository/composer/amphp/serialization/1.x-dev/amphp-serialization-1.x-dev.zip",
-                "reference": "21116dcd1221e0d1817e02a6e2b0c52a9a317327",
+                "reference": "fdf2834d78cebb0205fb2672676c1b1eb84371f0",
                 "shasum": ""
             },
             "require": {
@@ -646,7 +646,7 @@
                 "ext-json": "*",
                 "ext-zlib": "*",
                 "phpunit/phpunit": "^9",
-                "psalm/phar": "5.4"
+                "psalm/phar": "6.16.1"
             },
             "type": "library",
             "autoload": {
@@ -682,7 +682,7 @@
                 "issues": "https://github.com/amphp/serialization/issues",
                 "source": "https://github.com/amphp/serialization/tree/1.x"
             },
-            "time": "2023-08-29T20:22:27+00:00"
+            "time": "2026-04-05T15:59:53+00:00"
         },
         {
             "name": "amphp/socket",
@@ -762,7 +762,7 @@
             "dist": {
                 "type": "zip",
                 "url": "https://mirrors.tencent.com/repository/composer/amphp/sync/2.x-dev/amphp-sync-2.x-dev.zip",
-                "reference": "217097b785130d77cfcc58ff583cf26cd1770bf1",
+                "reference": "0f7d404940802ef9ce850faacc348c1deca50683",
                 "shasum": ""
             },
             "require": {
@@ -776,7 +776,7 @@
                 "amphp/php-cs-fixer-config": "^2",
                 "amphp/phpunit-util": "^3",
                 "phpunit/phpunit": "^9",
-                "psalm/phar": "5.23"
+                "psalm/phar": "6.16.1"
             },
             "type": "library",
             "autoload": {
@@ -815,9 +815,9 @@
             ],
             "support": {
                 "issues": "https://github.com/amphp/sync/issues",
-                "source": "https://github.com/amphp/sync/tree/v2.3.0"
+                "source": "https://github.com/amphp/sync/tree/2.x"
             },
-            "time": "2024-08-03T19:31:26+00:00"
+            "time": "2026-04-05T16:42:42+00:00"
         },
         {
             "name": "daverandom/libdns",
@@ -1145,7 +1145,7 @@
             "dist": {
                 "type": "zip",
                 "url": "https://mirrors.tencent.com/repository/composer/monolog/monolog/dev-main/monolog-monolog-dev-main.zip",
-                "reference": "6db20ca029219dd8de378cea8e32ee149399ef1b",
+                "reference": "68b974809baff3f071893de61447212e9e688ee7",
                 "shasum": ""
             },
             "require": {
@@ -1224,7 +1224,7 @@
                 "issues": "https://github.com/Seldaek/monolog/issues",
                 "source": "https://github.com/Seldaek/monolog/tree/main"
             },
-            "time": "2026-02-23T16:52:20+00:00"
+            "time": "2026-04-09T13:04:03+00:00"
         },
         {
             "name": "psr/http-factory",
@@ -1497,11 +1497,11 @@
             "dist": {
                 "type": "zip",
                 "url": "https://mirrors.tencent.com/repository/composer/symfony/yaml/8.1.x-dev/symfony-yaml-8.1.x-dev.zip",
-                "reference": "5ec80d6a525aed818ff7b7ba5a84288fbe678c3c",
+                "reference": "bbc70a66620ea6185bdc39eddeba37abb2f0574a",
                 "shasum": ""
             },
             "require": {
-                "php": ">=8.4",
+                "php": ">=8.4.1",
                 "symfony/polyfill-ctype": "^1.8"
             },
             "conflict": {
@@ -1541,7 +1541,7 @@
             "support": {
                 "source": "https://github.com/symfony/yaml/tree/8.1"
             },
-            "time": "2026-03-30T15:21:58+00:00"
+            "time": "2026-04-07T06:26:27+00:00"
         }
     ],
     "packages-dev": [
@@ -1751,7 +1751,7 @@
             "dist": {
                 "type": "zip",
                 "url": "https://mirrors.tencent.com/repository/composer/phpunit/php-code-coverage/12.5.x-dev/phpunit-php-code-coverage-12.5.x-dev.zip",
-                "reference": "ef1499f40866fec22bfc21f243939da256e2636a",
+                "reference": "8a75142ee61c758beb8026efc617667b09175333",
                 "shasum": ""
             },
             "require": {
@@ -1807,7 +1807,7 @@
                 "security": "https://github.com/sebastianbergmann/php-code-coverage/security/policy",
                 "source": "https://github.com/sebastianbergmann/php-code-coverage/tree/12.5"
             },
-            "time": "2026-04-04T09:51:38+00:00"
+            "time": "2026-04-09T05:41:17+00:00"
         },
         {
             "name": "phpunit/php-file-iterator",
@@ -1815,7 +1815,7 @@
             "dist": {
                 "type": "zip",
                 "url": "https://mirrors.tencent.com/repository/composer/phpunit/php-file-iterator/6.0.x-dev/phpunit-php-file-iterator-6.0.x-dev.zip",
-                "reference": "9ef51d100c7627f2614ca4d8331fc97c4dd48cf7",
+                "reference": "989522dd932b31924d8800b41f7e3e6a4e4648e9",
                 "shasum": ""
             },
             "require": {
@@ -1856,7 +1856,7 @@
                 "security": "https://github.com/sebastianbergmann/php-file-iterator/security/policy",
                 "source": "https://github.com/sebastianbergmann/php-file-iterator/tree/6.0"
             },
-            "time": "2026-02-02T14:11:03+00:00"
+            "time": "2026-04-09T05:44:00+00:00"
         },
         {
             "name": "phpunit/php-invoker",
@@ -1864,7 +1864,7 @@
             "dist": {
                 "type": "zip",
                 "url": "https://mirrors.tencent.com/repository/composer/phpunit/php-invoker/6.0.x-dev/phpunit-php-invoker-6.0.x-dev.zip",
-                "reference": "f9cd1a0f2e6c0036c2769a257ffca9a4f14d1f22",
+                "reference": "317325b6600e2c6e33e743ccbd9eea9285ad3788",
                 "shasum": ""
             },
             "require": {
@@ -1908,7 +1908,7 @@
                 "security": "https://github.com/sebastianbergmann/php-invoker/security/policy",
                 "source": "https://github.com/sebastianbergmann/php-invoker/tree/6.0"
             },
-            "time": "2025-12-31T14:24:04+00:00"
+            "time": "2026-04-09T05:45:49+00:00"
         },
         {
             "name": "phpunit/php-text-template",
@@ -1916,7 +1916,7 @@
             "dist": {
                 "type": "zip",
                 "url": "https://mirrors.tencent.com/repository/composer/phpunit/php-text-template/5.0.x-dev/phpunit-php-text-template-5.0.x-dev.zip",
-                "reference": "28cd3c84ce3ae7628b490f1430c8c7498b7314fa",
+                "reference": "63d4e3b2f9d18d2f8385cd741d5bd630c08ca596",
                 "shasum": ""
             },
             "require": {
@@ -1956,7 +1956,7 @@
                 "security": "https://github.com/sebastianbergmann/php-text-template/security/policy",
                 "source": "https://github.com/sebastianbergmann/php-text-template/tree/5.0"
             },
-            "time": "2025-12-31T14:25:21+00:00"
+            "time": "2026-04-09T05:47:07+00:00"
         },
         {
             "name": "phpunit/php-timer",
@@ -1964,7 +1964,7 @@
             "dist": {
                 "type": "zip",
                 "url": "https://mirrors.tencent.com/repository/composer/phpunit/php-timer/8.0.x-dev/phpunit-php-timer-8.0.x-dev.zip",
-                "reference": "927a2fbf7112ba950fdf117dcb6ba3e9fd1b24eb",
+                "reference": "5ca9a5d550f263bbec50daa80adf0f098f4f728d",
                 "shasum": ""
             },
             "require": {
@@ -2004,15 +2004,15 @@
                 "security": "https://github.com/sebastianbergmann/php-timer/security/policy",
                 "source": "https://github.com/sebastianbergmann/php-timer/tree/8.0"
             },
-            "time": "2025-12-31T14:26:35+00:00"
+            "time": "2026-04-09T05:48:28+00:00"
         },
         {
             "name": "phpunit/phpunit",
-            "version": "12.5.16",
+            "version": "12.5.17",
             "dist": {
                 "type": "zip",
-                "url": "https://mirrors.tencent.com/repository/composer/phpunit/phpunit/12.5.16/phpunit-phpunit-12.5.16.zip",
-                "reference": "b2429f58ae75cae980b5bb9873abe4de6aac8b58",
+                "url": "https://mirrors.tencent.com/repository/composer/phpunit/phpunit/12.5.17/phpunit-phpunit-12.5.17.zip",
+                "reference": "85b62adab1a340982df64e66daa4a4435eb5723b",
                 "shasum": ""
             },
             "require": {
@@ -2080,9 +2080,9 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/phpunit/issues",
                 "security": "https://github.com/sebastianbergmann/phpunit/security/policy",
-                "source": "https://github.com/sebastianbergmann/phpunit/tree/12.5.16"
+                "source": "https://github.com/sebastianbergmann/phpunit/tree/12.5.17"
             },
-            "time": "2026-04-03T05:26:42+00:00"
+            "time": "2026-04-08T03:04:19+00:00"
         },
         {
             "name": "sebastian/cli-parser",
@@ -2090,7 +2090,7 @@
             "dist": {
                 "type": "zip",
                 "url": "https://mirrors.tencent.com/repository/composer/sebastian/cli-parser/4.2.x-dev/sebastian-cli-parser-4.2.x-dev.zip",
-                "reference": "0471fcf611e5663ed3314eb81afd1cfcaa24431b",
+                "reference": "49d172a891df4b8b1cedd6ce73b6341a8125040b",
                 "shasum": ""
             },
             "require": {
@@ -2127,7 +2127,7 @@
                 "security": "https://github.com/sebastianbergmann/cli-parser/security/policy",
                 "source": "https://github.com/sebastianbergmann/cli-parser/tree/4.2"
             },
-            "time": "2026-01-01T06:55:57+00:00"
+            "time": "2026-04-09T05:07:05+00:00"
         },
         {
             "name": "sebastian/comparator",
@@ -2135,7 +2135,7 @@
             "dist": {
                 "type": "zip",
                 "url": "https://mirrors.tencent.com/repository/composer/sebastian/comparator/7.1.x-dev/sebastian-comparator-7.1.x-dev.zip",
-                "reference": "740247c4b621becf9e52da7eb6ae64c3f7c32dad",
+                "reference": "7b10ce0d08619a3e6d83848748edf0b8b62f9099",
                 "shasum": ""
             },
             "require": {
@@ -2195,7 +2195,7 @@
                 "security": "https://github.com/sebastianbergmann/comparator/security/policy",
                 "source": "https://github.com/sebastianbergmann/comparator/tree/7.1"
             },
-            "time": "2026-01-24T09:33:40+00:00"
+            "time": "2026-04-09T05:09:36+00:00"
         },
         {
             "name": "sebastian/complexity",
@@ -2203,7 +2203,7 @@
             "dist": {
                 "type": "zip",
                 "url": "https://mirrors.tencent.com/repository/composer/sebastian/complexity/5.0.x-dev/sebastian-complexity-5.0.x-dev.zip",
-                "reference": "0daec79a900212b86fac0dc5342cb1e304ac3679",
+                "reference": "f23a4858b07089a99509b253a232fd165f6074e0",
                 "shasum": ""
             },
             "require": {
@@ -2241,7 +2241,7 @@
                 "security": "https://github.com/sebastianbergmann/complexity/security/policy",
                 "source": "https://github.com/sebastianbergmann/complexity/tree/5.0"
             },
-            "time": "2025-12-31T13:47:50+00:00"
+            "time": "2026-04-09T05:11:50+00:00"
         },
         {
             "name": "sebastian/diff",
@@ -2249,7 +2249,7 @@
             "dist": {
                 "type": "zip",
                 "url": "https://mirrors.tencent.com/repository/composer/sebastian/diff/7.0.x-dev/sebastian-diff-7.0.x-dev.zip",
-                "reference": "973d592efe76a26d3989010c8c06b952cf4edd93",
+                "reference": "998626047276ace0e945f6c399536e0410de219e",
                 "shasum": ""
             },
             "require": {
@@ -2296,7 +2296,7 @@
                 "security": "https://github.com/sebastianbergmann/diff/security/policy",
                 "source": "https://github.com/sebastianbergmann/diff/tree/7.0"
             },
-            "time": "2025-12-31T13:52:56+00:00"
+            "time": "2026-04-09T05:14:54+00:00"
         },
         {
             "name": "sebastian/environment",
@@ -2304,7 +2304,7 @@
             "dist": {
                 "type": "zip",
                 "url": "https://mirrors.tencent.com/repository/composer/sebastian/environment/8.0.x-dev/sebastian-environment-8.0.x-dev.zip",
-                "reference": "7b8842c2d8e85d0c3a5831236bf5869af6ab2a11",
+                "reference": "d47c4b3c78064a00d30fcaef361fca4061a51ecf",
                 "shasum": ""
             },
             "require": {
@@ -2346,9 +2346,9 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/environment/issues",
                 "security": "https://github.com/sebastianbergmann/environment/security/policy",
-                "source": "https://github.com/sebastianbergmann/environment/tree/8.0.4"
+                "source": "https://github.com/sebastianbergmann/environment/tree/8.0"
             },
-            "time": "2026-03-15T07:05:40+00:00"
+            "time": "2026-04-09T05:17:16+00:00"
         },
         {
             "name": "sebastian/exporter",
@@ -2356,7 +2356,7 @@
             "dist": {
                 "type": "zip",
                 "url": "https://mirrors.tencent.com/repository/composer/sebastian/exporter/7.0.x-dev/sebastian-exporter-7.0.x-dev.zip",
-                "reference": "e0408a38b0f8e471617942968965e68f7959e346",
+                "reference": "2308f4f1ceae7a593a45733e695bf786f201a39d",
                 "shasum": ""
             },
             "require": {
@@ -2414,7 +2414,7 @@
                 "security": "https://github.com/sebastianbergmann/exporter/security/policy",
                 "source": "https://github.com/sebastianbergmann/exporter/tree/7.0"
             },
-            "time": "2025-12-31T13:59:57+00:00"
+            "time": "2026-04-09T05:19:00+00:00"
         },
         {
             "name": "sebastian/global-state",
@@ -2422,7 +2422,7 @@
             "dist": {
                 "type": "zip",
                 "url": "https://mirrors.tencent.com/repository/composer/sebastian/global-state/8.0.x-dev/sebastian-global-state-8.0.x-dev.zip",
-                "reference": "de3f61e6c1a5fc6b522c166f759185fd2bad0e3e",
+                "reference": "75933662417ad734fdee3b7604ef90ada21395d9",
                 "shasum": ""
             },
             "require": {
@@ -2464,7 +2464,7 @@
                 "security": "https://github.com/sebastianbergmann/global-state/security/policy",
                 "source": "https://github.com/sebastianbergmann/global-state/tree/8.0"
             },
-            "time": "2025-12-31T14:04:16+00:00"
+            "time": "2026-04-09T05:22:21+00:00"
         },
         {
             "name": "sebastian/lines-of-code",
@@ -2472,7 +2472,7 @@
             "dist": {
                 "type": "zip",
                 "url": "https://mirrors.tencent.com/repository/composer/sebastian/lines-of-code/4.0.x-dev/sebastian-lines-of-code-4.0.x-dev.zip",
-                "reference": "9f674ea03b82bbe26876586ba4172095aa8f2b0f",
+                "reference": "83c66d87a14b8024aabc8fd26b6ce7f38c6016b5",
                 "shasum": ""
             },
             "require": {
@@ -2510,7 +2510,7 @@
                 "security": "https://github.com/sebastianbergmann/lines-of-code/security/policy",
                 "source": "https://github.com/sebastianbergmann/lines-of-code/tree/4.0"
             },
-            "time": "2025-12-31T14:06:12+00:00"
+            "time": "2026-04-09T05:23:57+00:00"
         },
         {
             "name": "sebastian/object-enumerator",
@@ -2518,7 +2518,7 @@
             "dist": {
                 "type": "zip",
                 "url": "https://mirrors.tencent.com/repository/composer/sebastian/object-enumerator/7.0.x-dev/sebastian-object-enumerator-7.0.x-dev.zip",
-                "reference": "bbeab56e0903c05e2660010ba607d945652bfb74",
+                "reference": "a05886b8ee96108d850c77b25bc27296ad2140f7",
                 "shasum": ""
             },
             "require": {
@@ -2556,7 +2556,7 @@
                 "security": "https://github.com/sebastianbergmann/object-enumerator/security/policy",
                 "source": "https://github.com/sebastianbergmann/object-enumerator/tree/7.0"
             },
-            "time": "2025-12-31T14:10:10+00:00"
+            "time": "2026-04-09T05:35:41+00:00"
         },
         {
             "name": "sebastian/object-reflector",
@@ -2564,7 +2564,7 @@
             "dist": {
                 "type": "zip",
                 "url": "https://mirrors.tencent.com/repository/composer/sebastian/object-reflector/5.0.x-dev/sebastian-object-reflector-5.0.x-dev.zip",
-                "reference": "f1dc3d64e179ec04073e0fd10cbf6d29108b03dc",
+                "reference": "cde080d6ee3392569be139e187fb2203bdc9e1ed",
                 "shasum": ""
             },
             "require": {
@@ -2600,7 +2600,7 @@
                 "security": "https://github.com/sebastianbergmann/object-reflector/security/policy",
                 "source": "https://github.com/sebastianbergmann/object-reflector/tree/5.0"
             },
-            "time": "2025-12-31T14:16:51+00:00"
+            "time": "2026-04-09T05:38:00+00:00"
         },
         {
             "name": "sebastian/recursion-context",
@@ -2608,7 +2608,7 @@
             "dist": {
                 "type": "zip",
                 "url": "https://mirrors.tencent.com/repository/composer/sebastian/recursion-context/7.0.x-dev/sebastian-recursion-context-7.0.x-dev.zip",
-                "reference": "b15e0d2f6be5d913320581ef741943fc4cd5d42d",
+                "reference": "c92f57b6c1e2e6727a3990d3d5dc87e3d5ca5c8a",
                 "shasum": ""
             },
             "require": {
@@ -2652,7 +2652,7 @@
                 "security": "https://github.com/sebastianbergmann/recursion-context/security/policy",
                 "source": "https://github.com/sebastianbergmann/recursion-context/tree/7.0"
             },
-            "time": "2025-12-31T14:28:05+00:00"
+            "time": "2026-04-09T05:51:27+00:00"
         },
         {
             "name": "sebastian/type",
@@ -2660,7 +2660,7 @@
             "dist": {
                 "type": "zip",
                 "url": "https://mirrors.tencent.com/repository/composer/sebastian/type/6.0.x-dev/sebastian-type-6.0.x-dev.zip",
-                "reference": "a51a7e04851e5b4d7dbc7cad7e1fa4c1a6a8636d",
+                "reference": "b5ad45362d18f581e72ca157e46138be82af2fb7",
                 "shasum": ""
             },
             "require": {
@@ -2697,7 +2697,7 @@
                 "security": "https://github.com/sebastianbergmann/type/security/policy",
                 "source": "https://github.com/sebastianbergmann/type/tree/6.0"
             },
-            "time": "2025-12-31T14:29:31+00:00"
+            "time": "2026-04-09T05:52:58+00:00"
         },
         {
             "name": "sebastian/version",
@@ -2705,7 +2705,7 @@
             "dist": {
                 "type": "zip",
                 "url": "https://mirrors.tencent.com/repository/composer/sebastian/version/6.0.x-dev/sebastian-version-6.0.x-dev.zip",
-                "reference": "5e2eca956ec2a50a0486c3a741f9c75c8f621302",
+                "reference": "43687882d34c77264297dc6450124a3d5d581087",
                 "shasum": ""
             },
             "require": {
@@ -2739,7 +2739,7 @@
                 "security": "https://github.com/sebastianbergmann/version/security/policy",
                 "source": "https://github.com/sebastianbergmann/version/tree/6.0"
             },
-            "time": "2025-12-31T14:32:05+00:00"
+            "time": "2026-04-09T05:54:44+00:00"
         },
         {
             "name": "staabm/side-effects-detector",
@@ -2832,7 +2832,7 @@
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
-        "php": ">=8.4",
+        "php": ">=8.5",
         "ext-openssl": "*",
         "ext-json": "*",
         "ext-zlib": "*",
