@@ -3,6 +3,7 @@
 namespace Bhp\Plugin\Builtin\Silver2Coin;
 
 use Bhp\Api\XLive\ApiRevenueWallet;
+use Bhp\Login\AuthFailureClassifier;
 use Bhp\Plugin\BasePlugin;
 use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
@@ -12,6 +13,7 @@ use Bhp\Util\Exceptions\NoLoginException;
 class Silver2CoinPlugin extends BasePlugin implements PluginTaskInterface
 {
     private ?ApiRevenueWallet $revenueWalletApi = null;
+    private ?AuthFailureClassifier $authFailureClassifier = null;
 
     /**
      * 插件信息
@@ -21,6 +23,7 @@ class Silver2CoinPlugin extends BasePlugin implements PluginTaskInterface
 
     public function __construct(Plugin &$plugin)
     {
+        $this->authFailureClassifier = new AuthFailureClassifier();
         $this->bootPlugin($plugin, true);
     }
 
@@ -95,6 +98,7 @@ class Silver2CoinPlugin extends BasePlugin implements PluginTaskInterface
      */
     protected function handle(string $type, array $data): bool
     {
+        $this->assertNotAuthFailure($data, "银瓜子兑换硬币[$type]: 兑换时账号未登录");
         switch ($data['code']) {
             case 0:
                 $this->notice("银瓜子兑换硬币[$type]: {$data['message']}");
@@ -113,5 +117,14 @@ class Silver2CoinPlugin extends BasePlugin implements PluginTaskInterface
     private function revenueWalletApi(): ApiRevenueWallet
     {
         return $this->revenueWalletApi ??= new ApiRevenueWallet($this->appContext()->request());
+    }
+
+    /**
+     * @throws NoLoginException
+     */
+    private function assertNotAuthFailure(array $response, string $fallbackMessage): void
+    {
+        $this->authFailureClassifier ??= new AuthFailureClassifier();
+        $this->authFailureClassifier->assertNotAuthFailure($response, $fallbackMessage);
     }
 }
