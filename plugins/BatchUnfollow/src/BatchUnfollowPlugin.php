@@ -43,7 +43,11 @@ class BatchUnfollowPlugin extends BasePlugin
         }
 
         while (!empty($this->wait_unfollows)) {
-            $this->unfollow();
+            if (!$this->unfollow()) {
+                $this->warning('批量取关: 本轮已停止，剩余待处理关注 Count: ' . count($this->wait_unfollows));
+
+                return;
+            }
         }
     }
 
@@ -103,13 +107,13 @@ class BatchUnfollowPlugin extends BasePlugin
         $this->info('批量取关: 获取关注列表成功 Count: ' . count($follows));
     }
 
-    protected function unfollow(): void
+    protected function unfollow(): bool
     {
-        $follow = array_shift($this->wait_unfollows);
+        $follow = $this->wait_unfollows[0] ?? null;
         if (is_null($follow)) {
             $this->info('批量取关: 暂无关注列表');
 
-            return;
+            return true;
         }
 
         $this->info("批量取关: 尝试取关用户: {$follow['uname']}({$follow['mid']})");
@@ -119,10 +123,13 @@ class BatchUnfollowPlugin extends BasePlugin
         if ($response['code'] != 0) {
             $this->warning("批量取关: 取关失败: {$response['code']} -> {$response['message']}");
 
-            return;
+            return false;
         }
 
+        array_shift($this->wait_unfollows);
         $this->notice('批量取关: 取关成功');
+
+        return true;
     }
 
     private function relationApi(): ApiRelation
