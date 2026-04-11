@@ -148,7 +148,7 @@ class GameForecastPlugin extends BasePlugin implements PluginTaskInterface
         $response = $this->guessApi()->guessAdd((int)$guess['oid'], (int)$guess['main_id'], (int)$guess['detail_id'], (int)$guess['count']);
         $this->authFailureClassifier->assertNotAuthFailure($response, '赛事预测: 执行竞猜时账号未登录');
         $code = (int)($response['code'] ?? -1);
-        if ($response['message'] == 0) {
+        if ($code === 0) {
             $this->notice('赛事预测: 破产成功');
 
             return true;
