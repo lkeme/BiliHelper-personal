@@ -148,7 +148,7 @@ abstract class BasePlugin
     {
         $value = $this->cache()->pull($key, $scope);
 
-        return $value === null ? $default : $value;
+        return $value === null || $value === false ? $default : $value;
     }
 
     protected function cacheSet(string $key, mixed $value, string $scope): void
