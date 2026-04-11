@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Bhp\Plugin\Builtin\Lottery;
+namespace Bhp\Plugin\Builtin\DynamicLottery;
 
-final class LotteryWindow
+final class DynamicLotteryWindow
 {
     private int $startSeconds;
     private int $endSeconds;

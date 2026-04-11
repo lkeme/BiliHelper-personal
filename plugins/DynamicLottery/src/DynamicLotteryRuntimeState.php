@@ -1,15 +1,15 @@
 <?php declare(strict_types=1);
 
-namespace Bhp\Plugin\Builtin\Lottery;
+namespace Bhp\Plugin\Builtin\DynamicLottery;
 
-final class LotteryRuntimeState
+final class DynamicLotteryRuntimeState
 {
     /**
      * @param array<string, mixed> $state
      */
     public static function bootstrap(array $state): self
     {
-        return new self(array_replace(LotteryStateStore::defaults(), $state));
+        return new self(array_replace(DynamicLotteryStateStore::defaults(), $state));
     }
 
     /**
@@ -50,7 +50,7 @@ final class LotteryRuntimeState
             return;
         }
 
-        $this->state = LotteryStateStore::defaults();
+        $this->state = DynamicLotteryStateStore::defaults();
         $this->state['biz_date'] = $bizDate;
     }
 
@@ -81,6 +81,33 @@ final class LotteryRuntimeState
         return is_int($dynamic) ? $dynamic : null;
     }
 
+    public function requeueDynamic(int $dynamicId): void
+    {
+        if ($dynamicId <= 0 || in_array($dynamicId, $this->state['wait_dynamic_list'], true)) {
+            return;
+        }
+
+        $this->state['wait_dynamic_list'] = [$dynamicId, ...$this->state['wait_dynamic_list']];
+        if (!in_array($dynamicId, $this->state['dynamic_list'], true)) {
+            $this->state['dynamic_list'][] = $dynamicId;
+        }
+    }
+
+    public function totalDynamicCount(): int
+    {
+        return count($this->state['dynamic_list']);
+    }
+
+    public function pendingDynamicCount(): int
+    {
+        return count($this->state['wait_dynamic_list']);
+    }
+
+    public function processedDynamicCount(): int
+    {
+        return max(0, $this->totalDynamicCount() - $this->pendingDynamicCount());
+    }
+
     /**
      * @return array<string, mixed>|null
      */
@@ -91,17 +118,12 @@ final class LotteryRuntimeState
         return is_array($lottery) ? $lottery : null;
     }
 
-    public function hasDynamic(int $dynamic): bool
-    {
-        return in_array($dynamic, $this->state['dynamic_list'], true);
-    }
-
     /**
      * @param array<string, mixed> $lottery
      */
     public function addLottery(array $lottery): void
     {
-        $key = "rid{$lottery['rid']}";
+        $key = 'rid' . $lottery['rid'];
         if (array_key_exists($key, $this->state['lottery_list'])) {
             return;
         }
@@ -115,7 +137,7 @@ final class LotteryRuntimeState
      */
     public function requeueLottery(array $lottery): void
     {
-        $key = "rid{$lottery['rid']}";
+        $key = 'rid' . $lottery['rid'];
         if (!array_key_exists($key, $this->state['lottery_list'])) {
             $this->state['lottery_list'][$key] = $lottery;
         }
@@ -124,12 +146,7 @@ final class LotteryRuntimeState
             return;
         }
 
-        $this->state['wait_lottery_list'] = [$key => $lottery] + $this->state['wait_lottery_list'];
-    }
-
-    public function pendingDynamicCount(): int
-    {
-        return count($this->state['wait_dynamic_list']);
+        $this->state['wait_lottery_list'][$key] = $lottery;
     }
 
     public function pendingLotteryCount(): int

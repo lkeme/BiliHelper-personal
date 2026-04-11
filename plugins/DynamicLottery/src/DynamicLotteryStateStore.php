@@ -1,12 +1,12 @@
 <?php declare(strict_types=1);
 
-namespace Bhp\Plugin\Builtin\Lottery;
+namespace Bhp\Plugin\Builtin\DynamicLottery;
 
 use Bhp\Cache\Cache;
 
-final class LotteryStateStore
+final class DynamicLotteryStateStore
 {
-    private const CACHE_SCOPE = 'Lottery';
+    private const CACHE_SCOPE = 'DynamicLottery';
 
     public function __construct(
         private readonly Cache $cache,

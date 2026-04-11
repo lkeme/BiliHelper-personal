@@ -123,7 +123,7 @@ php app.php m:a --reset-cache --purge-auth
 
 ```shell
 php app.php m:d -p VipPoint
-php app.php m:d -P VipPoint,Lottery
+php app.php m:d -P VipPoint,DynamicLottery
 php app.php m:d -p VipPoint --reset-cache
 php app.php m:d -p VipPoint --reset-cache --purge-auth
 ```

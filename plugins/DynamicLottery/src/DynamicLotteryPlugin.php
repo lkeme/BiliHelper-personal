@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Bhp\Plugin\Builtin\Lottery;
+namespace Bhp\Plugin\Builtin\DynamicLottery;
 
 use Bhp\ArticleSource\SpaceArticleSourceService;
 use Bhp\Api\Dynamic\ApiDetail;
@@ -10,14 +10,14 @@ use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
 use Bhp\Scheduler\TaskResult;
 
-final class LotteryPlugin extends BasePlugin implements PluginTaskInterface
+final class DynamicLotteryPlugin extends BasePlugin implements PluginTaskInterface
 {
     private ?AuthFailureClassifier $authFailureClassifier = null;
     private ?ApiDetail $detailApi = null;
-    private ?LotteryStateStore $stateStore = null;
-    private ?LotteryReservationExecutor $reservationExecutor = null;
+    private ?DynamicLotteryStateStore $stateStore = null;
+    private ?DynamicLotteryReservationExecutor $reservationExecutor = null;
     private ?SpaceArticleSourceService $articleSourceService = null;
-    private ?LotteryWindow $window = null;
+    private ?DynamicLotteryWindow $window = null;
 
     public function __construct(Plugin &$plugin)
     {
@@ -27,12 +27,12 @@ final class LotteryPlugin extends BasePlugin implements PluginTaskInterface
 
     public function runOnce(): TaskResult
     {
-        if (!$this->enabled('lottery')) {
+        if (!$this->enabled('dynamic_lottery')) {
             return TaskResult::keepSchedule();
         }
 
         $now = $this->now();
-        $state = LotteryRuntimeState::bootstrap($this->stateStore()->load());
+        $state = DynamicLotteryRuntimeState::bootstrap($this->stateStore()->load());
         $state->resetForBizDate($this->bizDate($now));
 
         if (!$this->window()->contains($now)) {
@@ -65,20 +65,20 @@ final class LotteryPlugin extends BasePlugin implements PluginTaskInterface
         return TaskResult::after(mt_rand(10, 25) * 60);
     }
 
-    protected function joinLottery(LotteryRuntimeState $state): void
+    protected function joinLottery(DynamicLotteryRuntimeState $state): void
     {
         $lottery = $state->shiftPendingLottery();
         if (!is_array($lottery)) {
             return;
         }
 
-        $this->info("抽奖: 尝试预约 ID: {$lottery['rid']} UP: {$lottery['up_mid']} 预约人数: {$lottery['reserve_total']}");
-        $this->info("抽奖: 标题: {$lottery['title']}");
-        $this->info('抽奖: 地址: ' . $this->setT((int)$lottery['id_str']));
-        $this->info("抽奖: 奖品: {$lottery['prize']}");
+        $this->info("动态抽奖: 执行进度 待参与 {$state->pendingLotteryCount()} 动态 {$lottery['id_str']} RID {$lottery['rid']}");
+        $this->info("动态抽奖: 标题: {$lottery['title']}");
+        $this->info('动态抽奖: 地址: ' . $this->setDynamicUrl((int)$lottery['id_str']));
+        $this->info("动态抽奖: 奖品: {$lottery['prize']}");
 
         if ($this->filterContentWords((string)$lottery['title']) || $this->filterContentWords((string)$lottery['prize'])) {
-            $this->warning('抽奖: 预约失败，标题或描述含有敏感词, 跳过');
+            $this->warning('动态抽奖: 标题或奖品命中敏感词，跳过');
             return;
         }
 
@@ -97,7 +97,7 @@ final class LotteryPlugin extends BasePlugin implements PluginTaskInterface
         $result = $this->reservationExecutor()->reserve(
             $info,
             (string)($this->csrf() ?? ''),
-            $this->setT((int)$info['id_str']),
+            $this->setDynamicUrl((int)$info['id_str']),
         );
 
         if ($result['success']) {
@@ -110,67 +110,75 @@ final class LotteryPlugin extends BasePlugin implements PluginTaskInterface
         return $result;
     }
 
-    protected function fetchDynamicReserve(LotteryRuntimeState $state): void
+    protected function fetchDynamicReserve(DynamicLotteryRuntimeState $state): void
     {
         $dynamicId = $state->shiftPendingDynamic();
         if (!is_int($dynamicId)) {
             return;
         }
 
-        $dynamicUrl = $this->setT($dynamicId);
-        $this->info("抽奖: 开始提取动态 $dynamicUrl");
+        $dynamicUrl = $this->setDynamicUrl($dynamicId);
+        $this->info(sprintf(
+            '动态抽奖: 扫描动态进度 (%d/%d) %s',
+            max(1, $state->processedDynamicCount()),
+            max(1, $state->totalDynamicCount()),
+            $dynamicUrl,
+        ));
 
         $response = $this->detailApi()->detail($dynamicId);
-        $this->authFailureClassifier()?->assertNotAuthFailure($response, "抽奖: 提取动态{$dynamicId}时账号未登录");
+        $this->authFailureClassifier()?->assertNotAuthFailure($response, "动态抽奖: 提取动态{$dynamicId}时账号未登录");
 
         if (($response['code'] ?? -1) !== 0) {
-            $this->warning("抽奖: 提取动态({$dynamicId})失败: {$response['code']} -> {$response['message']}");
+            $state->requeueDynamic($dynamicId);
+            $this->warning("动态抽奖: 提取动态({$dynamicId})失败: {$response['code']} -> {$response['message']}，稍后重试");
             return;
         }
 
         $data = $response['data'] ?? [];
-        if (is_array($data)) {
-            $this->extractReserveFromDynamicDetail($data, $state);
+        if (!is_array($data)) {
+            $state->requeueDynamic($dynamicId);
+            $this->warning("动态抽奖: 提取动态({$dynamicId})返回结构异常，稍后重试");
+            return;
         }
 
-        $this->info('抽奖: 获取有效预约列表成功 当前未处理Count: ' . $state->pendingLotteryCount());
+        $this->extractReserveFromDynamicDetail($data, $state);
     }
 
     /**
      * @param array<string, mixed> $data
      */
-    protected function extractReserveFromDynamicDetail(array $data, LotteryRuntimeState $state): void
+    protected function extractReserveFromDynamicDetail(array $data, DynamicLotteryRuntimeState $state): void
     {
         if (!isset($data['item']['modules']['module_dynamic']['additional']['reserve'])) {
-            $this->warning('抽奖: 提取动态预约失败: 未找到预约信息');
+            $this->info('动态抽奖: 当前动态未发现互动抽奖，跳过');
             return;
         }
 
         if (!(bool)($data['item']['visible'] ?? false)) {
-            $this->warning('抽奖: 提取动态预约失败: 动态已不可见');
+            $this->warning('动态抽奖: 动态已不可见');
             return;
         }
 
         $reserve = $data['item']['modules']['module_dynamic']['additional']['reserve'];
         if (!is_array($reserve)) {
-            $this->warning('抽奖: 提取动态预约失败: 未找到预约信息');
+            $this->info('动态抽奖: 当前动态未发现互动抽奖，跳过');
             return;
         }
 
         if (isset($reserve['reserve_record_ctime']) && (int)$reserve['reserve_record_ctime'] > 0) {
-            $this->warning('抽奖: 提取动态预约失败: 当前账号已参与过该预约');
+            $this->info('动态抽奖: 当前账号已参与过该互动抽奖，跳过');
             return;
         }
 
         if (($reserve['button']['uncheck']['text'] ?? null) !== '预约'
             || ($reserve['button']['status'] ?? null) != 1
             || ($reserve['button']['type'] ?? null) != 2) {
-            $this->warning('抽奖: 提取动态预约失败: 预约按钮状态异常');
+            $this->warning('动态抽奖: 互动抽奖按钮状态异常');
             return;
         }
 
         if (($reserve['state'] ?? null) != 0 || ($reserve['stype'] ?? null) != 2) {
-            $this->warning('抽奖: 提取动态预约失败: 预约动态状态异常');
+            $this->warning('动态抽奖: 状态异常，当前不可参与');
             return;
         }
 
@@ -184,16 +192,17 @@ final class LotteryPlugin extends BasePlugin implements PluginTaskInterface
         ];
 
         $state->addLottery($lottery);
+        $this->info("动态抽奖: 动态 {$lottery['id_str']} 发现互动抽奖，已入队");
     }
 
-    protected function setT(int $dynamicId): string
+    protected function setDynamicUrl(int $dynamicId): string
     {
         return 'https://t.bilibili.com/' . $dynamicId;
     }
 
     protected function filterContentWords(string $content): bool
     {
-        $sensitiveWords = $this->filterWords('Lottery.sensitive', [], 'array');
+        $sensitiveWords = $this->filterWords('DynamicLottery.sensitive', [], 'array');
         foreach ($sensitiveWords as $word) {
             if (is_string($word) && str_contains($content, $word)) {
                 return true;
@@ -203,14 +212,14 @@ final class LotteryPlugin extends BasePlugin implements PluginTaskInterface
         return false;
     }
 
-    protected function stateStore(): LotteryStateStore
+    protected function stateStore(): DynamicLotteryStateStore
     {
-        return $this->stateStore ??= new LotteryStateStore($this->cache());
+        return $this->stateStore ??= new DynamicLotteryStateStore($this->cache());
     }
 
-    protected function reservationExecutor(): LotteryReservationExecutor
+    protected function reservationExecutor(): DynamicLotteryReservationExecutor
     {
-        return $this->reservationExecutor ??= new LotteryReservationExecutor(new LotteryReservationService(), $this->appContext()->request());
+        return $this->reservationExecutor ??= new DynamicLotteryReservationExecutor(new DynamicLotteryReservationService(), $this->appContext()->request());
     }
 
     protected function authFailureClassifier(): ?AuthFailureClassifier
@@ -228,9 +237,9 @@ final class LotteryPlugin extends BasePlugin implements PluginTaskInterface
         return $this->detailApi ??= new ApiDetail($this->appContext()->request());
     }
 
-    private function window(): LotteryWindow
+    private function window(): DynamicLotteryWindow
     {
-        return $this->window ??= new LotteryWindow($this->pluginWindowStartAt(), $this->pluginWindowEndAt());
+        return $this->window ??= new DynamicLotteryWindow($this->pluginWindowStartAt(), $this->pluginWindowEndAt());
     }
 
     private function now(): int

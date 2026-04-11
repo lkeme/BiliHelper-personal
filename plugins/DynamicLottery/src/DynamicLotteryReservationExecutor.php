@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Bhp\Plugin\Builtin\Lottery;
+namespace Bhp\Plugin\Builtin\DynamicLottery;
 
 use Bhp\Api\Support\ApiJson;
 use Bhp\Login\AuthFailureClassifier;
@@ -8,12 +8,12 @@ use Bhp\Request\Request;
 use Bhp\Util\Exceptions\NoLoginException;
 use Throwable;
 
-class LotteryReservationExecutor
+class DynamicLotteryReservationExecutor
 {
     private AuthFailureClassifier $authFailureClassifier;
 
     public function __construct(
-        private readonly LotteryReservationService $reservationService,
+        private readonly DynamicLotteryReservationService $reservationService,
         private readonly Request $request,
     ) {
         $this->authFailureClassifier = new AuthFailureClassifier();
@@ -32,7 +32,7 @@ class LotteryReservationExecutor
 
         $response = $this->postJson($request['url'], $request['payload'], $request['headers']);
         $this->assertNotAuthFailure($response, sprintf(
-            '抽奖: 预约 ReserveId=%s 时账号未登录',
+            '动态抽奖: 参与 ReserveId=%s 时账号未登录',
             (string)($lottery['rid'] ?? ''),
         ));
 
@@ -56,12 +56,12 @@ class LotteryReservationExecutor
         } catch (Throwable $throwable) {
             return [
                 'code' => -500,
-                'message' => 'lottery.reserve 请求失败: ' . $throwable->getMessage(),
+                'message' => 'dynamic_lottery.reserve 请求失败: ' . $throwable->getMessage(),
                 'data' => [],
             ];
         }
 
-        return ApiJson::decode($raw, 'lottery.reserve');
+        return ApiJson::decode($raw, 'dynamic_lottery.reserve');
     }
 
     /**

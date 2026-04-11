@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Bhp\Plugin\Builtin\Lottery;
+namespace Bhp\Plugin\Builtin\DynamicLottery;
 
-final class LotteryReservationService
+final class DynamicLotteryReservationService
 {
     /**
      * @param array<string, mixed> $lottery
@@ -38,13 +38,23 @@ final class LotteryReservationService
         if (($response['code'] ?? -1) === 0) {
             return [
                 'success' => true,
-                'message' => "抽奖: 预约成功 ReserveId: {$lottery['rid']}  Toast: {$response['data']['toast']} 已有{$response['data']['desc_update']} ",
+                'message' => sprintf(
+                    '动态抽奖: 参与成功 ReserveId: %s Toast: %s 已有%s',
+                    (string)$lottery['rid'],
+                    (string)($response['data']['toast'] ?? ''),
+                    (string)($response['data']['desc_update'] ?? ''),
+                ),
             ];
         }
 
         return [
             'success' => false,
-            'message' => "抽奖: 预约失败 ReserveId: {$lottery['rid']}  Error: {$response['code']} -> {$response['message']}",
+            'message' => sprintf(
+                '动态抽奖: 参与失败 ReserveId: %s Error: %s -> %s',
+                (string)$lottery['rid'],
+                (string)($response['code'] ?? ''),
+                (string)($response['message'] ?? ''),
+            ),
         ];
     }
 }

@@ -1,6 +1,6 @@
 {
     "code": 200,
-    "Lottery": {
+    "DynamicLottery": {
         "sensitive": [
             "故障",
             "演练",
