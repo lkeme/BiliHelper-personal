@@ -21,7 +21,7 @@ class LotteryReservationExecutor
 
     /**
      * @param array<string, mixed> $lottery
-     * @return array{success: bool, message: string}
+     * @return array{success: bool, message: string, retryable?: bool}
      */
     public function reserve(
         array $lottery,
@@ -36,7 +36,12 @@ class LotteryReservationExecutor
             (string)($lottery['rid'] ?? ''),
         ));
 
-        return $this->reservationService->evaluateReserveResponse($response, $lottery);
+        $result = $this->reservationService->evaluateReserveResponse($response, $lottery);
+        if (($response['code'] ?? 0) === -500) {
+            $result['retryable'] = true;
+        }
+
+        return $result;
     }
 
     /**

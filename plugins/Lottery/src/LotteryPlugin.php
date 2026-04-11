@@ -82,13 +82,17 @@ final class LotteryPlugin extends BasePlugin implements PluginTaskInterface
             return;
         }
 
-        $this->reserve($lottery);
+        $result = $this->reserve($lottery);
+        if (($result['success'] ?? false) !== true && ($result['retryable'] ?? false) === true) {
+            $state->requeueLottery($lottery);
+        }
     }
 
     /**
      * @param array<string, mixed> $info
+     * @return array{success: bool, message: string, retryable?: bool}
      */
-    protected function reserve(array $info): void
+    protected function reserve(array $info): array
     {
         $result = $this->reservationExecutor()->reserve(
             $info,
@@ -98,10 +102,12 @@ final class LotteryPlugin extends BasePlugin implements PluginTaskInterface
 
         if ($result['success']) {
             $this->notice($result['message']);
-            return;
+            return $result;
         }
 
         $this->warning($result['message']);
+
+        return $result;
     }
 
     protected function fetchDynamicReserve(LotteryRuntimeState $state): void

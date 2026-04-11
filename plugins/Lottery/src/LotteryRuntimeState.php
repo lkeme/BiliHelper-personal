@@ -110,6 +110,23 @@ final class LotteryRuntimeState
         $this->state['wait_lottery_list'][$key] = $lottery;
     }
 
+    /**
+     * @param array<string, mixed> $lottery
+     */
+    public function requeueLottery(array $lottery): void
+    {
+        $key = "rid{$lottery['rid']}";
+        if (!array_key_exists($key, $this->state['lottery_list'])) {
+            $this->state['lottery_list'][$key] = $lottery;
+        }
+
+        if (array_key_exists($key, $this->state['wait_lottery_list'])) {
+            return;
+        }
+
+        $this->state['wait_lottery_list'] = [$key => $lottery] + $this->state['wait_lottery_list'];
+    }
+
     public function pendingDynamicCount(): int
     {
         return count($this->state['wait_dynamic_list']);
