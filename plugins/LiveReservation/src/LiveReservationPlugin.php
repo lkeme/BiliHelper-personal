@@ -113,12 +113,11 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
         } else {
             $state->clearReservationBatch();
             $this->info(sprintf(
-                '预约直播: 父任务进度 (%d/%d) 子任务进度 (0/0) UP主 %s',
+                '预约直播: 父任务进度 (%d/%d) 子任务进度 (0/0) UP主 %s 当前UP没有可预约的直播',
                 $parentCurrent,
                 $parentTotal,
                 $upMid,
             ));
-            $this->info("预约直播: 当前UP没有可预约的直播 {$upMid}");
         }
 
         if ($state->pendingReservationCount() > 0) {
