@@ -87,17 +87,31 @@ final class ActivityLotteryRuntime
             return TaskResult::after($delay);
         }
 
+        $catalog = $this->catalogLoader->load();
+        $plannedCatalogFlows = [];
+        foreach ($catalog as $item) {
+            $planned = $this->planner->plan($item, null, $bizDate);
+            $plannedCatalogFlows[$planned->id()] = $planned;
+        }
+
         $flows = [];
         foreach ($this->flowStore->load($bizDate) as $flow) {
             $flows[$flow->id()] = $flow;
         }
 
-        $catalog = $this->catalogLoader->load();
+        $loadedFlowCount = count($flows);
+        $prunedFlowCount = 0;
+        if ($plannedCatalogFlows !== []) {
+            $flows = array_filter(
+                $flows,
+                fn (ActivityFlow $flow): bool => isset($plannedCatalogFlows[$flow->id()]),
+            );
+            $prunedFlowCount = $loadedFlowCount - count($flows);
+        }
         $existingFlowCount = count($flows);
 
         $newFlowCount = 0;
-        foreach ($catalog as $item) {
-            $planned = $this->planner->plan($item, null, $bizDate);
+        foreach ($plannedCatalogFlows as $planned) {
             if (!isset($flows[$planned->id()])) {
                 $flows[$planned->id()] = $planned;
                 $newFlowCount++;
@@ -156,7 +170,9 @@ final class ActivityLotteryRuntime
             'event' => 'tick.finish',
             'biz_date' => $bizDate,
             'catalog_count' => count($catalog),
+            'loaded_flow_count' => $loadedFlowCount,
             'existing_flow_count' => $existingFlowCount,
+            'pruned_flow_count' => $prunedFlowCount,
             'flow_count' => count($flows),
             'new_flow_count' => $newFlowCount,
             'picked_flow_count' => count($pickedFlows),
