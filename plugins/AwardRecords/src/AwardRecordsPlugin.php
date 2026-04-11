@@ -95,12 +95,13 @@ class AwardRecordsPlugin extends BasePlugin implements PluginTaskInterface
         $now = date('m') . '月' . date('d') . '日';
         foreach ($response['data']['list'] as $data) {
             $info = $data['md'] . '-' . $data['desc'];
+            $isNew = !in_array($info, $this->records['operation'], true);
 
-            if (!in_array($info, $this->records['operation'], true)) {
+            if ($isNew) {
                 $this->records['operation'][] = $info;
             }
 
-            if ($now !== $data['md']) {
+            if (!$isNew || $now !== $data['md']) {
                 continue;
             }
 
@@ -126,14 +127,15 @@ class AwardRecordsPlugin extends BasePlugin implements PluginTaskInterface
 
         foreach ($response['data']['list'] as $data) {
             $info = $data['create_time'] . '-' . $data['id'] . '-' . $data['source'] . '-' . $data['gift_name'];
+            $isNew = !in_array($info, $this->records['award'], true);
 
-            if (!in_array($info, $this->records['award'], true)) {
+            if ($isNew) {
                 $this->records['award'][] = $info;
             }
 
             $createTime = strtotime($data['create_time']);
             $day = (int)ceil((time() - $createTime) / 86400);
-            if ($day <= 2 && $data['update_time'] === '') {
+            if ($isNew && $day <= 2 && $data['update_time'] === '') {
                 $this->notice($info);
                 $this->notify($title, $info);
             }
@@ -157,14 +159,15 @@ class AwardRecordsPlugin extends BasePlugin implements PluginTaskInterface
 
         foreach ($response['data']['list'] as $data) {
             $info = $data['end_time'] . '-' . $data['id'] . '-' . $data['anchor_name'] . '-' . $data['award_name'];
+            $isNew = !in_array($info, $this->records['celestial'], true);
 
-            if (!in_array($info, $this->records['celestial'], true)) {
+            if ($isNew) {
                 $this->records['celestial'][] = $info;
             }
 
             $endTime = strtotime($data['end_time']);
             $day = (int)ceil((time() - $endTime) / 86400);
-            if ($day <= 2) {
+            if ($isNew && $day <= 2) {
                 $this->notice($info);
                 $this->notify($title, $info);
             }
@@ -188,13 +191,14 @@ class AwardRecordsPlugin extends BasePlugin implements PluginTaskInterface
 
         foreach ($response['data']['list'] as $data) {
             $info = $data['settlement_time'] . '-' . $data['win_id'] . '-' . $data['anchor_name'] . '-' . $data['award_name'];
+            $isNew = !in_array($info, $this->records['bonus'], true);
 
-            if (!in_array($info, $this->records['bonus'], true)) {
+            if ($isNew) {
                 $this->records['bonus'][] = $info;
             }
 
             $settlementTime = strtotime($data['settlement_time']);
-            if (time() < $settlementTime) {
+            if ($isNew && time() < $settlementTime) {
                 $this->notice($info);
                 $this->notify($title, $info);
             }
