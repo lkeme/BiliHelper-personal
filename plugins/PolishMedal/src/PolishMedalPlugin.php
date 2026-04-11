@@ -63,22 +63,36 @@ final class PolishMedalPlugin extends BasePlugin implements PluginTaskInterface
         }
 
         if ($this->cleanupInvalidMedalEnabled() && $state->hasDeleteQueue()) {
-            $medal = $state->popDeleteQueue();
-            $this->saveState($state);
+            $medal = $state->roundDeleteQueue()[0] ?? null;
             if (is_array($medal)) {
-                $this->executeDelete($medal);
+                if ($this->executeDelete($medal)) {
+                    $state->popDeleteQueue();
+                } else {
+                    $failed = $state->popDeleteQueue();
+                    if (is_array($failed)) {
+                        $state->requeueDeleteQueue($failed);
+                    }
+                }
             }
+            $this->saveState($state);
 
             return TaskResult::after($this->randomInt(self::MIN_ACTION_DELAY_SECONDS, self::MAX_ACTION_DELAY_SECONDS));
         }
 
         if ($state->hasLightQueue()) {
             $remainingBeforePop = count($state->roundLightQueue());
-            $medal = $state->popLightQueue();
-            $this->saveState($state);
+            $medal = $state->roundLightQueue()[0] ?? null;
             if (is_array($medal)) {
-                $this->executeLight($medal, $remainingBeforePop);
+                if ($this->executeLight($medal, $remainingBeforePop)) {
+                    $state->popLightQueue();
+                } else {
+                    $failed = $state->popLightQueue();
+                    if (is_array($failed)) {
+                        $state->requeueLightQueue($failed);
+                    }
+                }
             }
+            $this->saveState($state);
 
             return TaskResult::after($this->randomInt(self::MIN_ACTION_DELAY_SECONDS, self::MAX_ACTION_DELAY_SECONDS));
         }
@@ -198,11 +212,11 @@ final class PolishMedalPlugin extends BasePlugin implements PluginTaskInterface
     /**
      * @param array<string, mixed> $medal
      */
-    protected function executeDelete(array $medal): void
+    protected function executeDelete(array $medal): bool
     {
         $medalId = (int)($medal['medal_id'] ?? 0);
         if ($medalId <= 0) {
-            return;
+            return true;
         }
 
         $response = $this->medalManageApi()->deleteMedal($medalId);
@@ -213,14 +227,14 @@ final class PolishMedalPlugin extends BasePlugin implements PluginTaskInterface
             $existsInPanel = $this->medalExistsInPanel($medalId);
             if ($existsInPanel === true) {
                 $this->warning(sprintf('清理徽章: 删除已注销勋章返回成功但列表仍存在 [%s]', $label));
-                return;
+                return false;
             }
             if ($existsInPanel === null) {
                 $this->notice(sprintf('清理徽章: 删除已注销勋章成功 [%s]，但删后校验失败', $label));
-                return;
+                return false;
             }
             $this->notice(sprintf('清理徽章: 删除已注销勋章成功 [%s]', $label));
-            return;
+            return true;
         }
 
         $this->warning(sprintf(
@@ -229,6 +243,8 @@ final class PolishMedalPlugin extends BasePlugin implements PluginTaskInterface
             (string)($response['code'] ?? ''),
             (string)($response['message'] ?? ''),
         ));
+
+        return false;
     }
 
     protected function medalExistsInPanel(int $medalId): ?bool
@@ -278,12 +294,12 @@ final class PolishMedalPlugin extends BasePlugin implements PluginTaskInterface
     /**
      * @param array<string, mixed> $medal
      */
-    protected function executeLight(array $medal, int $remainingBeforePop): void
+    protected function executeLight(array $medal, int $remainingBeforePop): bool
     {
         $roomId = (int)($medal['room_id'] ?? 0);
         $targetId = (int)($medal['target_id'] ?? 0);
         if ($roomId <= 0 || $targetId <= 0) {
-            return;
+            return true;
         }
 
         $clickTime = $this->randomInt(30, 35);
@@ -301,7 +317,7 @@ final class PolishMedalPlugin extends BasePlugin implements PluginTaskInterface
                 $label,
                 $clickTime,
             ));
-            return;
+            return true;
         }
 
         $this->warning(sprintf(
@@ -313,6 +329,8 @@ final class PolishMedalPlugin extends BasePlugin implements PluginTaskInterface
             (string)($response['code'] ?? ''),
             (string)($response['message'] ?? ''),
         ));
+
+        return false;
     }
 
     protected function handleOutsideWindow(PolishMedalRuntimeState $state, int $now): TaskResult

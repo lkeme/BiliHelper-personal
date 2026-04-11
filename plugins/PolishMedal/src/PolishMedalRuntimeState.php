@@ -117,6 +117,23 @@ final class PolishMedalRuntimeState
     }
 
     /**
+     * @param array<string, mixed> $item
+     */
+    public function requeueDeleteQueue(array $item): void
+    {
+        $medalId = (int)($item['medal_id'] ?? 0);
+        foreach ($this->roundDeleteQueue() as $queued) {
+            if ((int)($queued['medal_id'] ?? 0) === $medalId && $medalId > 0) {
+                return;
+            }
+        }
+
+        $queue = $this->roundDeleteQueue();
+        $queue[] = $item;
+        $this->state['round_delete_queue'] = $queue;
+    }
+
+    /**
      * @return array<string, mixed>|null
      */
     public function popLightQueue(): ?array
@@ -127,6 +144,24 @@ final class PolishMedalRuntimeState
         $this->state['round_stats']['queued_light_count'] = count($queue);
 
         return is_array($item) ? $item : null;
+    }
+
+    /**
+     * @param array<string, mixed> $item
+     */
+    public function requeueLightQueue(array $item): void
+    {
+        $medalId = (int)($item['medal_id'] ?? 0);
+        foreach ($this->roundLightQueue() as $queued) {
+            if ((int)($queued['medal_id'] ?? 0) === $medalId && $medalId > 0) {
+                return;
+            }
+        }
+
+        $queue = $this->roundLightQueue();
+        $queue[] = $item;
+        $this->state['round_light_queue'] = $queue;
+        $this->state['round_stats']['queued_light_count'] = count($queue);
     }
 
     public function clearRound(): void
