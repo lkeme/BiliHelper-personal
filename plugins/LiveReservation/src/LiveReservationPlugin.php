@@ -91,8 +91,11 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
         $reservationList = $this->fetchReservation($upMid);
         $added = $state->enqueueReservations($reservationList);
         $this->info(sprintf(
-            '预约直播: 获取预约列表成功 %d，总任务 %d，已完成 %d，待执行 %d',
+            '预约直播: 获取预约列表成功 %d，UP主总数 %d，已扫描UP主 %d，待扫描UP主 %d，预约任务总数 %d，已完成预约 %d，待执行预约 %d',
             $added,
+            $state->totalUpMidCount(),
+            $state->processedUpMidCount(),
+            $state->pendingUpMidCount(),
             $state->discoveredReservationTotal(),
             $state->processedReservationCount(),
             $state->pendingReservationCount(),

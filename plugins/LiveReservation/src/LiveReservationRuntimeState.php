@@ -87,6 +87,16 @@ final class LiveReservationRuntimeState
         return count($this->state['wait_up_mid_list']);
     }
 
+    public function totalUpMidCount(): int
+    {
+        return count($this->state['up_mid_list']);
+    }
+
+    public function processedUpMidCount(): int
+    {
+        return max(0, $this->totalUpMidCount() - $this->pendingUpMidCount());
+    }
+
     public function pendingReservationCount(): int
     {
         return count($this->state['reservation_queue']);
