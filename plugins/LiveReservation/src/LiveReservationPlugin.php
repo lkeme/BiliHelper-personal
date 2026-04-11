@@ -108,7 +108,12 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
             );
         }
 
-        $reservationList = $this->fetchReservation($upMid);
+        $reservationResult = $this->fetchReservation($upMid);
+        $reservationList = $reservationResult['items'];
+        if (($reservationResult['retryable'] ?? false) === true) {
+            $state->requeueUpMid($upMid);
+        }
+
         $added = $state->enqueueReservations($reservationList);
         $parentCurrent = $state->processedUpMidCount();
         $parentTotal = max(1, $state->totalUpMidCount());
@@ -214,7 +219,10 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
     }
 
     /**
-     * @return array<int, array{sid: mixed, name: mixed, vmid: mixed, jump_url: mixed, text: mixed}>
+     * @return array{
+     *   items: array<int, array{sid: mixed, name: mixed, vmid: mixed, jump_url: mixed, text: mixed}>,
+     *   retryable: bool
+     * }
      */
     protected function fetchReservation(string $vmid): array
     {
@@ -223,6 +231,10 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
         $this->authFailureClassifier->assertNotAuthFailure($response, '预约直播: 获取预约列表时账号未登录');
         if ($response['code']) {
             $this->warning("预约直播: 获取预约列表失败: {$response['code']} -> {$response['message']}");
+            return [
+                'items' => [],
+                'retryable' => (int)$response['code'] === -500,
+            ];
         } else {
             $deData = $response['data'] ?: [];
             foreach ($deData as $data) {
@@ -234,7 +246,10 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
             }
         }
 
-        return $reservationList;
+        return [
+            'items' => $reservationList,
+            'retryable' => false,
+        ];
     }
 
     /**

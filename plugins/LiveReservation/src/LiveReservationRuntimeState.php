@@ -85,6 +85,23 @@ final class LiveReservationRuntimeState
         return is_string($upMid) && $upMid !== '' ? $upMid : null;
     }
 
+    public function requeueUpMid(string $upMid): void
+    {
+        $upMid = trim($upMid);
+        if ($upMid === '') {
+            return;
+        }
+
+        if (in_array($upMid, $this->state['wait_up_mid_list'], true)) {
+            return;
+        }
+
+        array_unshift($this->state['wait_up_mid_list'], $upMid);
+        if (!in_array($upMid, $this->state['up_mid_list'], true)) {
+            array_unshift($this->state['up_mid_list'], $upMid);
+        }
+    }
+
     public function pendingUpMidCount(): int
     {
         return count($this->state['wait_up_mid_list']);
