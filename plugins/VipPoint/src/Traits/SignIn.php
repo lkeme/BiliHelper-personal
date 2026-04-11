@@ -18,6 +18,7 @@ trait SignIn
     protected function _signIn(string $name): bool
     {
         $response = $this->vipPointScoreTaskApi()->sign();
+        $this->assertVipPointAuthFailure($response, "大会员积分@{$name}: 签到时账号未登录");
         if ($response['code']) {
             if (($response['message'] ?? null) == '签到失败，请刷新重试') {
                 $this->warning("大会员积分@{$name}: 今日已签到，重复签到");
@@ -37,6 +38,7 @@ trait SignIn
     protected function _isSignIn(array $data, string $name): bool
     {
         $response = $this->vipPointTaskApi()->homepageCombine();
+        $this->assertVipPointAuthFailure($response, "大会员积分@{$name}: 查询签到状态时账号未登录");
         if ($response['code']) {
             $this->warning('大会员积分: 获取签到信息失败');
 

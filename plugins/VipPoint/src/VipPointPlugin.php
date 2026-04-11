@@ -25,6 +25,7 @@ use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
 use Bhp\Scheduler\TaskResult;
 use Bhp\Util\AppTerminator;
+use Bhp\Util\Exceptions\NoLoginException;
 
 class VipPointPlugin extends BasePlugin implements PluginTaskInterface
 {
@@ -225,5 +226,13 @@ class VipPointPlugin extends BasePlugin implements PluginTaskInterface
     protected function vipPointEventApi(): ApiEvent
     {
         return $this->vipPointEventApi ??= new ApiEvent($this->appContext()->request());
+    }
+
+    /**
+     * @throws NoLoginException
+     */
+    protected function assertVipPointAuthFailure(array $response, string $fallbackMessage): void
+    {
+        $this->authFailureClassifier->assertNotAuthFailure($response, $fallbackMessage);
     }
 }

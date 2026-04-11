@@ -64,6 +64,7 @@ trait CommonTaskInfo
 
         if ($item['state'] == 0 && $c !== 4) {
             $response = $this->vipPointScoreTaskApi()->receive($item['task_code']);
+            $this->assertVipPointAuthFailure($response, "大会员积分@{$name}: {$item['task_code']} 任务领取时账号未登录");
             if ($response['code']) {
                 $this->warning("大会员积分@{$name}: {$item['task_code']} 任务领取失败 " . json_encode($response));
 
@@ -84,6 +85,7 @@ trait CommonTaskInfo
     protected function complete(string $task_code, string $name): bool
     {
         $response = $this->vipPointScoreTaskApi()->complete($task_code);
+        $this->assertVipPointAuthFailure($response, "大会员积分@{$name}: {$task_code} 任务执行时账号未登录");
         if ($response['code']) {
             $this->warning("大会员积分@{$name}: {$task_code} 任务执行失败 " . json_encode($response));
 
@@ -124,6 +126,7 @@ trait CommonTaskInfo
         }
 
         $response = $this->vipPointDeliverTaskApi()->complete($channel);
+        $this->assertVipPointAuthFailure($response, "大会员积分@{$name}: {$task_code} 任务执行时账号未登录");
         if ($response['code']) {
             $this->warning("大会员积分@{$name}: {$task_code} 任务执行失败 " . json_encode($response));
 
@@ -161,6 +164,7 @@ trait CommonTaskInfo
         }
 
         $response = $this->vipPointEventApi()->dispatch();
+        $this->assertVipPointAuthFailure($response, "大会员积分@{$name}: {$task_code} 任务执行时账号未登录");
         if ($response['code']) {
             $this->warning("大会员积分@{$name}: {$task_code} 任务执行失败 " . json_encode($response));
 
