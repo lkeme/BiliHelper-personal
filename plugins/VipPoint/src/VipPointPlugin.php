@@ -58,6 +58,7 @@ class VipPointPlugin extends BasePlugin implements PluginTaskInterface
     protected ?array $tasks = [];
 
     private ?VipPointRuntimeState $runtimeState = null;
+    private ?VipPointTaskStateStore $stateStore = null;
     private ?ApiTask $vipPointTaskApi = null;
     private ?VipPointScoreApiTask $vipPointScoreTaskApi = null;
     private ?VipPointDeliverApiTask $vipPointDeliverTaskApi = null;
@@ -134,8 +135,9 @@ class VipPointPlugin extends BasePlugin implements PluginTaskInterface
     protected function initTask(): void
     {
         $date = date('Y-m-d');
+        $storedTasks = $this->stateStore()->load();
         $this->runtimeState = VipPointRuntimeState::bootstrap(
-            is_array($this->tasks) ? $this->tasks : [],
+            is_array($this->tasks) && $this->tasks !== [] ? $this->tasks : $storedTasks,
             $date,
             $this->targetTasks,
         );
@@ -147,6 +149,7 @@ class VipPointPlugin extends BasePlugin implements PluginTaskInterface
         }
 
         $this->tasks = $tasks;
+        $this->persistTasks();
     }
 
     protected function getTaskList(): bool
@@ -169,6 +172,7 @@ class VipPointPlugin extends BasePlugin implements PluginTaskInterface
         $state = $this->state();
         $state->setTask($key, $value);
         $this->tasks = $state->all();
+        $this->persistTasks();
     }
 
     protected function getTask(string $key): mixed
@@ -181,6 +185,7 @@ class VipPointPlugin extends BasePlugin implements PluginTaskInterface
         $state = $this->state();
         $state->deleteTask($key);
         $this->tasks = $state->all();
+        $this->persistTasks();
     }
 
     private function state(): VipPointRuntimeState
@@ -190,6 +195,16 @@ class VipPointPlugin extends BasePlugin implements PluginTaskInterface
         }
 
         return $this->runtimeState;
+    }
+
+    private function stateStore(): VipPointTaskStateStore
+    {
+        return $this->stateStore ??= new VipPointTaskStateStore($this->cache());
+    }
+
+    private function persistTasks(): void
+    {
+        $this->stateStore()->save(is_array($this->tasks) ? $this->tasks : []);
     }
 
     protected function vipPointTaskApi(): ApiTask
