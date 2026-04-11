@@ -23,6 +23,7 @@ final class ActivityInfoUpdateRunner
         $this->assertAuthenticated();
         $resourcePath = $this->resourcePath();
         $existing = $this->loadExistingData($resourcePath);
+        $existingByUrl = $this->indexRecordsByUrl($existing);
         $mergedUrls = $this->mergeUrls(
             $this->extractUrlsFromRecords($existing),
             $this->parseUrlsArgument($urls),
@@ -38,6 +39,9 @@ final class ActivityInfoUpdateRunner
         foreach ($mergedUrls as $url) {
             $record = $this->buildRecord($url);
             if ($record === null) {
+                if (isset($existingByUrl[$url])) {
+                    $records[] = $existingByUrl[$url];
+                }
                 $skipped++;
                 continue;
             }
@@ -120,6 +124,25 @@ final class ActivityInfoUpdateRunner
         }
 
         return array_values(array_filter($data, static fn (mixed $item): bool => is_array($item)));
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $records
+     * @return array<string, array<string, mixed>>
+     */
+    private function indexRecordsByUrl(array $records): array
+    {
+        $indexed = [];
+        foreach ($records as $record) {
+            $url = $this->normalizeUrl((string)($record['url'] ?? ''));
+            if ($url === '') {
+                continue;
+            }
+
+            $indexed[$url] = $record;
+        }
+
+        return $indexed;
     }
 
     /**
