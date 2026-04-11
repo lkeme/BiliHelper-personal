@@ -175,9 +175,13 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
             $total,
             $currentBatchUpMid,
         ));
-        $this->reserve($reservation);
-        $state->incrementProcessedReservationCount();
-        $state->incrementCurrentBatchProcessedReservationCount();
+        $result = $this->reserve($reservation);
+        if (($result['success'] ?? false) === true || ($result['retryable'] ?? false) !== true) {
+            $state->incrementProcessedReservationCount();
+            $state->incrementCurrentBatchProcessedReservationCount();
+        } else {
+            $state->requeueReservation($reservation);
+        }
 
         if ($state->currentBatchProcessedReservationCount() >= $state->currentBatchReservationTotal()) {
             $state->clearReservationBatch();
@@ -263,8 +267,9 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
 
     /**
      * @param array{sid: mixed, name: mixed, vmid: mixed, jump_url: mixed, text: mixed} $data
+     * @return array{success: bool, message: string, retryable?: bool}
      */
-    protected function reserve(array $data): void
+    protected function reserve(array $data): array
     {
         $response = $this->reservationApi()->reserve((int)$data['sid'], (int)$data['vmid']);
         $this->authFailureClassifier->assertNotAuthFailure($response, '预约直播: 执行预约时账号未登录');
@@ -275,9 +280,19 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
 
         if ($response['code']) {
             $this->warning("预约直播: 尝试预约并抽奖失败 {$response['code']} -> {$response['message']}");
-        } else {
-            $this->notice("预约直播: 尝试预约并抽奖成功 {$response['message']}");
+            return [
+                'success' => false,
+                'message' => (string)$response['message'],
+                'retryable' => (int)$response['code'] === -500,
+            ];
         }
+
+        $this->notice("预约直播: 尝试预约并抽奖成功 {$response['message']}");
+
+        return [
+            'success' => true,
+            'message' => (string)$response['message'],
+        ];
     }
 
     protected function articleSource(): SpaceArticleSourceService

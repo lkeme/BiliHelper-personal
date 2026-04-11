@@ -195,6 +195,28 @@ final class LiveReservationRuntimeState
         return is_array($reservation) ? $reservation : null;
     }
 
+    /**
+     * @param array<string, mixed> $reservation
+     */
+    public function requeueReservation(array $reservation): void
+    {
+        $sid = trim((string)($reservation['sid'] ?? ''));
+        if ($sid === '') {
+            return;
+        }
+
+        foreach ($this->state['reservation_queue'] as $queued) {
+            if (is_array($queued) && trim((string)($queued['sid'] ?? '')) === $sid) {
+                return;
+            }
+        }
+
+        array_unshift($this->state['reservation_queue'], $reservation);
+        if (!in_array($sid, $this->state['reservation_keys'], true)) {
+            $this->state['reservation_keys'][] = $sid;
+        }
+    }
+
     public function hasWork(): bool
     {
         return $this->pendingUpMidCount() > 0 || $this->pendingReservationCount() > 0;
