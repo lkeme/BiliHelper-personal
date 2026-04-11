@@ -12,14 +12,14 @@ use Bhp\Scheduler\TaskResult;
 
 final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterface
 {
-    private const WINDOW_START = '03:30:00';
-    private const WINDOW_END = '23:30:00';
-    private const DELAY_AFTER_FETCH_WITH_TASKS_MIN = 45;
-    private const DELAY_AFTER_FETCH_WITH_TASKS_MAX = 120;
-    private const DELAY_AFTER_FETCH_EMPTY_MIN = 120;
-    private const DELAY_AFTER_FETCH_EMPTY_MAX = 300;
-    private const DELAY_AFTER_RESERVE_MIN = 45;
-    private const DELAY_AFTER_RESERVE_MAX = 120;
+    private const START_RANDOM_DELAY_MIN_MINUTES = 15;
+    private const START_RANDOM_DELAY_MAX_MINUTES = 45;
+    private const DELAY_AFTER_FETCH_WITH_TASKS_MIN = 180;
+    private const DELAY_AFTER_FETCH_WITH_TASKS_MAX = 480;
+    private const DELAY_AFTER_FETCH_EMPTY_MIN = 480;
+    private const DELAY_AFTER_FETCH_EMPTY_MAX = 1200;
+    private const DELAY_AFTER_RESERVE_MIN = 180;
+    private const DELAY_AFTER_RESERVE_MAX = 480;
 
     private AuthFailureClassifier $authFailureClassifier;
     private ?ApiReservation $reservationApi = null;
@@ -46,7 +46,10 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
         if (!$this->window()->contains($now)) {
             $this->stateStore()->save($state->all());
 
-            return TaskResult::after($this->window()->secondsUntilNextStart($now));
+            return $this->nextPluginStartTaskResult(
+                self::START_RANDOM_DELAY_MIN_MINUTES,
+                self::START_RANDOM_DELAY_MAX_MINUTES,
+            );
         }
 
         if (!$state->sourceSynced()) {
@@ -84,7 +87,11 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
         $this->stateStore()->save($state->all());
 
         if (!$state->hasWork()) {
-            return TaskResult::nextDayAt(3, 30);
+            return $this->nextPluginStartTaskResult(
+                self::START_RANDOM_DELAY_MIN_MINUTES,
+                self::START_RANDOM_DELAY_MAX_MINUTES,
+                true,
+            );
         }
 
         return TaskResult::after(mt_rand(1, 3) * 60 * 60);
@@ -94,7 +101,11 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
     {
         $upMid = $state->shiftPendingUpMid();
         if ($upMid === null) {
-            return TaskResult::nextDayAt(3, 30);
+            return $this->nextPluginStartTaskResult(
+                self::START_RANDOM_DELAY_MIN_MINUTES,
+                self::START_RANDOM_DELAY_MAX_MINUTES,
+                true,
+            );
         }
 
         $reservationList = $this->fetchReservation($upMid);
@@ -128,7 +139,11 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
             return TaskResult::after($this->randomDelay(self::DELAY_AFTER_FETCH_EMPTY_MIN, self::DELAY_AFTER_FETCH_EMPTY_MAX));
         }
 
-        return TaskResult::nextDayAt(3, 30);
+        return $this->nextPluginStartTaskResult(
+            self::START_RANDOM_DELAY_MIN_MINUTES,
+            self::START_RANDOM_DELAY_MAX_MINUTES,
+            true,
+        );
     }
 
     protected function executeReservationTask(LiveReservationRuntimeState $state): TaskResult
@@ -138,7 +153,11 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
             $state->clearReservationBatch();
             return $state->pendingUpMidCount() > 0
                 ? TaskResult::after($this->randomDelay(self::DELAY_AFTER_FETCH_EMPTY_MIN, self::DELAY_AFTER_FETCH_EMPTY_MAX))
-                : TaskResult::nextDayAt(3, 30);
+                : $this->nextPluginStartTaskResult(
+                    self::START_RANDOM_DELAY_MIN_MINUTES,
+                    self::START_RANDOM_DELAY_MAX_MINUTES,
+                    true,
+                );
         }
 
         $currentBatchUpMid = $state->currentBatchUpMid() ?? trim((string)($reservation['vmid'] ?? ''));
@@ -172,7 +191,11 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
             return TaskResult::after($this->randomDelay(self::DELAY_AFTER_FETCH_EMPTY_MIN, self::DELAY_AFTER_FETCH_EMPTY_MAX));
         }
 
-        return TaskResult::nextDayAt(3, 30);
+        return $this->nextPluginStartTaskResult(
+            self::START_RANDOM_DELAY_MIN_MINUTES,
+            self::START_RANDOM_DELAY_MAX_MINUTES,
+            true,
+        );
     }
 
     /**
@@ -274,7 +297,7 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
 
     protected function window(): LiveReservationWindow
     {
-        return $this->window ??= new LiveReservationWindow(self::WINDOW_START, self::WINDOW_END);
+        return $this->window ??= new LiveReservationWindow($this->pluginWindowStartAt(), $this->pluginWindowEndAt());
     }
 
     protected function now(): int

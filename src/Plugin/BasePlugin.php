@@ -30,12 +30,14 @@ use LogicException;
 abstract class BasePlugin
 {
     protected ?TaskResult $taskResult = null;
+    private ?Plugin $pluginService = null;
     private ?AppContext $context = null;
     private ?Notice $notice = null;
     private ?Log $log = null;
 
     protected function bootPlugin(Plugin $plugin, bool $schedulerTask = false): void
     {
+        $this->pluginService = $plugin;
         $this->context = $plugin->appContext();
         $this->notice = $plugin->notice();
         $this->log = $plugin->log();
@@ -159,6 +161,41 @@ abstract class BasePlugin
         return $this->appContext()->userProfileService();
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    protected function pluginDefinition(): array
+    {
+        if (!$this->pluginService instanceof Plugin) {
+            throw new LogicException('Plugin service has not been bootstrapped.');
+        }
+
+        return $this->pluginService->pluginDefinitionForClass(static::class);
+    }
+
+    protected function pluginWindowStartAt(): string
+    {
+        return $this->pluginScheduleTime('start');
+    }
+
+    protected function pluginWindowEndAt(): string
+    {
+        return $this->pluginScheduleTime('end');
+    }
+
+    protected function nextPluginStartTaskResult(
+        int $randomMinMinutes = 0,
+        int $randomMaxMinutes = 0,
+        bool $nextDay = false,
+        ?string $message = null,
+    ): TaskResult {
+        [$hour, $minute, $second] = $this->parseClockTime($this->pluginWindowStartAt());
+
+        return $nextDay
+            ? TaskResult::nextDayAt($hour, $minute, $second, $randomMinMinutes, $randomMaxMinutes, $message)
+            : TaskResult::nextAt($hour, $minute, $second, $randomMinMinutes, $randomMaxMinutes, $message);
+    }
+
     protected function error(string $message, array $context = []): void
     {
         $this->logService()->recordError($message, $context);
@@ -200,6 +237,30 @@ abstract class BasePlugin
         }
 
         return $this->log;
+    }
+
+    private function pluginScheduleTime(string $key): string
+    {
+        $value = trim((string)($this->pluginDefinition()[$key] ?? ''));
+        if ($value === '') {
+            throw new LogicException("Plugin schedule field {$key} is not configured.");
+        }
+
+        return $value;
+    }
+
+    /**
+     * @return array{0:int,1:int,2:int}
+     */
+    private function parseClockTime(string $time): array
+    {
+        $chunks = explode(':', trim($time));
+
+        return [
+            (int)($chunks[0] ?? 0),
+            (int)($chunks[1] ?? 0),
+            (int)($chunks[2] ?? 0),
+        ];
     }
 }
 

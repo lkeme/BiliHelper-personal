@@ -40,8 +40,6 @@ use Bhp\Scheduler\TaskResult;
 
 final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterface
 {
-    private const WINDOW_START = '06:00:00';
-    private const WINDOW_END = '23:00:00';
     private const MAX_FLOWS_PER_TICK = 4;
     private const MAX_STEPS_PER_TICK = 6;
     private const MAX_RUNTIME_MS_PER_TICK = 3000;
@@ -136,6 +134,8 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
                 apiWatch: new ApiWatch($this->appContext()->request()),
             ),
         );
+        $windowStartAt = $this->pluginWindowStartAt();
+        $windowEndAt = $this->pluginWindowEndAt();
 
         $this->runtimeInstance = new ActivityLotteryRuntime(
             new ActivityCatalogLoader($sources, new ActivityCatalogValidator($logger)),
@@ -165,9 +165,9 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
                 self::MAX_RUNTIME_MS_PER_TICK,
             )),
             new ActivityLotteryClock(),
-            new ActivityLotteryWindow(self::WINDOW_START, self::WINDOW_END),
-            self::WINDOW_START,
-            self::WINDOW_END,
+            new ActivityLotteryWindow($windowStartAt, $windowEndAt),
+            $windowStartAt,
+            $windowEndAt,
             $logger,
         );
 

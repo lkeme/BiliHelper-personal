@@ -13,8 +13,6 @@ use Bhp\Scheduler\TaskResult;
 
 final class PolishMedalPlugin extends BasePlugin implements PluginTaskInterface
 {
-    private const WINDOW_START = '08:00:00';
-    private const WINDOW_END = '02:00:00';
     private const MAX_LIGHT_QUEUE_PER_ROUND = 30;
     private const MIN_ACTION_DELAY_SECONDS = 30;
     private const MAX_ACTION_DELAY_SECONDS = 60;
@@ -323,7 +321,10 @@ final class PolishMedalPlugin extends BasePlugin implements PluginTaskInterface
         if ($hadPendingRound) {
             $state->clearRound();
             $this->saveState($state);
-            $this->info('点亮徽章: 当前不在运行窗口内，已丢弃未完成轮次，等待 08:00 重新获取');
+            $this->info(sprintf(
+                '点亮徽章: 当前不在运行窗口内，已丢弃未完成轮次，等待 %s 重新获取',
+                $this->pluginWindowStartAt(),
+            ));
         }
 
         return TaskResult::after($this->window()->secondsUntilNextStart($now));
@@ -346,7 +347,7 @@ final class PolishMedalPlugin extends BasePlugin implements PluginTaskInterface
 
     protected function window(): PolishMedalWindow
     {
-        return $this->window ??= new PolishMedalWindow(self::WINDOW_START, self::WINDOW_END);
+        return $this->window ??= new PolishMedalWindow($this->pluginWindowStartAt(), $this->pluginWindowEndAt());
     }
 
     protected function roundPlanner(): PolishMedalRoundPlanner

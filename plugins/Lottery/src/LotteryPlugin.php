@@ -12,9 +12,6 @@ use Bhp\Scheduler\TaskResult;
 
 final class LotteryPlugin extends BasePlugin implements PluginTaskInterface
 {
-    private const WINDOW_START = '02:30:00';
-    private const WINDOW_END = '23:30:00';
-
     private ?AuthFailureClassifier $authFailureClassifier = null;
     private ?ApiDetail $detailApi = null;
     private ?LotteryStateStore $stateStore = null;
@@ -62,7 +59,7 @@ final class LotteryPlugin extends BasePlugin implements PluginTaskInterface
         $this->stateStore()->save($state->all());
 
         if (!$state->hasWork()) {
-            return TaskResult::nextDayAt(2, 30);
+            return $this->nextPluginStartTaskResult(nextDay: true);
         }
 
         return TaskResult::after(mt_rand(10, 25) * 60);
@@ -227,7 +224,7 @@ final class LotteryPlugin extends BasePlugin implements PluginTaskInterface
 
     private function window(): LotteryWindow
     {
-        return $this->window ??= new LotteryWindow(self::WINDOW_START, self::WINDOW_END);
+        return $this->window ??= new LotteryWindow($this->pluginWindowStartAt(), $this->pluginWindowEndAt());
     }
 
     private function now(): int

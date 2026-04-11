@@ -50,9 +50,9 @@ final class ActivityLotteryRuntime
         private readonly ActivityFlowPlanner $planner = new ActivityFlowPlanner(),
         private readonly ActivityFlowPool $flowPool = new ActivityFlowPool(new ActivityFlowBudget(4, 6, 3000)),
         private readonly ActivityLotteryClock $clock = new ActivityLotteryClock(),
-        private readonly ActivityLotteryWindow $window = new ActivityLotteryWindow('06:00:00', '23:00:00'),
-        private readonly string $windowStartAt = '06:00:00',
-        private readonly string $windowEndAt = '23:00:00',
+        private readonly ActivityLotteryWindow $window,
+        private readonly string $windowStartAt,
+        private readonly string $windowEndAt,
         ?callable $logger = null,
     ) {
         $this->logger = $logger !== null

@@ -6,7 +6,7 @@
     "author": "Lkeme",
     "priority": 2007,
     "cycle": "1-3(小时)",
-    "start": "03:30:00",
+    "start": "07:30:00",
     "end": "23:30:00",
     "mode": "app",
     "valid_until": "2099-12-31 23:59:59",

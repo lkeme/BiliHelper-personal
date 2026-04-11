@@ -120,6 +120,17 @@ class Plugin
         return array_key_exists($hook, $this->_plugins);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function pluginDefinitionForClass(string $className): array
+    {
+        $hook = $this->resolveHookForClass($className);
+        $plugin = $this->_plugins[$hook] ?? null;
+
+        return is_array($plugin) ? $plugin : [];
+    }
+
     public function trigger(string $hook, mixed ...$params): string
     {
         $pluginFuncResult = '';
