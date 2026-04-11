@@ -4,6 +4,9 @@ namespace Bhp\Plugin\Builtin\DynamicLottery;
 
 use Bhp\ArticleSource\SpaceArticleSourceService;
 use Bhp\Api\Dynamic\ApiDetail;
+use Bhp\Api\Dynamic\ApiLotteryNotice;
+use Bhp\Api\Response\DynamicLotteryNotice;
+use Bhp\Api\Response\DynamicReserveLottery;
 use Bhp\Login\AuthFailureClassifier;
 use Bhp\Plugin\BasePlugin;
 use Bhp\Plugin\Contract\PluginTaskInterface;
@@ -14,6 +17,7 @@ final class DynamicLotteryPlugin extends BasePlugin implements PluginTaskInterfa
 {
     private ?AuthFailureClassifier $authFailureClassifier = null;
     private ?ApiDetail $detailApi = null;
+    private ?ApiLotteryNotice $lotteryNoticeApi = null;
     private ?DynamicLotteryStateStore $stateStore = null;
     private ?DynamicLotteryReservationExecutor $reservationExecutor = null;
     private ?SpaceArticleSourceService $articleSourceService = null;
@@ -149,50 +153,31 @@ final class DynamicLotteryPlugin extends BasePlugin implements PluginTaskInterfa
      */
     protected function extractReserveFromDynamicDetail(array $data, DynamicLotteryRuntimeState $state): void
     {
-        if (!isset($data['item']['modules']['module_dynamic']['additional']['reserve'])) {
+        $lottery = DynamicReserveLottery::fromDetailData($data);
+        if (!$lottery instanceof DynamicReserveLottery) {
             $this->info('动态抽奖: 当前动态未发现互动抽奖，跳过');
             return;
         }
 
-        if (!(bool)($data['item']['visible'] ?? false)) {
-            $this->warning('动态抽奖: 动态已不可见');
+        $notice = $this->fetchLotteryNotice((int)$lottery->idStr);
+        if (!$notice instanceof DynamicLotteryNotice) {
+            $state->requeueDynamic((int)$lottery->idStr);
+            $this->warning("动态抽奖: 动态 {$lottery->idStr} 的互动抽奖详情查询失败，稍后重试");
             return;
         }
 
-        $reserve = $data['item']['modules']['module_dynamic']['additional']['reserve'];
-        if (!is_array($reserve)) {
-            $this->info('动态抽奖: 当前动态未发现互动抽奖，跳过');
-            return;
-        }
-
-        if (isset($reserve['reserve_record_ctime']) && (int)$reserve['reserve_record_ctime'] > 0) {
+        if ($notice->participated) {
             $this->info('动态抽奖: 当前账号已参与过该互动抽奖，跳过');
             return;
         }
 
-        if (($reserve['button']['uncheck']['text'] ?? null) !== '预约'
-            || ($reserve['button']['status'] ?? null) != 1
-            || ($reserve['button']['type'] ?? null) != 2) {
-            $this->warning('动态抽奖: 互动抽奖按钮状态异常');
+        if ($notice->status !== 0) {
+            $this->info("动态抽奖: 当前互动抽奖状态为 {$notice->status}，跳过");
             return;
         }
 
-        if (($reserve['state'] ?? null) != 0 || ($reserve['stype'] ?? null) != 2) {
-            $this->warning('动态抽奖: 状态异常，当前不可参与');
-            return;
-        }
-
-        $lottery = [
-            'reserve_total' => (int)$reserve['reserve_total'],
-            'rid' => (int)$reserve['rid'],
-            'title' => (string)$reserve['title'],
-            'up_mid' => (int)$reserve['up_mid'],
-            'prize' => (string)($reserve['desc3']['text'] ?? ''),
-            'id_str' => (string)($data['item']['id_str'] ?? ''),
-        ];
-
-        $state->addLottery($lottery);
-        $this->info("动态抽奖: 动态 {$lottery['id_str']} 发现互动抽奖，已入队");
+        $state->addLottery($lottery->toArray());
+        $this->info("动态抽奖: 动态 {$lottery->idStr} 发现互动抽奖，已入队");
     }
 
     protected function setDynamicUrl(int $dynamicId): string
@@ -235,6 +220,19 @@ final class DynamicLotteryPlugin extends BasePlugin implements PluginTaskInterfa
     private function detailApi(): ApiDetail
     {
         return $this->detailApi ??= new ApiDetail($this->appContext()->request());
+    }
+
+    private function lotteryNoticeApi(): ApiLotteryNotice
+    {
+        return $this->lotteryNoticeApi ??= new ApiLotteryNotice($this->appContext()->request());
+    }
+
+    private function fetchLotteryNotice(int $dynamicId): ?DynamicLotteryNotice
+    {
+        $response = $this->lotteryNoticeApi()->notice($dynamicId);
+        $this->authFailureClassifier()?->assertNotAuthFailure($response, "动态抽奖: 查询互动抽奖{$dynamicId}详情时账号未登录");
+
+        return DynamicLotteryNotice::fromResponse($response);
     }
 
     private function window(): DynamicLotteryWindow
