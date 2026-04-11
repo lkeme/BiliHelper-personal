@@ -51,14 +51,9 @@ class MainSitePlugin extends BasePlugin implements PluginTaskInterface
 
         try {
             $success = $this->watchTask() && $this->shareTask() && $this->coinTask();
-        } catch (NoLoginException $e) {
+        } finally {
             $this->persistState();
-            $this->warning("主站任务: {$e->getMessage()}");
-
-            return TaskResult::after(3600);
         }
-
-        $this->persistState();
 
         return $this->resolveTaskResult(
             $success ? TaskResult::nextDayAt(10, 0, 0, 1, 60) : TaskResult::after(mt_rand(60, 180) * 60)

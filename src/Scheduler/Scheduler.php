@@ -19,6 +19,7 @@ class Scheduler
     private const CIRCUIT_FAILURE_THRESHOLD = 3;
     private const CIRCUIT_OPEN_SECONDS = 300.0;
     private const LOGIN_REQUIRED_RETRY_SECONDS = 30.0;
+    private const UNEXPECTED_FAILURE_RETRY_SECONDS = 60.0;
 
     /** @var array<string, ScheduledTask> */
     private array $tasks = [];
@@ -281,6 +282,7 @@ class Scheduler
                     'plugin' => $task->hook,
                     'task' => 'plugin.run',
                 ]);
+                $result = TaskResult::retryAfter(self::UNEXPECTED_FAILURE_RETRY_SECONDS, $e->getMessage());
             } finally {
                 $finishedAt = $this->monotonicNowNs();
                 $durationSeconds = ($finishedAt - $startedAt) / 1_000_000_000;
@@ -331,6 +333,7 @@ class Scheduler
                 'plugin' => $task->hook,
                 'task' => 'plugin.run',
             ]);
+            $result = TaskResult::retryAfter(self::UNEXPECTED_FAILURE_RETRY_SECONDS, $e->getMessage());
         } finally {
             $durationSeconds = ($this->monotonicNowNs() - $startedAt) / 1_000_000_000;
             if ($durationSeconds > $task->timeoutSeconds) {
@@ -401,7 +404,13 @@ class Scheduler
         }
 
         preg_match('/(\d+)(?:-(\d+))?/', $cycle, $matches);
-        $value = isset($matches[1]) ? (int)$matches[1] : 1;
+        $min = isset($matches[1]) ? (int)$matches[1] : 1;
+        $max = isset($matches[2]) ? (int)$matches[2] : $min;
+        if ($max < $min) {
+            [$min, $max] = [$max, $min];
+        }
+
+        $value = $min === $max ? $min : mt_rand($min, $max);
 
         return match (true) {
             str_contains($cycle, '秒') => max(0.05, (float)$value),

@@ -29,13 +29,7 @@ class MangaPlugin extends BasePlugin implements PluginTaskInterface
             return TaskResult::keepSchedule();
         }
 
-        try {
-            $success = $this->shareTask() && $this->signInTask();
-        } catch (NoLoginException $e) {
-            $this->warning("漫画: {$e->getMessage()}");
-
-            return TaskResult::after(3600);
-        }
+        $success = $this->shareTask() && $this->signInTask();
 
         return $success ? TaskResult::nextDayAt(10, 0, 0, 1, 60) : TaskResult::after(3600);
     }

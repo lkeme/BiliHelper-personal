@@ -30,21 +30,15 @@ class Silver2CoinPlugin extends BasePlugin implements PluginTaskInterface
             return TaskResult::keepSchedule();
         }
 
-        try {
-            if (!$this->before()) {
-                return TaskResult::nextDayAt(10, 0, 0, 1, 60);
-            }
+        if (!$this->before()) {
+            return TaskResult::nextDayAt(10, 0, 0, 1, 60);
+        }
 
-            if (!$this->exchangeTask()) {
-                return TaskResult::after(3600);
-            }
-
-            $this->after();
-        } catch (NoLoginException $e) {
-            $this->warning("银瓜子兑换硬币: {$e->getMessage()}");
-
+        if (!$this->exchangeTask()) {
             return TaskResult::after(3600);
         }
+
+        $this->after();
 
         return TaskResult::nextDayAt(10, 0, 0, 1, 60);
     }

@@ -41,13 +41,7 @@ class VipPrivilegePlugin extends BasePlugin implements PluginTaskInterface
         }
 
         $this->resetTaskResult();
-        try {
-            $this->receiveTask();
-        } catch (NoLoginException $e) {
-            $this->warning("大会员权益: {$e->getMessage()}");
-
-            return TaskResult::after(3600);
-        }
+        $this->receiveTask();
 
         return $this->resolveTaskResult(TaskResult::nextDayAt(23, 0, 0, 10, 30));
     }
