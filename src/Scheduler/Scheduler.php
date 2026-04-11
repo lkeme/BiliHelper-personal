@@ -247,7 +247,7 @@ class Scheduler
             return;
         }
 
-        $task->nextRunAtNs = PHP_INT_MAX;
+        $this->reserveNextRunSlot($task, $nowNs);
         $this->running[$task->hook] = $running + 1;
 
         async(function () use ($task) {
@@ -306,6 +306,7 @@ class Scheduler
             'task' => 'scheduler.init',
         ]);
 
+        $this->reserveNextRunSlot($task, $nowNs);
         $startedAt = $this->monotonicNowNs();
         $result = TaskResult::keepSchedule();
         try {
@@ -359,9 +360,33 @@ class Scheduler
             return;
         }
 
-        $this->advanceNextRunAt($task, $referenceNs);
+        $this->finalizeScheduledNextRun($task, $referenceNs);
         $this->persistTaskState($task);
         $this->refreshLoginRecoveryState($task);
+    }
+
+    private function reserveNextRunSlot(ScheduledTask $task, float $referenceNs): void
+    {
+        $this->advanceNextRunAt($task, $referenceNs);
+    }
+
+    private function finalizeScheduledNextRun(ScheduledTask $task, float $referenceNs): void
+    {
+        if ($task->nextRunAtNs === 0.0) {
+            $this->advanceNextRunAt($task, $referenceNs);
+            return;
+        }
+
+        if ($task->nextRunAtNs > $referenceNs) {
+            return;
+        }
+
+        if ($task->policy === TaskPolicy::SERIALIZE) {
+            $task->nextRunAtNs = $referenceNs;
+            return;
+        }
+
+        $this->advanceNextRunAt($task, $referenceNs);
     }
 
     private function advanceNextRunAt(ScheduledTask $task, float $nowNs): void
