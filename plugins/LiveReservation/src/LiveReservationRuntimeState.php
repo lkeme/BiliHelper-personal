@@ -24,6 +24,9 @@ final class LiveReservationRuntimeState
         $this->state['wait_up_mid_list'] = $this->normalizeStringList($this->state['wait_up_mid_list'] ?? []);
         $this->state['reservation_queue'] = $this->normalizeReservationQueue($this->state['reservation_queue'] ?? []);
         $this->state['reservation_keys'] = $this->normalizeStringList($this->state['reservation_keys'] ?? []);
+        $this->state['current_batch_up_mid'] = trim((string)($this->state['current_batch_up_mid'] ?? ''));
+        $this->state['current_batch_reservation_total'] = max(0, (int)($this->state['current_batch_reservation_total'] ?? 0));
+        $this->state['current_batch_processed_reservation_count'] = max(0, (int)($this->state['current_batch_processed_reservation_count'] ?? 0));
         $this->state['discovered_reservation_total'] = max(0, (int)($this->state['discovered_reservation_total'] ?? 0));
         $this->state['processed_reservation_count'] = max(0, (int)($this->state['processed_reservation_count'] ?? 0));
     }
@@ -95,6 +98,42 @@ final class LiveReservationRuntimeState
     public function processedUpMidCount(): int
     {
         return max(0, $this->totalUpMidCount() - $this->pendingUpMidCount());
+    }
+
+    public function beginReservationBatch(string $upMid, int $reservationTotal): void
+    {
+        $this->state['current_batch_up_mid'] = trim($upMid);
+        $this->state['current_batch_reservation_total'] = max(0, $reservationTotal);
+        $this->state['current_batch_processed_reservation_count'] = 0;
+    }
+
+    public function currentBatchUpMid(): ?string
+    {
+        $upMid = trim((string)$this->state['current_batch_up_mid']);
+
+        return $upMid !== '' ? $upMid : null;
+    }
+
+    public function currentBatchReservationTotal(): int
+    {
+        return (int)$this->state['current_batch_reservation_total'];
+    }
+
+    public function currentBatchProcessedReservationCount(): int
+    {
+        return (int)$this->state['current_batch_processed_reservation_count'];
+    }
+
+    public function incrementCurrentBatchProcessedReservationCount(): void
+    {
+        $this->state['current_batch_processed_reservation_count'] = $this->currentBatchProcessedReservationCount() + 1;
+    }
+
+    public function clearReservationBatch(): void
+    {
+        $this->state['current_batch_up_mid'] = '';
+        $this->state['current_batch_reservation_total'] = 0;
+        $this->state['current_batch_processed_reservation_count'] = 0;
     }
 
     public function pendingReservationCount(): int

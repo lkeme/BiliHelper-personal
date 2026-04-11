@@ -51,10 +51,19 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
 
         if (!$state->sourceSynced()) {
             $snapshot = $this->articleSource()->snapshotForToday();
+            $remoteUpMids = $snapshot->liveReservationUpMids;
+            $configuredUpMids = $this->parseConfiguredVmids((string)$this->config('live_reservation.vmids', ''));
+            $mergedUpMids = array_values(array_unique(array_merge($remoteUpMids, $configuredUpMids)));
+            $this->info(sprintf(
+                '预约直播: 获取数据成功，远程源 %d，本地源 %d，总 %d',
+                count($remoteUpMids),
+                count($configuredUpMids),
+                count($mergedUpMids),
+            ));
             $state->seedUpMidQueue(
                 $snapshot->reservationSourceCvId,
-                $snapshot->liveReservationUpMids,
-                $this->parseConfiguredVmids((string)$this->config('live_reservation.vmids', '')),
+                $remoteUpMids,
+                $configuredUpMids,
             );
         }
 
@@ -90,16 +99,27 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
 
         $reservationList = $this->fetchReservation($upMid);
         $added = $state->enqueueReservations($reservationList);
-        $this->info(sprintf(
-            '预约直播: 获取预约列表成功 %d，UP主总数 %d，已扫描UP主 %d，待扫描UP主 %d，预约任务总数 %d，已完成预约 %d，待执行预约 %d',
-            $added,
-            $state->totalUpMidCount(),
-            $state->processedUpMidCount(),
-            $state->pendingUpMidCount(),
-            $state->discoveredReservationTotal(),
-            $state->processedReservationCount(),
-            $state->pendingReservationCount(),
-        ));
+        $parentCurrent = $state->processedUpMidCount();
+        $parentTotal = max(1, $state->totalUpMidCount());
+        if ($added > 0) {
+            $state->beginReservationBatch($upMid, $added);
+            $this->info(sprintf(
+                '预约直播: 父任务进度 (%d/%d) 子任务进度 (0/%d) UP主 %s',
+                $parentCurrent,
+                $parentTotal,
+                $added,
+                $upMid,
+            ));
+        } else {
+            $state->clearReservationBatch();
+            $this->info(sprintf(
+                '预约直播: 父任务进度 (%d/%d) 子任务进度 (0/0) UP主 %s',
+                $parentCurrent,
+                $parentTotal,
+                $upMid,
+            ));
+            $this->info("预约直播: 当前UP没有可预约的直播 {$upMid}");
+        }
 
         if ($state->pendingReservationCount() > 0) {
             return TaskResult::after($this->randomDelay(self::DELAY_AFTER_FETCH_WITH_TASKS_MIN, self::DELAY_AFTER_FETCH_WITH_TASKS_MAX));
@@ -116,16 +136,34 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
     {
         $reservation = $state->shiftPendingReservation();
         if (!is_array($reservation)) {
+            $state->clearReservationBatch();
             return $state->pendingUpMidCount() > 0
                 ? TaskResult::after($this->randomDelay(self::DELAY_AFTER_FETCH_EMPTY_MIN, self::DELAY_AFTER_FETCH_EMPTY_MAX))
                 : TaskResult::nextDayAt(3, 30);
         }
 
-        $current = $state->processedReservationCount() + 1;
-        $total = max($current, $state->discoveredReservationTotal());
-        $this->info(sprintf('预约直播: 任务进度 (%d/%d)', $current, $total));
+        $currentBatchUpMid = $state->currentBatchUpMid() ?? trim((string)($reservation['vmid'] ?? ''));
+        if ($state->currentBatchReservationTotal() <= 0) {
+            $state->beginReservationBatch($currentBatchUpMid, max(1, $state->pendingReservationCount() + 1));
+        }
+
+        $current = $state->currentBatchProcessedReservationCount() + 1;
+        $total = max($current, $state->currentBatchReservationTotal());
+        $this->info(sprintf(
+            '预约直播: 父任务进度 (%d/%d) 子任务进度 (%d/%d) UP主 %s',
+            $state->processedUpMidCount(),
+            max(1, $state->totalUpMidCount()),
+            $current,
+            $total,
+            $currentBatchUpMid,
+        ));
         $this->reserve($reservation);
         $state->incrementProcessedReservationCount();
+        $state->incrementCurrentBatchProcessedReservationCount();
+
+        if ($state->currentBatchProcessedReservationCount() >= $state->currentBatchReservationTotal()) {
+            $state->clearReservationBatch();
+        }
 
         if ($state->pendingReservationCount() > 0) {
             return TaskResult::after($this->randomDelay(self::DELAY_AFTER_RESERVE_MIN, self::DELAY_AFTER_RESERVE_MAX));

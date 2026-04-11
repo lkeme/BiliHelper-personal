@@ -26,6 +26,9 @@ final class LiveReservationStateStore
             'wait_up_mid_list' => [],
             'reservation_queue' => [],
             'reservation_keys' => [],
+            'current_batch_up_mid' => '',
+            'current_batch_reservation_total' => 0,
+            'current_batch_processed_reservation_count' => 0,
             'discovered_reservation_total' => 0,
             'processed_reservation_count' => 0,
         ];
