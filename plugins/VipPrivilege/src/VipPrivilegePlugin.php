@@ -68,27 +68,27 @@ class VipPrivilegePlugin extends BasePlugin implements PluginTaskInterface
         }
 
         $this->info('大会员权益: 待领取权益数 ' . count($privilegeList));
-        $privilege = array_shift($privilegeList);
+        $privilege = $privilegeList[0] ?? null;
         if (!is_array($privilege)) {
             $this->clearPendingPrivileges();
 
             return;
         }
 
-        if (($privilege['type'] ?? 0) == 9) {
-            $this->extraExp();
-        } else {
-            $this->privilegeAssetReceive($privilege);
+        $handled = ($privilege['type'] ?? 0) == 9
+            ? $this->extraExp()
+            : $this->privilegeAssetReceive($privilege);
+
+        if ($handled) {
+            array_shift($privilegeList);
         }
 
         if ($privilegeList === []) {
             $this->clearPendingPrivileges();
-
-            return;
+        } else {
+            $this->savePendingPrivileges($privilegeList);
+            $this->scheduleAfter((float)mt_rand(5, 10), 'continue vip privilege queue');
         }
-
-        $this->savePendingPrivileges($privilegeList);
-        $this->scheduleAfter((float)mt_rand(5, 10), 'continue vip privilege queue');
     }
 
     /**
@@ -178,15 +178,18 @@ class VipPrivilegePlugin extends BasePlugin implements PluginTaskInterface
         return $privilegeList;
     }
 
-    protected function extraExp(): void
+    protected function extraExp(): bool
     {
         $response = $this->experienceApi()->add();
         if (!$response['code']) {
             $this->notice('大会员额外经验: 领取额外经验成功');
+            return true;
         } elseif ($response['code'] == 69198) {
             $this->info('大会员额外经验: 用户经验已经领取');
+            return true;
         } else {
             $this->warning("大会员额外经验: 领取额外经验失败  {$response['code']} -> {$response['message']}");
+            return false;
         }
     }
 
@@ -194,7 +197,7 @@ class VipPrivilegePlugin extends BasePlugin implements PluginTaskInterface
      * @param array<string, mixed> $asset
      * @throws NoLoginException
      */
-    protected function privilegeAssetReceive(array $asset): void
+    protected function privilegeAssetReceive(array $asset): bool
     {
         $response = $this->privilegeAssetsApi()->exchange((string)$asset['token']);
         switch ($response['code']) {
@@ -203,14 +206,14 @@ class VipPrivilegePlugin extends BasePlugin implements PluginTaskInterface
             case 0:
                 $this->rememberHandledPrivilegeToken((string)($asset['token'] ?? ''));
                 $this->notice("大会员权益: 领取权益[{$asset['title']} * {$asset['customized_text']}]成功");
-                break;
+                return true;
             case 6034024:
                 $this->rememberHandledPrivilegeToken((string)($asset['token'] ?? ''));
                 $this->notice("大会员权益: 领取权益[{$asset['title']} * {$asset['customized_text']}]跳过 {$response['code']} -> {$response['message']}，视为已处理");
-                break;
+                return true;
             default:
                 $this->warning("大会员权益: 领取权益[{$asset['title']} * {$asset['customized_text']}]失败 {$response['code']} -> {$response['message']}");
-                break;
+                return false;
         }
     }
 
