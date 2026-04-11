@@ -8,6 +8,7 @@ use Bhp\Api\Video\ApiCoin;
 use Bhp\Api\Video\ApiShare;
 use Bhp\Api\Video\ApiVideo;
 use Bhp\Api\Video\ApiWatch;
+use Bhp\Login\AuthFailureClassifier;
 use Bhp\Plugin\BasePlugin;
 use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
@@ -27,6 +28,7 @@ class MainSitePlugin extends BasePlugin implements PluginTaskInterface
     protected ?ApiCoin $coinApi = null;
     protected ?ApiShare $shareApi = null;
     protected ?ApiWatch $watchApi = null;
+    protected ?AuthFailureClassifier $authFailureClassifier = null;
 
     /**
      * @var array<string, int|string>
@@ -34,6 +36,7 @@ class MainSitePlugin extends BasePlugin implements PluginTaskInterface
 
     public function __construct(Plugin &$plugin)
     {
+        $this->authFailureClassifier = new AuthFailureClassifier();
         $this->bootPlugin($plugin, true);
     }
 
@@ -179,6 +182,7 @@ class MainSitePlugin extends BasePlugin implements PluginTaskInterface
     protected function getCoinAlready(): int
     {
         $response = $this->coinApi()->addLog();
+        $this->assertNotAuthFailure($response, '主站任务: 获取已投硬币时账号未登录');
         if (($response['code'] ?? 0) !== 0 || !isset($response['data']['list']) || !is_array($response['data']['list'])) {
             $code = $response['code'] ?? 'unknown';
             $message = is_string($response['message'] ?? null) ? $response['message'] : 'unknown';
@@ -218,6 +222,7 @@ class MainSitePlugin extends BasePlugin implements PluginTaskInterface
     protected function getCoinStock(): int
     {
         $response = $this->coinApi()->getCoin();
+        $this->assertNotAuthFailure($response, '主站任务: 获取硬币库存时账号未登录');
         if (($response['code'] ?? 0) !== 0 || !isset($response['data']['money'])) {
             $this->warning('主站任务: 获取硬币库存失败或者硬币为null ' . json_encode($response, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
@@ -309,6 +314,7 @@ class MainSitePlugin extends BasePlugin implements PluginTaskInterface
         }
 
         $response = $this->watchApi()->video($aid, $cid);
+        $this->assertNotAuthFailure($response, "主站任务: {$aid} 开始观看时账号未登录");
         $code = (int)($response['code'] ?? -1);
         $message = is_string($response['message'] ?? null) ? $response['message'] : 'unknown';
         if ($code !== 0) {
@@ -318,6 +324,7 @@ class MainSitePlugin extends BasePlugin implements PluginTaskInterface
         }
 
         $response = $this->watchApi()->heartbeat($aid, $cid, $duration);
+        $this->assertNotAuthFailure($response, "主站任务: {$aid} 发送观看心跳时账号未登录");
         $code = (int)($response['code'] ?? -1);
         $message = is_string($response['message'] ?? null) ? $response['message'] : 'unknown';
         if ($code !== 0) {
@@ -356,6 +363,7 @@ class MainSitePlugin extends BasePlugin implements PluginTaskInterface
         $data['start_ts'] = time();
 
         $response = $this->watchApi()->heartbeat($aid, $cid, $duration, '', $data);
+        $this->assertNotAuthFailure($response, "主站任务: {$aid} 完成观看时账号未登录");
         $code = (int)($response['code'] ?? -1);
         $message = is_string($response['message'] ?? null) ? $response['message'] : 'unknown';
         if ($code !== 0) {
@@ -501,6 +509,15 @@ class MainSitePlugin extends BasePlugin implements PluginTaskInterface
     protected function watchApi(): ApiWatch
     {
         return $this->watchApi ??= new ApiWatch($this->appContext()->request());
+    }
+
+    /**
+     * @throws NoLoginException
+     */
+    protected function assertNotAuthFailure(array $response, string $fallbackMessage): void
+    {
+        $this->authFailureClassifier ??= new AuthFailureClassifier();
+        $this->authFailureClassifier->assertNotAuthFailure($response, $fallbackMessage);
     }
 
     /**
