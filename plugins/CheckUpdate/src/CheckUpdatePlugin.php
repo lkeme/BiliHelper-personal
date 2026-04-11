@@ -111,6 +111,15 @@ class CheckUpdatePlugin extends BasePlugin implements PluginTaskInterface
 
     protected static function compareVersion(string $off, string $on): bool
     {
-        return $off !== $on;
+        $off = trim($off);
+        $on = trim($on);
+        if ($on === '') {
+            return false;
+        }
+        if ($off === '') {
+            return true;
+        }
+
+        return version_compare($off, $on, '<');
     }
 }
