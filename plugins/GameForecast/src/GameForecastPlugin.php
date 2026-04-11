@@ -131,8 +131,9 @@ class GameForecastPlugin extends BasePlugin implements PluginTaskInterface
             }
 
             $guess = $this->parseQuestion($question);
-            $this->addGuess($guess);
-            $processed++;
+            if ($this->addGuess($guess)) {
+                $processed++;
+            }
         }
     }
 
