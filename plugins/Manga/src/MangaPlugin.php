@@ -3,6 +3,7 @@
 namespace Bhp\Plugin\Builtin\Manga;
 
 use Bhp\Api\Manga\ApiManga;
+use Bhp\Login\AuthFailureClassifier;
 use Bhp\Plugin\BasePlugin;
 use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
@@ -12,6 +13,7 @@ use Bhp\Util\Exceptions\NoLoginException;
 class MangaPlugin extends BasePlugin implements PluginTaskInterface
 {
     private ?ApiManga $mangaApi = null;
+    private ?AuthFailureClassifier $authFailureClassifier = null;
     /**
      * 插件信息
      *
@@ -20,6 +22,7 @@ class MangaPlugin extends BasePlugin implements PluginTaskInterface
 
     public function __construct(Plugin &$plugin)
     {
+        $this->authFailureClassifier = new AuthFailureClassifier();
         $this->bootPlugin($plugin, true);
     }
 
@@ -37,6 +40,7 @@ class MangaPlugin extends BasePlugin implements PluginTaskInterface
     protected function signInTask(): bool
     {
         $response = $this->mangaApi()->ClockIn();
+        $this->assertNotAuthFailure($response, '漫画: 签到时账号未登录');
 
         switch ($response['code']) {
             case 0:
@@ -59,6 +63,7 @@ class MangaPlugin extends BasePlugin implements PluginTaskInterface
     protected function shareTask(): bool
     {
         $response = $this->mangaApi()->ShareComic();
+        $this->assertNotAuthFailure($response, '漫画: 分享时账号未登录');
 
         switch ($response['code']) {
             case 0:
@@ -82,6 +87,7 @@ class MangaPlugin extends BasePlugin implements PluginTaskInterface
     protected function signInInfo(): void
     {
         $response = $this->mangaApi()->GetClockInInfo();
+        $this->assertNotAuthFailure($response, '漫画: 获取签到信息时账号未登录');
         if ($response['code']) {
             $this->warning("漫画: 获取签到信息失败 {$response['code']} -> {$response['msg']}");
         } else {
@@ -92,5 +98,14 @@ class MangaPlugin extends BasePlugin implements PluginTaskInterface
     private function mangaApi(): ApiManga
     {
         return $this->mangaApi ??= new ApiManga($this->appContext()->request());
+    }
+
+    /**
+     * @throws NoLoginException
+     */
+    private function assertNotAuthFailure(array $response, string $fallbackMessage): void
+    {
+        $this->authFailureClassifier ??= new AuthFailureClassifier();
+        $this->authFailureClassifier->assertNotAuthFailure($response, $fallbackMessage);
     }
 }
