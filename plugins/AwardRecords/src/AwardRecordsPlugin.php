@@ -192,13 +192,13 @@ class AwardRecordsPlugin extends BasePlugin implements PluginTaskInterface
         foreach ($response['data']['list'] as $data) {
             $info = $data['settlement_time'] . '-' . $data['win_id'] . '-' . $data['anchor_name'] . '-' . $data['award_name'];
             $isNew = !in_array($info, $this->records['bonus'], true);
+            $settlementTime = strtotime($data['settlement_time']);
+            if ($settlementTime === false || time() < $settlementTime) {
+                continue;
+            }
 
             if ($isNew) {
                 $this->records['bonus'][] = $info;
-            }
-
-            $settlementTime = strtotime($data['settlement_time']);
-            if ($isNew && time() < $settlementTime) {
                 $this->notice($info);
                 $this->notify($title, $info);
             }
