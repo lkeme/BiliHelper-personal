@@ -56,12 +56,19 @@ class JudgePlugin extends BasePlugin implements PluginTaskInterface
             return;
         }
 
-        $case = array_pop($this->wait_case);
+        $lastKey = array_key_last($this->wait_case);
+        $case = $lastKey !== null ? $this->wait_case[$lastKey] : null;
         if ($case === null) {
             return;
         }
 
-        $this->vote($case['id'], $case['vote']);
+        if (!$this->vote($case['id'], $case['vote'])) {
+            $this->scheduleAfter(60.0);
+
+            return;
+        }
+
+        array_pop($this->wait_case);
     }
 
     protected function caseCheck(string $caseId): bool
@@ -90,15 +97,17 @@ class JudgePlugin extends BasePlugin implements PluginTaskInterface
         return false;
     }
 
-    private function vote(string $caseId, int $vote): void
+    private function vote(string $caseId, int $vote): bool
     {
         $response = $this->juryApi()->vote($caseId, $vote, '', 0, array_rand([0, 1]));
         $this->authFailureClassifier->assertNotAuthFailure($response, "風機委員: 案件{$caseId}投票时账号未登录");
 
         if ($response['code']) {
             $this->warning("風機委員: 案件{$caseId}投票失败 {$response['code']} -> {$response['message']}");
+            return false;
         } else {
             $this->notice("風機委員: 案件{$caseId}投票成功");
+            return true;
         }
     }
 
