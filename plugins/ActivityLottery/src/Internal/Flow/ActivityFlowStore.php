@@ -75,6 +75,7 @@ final class ActivityFlowStore
         $deletedRows = 0;
         try {
             foreach ($grouped as $bizDate => $items) {
+                $flowIds = [];
                 foreach ($items as $flow) {
                     $payload = $flow->toArray();
                     $payload['biz_date'] = $bizDate;
@@ -90,7 +91,9 @@ final class ActivityFlowStore
                     if ($result instanceof SQLite3Result) {
                         $result->finalize();
                     }
+                    $flowIds[] = $flow->id();
                 }
+                $this->deleteMissingFlowIdsForBizDate($connection, (string)$bizDate, $flowIds);
             }
             $deletedRows = $this->deleteObsoleteBizDates($connection, array_keys($grouped));
             $connection->exec('COMMIT');
@@ -244,6 +247,44 @@ final class ActivityFlowStore
         $statement->bindValue(':scope', $this->scope, SQLITE3_TEXT);
         foreach (array_values($keptBizDates) as $index => $bizDate) {
             $statement->bindValue(':biz_date_' . $index, $bizDate, SQLITE3_TEXT);
+        }
+
+        $result = $statement->execute();
+        if ($result instanceof SQLite3Result) {
+            $result->finalize();
+        }
+
+        return $connection->changes();
+    }
+
+    /**
+     * @param string[] $keptFlowIds
+     */
+    private function deleteMissingFlowIdsForBizDate(SQLite3 $connection, string $bizDate, array $keptFlowIds): int
+    {
+        if ($keptFlowIds === []) {
+            return 0;
+        }
+
+        $placeholders = [];
+        foreach (array_values($keptFlowIds) as $index => $_flowId) {
+            $placeholders[] = ':flow_id_' . $index;
+        }
+
+        $statement = $connection->prepare(
+            'DELETE FROM ' . self::TABLE_NAME . '
+             WHERE scope = :scope
+               AND biz_date = :biz_date
+               AND flow_id NOT IN (' . implode(', ', $placeholders) . ')'
+        );
+        if (!$statement instanceof SQLite3Stmt) {
+            throw new RuntimeException('无法准备 ActivityFlowStore SQLite flow 清理语句');
+        }
+
+        $statement->bindValue(':scope', $this->scope, SQLITE3_TEXT);
+        $statement->bindValue(':biz_date', $bizDate, SQLITE3_TEXT);
+        foreach (array_values($keptFlowIds) as $index => $flowId) {
+            $statement->bindValue(':flow_id_' . $index, $flowId, SQLITE3_TEXT);
         }
 
         $result = $statement->execute();
