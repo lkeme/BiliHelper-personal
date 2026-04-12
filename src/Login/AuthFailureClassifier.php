@@ -25,6 +25,7 @@ final class AuthFailureClassifier
     {
         $code = $this->resolveCode($response);
         $message = $this->resolveMessage($response);
+        $stringCode = $this->resolveStringCode($response);
 
         if ($code === -101) {
             return $message !== '' ? $message : '账号未登录';
@@ -32,6 +33,10 @@ final class AuthFailureClassifier
 
         if ($code === -111) {
             return $message !== '' ? $message : 'csrf 校验失败';
+        }
+
+        if ($stringCode === 'unauthenticated') {
+            return $message !== '' ? $message : '账号未登录';
         }
 
         $normalized = strtolower($message);
@@ -65,6 +70,18 @@ final class AuthFailureClassifier
         }
 
         return 0;
+    }
+
+    private function resolveStringCode(array $response): string
+    {
+        foreach (['code', 'errno', 'errcode'] as $key) {
+            $value = trim((string)($response[$key] ?? ''));
+            if ($value !== '' && !is_numeric($value)) {
+                return strtolower($value);
+            }
+        }
+
+        return '';
     }
 
     private function resolveMessage(array $response): string
