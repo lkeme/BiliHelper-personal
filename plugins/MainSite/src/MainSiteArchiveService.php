@@ -85,6 +85,7 @@ class MainSiteArchiveService
     {
         $archives = [];
         $response = $this->fetchFollowUpDynamic();
+        (new AuthFailureClassifier())->assertNotAuthFailure($response, '主站任务: 获取关注动态时账号未登录');
         if (($response['code'] ?? 0) !== 0) {
             $code = $response['code'] ?? 'unknown';
             $message = is_string($response['message'] ?? null) ? $response['message'] : 'unknown';
