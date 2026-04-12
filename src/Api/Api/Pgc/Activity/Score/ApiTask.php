@@ -25,7 +25,7 @@ class ApiTask extends AbstractApiClient
      */
     public function sign(): array
     {
-        return $this->decodePost('app', 'https://api.bilibili.com/pgc/activity/score/task/sign2', $this->request()->signCommonPayload([
+        return $this->decodePost('app', 'https://api.bilibili.com/pgc/activity/score/task/sign', $this->request()->signCommonPayload([
             'disable_rcmd' => '0',
             'buvid' => $this->request()->buvidValue(),
             'csrf' => $this->request()->csrfValue(),
