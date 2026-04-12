@@ -472,7 +472,11 @@ class MainSitePlugin extends BasePlugin implements PluginTaskInterface
         }
 
         $timestamp = strtotime($time);
-        if ($timestamp === false || date('Y-m-d', $timestamp) !== $today || !str_contains($reason, '打赏')) {
+        if ($timestamp === false || date('Y-m-d', $timestamp) !== $today) {
+            return 0;
+        }
+
+        if (!str_contains($reason, '投币') && !str_contains($reason, '打赏')) {
             return 0;
         }
 
