@@ -10,6 +10,8 @@ use Bhp\Plugin\Builtin\ActivityLottery\Internal\Gateway\DrawGateway;
 
 final class ExecuteDrawNodeRunner implements NodeRunnerInterface
 {
+    private const RETRY_DELAY_SECONDS = 300;
+
     public function __construct(
         private readonly DrawGateway $drawGateway,
     ) {
@@ -53,6 +55,20 @@ final class ExecuteDrawNodeRunner implements NodeRunnerInterface
                     'draw_batch_win_count' => 0,
                     'draw_batch_win_names' => [],
                     'draw_execute_response' => $response,
+                ],
+            ], $now);
+        }
+        if ($code === -500) {
+            return new ActivityNodeResult(false, '执行抽奖失败，稍后重试', [
+                'node_status' => ActivityNodeStatus::WAITING,
+                'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
+                'draw_execute_response' => $response,
+                'context_patch' => [
+                    'draw_times_remaining' => $remaining,
+                    'draw_results' => $drawResults,
+                    'draw_batch_size' => 0,
+                    'draw_batch_win_count' => 0,
+                    'draw_batch_win_names' => [],
                 ],
             ], $now);
         }

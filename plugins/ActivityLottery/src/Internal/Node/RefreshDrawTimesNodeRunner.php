@@ -10,6 +10,8 @@ use Bhp\Plugin\Builtin\ActivityLottery\Internal\Gateway\DrawGateway;
 
 final class RefreshDrawTimesNodeRunner implements NodeRunnerInterface
 {
+    private const RETRY_DELAY_SECONDS = 300;
+
     public function __construct(
         private readonly DrawGateway $drawGateway,
     ) {
@@ -25,6 +27,13 @@ final class RefreshDrawTimesNodeRunner implements NodeRunnerInterface
         $activity = ResolvedActivityView::fromFlow($flow)->toActivityArray();
         $response = $this->drawGateway->refreshTimes($activity);
         $code = (int)($response['code'] ?? -1);
+        if ($code === -500) {
+            return new ActivityNodeResult(false, '刷新抽奖次数失败，稍后重试', [
+                'node_status' => ActivityNodeStatus::WAITING,
+                'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
+                'draw_refresh_response' => $response,
+            ], $now);
+        }
         if ($code !== 0) {
             return new ActivityNodeResult(false, '刷新抽奖次数失败', [
                 'node_status' => ActivityNodeStatus::FAILED,
