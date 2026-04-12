@@ -3,6 +3,7 @@
 namespace Bhp\Plugin\Builtin\ActivityInfoUpdate\Internal;
 
 use Bhp\Api\Api\X\Activity\ApiActivity;
+use Bhp\Login\AuthFailureClassifier;
 use Bhp\Runtime\AppContext;
 use RuntimeException;
 
@@ -302,6 +303,7 @@ final class ActivityInfoUpdateRunner
             'url' => $url,
             'title' => $page->title,
         ]);
+        (new AuthFailureClassifier())->assertNotAuthFailure($response, "活动索引: 获取{$page->title}抽奖信息时账号未登录");
         if (($response['code'] ?? -1) !== 0 || !is_array($response['data'] ?? null)) {
             $code = $response['code'] ?? 'unknown';
             $message = is_string($response['message'] ?? null) ? $response['message'] : 'unknown';
