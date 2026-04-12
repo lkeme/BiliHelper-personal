@@ -2,8 +2,6 @@
 
 namespace Bhp\Plugin\Builtin\ActivityLottery\Internal\Gateway;
 
-use Bhp\Util\Exceptions\RequestException;
-
 final class ActivityLotteryGateway
 {
     /**
@@ -26,11 +24,7 @@ final class ActivityLotteryGateway
 
     public function fetchActivityPageHtml(string $url): string
     {
-        try {
-            return (string)($this->pageHtmlFetcher)($url);
-        } catch (RequestException) {
-            return '';
-        }
+        return (string)($this->pageHtmlFetcher)($url);
     }
 
     public function pushNotice(string $channel, string $message): void
