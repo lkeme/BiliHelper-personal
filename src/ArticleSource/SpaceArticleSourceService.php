@@ -44,7 +44,16 @@ final class SpaceArticleSourceService
             return $existing;
         }
 
-        $snapshot = $this->buildSnapshot($bizDate, $now);
+        try {
+            $snapshot = $this->buildSnapshot($bizDate, $now);
+        } catch (\Throwable $throwable) {
+            if ($this->context instanceof AppContext) {
+                $this->context->log()->recordWarning('文章源: 获取当日稿件失败 ' . $throwable->getMessage());
+            }
+
+            return SpaceArticleDailySnapshot::pending($bizDate, $now);
+        }
+
         $this->cacheStore->save($snapshot);
 
         return $snapshot;
@@ -131,6 +140,12 @@ final class SpaceArticleSourceService
             $this->config->articlePage(),
             $this->config->articlePageSize(),
         );
+        if (($response['code'] ?? 0) !== 0) {
+            $code = $response['code'] ?? 'unknown';
+            $message = is_string($response['message'] ?? null) ? $response['message'] : 'unknown';
+
+            throw new RuntimeException("space.article 拉取失败 {$code} -> {$message}");
+        }
         $articles = $response['data']['articles'] ?? null;
 
         return is_array($articles) ? array_values(array_filter($articles, 'is_array')) : [];

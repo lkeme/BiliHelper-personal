@@ -36,6 +36,21 @@ final class SpaceArticleDailySnapshot
         );
     }
 
+    public static function pending(string $bizDate, int $fetchedAt): self
+    {
+        return new self(
+            $bizDate,
+            false,
+            $fetchedAt,
+            null,
+            null,
+            null,
+            null,
+            [],
+            [],
+        );
+    }
+
     /**
      * @param array<string, mixed> $data
      */
