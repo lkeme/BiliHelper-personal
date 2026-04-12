@@ -87,6 +87,8 @@ class UserProfileService
                 (string)($response['code'] ?? -1),
                 (string)($response['message'] ?? 'invalid response'),
             ));
+
+            return $response;
         }
 
         return $this->vipInfoResponse = $response;
@@ -109,6 +111,8 @@ class UserProfileService
                 (string)($response['code'] ?? -1),
                 (string)($response['message'] ?? 'invalid response'),
             ));
+
+            return $response;
         }
 
         return $this->navInfoResponse = $response;
