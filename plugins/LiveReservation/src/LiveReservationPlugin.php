@@ -54,6 +54,13 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
 
         if (!$state->sourceSynced()) {
             $snapshot = $this->articleSource()->snapshotForToday();
+            if (!$snapshot->fetchAttempted) {
+                $this->warning('预约直播: 当日稿件源暂未就绪，稍后重试');
+                $this->stateStore()->save($state->all());
+
+                return TaskResult::after($this->randomDelay(self::DELAY_AFTER_FETCH_EMPTY_MIN, self::DELAY_AFTER_FETCH_EMPTY_MAX));
+            }
+
             $remoteUpMids = $snapshot->liveReservationUpMids;
             $configuredUpMids = $this->parseConfiguredVmids((string)$this->config('live_reservation.vmids', ''));
             $mergedUpMids = array_values(array_unique(array_merge($remoteUpMids, $configuredUpMids)));

@@ -47,6 +47,13 @@ final class DynamicLotteryPlugin extends BasePlugin implements PluginTaskInterfa
 
         if (!$state->sourceSynced()) {
             $snapshot = $this->articleSource()->snapshotForToday();
+            if (!$snapshot->fetchAttempted) {
+                $this->warning('动态抽奖: 当日稿件源暂未就绪，稍后重试');
+                $this->stateStore()->save($state->all());
+
+                return TaskResult::after(mt_rand(10, 25) * 60);
+            }
+
             $state->seedDynamicQueue(
                 $snapshot->lotterySourceCvId,
                 array_map('intval', $snapshot->lotteryDynamicIds),
