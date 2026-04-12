@@ -5,6 +5,7 @@ namespace Bhp\Plugin\Builtin\MainSite;
 use Bhp\Api\Api\X\Player\ApiPlayer;
 use Bhp\Api\DynamicSvr\ApiDynamicSvr;
 use Bhp\Api\Video\ApiVideo;
+use Bhp\Login\AuthFailureClassifier;
 use Bhp\Log\Log;
 use Bhp\Util\ArrayR\ArrayR;
 
@@ -112,6 +113,7 @@ class MainSiteArchiveService
     public function fetchArchiveInfo(string $aid): array
     {
         $response = $this->fetchPlayerPageList($aid);
+        (new AuthFailureClassifier())->assertNotAuthFailure($response, "主站任务: {$aid} 获取稿件信息时账号未登录");
         if (($response['code'] ?? 0) === -404) {
             $code = $response['code'] ?? 'unknown';
             $message = is_string($response['message'] ?? null) ? $response['message'] : 'unknown';
