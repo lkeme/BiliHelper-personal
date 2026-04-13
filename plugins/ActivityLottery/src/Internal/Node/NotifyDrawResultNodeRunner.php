@@ -7,11 +7,13 @@ use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNode;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNodeResult;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNodeStatus;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Gateway\ActivityLotteryGateway;
+use Bhp\Util\Exceptions\RequestException;
 use Throwable;
 
 final class NotifyDrawResultNodeRunner implements NodeRunnerInterface
 {
     private const AWARD_RECORD_URL_TEMPLATE = 'https://www.bilibili.com/blackboard/era/new-award-record.html?activity_id=%s';
+    private const RETRY_DELAY_SECONDS = 300;
 
     public function __construct(
         private readonly ActivityLotteryGateway $activityGateway = new ActivityLotteryGateway(),
@@ -40,6 +42,11 @@ final class NotifyDrawResultNodeRunner implements NodeRunnerInterface
 
             try {
                 $this->activityGateway->pushNotice('activity_lottery', $message);
+            } catch (RequestException $e) {
+                return new ActivityNodeResult(false, '推送抽奖通知失败: ' . $e->getMessage(), [
+                    'node_status' => ActivityNodeStatus::WAITING,
+                    'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
+                ], $now);
             } catch (Throwable $e) {
                 return new ActivityNodeResult(false, '推送抽奖通知失败: ' . $e->getMessage(), [
                     'node_status' => ActivityNodeStatus::FAILED,
