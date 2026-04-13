@@ -143,6 +143,9 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
                 rtrim(str_replace('\\', '/', $this->appContext()->cachePath()), '/') . '/cache.sqlite3',
                 'ActivityLottery',
             ),
+            new ActivityLotteryWindow($windowStartAt, $windowEndAt),
+            $windowStartAt,
+            $windowEndAt,
             [
                 new \Bhp\Plugin\Builtin\ActivityLottery\Internal\Node\LoadActivitySnapshotNodeRunner($activityGateway),
                 new \Bhp\Plugin\Builtin\ActivityLottery\Internal\Node\ParseEraPageNodeRunner(taskProgressGateway: $taskProgressGateway),
@@ -165,9 +168,6 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
                 self::MAX_RUNTIME_MS_PER_TICK,
             )),
             new ActivityLotteryClock(),
-            new ActivityLotteryWindow($windowStartAt, $windowEndAt),
-            $windowStartAt,
-            $windowEndAt,
             $logger,
         );
 
