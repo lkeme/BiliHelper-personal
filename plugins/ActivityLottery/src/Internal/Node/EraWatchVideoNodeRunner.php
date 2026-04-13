@@ -85,7 +85,16 @@ final class EraWatchVideoNodeRunner implements NodeRunnerInterface
 
         if ($sessionId === '' || $startedAt <= 0) {
             $sessionId = self::generateSessionId();
-            if (!$this->watchGateway->start($archive, $sessionId)) {
+            try {
+                $started = $this->watchGateway->start($archive, $sessionId);
+            } catch (RequestException $exception) {
+                return new ActivityNodeResult(false, '视频观看初始化失败: ' . $exception->getMessage(), [
+                    'node_status' => ActivityNodeStatus::WAITING,
+                    'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
+                ], $now);
+            }
+
+            if (!$started) {
                 return new ActivityNodeResult(false, '视频观看初始化失败', [
                     'node_status' => ActivityNodeStatus::FAILED,
                 ], $now);

@@ -65,7 +65,12 @@ final class WatchVideoGateway
                         'session_id' => $sessionId,
                     ],
                 );
-            } catch (\RuntimeException) {
+            } catch (\RuntimeException $exception) {
+                $retryable = $this->resolveWatchStartFailure($exception);
+                if ($retryable instanceof RequestException) {
+                    throw $retryable;
+                }
+
                 return false;
             }
 
@@ -276,6 +281,18 @@ final class WatchVideoGateway
         }
 
         return (string)(($result - 8728348608) ^ 177451812);
+    }
+
+    private function resolveWatchStartFailure(\RuntimeException $exception): ?RequestException
+    {
+        $message = trim($exception->getMessage());
+        foreach (['视频观看初始化失败', '视频观看首拍心跳失败'] as $prefix) {
+            if (str_starts_with($message, $prefix)) {
+                return new RequestException($message);
+            }
+        }
+
+        return null;
     }
 }
 
