@@ -11,10 +11,12 @@ use Bhp\Plugin\BasePlugin;
 use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
 use Bhp\Scheduler\TaskResult;
+use Bhp\Util\Exceptions\RequestException;
 
 class AwardRecordsPlugin extends BasePlugin implements PluginTaskInterface
 {
     private const CACHE_SCOPE = 'AwardRecords';
+    private const TRANSIENT_RETRY_SECONDS = 300;
 
     private AuthFailureClassifier $authFailureClassifier;
     private ?ApiWallet $operationWalletApi = null;
@@ -82,12 +84,19 @@ class AwardRecordsPlugin extends BasePlugin implements PluginTaskInterface
 
     protected function operation(string $title = '运营奖惩'): bool
     {
-        $response = $this->operationWalletApi()->apCenterList();
+        try {
+            $response = $this->operationWalletApi()->apCenterList();
+        } catch (RequestException $exception) {
+            $this->warning("获奖记录: 获取{$title}失败 {$exception->getMessage()}");
+            $this->locks['operation'] = time() + self::TRANSIENT_RETRY_SECONDS;
+
+            return false;
+        }
         $this->authFailureClassifier->assertNotAuthFailure($response, "获奖记录: 获取{$title}时账号未登录");
 
         if ($response['code']) {
             $this->warning("获奖记录: 获取{$title}失败 {$response['code']} -> {$response['message']}");
-            $this->locks['operation'] = time() + 6 * 60 * 60;
+            $this->locks['operation'] = $this->failureLockAt((int)$response['code'], 6 * 60 * 60);
 
             return false;
         }
@@ -115,12 +124,19 @@ class AwardRecordsPlugin extends BasePlugin implements PluginTaskInterface
 
     protected function award(string $title = '获奖记录'): bool
     {
-        $response = $this->awardApi()->awardList();
+        try {
+            $response = $this->awardApi()->awardList();
+        } catch (RequestException $exception) {
+            $this->warning("获奖记录: 获取{$title}失败 {$exception->getMessage()}");
+            $this->locks['award'] = time() + self::TRANSIENT_RETRY_SECONDS;
+
+            return false;
+        }
         $this->authFailureClassifier->assertNotAuthFailure($response, "获奖记录: 获取{$title}时账号未登录");
 
         if ($response['code']) {
             $this->warning("获奖记录: 获取{$title}失败 {$response['code']} -> {$response['message']}");
-            $this->locks['award'] = time() + 60 * 60;
+            $this->locks['award'] = $this->failureLockAt((int)$response['code'], 60 * 60);
 
             return false;
         }
@@ -145,12 +161,19 @@ class AwardRecordsPlugin extends BasePlugin implements PluginTaskInterface
 
     protected function celestial(string $title = '天选时刻'): bool
     {
-        $response = $this->anchorApi()->awardRecord();
+        try {
+            $response = $this->anchorApi()->awardRecord();
+        } catch (RequestException $exception) {
+            $this->warning("获奖记录: 获取{$title}失败 {$exception->getMessage()}");
+            $this->locks['celestial'] = time() + self::TRANSIENT_RETRY_SECONDS;
+
+            return false;
+        }
         $this->authFailureClassifier->assertNotAuthFailure($response, "获奖记录: 获取{$title}时账号未登录");
 
         if ($response['code']) {
             $this->warning("获奖记录: 获取{$title}失败 {$response['code']} -> {$response['message']}");
-            $this->locks['celestial'] = time() + 30 * 60;
+            $this->locks['celestial'] = $this->failureLockAt((int)$response['code'], 30 * 60);
 
             return false;
         }
@@ -175,12 +198,19 @@ class AwardRecordsPlugin extends BasePlugin implements PluginTaskInterface
 
     protected function bonus(string $title = '航海回馈'): bool
     {
-        $response = $this->guardBenefitApi()->winListByUser();
+        try {
+            $response = $this->guardBenefitApi()->winListByUser();
+        } catch (RequestException $exception) {
+            $this->warning("获奖记录: 获取{$title}失败 {$exception->getMessage()}");
+            $this->locks['bonus'] = time() + self::TRANSIENT_RETRY_SECONDS;
+
+            return false;
+        }
         $this->authFailureClassifier->assertNotAuthFailure($response, "获奖记录: 获取{$title}时账号未登录");
 
         if ($response['code']) {
             $this->warning("获奖记录: 获取{$title}失败 {$response['code']} -> {$response['message']}");
-            $this->locks['bonus'] = time() + 6 * 30 * 60;
+            $this->locks['bonus'] = $this->failureLockAt((int)$response['code'], 6 * 30 * 60);
 
             return false;
         }
@@ -247,5 +277,10 @@ class AwardRecordsPlugin extends BasePlugin implements PluginTaskInterface
         }
 
         return date('Y-m-d', $timestamp) === date('Y-m-d');
+    }
+
+    private function failureLockAt(int $code, int $fallbackSeconds): int
+    {
+        return time() + ($code === -500 ? self::TRANSIENT_RETRY_SECONDS : $fallbackSeconds);
     }
 }
