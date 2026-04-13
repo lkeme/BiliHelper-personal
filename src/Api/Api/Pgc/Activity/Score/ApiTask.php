@@ -11,7 +11,7 @@ class ApiTask extends AbstractApiClient
      * @var array<string, string>
      */
     private const HEADERS = [
-        'Referer' => 'https://big.bilibili.com/mobile/bigPoint/task',
+        'Referer' => 'https://big.bilibili.com/mobile/bigPoint?navhide=1&closable=1',
     ];
 
     public function __construct(
@@ -25,11 +25,9 @@ class ApiTask extends AbstractApiClient
      */
     public function sign(): array
     {
-        return $this->decodePost('app', 'https://api.bilibili.com/pgc/activity/score/task/sign', $this->request()->signCommonPayload([
-            'disable_rcmd' => '0',
-            'buvid' => $this->request()->buvidValue(),
+        return $this->decodePost('pc', 'https://api.bilibili.com/pgc/activity/score/task/sign', [
             'csrf' => $this->request()->csrfValue(),
-        ], true), self::HEADERS, 'pgc.score.sign');
+        ], self::HEADERS, 'pgc.score.sign');
     }
 
     /**
@@ -37,10 +35,10 @@ class ApiTask extends AbstractApiClient
      */
     public function receive(string $taskCode): array
     {
-        return $this->decodePost('app', 'https://api.bilibili.com/pgc/activity/score/task/receive', $this->request()->signCommonPayload([
+        return $this->decodePost('pc', 'https://api.bilibili.com/pgc/activity/score/task/receive/v2', [
             'taskCode' => $taskCode,
             'csrf' => $this->request()->csrfValue(),
-        ], true), self::HEADERS, 'pgc.score.receive');
+        ], self::HEADERS, 'pgc.score.receive');
     }
 
     /**
@@ -48,12 +46,9 @@ class ApiTask extends AbstractApiClient
      */
     public function complete(string $taskCode): array
     {
-        return $this->decodePostJson('app', 'https://api.bilibili.com/pgc/activity/score/task/complete', $this->request()->signCommonPayload([
+        return $this->decodePost('pc', 'https://api.bilibili.com/pgc/activity/score/task/complete/v2', [
             'taskCode' => $taskCode,
             'csrf' => $this->request()->csrfValue(),
-            'ts' => time(),
-        ], true), array_merge([
-            'Content-Type' => 'application/json',
-        ], self::HEADERS), 'pgc.score.complete');
+        ], self::HEADERS, 'pgc.score.complete');
     }
 }

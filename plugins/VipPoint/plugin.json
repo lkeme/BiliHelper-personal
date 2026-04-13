@@ -8,8 +8,17 @@
     "cycle": "5(分钟)",
     "mode": "app",
     "valid_until": "2099-12-31 23:59:59",
-    "activity_url": "",
-    "reference_links": [],
+    "activity_url": "https://big.bilibili.com/mobile/bigPoint?navhide=1&closable=1",
+    "reference_links": [
+        {
+            "url": "https://big.bilibili.com/mobile/bigPoint?navhide=1&closable=1",
+            "comment": "当前大会员积分活动页"
+        },
+        {
+            "url": "https://big.bilibili.com/mobile/bigPoint/task?navhide=1&closable=1",
+            "comment": "当前大会员积分任务页"
+        }
+    ],
     "php_min": "8.5.0",
     "php_max": null,
     "required_extensions": [],

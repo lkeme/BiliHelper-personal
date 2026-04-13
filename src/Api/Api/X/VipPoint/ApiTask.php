@@ -11,7 +11,7 @@ class ApiTask extends AbstractApiClient
      * @var array<string, string>
      */
     private const HEADERS = [
-        'Referer' => 'https://big.bilibili.com/mobile/bigPoint/task',
+        'Referer' => 'https://big.bilibili.com/mobile/bigPoint?navhide=1&closable=1',
     ];
 
     public function __construct(

@@ -47,9 +47,9 @@ class VipPointPlugin extends BasePlugin implements PluginTaskInterface
      * @var array<string, int|string>
      */
 
-    protected string $home_task = 'https://big.bilibili.com/mobile/bigPoint/task';
+    protected string $home_task = 'https://big.bilibili.com/mobile/bigPoint/task?navhide=1&closable=1';
 
-    protected string $home = 'https://big.bilibili.com/mobile/bigPoint';
+    protected string $home = 'https://big.bilibili.com/mobile/bigPoint?navhide=1&closable=1';
 
     protected string $title = '大会员积分';
 
