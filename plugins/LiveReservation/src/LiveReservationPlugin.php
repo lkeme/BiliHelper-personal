@@ -9,6 +9,7 @@ use Bhp\Plugin\BasePlugin;
 use Bhp\Plugin\Contract\PluginTaskInterface;
 use Bhp\Plugin\Plugin;
 use Bhp\Scheduler\TaskResult;
+use Bhp\Util\Exceptions\RequestException;
 
 final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterface
 {
@@ -234,7 +235,15 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
     protected function fetchReservation(string $vmid): array
     {
         $reservationList = [];
-        $response = $this->reservationApi()->reservation($vmid);
+        try {
+            $response = $this->reservationApi()->reservation($vmid);
+        } catch (RequestException $exception) {
+            $this->warning("预约直播: 获取预约列表失败: {$exception->getMessage()}");
+            return [
+                'items' => [],
+                'retryable' => true,
+            ];
+        }
         $this->authFailureClassifier->assertNotAuthFailure($response, '预约直播: 获取预约列表时账号未登录');
         if ($response['code']) {
             $this->warning("预约直播: 获取预约列表失败: {$response['code']} -> {$response['message']}");
@@ -293,7 +302,16 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
      */
     protected function reserve(array $data): array
     {
-        $response = $this->reservationApi()->reserve((int)$data['sid'], (int)$data['vmid']);
+        try {
+            $response = $this->reservationApi()->reserve((int)$data['sid'], (int)$data['vmid']);
+        } catch (RequestException $exception) {
+            $this->warning("预约直播: 尝试预约并抽奖失败 {$exception->getMessage()}");
+            return [
+                'success' => false,
+                'message' => $exception->getMessage(),
+                'retryable' => true,
+            ];
+        }
         $this->authFailureClassifier->assertNotAuthFailure($response, '预约直播: 执行预约时账号未登录');
 
         $this->info("预约直播: {$data['name']}|{$data['vmid']}|{$data['sid']}");
