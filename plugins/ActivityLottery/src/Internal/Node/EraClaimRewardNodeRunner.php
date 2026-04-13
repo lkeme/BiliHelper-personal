@@ -10,6 +10,8 @@ use Bhp\Plugin\Builtin\ActivityLottery\Internal\Gateway\EraTaskGateway;
 
 final class EraClaimRewardNodeRunner implements NodeRunnerInterface
 {
+    private const RETRY_DELAY_SECONDS = 300;
+
     public function __construct(
         private readonly EraTaskGateway $taskGateway,
     ) {
@@ -32,7 +34,14 @@ final class EraClaimRewardNodeRunner implements NodeRunnerInterface
 
         $infoResponse = $this->taskGateway->taskInfo($task->taskId());
         $mission = is_array($infoResponse['data'] ?? null) ? $infoResponse['data'] : null;
-        if ((int)($infoResponse['code'] ?? -1) !== 0 || $mission === null) {
+        $infoCode = (int)($infoResponse['code'] ?? -1);
+        if ($infoCode === -500) {
+            return new ActivityNodeResult(false, '领奖信息获取失败，稍后重试', [
+                'node_status' => ActivityNodeStatus::WAITING,
+                'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
+            ], $now);
+        }
+        if ($infoCode !== 0 || $mission === null) {
             return new ActivityNodeResult(false, '领奖信息获取失败', [
                 'node_status' => ActivityNodeStatus::FAILED,
             ], $now);
@@ -71,6 +80,12 @@ final class EraClaimRewardNodeRunner implements NodeRunnerInterface
                 'context_patch' => $taskView->patchTaskRuntime([
                     'claim_reward_status' => 'risk_control',
                 ]),
+            ], $now);
+        }
+        if ($code === -500) {
+            return new ActivityNodeResult(false, '奖励领取失败，稍后重试', [
+                'node_status' => ActivityNodeStatus::WAITING,
+                'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
             ], $now);
         }
         if ($code !== 0) {
