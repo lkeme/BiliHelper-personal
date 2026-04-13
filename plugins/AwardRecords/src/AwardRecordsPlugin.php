@@ -133,9 +133,7 @@ class AwardRecordsPlugin extends BasePlugin implements PluginTaskInterface
                 $this->records['award'][] = $info;
             }
 
-            $createTime = strtotime($data['create_time']);
-            $day = (int)ceil((time() - $createTime) / 86400);
-            if ($isNew && $day <= 2 && $data['update_time'] === '') {
+            if ($isNew && $this->isTodayDateTime((string)($data['create_time'] ?? '')) && $data['update_time'] === '') {
                 $this->notice($info);
                 $this->notify($title, $info);
             }
@@ -165,9 +163,7 @@ class AwardRecordsPlugin extends BasePlugin implements PluginTaskInterface
                 $this->records['celestial'][] = $info;
             }
 
-            $endTime = strtotime($data['end_time']);
-            $day = (int)ceil((time() - $endTime) / 86400);
-            if ($isNew && $day <= 2) {
+            if ($isNew && $this->isTodayDateTime((string)($data['end_time'] ?? ''))) {
                 $this->notice($info);
                 $this->notify($title, $info);
             }
@@ -199,8 +195,10 @@ class AwardRecordsPlugin extends BasePlugin implements PluginTaskInterface
 
             if ($isNew) {
                 $this->records['bonus'][] = $info;
-                $this->notice($info);
-                $this->notify($title, $info);
+                if ($this->isTodayDateTime((string)($data['settlement_time'] ?? ''))) {
+                    $this->notice($info);
+                    $this->notify($title, $info);
+                }
             }
         }
         $this->locks['bonus'] = time() + 24 * 60 * 60;
@@ -239,5 +237,15 @@ class AwardRecordsPlugin extends BasePlugin implements PluginTaskInterface
     private function guardBenefitApi(): ApiGuardBenefit
     {
         return $this->guardBenefitApi ??= new ApiGuardBenefit($this->appContext()->request());
+    }
+
+    private function isTodayDateTime(string $value): bool
+    {
+        $timestamp = strtotime(trim($value));
+        if ($timestamp === false) {
+            return false;
+        }
+
+        return date('Y-m-d', $timestamp) === date('Y-m-d');
     }
 }
