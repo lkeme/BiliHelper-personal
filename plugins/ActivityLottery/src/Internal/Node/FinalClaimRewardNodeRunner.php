@@ -8,6 +8,7 @@ use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNodeResult;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNodeStatus;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Gateway\EraTaskGateway;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Page\EraTaskSnapshot;
+use Bhp\Util\Exceptions\RequestException;
 
 final class FinalClaimRewardNodeRunner implements NodeRunnerInterface
 {
@@ -45,7 +46,15 @@ final class FinalClaimRewardNodeRunner implements NodeRunnerInterface
                 continue;
             }
 
-            $infoResponse = $this->taskGateway->taskInfo($task->taskId());
+            try {
+                $infoResponse = $this->taskGateway->taskInfo($task->taskId());
+            } catch (RequestException $exception) {
+                return new ActivityNodeResult(false, '尾部领奖查询失败: ' . $exception->getMessage(), [
+                    'node_status' => ActivityNodeStatus::WAITING,
+                    'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
+                ], $now);
+            }
+
             $mission = is_array($infoResponse['data'] ?? null) ? $infoResponse['data'] : null;
             $infoCode = (int)($infoResponse['code'] ?? -1);
             if ($infoCode === -500) {
@@ -78,7 +87,15 @@ final class FinalClaimRewardNodeRunner implements NodeRunnerInterface
                 'task_name' => trim((string)($mission['task_name'] ?? $task->taskName())),
                 'reward_name' => trim((string)($mission['reward_info']['award_name'] ?? $task->awardName())),
             ];
-            $receiveResponse = $this->taskGateway->receiveReward($task->taskId(), $payload);
+            try {
+                $receiveResponse = $this->taskGateway->receiveReward($task->taskId(), $payload);
+            } catch (RequestException $exception) {
+                return new ActivityNodeResult(false, '尾部领奖执行失败: ' . $exception->getMessage(), [
+                    'node_status' => ActivityNodeStatus::WAITING,
+                    'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
+                ], $now);
+            }
+
             $code = (int)($receiveResponse['code'] ?? -1);
             if ($code === 202100) {
                 $skippedTaskIds[] = $task->taskId();

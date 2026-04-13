@@ -7,6 +7,7 @@ use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNode;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNodeResult;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNodeStatus;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Gateway\EraTaskGateway;
+use Bhp\Util\Exceptions\RequestException;
 
 final class EraClaimRewardNodeRunner implements NodeRunnerInterface
 {
@@ -32,7 +33,15 @@ final class EraClaimRewardNodeRunner implements NodeRunnerInterface
             ], $now);
         }
 
-        $infoResponse = $this->taskGateway->taskInfo($task->taskId());
+        try {
+            $infoResponse = $this->taskGateway->taskInfo($task->taskId());
+        } catch (RequestException $exception) {
+            return new ActivityNodeResult(false, '领奖信息获取失败: ' . $exception->getMessage(), [
+                'node_status' => ActivityNodeStatus::WAITING,
+                'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
+            ], $now);
+        }
+
         $mission = is_array($infoResponse['data'] ?? null) ? $infoResponse['data'] : null;
         $infoCode = (int)($infoResponse['code'] ?? -1);
         if ($infoCode === -500) {
@@ -72,7 +81,15 @@ final class EraClaimRewardNodeRunner implements NodeRunnerInterface
             'task_name' => trim((string)($mission['task_name'] ?? $task->taskName())),
             'reward_name' => trim((string)($mission['reward_info']['award_name'] ?? $task->awardName())),
         ];
-        $receiveResponse = $this->taskGateway->receiveReward($task->taskId(), $payload);
+        try {
+            $receiveResponse = $this->taskGateway->receiveReward($task->taskId(), $payload);
+        } catch (RequestException $exception) {
+            return new ActivityNodeResult(false, '奖励领取失败: ' . $exception->getMessage(), [
+                'node_status' => ActivityNodeStatus::WAITING,
+                'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
+            ], $now);
+        }
+
         $code = (int)($receiveResponse['code'] ?? -1);
         if ($code === 202100) {
             return new ActivityNodeResult(true, '奖励领取触发风控验证，已跳过', [
