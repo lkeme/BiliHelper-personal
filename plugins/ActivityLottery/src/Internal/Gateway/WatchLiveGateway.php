@@ -121,7 +121,17 @@ final class WatchLiveGateway
     public function start(array $roomIds, int $areaId = 0, int $parentAreaId = 0): ?array
     {
         $this->resetLookupState();
-        $session = ($this->startAction)($roomIds, $areaId, $parentAreaId);
+        try {
+            $session = ($this->startAction)($roomIds, $areaId, $parentAreaId);
+        } catch (\RuntimeException $exception) {
+            $retryable = $this->resolveWatchRuntimeFailure($exception);
+            if ($retryable instanceof RequestException) {
+                throw $retryable;
+            }
+
+            throw $exception;
+        }
+
         if (is_array($session)) {
             return $session;
         }
@@ -140,7 +150,17 @@ final class WatchLiveGateway
      */
     public function heartbeat(array $session): array
     {
-        $nextSession = ($this->heartbeatAction)($session);
+        try {
+            $nextSession = ($this->heartbeatAction)($session);
+        } catch (\RuntimeException $exception) {
+            $retryable = $this->resolveWatchRuntimeFailure($exception);
+            if ($retryable instanceof RequestException) {
+                throw $retryable;
+            }
+
+            throw $exception;
+        }
+
         return is_array($nextSession) ? $nextSession : [];
     }
 
@@ -461,6 +481,18 @@ final class WatchLiveGateway
 
         if ($this->recommendLookupFailed && !$this->recommendLookupSucceeded && !$this->areaListLookupSucceeded) {
             return new RequestException('ERA直播推荐接口异常，稍后重试');
+        }
+
+        return null;
+    }
+
+    private function resolveWatchRuntimeFailure(\RuntimeException $exception): ?RequestException
+    {
+        $message = trim($exception->getMessage());
+        foreach (['x25Kn/E失败', 'x25Kn/X失败'] as $prefix) {
+            if (str_starts_with($message, $prefix)) {
+                return new RequestException($message);
+            }
         }
 
         return null;

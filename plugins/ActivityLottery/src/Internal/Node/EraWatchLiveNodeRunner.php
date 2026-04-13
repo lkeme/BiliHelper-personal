@@ -79,7 +79,15 @@ final class EraWatchLiveNodeRunner implements NodeRunnerInterface
             ], $now);
         }
 
-        $nextSession = $this->watchGateway->heartbeat($session);
+        try {
+            $nextSession = $this->watchGateway->heartbeat($session);
+        } catch (RequestException $exception) {
+            return new ActivityNodeResult(false, '直播观看心跳失败: ' . $exception->getMessage(), [
+                'node_status' => ActivityNodeStatus::WAITING,
+                'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
+            ], $now);
+        }
+
         if ($nextSession === []) {
             return new ActivityNodeResult(false, '直播观看心跳失败', [
                 'node_status' => ActivityNodeStatus::FAILED,
