@@ -102,6 +102,12 @@ final class VideoWatchService
             'session' => $session->sessionId,
         ]);
         $this->authFailureClassifier->assertNotAuthFailure($response, '视频观看收尾时账号未登录');
-        return ($response['code'] ?? -1) === 0;
+        if (($response['code'] ?? -1) !== 0) {
+            $code = (int)($response['code'] ?? -1);
+            $message = trim((string)($response['message'] ?? $response['msg'] ?? ''));
+            throw new \RuntimeException("视频观看收尾失败 {$code} -> {$message}");
+        }
+
+        return true;
     }
 }

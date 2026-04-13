@@ -121,7 +121,16 @@ final class EraWatchVideoNodeRunner implements NodeRunnerInterface
         }
 
         $watchedSeconds = max(1, $now - $startedAt);
-        if (!$this->watchGateway->finish($archive, $watchedSeconds, $sessionId)) {
+        try {
+            $finished = $this->watchGateway->finish($archive, $watchedSeconds, $sessionId);
+        } catch (RequestException $exception) {
+            return new ActivityNodeResult(false, '视频观看收尾失败: ' . $exception->getMessage(), [
+                'node_status' => ActivityNodeStatus::WAITING,
+                'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
+            ], $now);
+        }
+
+        if (!$finished) {
             return new ActivityNodeResult(false, '视频观看收尾失败', [
                 'node_status' => ActivityNodeStatus::FAILED,
             ], $now);

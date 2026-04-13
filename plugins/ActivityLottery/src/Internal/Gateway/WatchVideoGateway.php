@@ -66,7 +66,7 @@ final class WatchVideoGateway
                     ],
                 );
             } catch (\RuntimeException $exception) {
-                $retryable = $this->resolveWatchStartFailure($exception);
+                $retryable = $this->resolveWatchFailure($exception);
                 if ($retryable instanceof RequestException) {
                     throw $retryable;
                 }
@@ -92,7 +92,16 @@ final class WatchVideoGateway
                 ],
             );
 
-            return $watchService->finish($session, $watchedSeconds);
+            try {
+                return $watchService->finish($session, $watchedSeconds);
+            } catch (\RuntimeException $exception) {
+                $retryable = $this->resolveWatchFailure($exception);
+                if ($retryable instanceof RequestException) {
+                    throw $retryable;
+                }
+
+                return false;
+            }
         };
     }
 
@@ -283,10 +292,10 @@ final class WatchVideoGateway
         return (string)(($result - 8728348608) ^ 177451812);
     }
 
-    private function resolveWatchStartFailure(\RuntimeException $exception): ?RequestException
+    private function resolveWatchFailure(\RuntimeException $exception): ?RequestException
     {
         $message = trim($exception->getMessage());
-        foreach (['视频观看初始化失败', '视频观看首拍心跳失败'] as $prefix) {
+        foreach (['视频观看初始化失败', '视频观看首拍心跳失败', '视频观看收尾失败'] as $prefix) {
             if (str_starts_with($message, $prefix)) {
                 return new RequestException($message);
             }
