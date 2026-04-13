@@ -7,6 +7,7 @@ use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNode;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNodeResult;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNodeStatus;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Gateway\DrawGateway;
+use Bhp\Util\Exceptions\RequestException;
 
 final class RefreshDrawTimesNodeRunner implements NodeRunnerInterface
 {
@@ -25,7 +26,14 @@ final class RefreshDrawTimesNodeRunner implements NodeRunnerInterface
     public function run(ActivityFlow $flow, ActivityNode $node, int $now): ActivityNodeResult
     {
         $activity = ResolvedActivityView::fromFlow($flow)->toActivityArray();
-        $response = $this->drawGateway->refreshTimes($activity);
+        try {
+            $response = $this->drawGateway->refreshTimes($activity);
+        } catch (RequestException $exception) {
+            return new ActivityNodeResult(false, '刷新抽奖次数失败，稍后重试: ' . $exception->getMessage(), [
+                'node_status' => ActivityNodeStatus::WAITING,
+                'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
+            ], $now);
+        }
         $code = (int)($response['code'] ?? -1);
         if ($code === -500) {
             return new ActivityNodeResult(false, '刷新抽奖次数失败，稍后重试', [

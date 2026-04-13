@@ -7,6 +7,7 @@ use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNode;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNodeResult;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNodeStatus;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Gateway\DrawGateway;
+use Bhp\Util\Exceptions\RequestException;
 
 final class ExecuteDrawNodeRunner implements NodeRunnerInterface
 {
@@ -42,7 +43,21 @@ final class ExecuteDrawNodeRunner implements NodeRunnerInterface
 
         $activity = ResolvedActivityView::fromFlow($flow)->toActivityArray();
         $drawCount = $this->resolveDrawCount($remaining);
-        $response = $this->drawGateway->drawOnce($activity, $drawCount);
+        try {
+            $response = $this->drawGateway->drawOnce($activity, $drawCount);
+        } catch (RequestException $exception) {
+            return new ActivityNodeResult(false, '执行抽奖失败，稍后重试: ' . $exception->getMessage(), [
+                'node_status' => ActivityNodeStatus::WAITING,
+                'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
+                'context_patch' => [
+                    'draw_times_remaining' => $remaining,
+                    'draw_results' => $drawResults,
+                    'draw_batch_size' => 0,
+                    'draw_batch_win_count' => 0,
+                    'draw_batch_win_names' => [],
+                ],
+            ], $now);
+        }
         $code = (int)($response['code'] ?? -1);
         if ($code === 170415) {
             return new ActivityNodeResult(true, '执行抽奖结束：剩余抽奖次数不足', [
