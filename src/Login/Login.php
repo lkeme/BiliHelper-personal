@@ -532,15 +532,15 @@ class Login extends BasePlugin implements PluginTaskInterface
             }
 
             if (!str_contains($segment, '=')) {
-                $masked[] = $segment . '=[已隐藏]';
+                $masked[] = $segment . '=***';
                 continue;
             }
 
             [$name] = explode('=', $segment, 2);
-            $masked[] = trim($name) . '=[已隐藏]';
+            $masked[] = trim($name) . '=***';
         }
 
-        return $masked === [] ? '[已隐藏]' : implode('; ', $masked);
+        return $masked === [] ? '***' : implode('; ', $masked);
     }
 
     /**
