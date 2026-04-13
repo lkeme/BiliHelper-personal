@@ -6,6 +6,7 @@ use Bhp\Api\Dynamic\ApiTopic;
 use Bhp\Api\Api\X\Player\ApiPlayer;
 use Bhp\Automation\Watch\VideoWatchService;
 use Bhp\Automation\Watch\VideoWatchSession;
+use Bhp\Util\Exceptions\RequestException;
 
 final class WatchVideoGateway
 {
@@ -164,7 +165,17 @@ final class WatchVideoGateway
         }
 
         $response = ($this->pageListFetcher)($aid, $bvid);
-        if (($response['code'] ?? 0) !== 0 || !isset($response['data'][0]) || !is_array($response['data'][0])) {
+        if (($response['code'] ?? 0) !== 0) {
+            throw new RequestException(sprintf(
+                'ERA视频分页接口异常 aid=%s bvid=%s code=%s message=%s',
+                $aid !== '' ? $aid : '-',
+                $bvid !== '' ? $bvid : '-',
+                (string)($response['code'] ?? ''),
+                (string)($response['message'] ?? $response['msg'] ?? '')
+            ));
+        }
+
+        if (!isset($response['data'][0]) || !is_array($response['data'][0])) {
             return null;
         }
 
@@ -191,7 +202,12 @@ final class WatchVideoGateway
     {
         $response = $this->apiTopic->feed($topicId, 0, '', $limit);
         if (($response['code'] ?? -1) !== 0) {
-            return [];
+            throw new RequestException(sprintf(
+                'ERA话题稿件接口异常 topic=%s code=%s message=%s',
+                $topicId !== '' ? $topicId : '-',
+                (string)($response['code'] ?? ''),
+                (string)($response['message'] ?? $response['msg'] ?? '')
+            ));
         }
 
         $items = $response['data']['topic_card_list']['items'] ?? [];

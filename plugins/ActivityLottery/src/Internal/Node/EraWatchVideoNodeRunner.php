@@ -8,10 +8,13 @@ use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNodeResult;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNodeStatus;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Gateway\WatchVideoGateway;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Page\EraTaskSnapshot;
+use Bhp\Util\Exceptions\RequestException;
 use RuntimeException;
 
 final class EraWatchVideoNodeRunner implements NodeRunnerInterface
 {
+    private const RETRY_DELAY_SECONDS = 300;
+
     public function __construct(
         private readonly string $nodeType,
         private readonly ?WatchVideoGateway $watchGateway = null,
@@ -41,7 +44,15 @@ final class EraWatchVideoNodeRunner implements NodeRunnerInterface
 
         $state = $taskView->taskRuntime();
         $progress = $taskView->taskProgress();
-        $resolvedArchive = $this->resolveArchive($task, $state);
+        try {
+            $resolvedArchive = $this->resolveArchive($task, $state);
+        } catch (RequestException $exception) {
+            return new ActivityNodeResult(false, '视频稿件解析失败: ' . $exception->getMessage(), [
+                'node_status' => ActivityNodeStatus::WAITING,
+                'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
+            ], $now);
+        }
+
         if ($resolvedArchive === null) {
             return new ActivityNodeResult(true, '无法解析视频稿件信息，已跳过', [
                 'node_status' => ActivityNodeStatus::SKIPPED,
