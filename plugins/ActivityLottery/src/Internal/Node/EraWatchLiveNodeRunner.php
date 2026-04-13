@@ -7,9 +7,12 @@ use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNode;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNodeResult;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNodeStatus;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Gateway\WatchLiveGateway;
+use Bhp\Util\Exceptions\RequestException;
 
 final class EraWatchLiveNodeRunner implements NodeRunnerInterface
 {
+    private const RETRY_DELAY_SECONDS = 300;
+
     public function __construct(
         private readonly WatchLiveGateway $watchGateway = new WatchLiveGateway(),
     ) {
@@ -48,7 +51,15 @@ final class EraWatchLiveNodeRunner implements NodeRunnerInterface
 
         $session = is_array($state['live_session'] ?? null) ? $state['live_session'] : null;
         if ($session === null) {
-            $session = $this->watchGateway->start($task->targetRoomIds(), $task->targetAreaId(), $task->targetParentAreaId());
+            try {
+                $session = $this->watchGateway->start($task->targetRoomIds(), $task->targetAreaId(), $task->targetParentAreaId());
+            } catch (RequestException $exception) {
+                return new ActivityNodeResult(false, '直播观看初始化失败: ' . $exception->getMessage(), [
+                    'node_status' => ActivityNodeStatus::WAITING,
+                    'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
+                ], $now);
+            }
+
             if ($session === null) {
                 return new ActivityNodeResult(true, '当前没有可观看的直播间，按完成处理', [
                     'node_status' => ActivityNodeStatus::SUCCEEDED,

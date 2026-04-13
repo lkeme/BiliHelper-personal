@@ -15,6 +15,11 @@ final class WatchLiveGateway
     private readonly ApiRecommend $apiRecommend;
     private readonly ApiIndex $apiIndex;
     private bool $areaFetchFailureReported = false;
+    private bool $directRoomLookupFailed = false;
+    private bool $areaListLookupFailed = false;
+    private bool $areaListLookupSucceeded = false;
+    private bool $recommendLookupFailed = false;
+    private bool $recommendLookupSucceeded = false;
     private ?LiveWatchService $watchService = null;
     /** @var array<string, string> */
     private array $areaWebIds = [];
@@ -115,8 +120,18 @@ final class WatchLiveGateway
      */
     public function start(array $roomIds, int $areaId = 0, int $parentAreaId = 0): ?array
     {
+        $this->resetLookupState();
         $session = ($this->startAction)($roomIds, $areaId, $parentAreaId);
-        return is_array($session) ? $session : null;
+        if (is_array($session)) {
+            return $session;
+        }
+
+        $failure = $this->resolvePendingStartFailure();
+        if ($failure instanceof RequestException) {
+            throw $failure;
+        }
+
+        return null;
     }
 
     /**
@@ -166,6 +181,7 @@ final class WatchLiveGateway
         $sortTypes = [''];
 
         if (($seedResponse['code'] ?? 0) === 0) {
+            $this->areaListLookupSucceeded = true;
             foreach (($seedResponse['data']['new_tags'] ?? []) as $tag) {
                 if (!is_array($tag)) {
                     continue;
@@ -184,9 +200,12 @@ final class WatchLiveGateway
                     ? $seedResponse
                     : $this->apiList->getList($parentAreaId, $areaId, $page, $sortType, $webId);
                 if (($response['code'] ?? 0) !== 0) {
+                    $this->areaListLookupFailed = true;
                     $this->logAreaListFailure($areaId, $parentAreaId, $sortType, $page, $response);
                     continue;
                 }
+
+                $this->areaListLookupSucceeded = true;
 
                 $list = $response['data']['list'] ?? [];
                 if (!is_array($list) || $list === []) {
@@ -288,8 +307,18 @@ final class WatchLiveGateway
     {
         $response = $this->apiRecommend->getMoreRecList();
         if (($response['code'] ?? 0) !== 0) {
+            $this->recommendLookupFailed = true;
+            $this->log('debug', sprintf(
+                'ERA直播推荐接口异常 area=%d parent=%d code=%s message=%s',
+                $areaId,
+                $parentAreaId,
+                (string)($response['code'] ?? ''),
+                (string)($response['message'] ?? $response['msg'] ?? '')
+            ));
             return null;
         }
+
+        $this->recommendLookupSucceeded = true;
 
         $recommendRoomList = $response['data']['recommend_room_list'] ?? [];
         if (!is_array($recommendRoomList)) {
@@ -342,6 +371,13 @@ final class WatchLiveGateway
 
         $response = $this->apiIndex->getInfoByRoom($roomId);
         if (($response['code'] ?? 0) !== 0) {
+            $this->directRoomLookupFailed = true;
+            $this->log('debug', sprintf(
+                'ERA直播房间信息接口异常 room=%d code=%s message=%s',
+                $roomId,
+                (string)($response['code'] ?? ''),
+                (string)($response['message'] ?? $response['msg'] ?? '')
+            ));
             return null;
         }
 
@@ -402,6 +438,32 @@ final class WatchLiveGateway
         $this->watchService = ($this->watchServiceFactory)();
 
         return $this->watchService;
+    }
+
+    private function resetLookupState(): void
+    {
+        $this->directRoomLookupFailed = false;
+        $this->areaListLookupFailed = false;
+        $this->areaListLookupSucceeded = false;
+        $this->recommendLookupFailed = false;
+        $this->recommendLookupSucceeded = false;
+    }
+
+    private function resolvePendingStartFailure(): ?RequestException
+    {
+        if ($this->directRoomLookupFailed) {
+            return new RequestException('ERA直播房间信息接口异常，稍后重试');
+        }
+
+        if ($this->areaListLookupFailed && !$this->areaListLookupSucceeded) {
+            return new RequestException('ERA直播分区列表接口异常，稍后重试');
+        }
+
+        if ($this->recommendLookupFailed && !$this->recommendLookupSucceeded && !$this->areaListLookupSucceeded) {
+            return new RequestException('ERA直播推荐接口异常，稍后重试');
+        }
+
+        return null;
     }
 
     /**
