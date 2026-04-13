@@ -8,10 +8,12 @@ use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityFlow;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNode;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNodeResult;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNodeStatus;
+use Bhp\Util\Exceptions\RequestException;
 
 final class EraUnfollowNodeRunner implements NodeRunnerInterface
 {
     private const STEP_DELAY_SECONDS = 15;
+    private const RETRY_DELAY_SECONDS = 300;
 
     /**
      * @var callable(int): array<string, mixed>
@@ -74,8 +76,23 @@ final class EraUnfollowNodeRunner implements NodeRunnerInterface
         }
 
         $uid = (string)$uids[$index];
-        $response = (array)($this->unfollowAction)((int)$uid);
+        try {
+            $response = (array)($this->unfollowAction)((int)$uid);
+        } catch (RequestException $exception) {
+            return new ActivityNodeResult(false, '取消关注任务执行失败: ' . $exception->getMessage(), [
+                'node_status' => ActivityNodeStatus::WAITING,
+                'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
+            ], $now);
+        }
+
         $this->authFailureClassifier->assertNotAuthFailure($response, '取消关注任务执行时账号未登录');
+        $code = (int)($response['code'] ?? -1);
+        if ($code === -500) {
+            return new ActivityNodeResult(false, '取消关注任务执行失败，稍后重试', [
+                'node_status' => ActivityNodeStatus::WAITING,
+                'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
+            ], $now);
+        }
         if (!$this->isSuccessfulResponse($response)) {
             return new ActivityNodeResult(false, '取消关注任务执行失败', [
                 'node_status' => ActivityNodeStatus::FAILED,
@@ -141,8 +158,23 @@ final class EraUnfollowNodeRunner implements NodeRunnerInterface
         }
 
         $uid = (string)$pending[0];
-        $response = (array)($this->unfollowAction)((int)$uid);
+        try {
+            $response = (array)($this->unfollowAction)((int)$uid);
+        } catch (RequestException $exception) {
+            return new ActivityNodeResult(false, '临时关注回收失败: ' . $exception->getMessage(), [
+                'node_status' => ActivityNodeStatus::WAITING,
+                'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
+            ], $now);
+        }
+
         $this->authFailureClassifier->assertNotAuthFailure($response, '回收临时关注时账号未登录');
+        $code = (int)($response['code'] ?? -1);
+        if ($code === -500) {
+            return new ActivityNodeResult(false, '临时关注回收失败，稍后重试', [
+                'node_status' => ActivityNodeStatus::WAITING,
+                'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
+            ], $now);
+        }
         if (!$this->isSuccessfulResponse($response)) {
             return new ActivityNodeResult(false, '临时关注回收失败', [
                 'node_status' => ActivityNodeStatus::FAILED,

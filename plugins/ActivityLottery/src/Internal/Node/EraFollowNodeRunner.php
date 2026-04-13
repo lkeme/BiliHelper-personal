@@ -8,10 +8,12 @@ use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityFlow;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNode;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNodeResult;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNodeStatus;
+use Bhp\Util\Exceptions\RequestException;
 
 final class EraFollowNodeRunner implements NodeRunnerInterface
 {
     private const STEP_DELAY_SECONDS = 15;
+    private const RETRY_DELAY_SECONDS = 300;
     private const RELATION_SOURCE_ACTIVITY_PAGE = 222;
 
     /**
@@ -71,8 +73,23 @@ final class EraFollowNodeRunner implements NodeRunnerInterface
         }
 
         $uid = (string)$uids[$index];
-        $response = (array)($this->followAction)((int)$uid);
+        try {
+            $response = (array)($this->followAction)((int)$uid);
+        } catch (RequestException $exception) {
+            return new ActivityNodeResult(false, '关注任务执行失败: ' . $exception->getMessage(), [
+                'node_status' => ActivityNodeStatus::WAITING,
+                'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
+            ], $now);
+        }
+
         $this->authFailureClassifier->assertNotAuthFailure($response, '关注任务执行时账号未登录');
+        $code = (int)($response['code'] ?? -1);
+        if ($code === -500) {
+            return new ActivityNodeResult(false, '关注任务执行失败，稍后重试', [
+                'node_status' => ActivityNodeStatus::WAITING,
+                'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
+            ], $now);
+        }
         if (!$this->isSuccessfulResponse($response)) {
             return new ActivityNodeResult(false, '关注任务执行失败', [
                 'node_status' => ActivityNodeStatus::FAILED,
