@@ -8,9 +8,12 @@ use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNodeResult;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNodeStatus;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Gateway\EraTaskProgressGateway;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Page\EraPageParser;
+use Bhp\Util\Exceptions\RequestException;
 
 final class ParseEraPageNodeRunner implements NodeRunnerInterface
 {
+    private const RETRY_DELAY_SECONDS = 300;
+
     public function __construct(
         private readonly EraTaskProgressGateway $taskProgressGateway,
         private readonly EraPageParser $pageParser = new EraPageParser(),
@@ -38,12 +41,22 @@ final class ParseEraPageNodeRunner implements NodeRunnerInterface
             ], $now);
         }
 
-        $progressSnapshot = $this->taskProgressGateway->fetchSnapshots(
-            array_values(array_filter(array_map(
-                static fn ($task): string => $task instanceof \Bhp\Plugin\Builtin\ActivityLottery\Internal\Page\EraTaskSnapshot ? $task->taskId() : '',
-                $pageSnapshot->tasks(),
-            ))),
-        );
+        try {
+            $progressSnapshot = $this->taskProgressGateway->fetchSnapshots(
+                array_values(array_filter(array_map(
+                    static fn ($task): string => $task instanceof \Bhp\Plugin\Builtin\ActivityLottery\Internal\Page\EraTaskSnapshot ? $task->taskId() : '',
+                    $pageSnapshot->tasks(),
+                ))),
+            );
+        } catch (RequestException $exception) {
+            return new ActivityNodeResult(false, 'ERA 页面解析成功，但任务进度同步失败: ' . $exception->getMessage(), [
+                'node_status' => ActivityNodeStatus::WAITING,
+                'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
+                'context_patch' => [
+                    'era_page_snapshot' => $pageSnapshot->toArray(),
+                ],
+            ], $now);
+        }
 
         $contextPatch = [
             'era_page_snapshot' => $pageSnapshot->toArray(),

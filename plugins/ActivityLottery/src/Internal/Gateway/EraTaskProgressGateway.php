@@ -4,6 +4,7 @@ namespace Bhp\Plugin\Builtin\ActivityLottery\Internal\Gateway;
 
 use Bhp\Api\Api\X\Task\ApiTask;
 use Bhp\Login\AuthFailureClassifier;
+use Bhp\Util\Exceptions\RequestException;
 
 final class EraTaskProgressGateway
 {
@@ -35,7 +36,16 @@ final class EraTaskProgressGateway
 
         $response = (array)($this->taskProgressFetcher)($taskIds, $needAllInvitedInfo);
         $this->authFailureClassifier->assertNotAuthFailure($response, '同步任务进度时账号未登录');
-        if ((int)($response['code'] ?? -1) !== 0) {
+        $code = (int)($response['code'] ?? -1);
+        if ($code === -500) {
+            throw new RequestException(sprintf(
+                '同步任务进度失败 task_ids=%s code=%s message=%s',
+                implode(',', $taskIds),
+                (string)$code,
+                (string)($response['message'] ?? $response['msg'] ?? '')
+            ));
+        }
+        if ($code !== 0) {
             return [];
         }
 
