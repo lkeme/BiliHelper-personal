@@ -27,6 +27,8 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
     private ?SpaceArticleSourceService $articleSourceService = null;
     private ?LiveReservationStateStore $stateStore = null;
     private ?LiveReservationWindow $window = null;
+    private ?array $commonSensitiveWords = null;
+    private ?array $commonUidBlacklist = null;
 
     /**
      * 初始化 LiveReservationPlugin
@@ -122,6 +124,25 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
     {
         $upMid = $state->shiftPendingUpMid();
         if ($upMid === null) {
+            return $this->nextPluginStartTaskResult(
+                self::START_RANDOM_DELAY_MIN_MINUTES,
+                self::START_RANDOM_DELAY_MAX_MINUTES,
+                true,
+            );
+        }
+
+        if ($this->isBlacklistedUpMid((int)$upMid)) {
+            $this->info(sprintf(
+                '预约直播: 父任务进度 (%d/%d) UP主 %s 命中公共UID黑名单，跳过',
+                $state->processedUpMidCount(),
+                max(1, $state->totalUpMidCount()),
+                $upMid,
+            ));
+
+            if ($state->pendingUpMidCount() > 0) {
+                return TaskResult::after($this->randomDelay(self::DELAY_AFTER_FETCH_EMPTY_MIN, self::DELAY_AFTER_FETCH_EMPTY_MAX));
+            }
+
             return $this->nextPluginStartTaskResult(
                 self::START_RANDOM_DELAY_MIN_MINUTES,
                 self::START_RANDOM_DELAY_MAX_MINUTES,
@@ -302,12 +323,28 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
             return false;
         }
         if (array_key_exists('lottery_prize_info', $data) && array_key_exists('lottery_type', $data)) {
+            $upMid = (int)($data['up_mid'] ?? 0);
+            $name = (string)($data['name'] ?? '');
+            $text = (string)($data['lottery_prize_info']['text'] ?? '');
+            if ($this->isBlacklistedUpMid($upMid)) {
+                $this->info("预约直播: UP主 {$upMid} 命中公共UID黑名单，跳过预约 {$name}");
+                return false;
+            }
+            if (($matchedWord = $this->matchCommonSensitiveWord($name)) !== null) {
+                $this->info("预约直播: UP主 {$upMid} 的标题命中公共敏感词 {$matchedWord}，跳过预约 {$name}");
+                return false;
+            }
+            if (($matchedWord = $this->matchCommonSensitiveWord($text)) !== null) {
+                $this->info("预约直播: UP主 {$upMid} 的奖品文案命中公共敏感词 {$matchedWord}，跳过预约 {$name}");
+                return false;
+            }
+
             return [
                 'sid' => $data['sid'],
-                'name' => $data['name'],
+                'name' => $name,
                 'vmid' => $data['up_mid'],
                 'jump_url' => $data['lottery_prize_info']['jump_url'],
-                'text' => $data['lottery_prize_info']['text'],
+                'text' => $text,
             ];
         }
 
@@ -417,5 +454,66 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
     protected function randomDelay(int $minSeconds, int $maxSeconds): int
     {
         return mt_rand($minSeconds, $maxSeconds);
+    }
+
+    private function matchCommonSensitiveWord(string $content): ?string
+    {
+        $content = trim($content);
+        if ($content === '') {
+            return null;
+        }
+
+        foreach ($this->commonSensitiveWords() as $word) {
+            if (str_contains($content, $word)) {
+                return $word;
+            }
+        }
+
+        return null;
+    }
+
+    private function isBlacklistedUpMid(int $upMid): bool
+    {
+        return $upMid > 0 && in_array($upMid, $this->commonUidBlacklist(), true);
+    }
+
+    /**
+     * @return string[]
+     */
+    private function commonSensitiveWords(): array
+    {
+        if (is_array($this->commonSensitiveWords)) {
+            return $this->commonSensitiveWords;
+        }
+
+        $words = [];
+        foreach ($this->filterWords('Common.sensitive_words', [], 'array') as $word) {
+            $normalized = trim((string)$word);
+            if ($normalized !== '' && !in_array($normalized, $words, true)) {
+                $words[] = $normalized;
+            }
+        }
+
+        return $this->commonSensitiveWords = $words;
+    }
+
+    /**
+     * @return int[]
+     */
+    private function commonUidBlacklist(): array
+    {
+        if (is_array($this->commonUidBlacklist)) {
+            return $this->commonUidBlacklist;
+        }
+
+        $uids = [];
+        foreach ($this->filterWords('Common.uid_blacklist', [], 'array') as $uid) {
+            $normalized = (int)$uid;
+            if ($normalized > 0 && !in_array($normalized, $uids, true)) {
+                $uids[] = $normalized;
+            }
+        }
+
+        return $this->commonUidBlacklist = $uids;
     }
 }

@@ -22,6 +22,8 @@ final class DynamicLotteryPlugin extends BasePlugin implements PluginTaskInterfa
     private ?DynamicLotteryReservationExecutor $reservationExecutor = null;
     private ?SpaceArticleSourceService $articleSourceService = null;
     private ?DynamicLotteryWindow $window = null;
+    private ?array $commonSensitiveWords = null;
+    private ?array $commonUidBlacklist = null;
 
     /**
      * 初始化 DynamicLotteryPlugin
@@ -101,8 +103,7 @@ final class DynamicLotteryPlugin extends BasePlugin implements PluginTaskInterfa
         $this->info('动态抽奖: 地址: ' . $this->setDynamicUrl((int)$lottery['id_str']));
         $this->info("动态抽奖: 奖品: {$lottery['prize']}");
 
-        if ($this->filterContentWords((string)$lottery['title']) || $this->filterContentWords((string)$lottery['prize'])) {
-            $this->warning('动态抽奖: 标题或奖品命中敏感词，跳过');
+        if ($this->shouldSkipLottery($lottery)) {
             return;
         }
 
@@ -184,6 +185,21 @@ final class DynamicLotteryPlugin extends BasePlugin implements PluginTaskInterfa
             return;
         }
 
+        if ($this->isBlacklistedUpMid($lottery->upMid)) {
+            $this->info("动态抽奖: 动态 {$lottery->idStr} 的UP主 {$lottery->upMid} 命中公共UID黑名单，跳过");
+            return;
+        }
+
+        if (($matchedWord = $this->matchCommonSensitiveWord($lottery->title)) !== null) {
+            $this->info("动态抽奖: 动态 {$lottery->idStr} 的标题命中公共敏感词 {$matchedWord}，跳过");
+            return;
+        }
+
+        if (($matchedWord = $this->matchCommonSensitiveWord($lottery->prize)) !== null) {
+            $this->info("动态抽奖: 动态 {$lottery->idStr} 的奖品命中公共敏感词 {$matchedWord}，跳过");
+            return;
+        }
+
         $notice = $this->fetchLotteryNotice((int)$lottery->idStr);
         if (!$notice instanceof DynamicLotteryNotice) {
             $state->requeueDynamic((int)$lottery->idStr);
@@ -213,23 +229,6 @@ final class DynamicLotteryPlugin extends BasePlugin implements PluginTaskInterfa
     protected function setDynamicUrl(int $dynamicId): string
     {
         return 'https://t.bilibili.com/' . $dynamicId;
-    }
-
-    /**
-     * 处理过滤ContentWords
-     * @param string $content
-     * @return bool
-     */
-    protected function filterContentWords(string $content): bool
-    {
-        $sensitiveWords = $this->filterWords('DynamicLottery.sensitive', [], 'array');
-        foreach ($sensitiveWords as $word) {
-            if (is_string($word) && str_contains($content, $word)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**
@@ -325,5 +324,91 @@ final class DynamicLotteryPlugin extends BasePlugin implements PluginTaskInterfa
     private function bizDate(int $timestamp): string
     {
         return date('Y-m-d', $timestamp);
+    }
+
+    /**
+     * @param array<string, mixed> $lottery
+     */
+    private function shouldSkipLottery(array $lottery): bool
+    {
+        $dynamicId = (string)($lottery['id_str'] ?? '0');
+        $upMid = (int)($lottery['up_mid'] ?? 0);
+        if ($this->isBlacklistedUpMid($upMid)) {
+            $this->info("动态抽奖: 动态 {$dynamicId} 的UP主 {$upMid} 命中公共UID黑名单，跳过");
+            return true;
+        }
+
+        if (($matchedWord = $this->matchCommonSensitiveWord((string)($lottery['title'] ?? ''))) !== null) {
+            $this->info("动态抽奖: 动态 {$dynamicId} 的标题命中公共敏感词 {$matchedWord}，跳过");
+            return true;
+        }
+
+        if (($matchedWord = $this->matchCommonSensitiveWord((string)($lottery['prize'] ?? ''))) !== null) {
+            $this->info("动态抽奖: 动态 {$dynamicId} 的奖品命中公共敏感词 {$matchedWord}，跳过");
+            return true;
+        }
+
+        return false;
+    }
+
+    private function matchCommonSensitiveWord(string $content): ?string
+    {
+        $content = trim($content);
+        if ($content === '') {
+            return null;
+        }
+
+        foreach ($this->commonSensitiveWords() as $word) {
+            if (str_contains($content, $word)) {
+                return $word;
+            }
+        }
+
+        return null;
+    }
+
+    private function isBlacklistedUpMid(int $upMid): bool
+    {
+        return $upMid > 0 && in_array($upMid, $this->commonUidBlacklist(), true);
+    }
+
+    /**
+     * @return string[]
+     */
+    private function commonSensitiveWords(): array
+    {
+        if (is_array($this->commonSensitiveWords)) {
+            return $this->commonSensitiveWords;
+        }
+
+        $words = [];
+        foreach ($this->filterWords('Common.sensitive_words', [], 'array') as $word) {
+            $normalized = trim((string)$word);
+            if ($normalized !== '' && !in_array($normalized, $words, true)) {
+                $words[] = $normalized;
+            }
+        }
+
+        return $this->commonSensitiveWords = $words;
+    }
+
+    /**
+     * @return int[]
+     */
+    private function commonUidBlacklist(): array
+    {
+        if (is_array($this->commonUidBlacklist)) {
+            return $this->commonUidBlacklist;
+        }
+
+        $uids = [];
+        foreach ($this->filterWords('Common.uid_blacklist', [], 'array') as $uid) {
+            $normalized = (int)$uid;
+            if ($normalized > 0 && !in_array($normalized, $uids, true)) {
+                $uids[] = $normalized;
+            }
+        }
+
+        return $this->commonUidBlacklist = $uids;
     }
 }

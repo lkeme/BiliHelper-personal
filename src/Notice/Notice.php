@@ -87,7 +87,7 @@ final class Notice
      */
     protected function filterMsgWords(string $msg): bool
     {
-        $defaultWords = $this->filterWords->get('Notice.default');
+        $defaultWords = $this->filterWords->get('Notice.sensitive_words');
         if (!is_array($defaultWords)) {
             $defaultWords = [];
         }
