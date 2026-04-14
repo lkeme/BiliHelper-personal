@@ -1,21 +1,39 @@
-# Update image first: 
-# docker compose pull && docker compose up -d
+# Usage:
+# Start:
+# docker compose up -d
+# sudo docker compose up -d
+#
+# Stop:
+# docker compose down
+# sudo docker compose down
+#
+# Update and restart:
+# docker compose down && docker compose pull && docker compose up -d
+# sudo docker compose down && sudo docker compose pull && sudo docker compose up -d
+#
+# Logs:
+# docker logs -f bhp
+# sudo docker logs -f bhp
+#
+# Status:
+# docker stats
+# sudo docker stats
 
 services:
-    bhp:
-        container_name: bhp
-        image: lkeme/bilihelper-personal:latest # my-app: x.x.x
-        stdin_open: true # docker run -i 交互模式
-        tty: true        # docker run -t 终端模式
-        restart: on-failure:5 # 重启策略 / on-failure:5 重启次数5次 / always 一直重启 / unless-stopped 除非停止 / no 从不重启
-        volumes:
-            - ./profile/user:/app/profile/user  # ./profile/user替换为自己的相对或绝对路径
-        network_mode: bridge # host
-        ports:
-            - "50001:50001" # 50001替换为自己的端口 user.ini->login_captcha->url
-        environment:
-            BRANCH: master # 远程资源分支。优先于 profile 里的 app.branch
-            CAPTCHA: 1 # docs/CAPTCHA.md
-            RESET_CACHE: 0 # 1 等价于追加 --reset-cache
-            PURGE_AUTH: 0 # 仅与 RESET_CACHE=1 联用，等价于追加 --purge-auth
+  bhp:
+    container_name: bhp
+    image: lkeme/bilihelper-personal:latest # my-app: x.x.x
+    stdin_open: true # docker run -i 交互模式
+    tty: true # docker run -t 终端模式
+    restart: on-failure:5 # 重启策略 / on-failure:5 重启次数5次 / always 一直重启 / unless-stopped 除非停止 / no 从不重启
+    volumes:
+      - ./profile/user:/app/profile/user # ./profile/user替换为自己的相对或绝对路径
+    network_mode: bridge # host
+    ports:
+      - "50001:50001" # 50001替换为自己的端口 user.ini->login_captcha->url
+    environment:
+      BRANCH: master # 远程资源分支。优先于 profile 里的 app.branch
+      CAPTCHA: 0 # docs/CAPTCHA.md
+      RESET_CACHE: 0 # 1 等价于追加 --reset-cache
+      PURGE_AUTH: 0 # 仅与 RESET_CACHE=1 联用，等价于追加 --purge-auth
 

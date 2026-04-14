@@ -5,10 +5,9 @@
 ### 开关
 
 ```ini
+; 验证码手动识别/服务地址
 [login_captcha]
-; 验证码手动识别
 enable = false
-; 验证码手动识别服务地址
 url = "http://localhost:50001"
 ```
 

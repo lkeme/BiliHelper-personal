@@ -1,0 +1,38 @@
+# Usage:
+# Start:
+# docker compose -f docker-compose.test.yml up -d
+# sudo docker compose -f docker-compose.test.yml up -d
+#
+# Stop:
+# docker compose -f docker-compose.test.yml down
+# sudo docker compose -f docker-compose.test.yml down
+#
+# Update and restart:
+# docker compose -f docker-compose.test.yml down && docker compose -f docker-compose.test.yml pull && docker compose -f docker-compose.test.yml up -d
+# sudo docker compose -f docker-compose.test.yml down && sudo docker compose -f docker-compose.test.yml pull && sudo docker compose -f docker-compose.test.yml up -d
+#
+# Logs:
+# docker logs -f bhp-test
+# sudo docker logs -f bhp-test
+#
+# Status:
+# docker stats
+# sudo docker stats
+
+services:
+  bhp:
+    container_name: bhp-test
+    image: lkeme/bilihelper-personal:test
+    stdin_open: true
+    tty: true
+    restart: on-failure:5
+    volumes:
+      - ./profile/user:/app/profile/user
+    network_mode: bridge
+    ports:
+      - "50001:50001"
+    environment:
+      BRANCH: dev
+      CAPTCHA: 0
+      RESET_CACHE: 0
+      PURGE_AUTH: 0
