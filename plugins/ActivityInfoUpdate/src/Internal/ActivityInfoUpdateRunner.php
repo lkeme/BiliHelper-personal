@@ -108,7 +108,7 @@ final class ActivityInfoUpdateRunner
     {
         $appRoot = rtrim(str_replace('\\', '/', $this->appContext->appRoot()), '/');
 
-        return $appRoot . '/resources/activity_lottery_infos.json';
+        return $appRoot . '/resources/plugins/ActivityLottery/catalog.json';
     }
 
     /**
@@ -128,7 +128,7 @@ final class ActivityInfoUpdateRunner
         try {
             $decoded = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
         } catch (\Throwable $throwable) {
-            throw new RuntimeException("读取 activity_lottery_infos.json 失败 {$throwable->getMessage()}");
+            throw new RuntimeException("读取 ActivityLottery catalog.json 失败 {$throwable->getMessage()}");
         }
 
         $data = $decoded['data'] ?? [];

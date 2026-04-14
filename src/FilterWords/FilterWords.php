@@ -29,7 +29,7 @@ class FilterWords extends BaseResource
      */
     public function __construct(
         private readonly ProfileContext $profileContext,
-        string $filename = 'filter_library.json',
+        string $filename = 'filter/library.json',
     )
     {
         $this->loadResource($filename, 'json');

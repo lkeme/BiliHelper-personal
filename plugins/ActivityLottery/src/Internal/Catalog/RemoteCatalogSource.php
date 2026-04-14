@@ -38,13 +38,9 @@ final class RemoteCatalogSource implements CatalogSourceInterface
             return [];
         }
 
-        if ($this->reader instanceof CatalogSourceInterface) {
-            return $this->reader->load();
-        }
-
         $urls = $this->urls();
         if ($urls === []) {
-            return [];
+            return $this->fallbackItems();
         }
 
         foreach ($urls as $url) {
@@ -90,7 +86,7 @@ final class RemoteCatalogSource implements CatalogSourceInterface
             }
         }
 
-        return [];
+        return $this->fallbackItems();
     }
 
     /**
@@ -116,6 +112,18 @@ final class RemoteCatalogSource implements CatalogSourceInterface
 
         $url = trim((string)$this->url);
         return $url === '' ? [] : [$url];
+    }
+
+    /**
+     * @return ActivityCatalogItem[]
+     */
+    private function fallbackItems(): array
+    {
+        if (!$this->reader instanceof CatalogSourceInterface) {
+            return [];
+        }
+
+        return $this->reader->load();
     }
 }
 

@@ -79,7 +79,7 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
         }
 
         $remoteResourceResolver = new RemoteResourceResolver($this->appContext());
-        $remoteCatalogUrls = $remoteResourceResolver->resourceRawUrls('activity_lottery_infos.json');
+        $remoteCatalogUrls = $remoteResourceResolver->resourceRawUrls('plugins/ActivityLottery/catalog.json');
         $logger = function (string $level, string $message, array $context = []): void {
             $context = array_replace(['caller' => 'ActivityLottery'], $context);
             switch (strtolower(trim($level))) {
@@ -102,11 +102,11 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
         };
         $remoteCatalogFetcher = fn (string $url): string => $this->appContext()->request()->getText('other', $url);
         $sources = [
-            new LocalCatalogSource($this->activityInfosLocalPath()),
             new RemoteCatalogSource(
                 $remoteCatalogUrls,
                 true,
-                fetcher: $remoteCatalogFetcher,
+                new LocalCatalogSource($this->activityInfosLocalPath()),
+                $remoteCatalogFetcher,
             ),
         ];
         $noticePusher = function (string $channel, string $message): void {
@@ -192,7 +192,7 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
      */
     private function activityInfosLocalPath(): string
     {
-        return rtrim(str_replace('\\', '/', $this->appContext()->appRoot()), '/') . '/resources/activity_lottery_infos.json';
+        return rtrim(str_replace('\\', '/', $this->appContext()->appRoot()), '/') . '/resources/plugins/ActivityLottery/catalog.json';
     }
 }
 
