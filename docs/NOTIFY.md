@@ -153,6 +153,6 @@ token =
 
 ### 调试
 
-https://github.com/lkeme/BiliHelper-personal/blob/eb06f55fa0fa6cb07bbeffc7e85c6ac0bfaa67b3/data/latest_version.json#L8
+https://github.com/lkeme/BiliHelper-personal/blob/703184690e3180429512e5bd6890f82697e4e9f7/resources/version.json#L11
 
 改成与线上不同的版本即可，检查新版本就会推送一次。  
