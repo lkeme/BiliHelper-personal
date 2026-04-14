@@ -39,7 +39,7 @@ final class PushPlusNoticeChannel extends AbstractNoticeChannel
 
         $decoded = $this->decode($raw);
         if (($decoded['code'] ?? -1) === 200) {
-            $this->notice('推送消息成功: ' . (string)($decoded['data'] ?? ''));
+            $this->notice('推送请求已接受: ' . (string)($decoded['data'] ?? ''));
             return;
         }
 

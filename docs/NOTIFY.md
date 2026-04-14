@@ -14,8 +14,9 @@ filter_words =
 
 **钉钉**
 
-> 文档: https://developers.dingtalk.com/document/robots/custom-robot-access  
-> 说明: 钉钉推送的密钥
+> 文档: https://open.dingtalk.com/document/orgapp/custom-robots-send-group-messages  
+> 说明: 钉钉机器人 webhook 的 `access_token`  
+> 说明: 若机器人开启了加签安全校验，当前实现暂不支持
 
 ```ini
 ; Dingtalk机器人|token|依赖USE_NOTIFY
@@ -40,24 +41,13 @@ chatid = 390****
 
 **PUSH PLUS**
 
-> 文档: http://www.pushplus.plus/doc/  
+> 文档: https://www.pushplus.plus/doc/guide/api.html  
 > 说明: push plus++ 推送的 `token`
 
 ```ini
 ; Pushplus酱|token|依赖USE_NOTIFY
 [notify_pushplus]
 token = 566cc69da782ec****
-```
-
-**Sever酱(原版)**
-
-> 文档: https://sc.ftqq.com/  
-> 说明: Server 酱老版本 key，SCU 开头的
-
-```ini
-; Sever酱(原版)|令牌Key|依赖USE_NOTIFY
-[notify_sc]
-sckey = SCU566cc69da782ec****
 ```
 
 **Server酱(Turbo版)**
@@ -99,7 +89,7 @@ token = 566cc69da782ec****
 
 **企业微信群机器人**
 
-> 文档: https://open.work.weixin.qq.com/api/doc/90000/90136/91770 | https://weibanzhushou.com/blog/330  
+> 文档: https://developer.work.weixin.qq.com/document/path/99110  
 > 说明: 推送的AccessToken
 
 ```ini
@@ -110,7 +100,7 @@ token = ec971f1d-****-4700-****-d9461e76****
 
 **企业微信应用**
 
-> 文档: https://open.work.weixin.qq.com/wwopen/devtool/interface?doc_id=10167  
+> 文档: https://developer.work.weixin.qq.com/document/90000/90135/91039 | https://developer.work.weixin.qq.com/document/90001/90143/90372  
 > 说明: 企业 id    
 > 说明: 应用的凭证密钥  
 > 说明: 企业应用的 id
@@ -127,8 +117,9 @@ to_user = UserId1|UserId2|UserId3
 
 **飞书**
 
-> 文档: https://developers.dingtalk.com/document/robots/custom-robot-access  
-> 说明: 推送的AccessToken
+> 文档: https://open.feishu.cn/document/client-docs/bot-v3/add-custom-bot  
+> 说明: 飞书自定义机器人 webhook 的 `token`  
+> 说明: 若机器人开启了签名校验，当前实现暂不支持
 
 ```ini
 ; 飞书机器人/依赖USE_NOTIFY
@@ -136,10 +127,10 @@ to_user = UserId1|UserId2|UserId3
 token =
 ```
 
-**飞书**
+**Bark**
 
-> 文档: https://github.com/Finb/Bark  
-> 说明: 推送的AccessToken
+> 文档: https://github.com/Finb/Bark | https://bark.day.app/#/en-us/  
+> 说明: Bark 推送使用的设备 `key`
 
 ```ini
 ; Bark/Token
@@ -149,8 +140,9 @@ token =
 
 **PushDeer**
 
-> 文档: http://pushdeer.com/
-> 说明: 服务器地址,Token
+> 文档: https://www.pushdeer.com/official.html  
+> 说明: `url` 为完整 push API 地址，可留空使用官方在线版默认地址  
+> 说明: `token` 为 PushDeer 的 `pushkey`
 
 ```ini
 ; PushDeer/服务器地址/token

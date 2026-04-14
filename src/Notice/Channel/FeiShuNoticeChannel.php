@@ -32,10 +32,11 @@ final class FeiShuNoticeChannel extends AbstractNoticeChannel
     {
         $this->info('使用飞书webhook机器人推送消息');
         $url = 'https://open.feishu.cn/open-apis/bot/v2/hook/' . $this->config('notify_feishu.token');
+        $text = trim((string)$payload['title'] . PHP_EOL . (string)$payload['content']);
         $raw = $this->requestPostJsonBody($url, [
             'msg_type' => 'text',
             'content' => [
-                'text' => (string)$payload['title'] . (string)$payload['content'],
+                'text' => $text,
             ],
         ], $this->jsonHeaders('application/json;charset=utf-8'));
 

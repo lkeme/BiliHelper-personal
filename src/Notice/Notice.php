@@ -10,7 +10,6 @@ use Bhp\Notice\Channel\FeiShuNoticeChannel;
 use Bhp\Notice\Channel\GoCqhttpNoticeChannel;
 use Bhp\Notice\Channel\PushDeerNoticeChannel;
 use Bhp\Notice\Channel\PushPlusNoticeChannel;
-use Bhp\Notice\Channel\ScNoticeChannel;
 use Bhp\Notice\Channel\SctNoticeChannel;
 use Bhp\Notice\Channel\TelegramNoticeChannel;
 use Bhp\Notice\Channel\WeComAppNoticeChannel;
@@ -128,7 +127,6 @@ final class Notice
     {
         return [
             new SctNoticeChannel($context),
-            new ScNoticeChannel($context),
             new TelegramNoticeChannel($context),
             new DingTalkNoticeChannel($context),
             new PushPlusNoticeChannel($context),
