@@ -105,7 +105,9 @@ class Scheduler
 
         $this->started = true;
         $this->runInitialRound();
-        EventLoop::repeat(0.05, fn () => $this->tick(true));
+        if ($this->hasHighFrequencyTasks()) {
+            EventLoop::repeat(0.05, fn () => $this->tick(true));
+        }
         EventLoop::repeat(1.0, fn () => $this->tick(false));
 
         EventLoop::run();
@@ -231,6 +233,17 @@ class Scheduler
 
             $this->dispatch($task, $now);
         }
+    }
+
+    private function hasHighFrequencyTasks(): bool
+    {
+        foreach ($this->tasks as $task) {
+            if ($task->highFrequency) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function dispatch(ScheduledTask $task, float $nowNs): void
