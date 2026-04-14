@@ -40,8 +40,15 @@ final class ActivityLotteryRuntime
 {
     /** @var array<string, NodeRunnerInterface> */
     private array $runnerMap = [];
+    /** @var array<string, ActivityFlow> */
+    private array $cachedFlows = [];
+    /** @var array<string, ActivityFlow> */
+    private array $cachedPlannedCatalogFlows = [];
     private \Closure $logger;
     private readonly ActivityLotteryLifecycleLogger $lifecycleLogger;
+    private ?string $cachedFlowBizDate = null;
+    private ?string $cachedPlannedCatalogBizDate = null;
+    private ?string $cachedPlannedCatalogFingerprint = null;
 
     /**
      * 初始化 ActivityLotteryRuntime
@@ -109,16 +116,8 @@ final class ActivityLotteryRuntime
         }
 
         $catalog = $this->catalogLoader->load();
-        $plannedCatalogFlows = [];
-        foreach ($catalog as $item) {
-            $planned = $this->planner->plan($item, null, $bizDate);
-            $plannedCatalogFlows[$planned->id()] = $planned;
-        }
-
-        $flows = [];
-        foreach ($this->flowStore->load($bizDate) as $flow) {
-            $flows[$flow->id()] = $flow;
-        }
+        $plannedCatalogFlows = $this->plannedCatalogFlows($catalog, $bizDate);
+        $flows = $this->loadFlowsForBizDate($bizDate);
 
         $loadedFlowCount = count($flows);
         $prunedFlowCount = 0;
@@ -177,7 +176,11 @@ final class ActivityLotteryRuntime
             }
         }
 
-        $this->flowStore->save(array_values($flows));
+        if ($prunedFlowCount > 0 || $newFlowCount > 0 || $pickedFlows !== []) {
+            $this->flowStore->save(array_values($flows));
+        }
+        $this->cachedFlowBizDate = $bizDate;
+        $this->cachedFlows = $flows;
 
         $delay = $this->resolveNextDelaySeconds(array_values($flows), $now);
         $this->log('debug', sprintf(
@@ -392,6 +395,62 @@ final class ActivityLotteryRuntime
         }
 
         return (float)($nextDelay ?? 300);
+    }
+
+    /**
+     * @param ActivityCatalogItem[] $catalog
+     * @return array<string, ActivityFlow>
+     */
+    private function plannedCatalogFlows(array $catalog, string $bizDate): array
+    {
+        $fingerprint = $this->catalogFingerprint($catalog);
+        if (
+            $this->cachedPlannedCatalogBizDate === $bizDate
+            && $this->cachedPlannedCatalogFingerprint === $fingerprint
+        ) {
+            return $this->cachedPlannedCatalogFlows;
+        }
+
+        $plannedCatalogFlows = [];
+        foreach ($catalog as $item) {
+            $planned = $this->planner->plan($item, null, $bizDate);
+            $plannedCatalogFlows[$planned->id()] = $planned;
+        }
+
+        $this->cachedPlannedCatalogBizDate = $bizDate;
+        $this->cachedPlannedCatalogFingerprint = $fingerprint;
+        return $this->cachedPlannedCatalogFlows = $plannedCatalogFlows;
+    }
+
+    /**
+     * @return array<string, ActivityFlow>
+     */
+    private function loadFlowsForBizDate(string $bizDate): array
+    {
+        if ($this->cachedFlowBizDate === $bizDate) {
+            return $this->cachedFlows;
+        }
+
+        $flows = [];
+        foreach ($this->flowStore->load($bizDate) as $flow) {
+            $flows[$flow->id()] = $flow;
+        }
+
+        $this->cachedFlowBizDate = $bizDate;
+        return $this->cachedFlows = $flows;
+    }
+
+    /**
+     * @param ActivityCatalogItem[] $catalog
+     */
+    private function catalogFingerprint(array $catalog): string
+    {
+        $parts = [];
+        foreach ($catalog as $item) {
+            $parts[] = $item->id() . ':' . $item->updateTimestamp();
+        }
+
+        return implode('|', $parts);
     }
 
     /**
