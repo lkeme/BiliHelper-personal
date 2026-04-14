@@ -8,7 +8,7 @@
 
 [comment]: <> (</details>)
 
-## v3.0.0.2604XX alpha (2026-04-XX)
+## v3.0.0.260414 alpha (2026-04-14)
 
 ### Added
 
