@@ -11,6 +11,14 @@ use Bhp\Util\AppTerminator;
 
 final class StartupSelfCheck
 {
+    /**
+     * 初始化 StartupSelfCheck
+     * @param AppContext $context
+     * @param ProfileInspector $profileInspector
+     * @param Plugin $plugin
+     * @param LoginGateStateService $loginGateStateService
+     * @param HttpRequestTrafficMonitor $httpRequestTrafficMonitor
+     */
     public function __construct(
         private readonly AppContext $context,
         private readonly ?ProfileInspector $profileInspector = null,
@@ -20,6 +28,10 @@ final class StartupSelfCheck
     ) {
     }
 
+    /**
+     * 启动执行流程
+     * @return void
+     */
     public function run(): void
     {
         $report = $this->report();
@@ -39,6 +51,10 @@ final class StartupSelfCheck
         AppTerminator::fail('启动自检失败: ' . implode(', ', $details));
     }
 
+    /**
+     * 处理report
+     * @return StartupSelfCheckReport
+     */
     public function report(): StartupSelfCheckReport
     {
         $profile = $this->context->profileContext();
@@ -89,6 +105,10 @@ final class StartupSelfCheck
         );
     }
 
+    /**
+     * 处理画像Inspector
+     * @return ProfileInspector
+     */
     private function profileInspector(): ProfileInspector
     {
         return $this->profileInspector ?? new ProfileInspector();

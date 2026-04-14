@@ -11,6 +11,13 @@ final class RemoteCatalogSource implements CatalogSourceInterface
      */
     private readonly mixed $fetcher;
 
+    /**
+     * 初始化 RemoteCatalogSource
+     * @param string|array $url
+     * @param bool $enabled
+     * @param CatalogSourceInterface $reader
+     * @param callable $fetcher
+     */
     public function __construct(
         private readonly string|array $url,
         private readonly bool $enabled = false,
@@ -86,6 +93,10 @@ final class RemoteCatalogSource implements CatalogSourceInterface
         return [];
     }
 
+    /**
+     * 处理priority
+     * @return int
+     */
     public function priority(): int
     {
         return 100;

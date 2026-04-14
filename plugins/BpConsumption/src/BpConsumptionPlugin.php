@@ -17,17 +17,19 @@ class BpConsumptionPlugin extends BasePlugin implements PluginTaskInterface
     private ?ApiWallet $walletApi = null;
 
     /**
-     * 插件信息
-     *
-     * @var array<string, int|string>
+     * 初始化 BpConsumptionPlugin
+     * @param Plugin $plugin
      */
-
     public function __construct(Plugin &$plugin)
     {
         $this->authFailureClassifier = new AuthFailureClassifier();
         $this->bootPlugin($plugin, true);
     }
 
+    /**
+     * 执行一次任务
+     * @return TaskResult
+     */
     public function runOnce(): TaskResult
     {
         if (!$this->enabled('bp_consumption')) {
@@ -39,6 +41,10 @@ class BpConsumptionPlugin extends BasePlugin implements PluginTaskInterface
         return TaskResult::nextDayAt(14, 0, 0, 1, 120);
     }
 
+    /**
+     * 执行 B 币券消费任务
+     * @return void
+     */
     protected function consumptionTask(): void
     {
         if (!$this->userProfiles()->isYearVip('消费B币券')) {
@@ -68,6 +74,11 @@ class BpConsumptionPlugin extends BasePlugin implements PluginTaskInterface
         }
     }
 
+    /**
+     * 使用 B 币券充值金瓜子
+     * @param int $num
+     * @return void
+     */
     protected function BP2gold(int $num): void
     {
         $response = $this->payApi()->gold($num);
@@ -79,6 +90,12 @@ class BpConsumptionPlugin extends BasePlugin implements PluginTaskInterface
         }
     }
 
+    /**
+     * 使用 B 币券为指定用户充电
+     * @param int $uid
+     * @param int $num
+     * @return void
+     */
     protected function BP2charge(int $uid, int $num = 5): void
     {
         $response = $this->payApi()->battery($uid, $num);
@@ -92,6 +109,10 @@ class BpConsumptionPlugin extends BasePlugin implements PluginTaskInterface
         }
     }
 
+    /**
+     * 获取用户钱包
+     * @return int
+     */
     protected function getUserWallet(): int
     {
         $response = $this->walletApi()->getUserWallet();
@@ -170,11 +191,19 @@ class BpConsumptionPlugin extends BasePlugin implements PluginTaskInterface
         return null;
     }
 
+    /**
+     * 获取支付 API 实例
+     * @return ApiPay
+     */
     private function payApi(): ApiPay
     {
         return $this->payApi ??= new ApiPay($this->appContext()->request());
     }
 
+    /**
+     * 获取钱包 API 实例
+     * @return ApiWallet
+     */
     private function walletApi(): ApiWallet
     {
         return $this->walletApi ??= new ApiWallet($this->appContext()->request());

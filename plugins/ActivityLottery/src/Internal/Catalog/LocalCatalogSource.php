@@ -4,6 +4,10 @@ namespace Bhp\Plugin\Builtin\ActivityLottery\Internal\Catalog;
 
 final class LocalCatalogSource implements CatalogSourceInterface
 {
+    /**
+     * 初始化 LocalCatalogSource
+     * @param string $path
+     */
     public function __construct(private readonly string $path)
     {
     }
@@ -16,6 +20,10 @@ final class LocalCatalogSource implements CatalogSourceInterface
         return $this->parseItemsFromPath($this->path);
     }
 
+    /**
+     * 处理priority
+     * @return int
+     */
     public function priority(): int
     {
         return 200;

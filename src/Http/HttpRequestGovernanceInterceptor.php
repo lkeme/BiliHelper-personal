@@ -6,6 +6,15 @@ use Bhp\Util\Exceptions\RequestException;
 
 final class HttpRequestGovernanceInterceptor implements HttpClientInterceptor
 {
+    /**
+     * 初始化 HttpRequestGovernanceInterceptor
+     * @param bool $enabled
+     * @param string $mode
+     * @param int $windowSeconds
+     * @param int $maxRequestsPerHost
+     * @param int $cooldownSeconds
+     * @param HttpRequestTrafficMonitor $monitor
+     */
     public function __construct(
         private readonly bool $enabled = false,
         private readonly string $mode = 'observe',
@@ -16,6 +25,11 @@ final class HttpRequestGovernanceInterceptor implements HttpClientInterceptor
     ) {
     }
 
+    /**
+     * 处理beforeSend
+     * @param HttpRequestContext $context
+     * @return HttpRequestContext
+     */
     public function beforeSend(HttpRequestContext $context): HttpRequestContext
     {
         $host = (string)($context->attributes['host'] ?? '');
@@ -56,14 +70,30 @@ final class HttpRequestGovernanceInterceptor implements HttpClientInterceptor
         return $context;
     }
 
+    /**
+     * 处理after响应
+     * @param HttpRequestContext $context
+     * @param HttpResponse $response
+     * @return void
+     */
     public function afterResponse(HttpRequestContext $context, HttpResponse $response): void
     {
     }
 
+    /**
+     * 处理after失败
+     * @param HttpRequestContext $context
+     * @param \Throwable $exception
+     * @return void
+     */
     public function afterFailure(HttpRequestContext $context, \Throwable $exception): void
     {
     }
 
+    /**
+     * 处理监控
+     * @return HttpRequestTrafficMonitor
+     */
     private function monitor(): HttpRequestTrafficMonitor
     {
         return $this->monitor ?? throw new \LogicException('HttpRequestGovernanceInterceptor monitor is not configured.');

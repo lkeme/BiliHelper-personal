@@ -12,6 +12,11 @@ final class RemoteResourceResolver
 
     private readonly GhProxy $ghProxy;
 
+    /**
+     * 初始化 RemoteResourceResolver
+     * @param AppContext $context
+     * @param GhProxy $ghProxy
+     */
     public function __construct(
         private readonly AppContext $context,
         ?GhProxy $ghProxy = null,
@@ -19,6 +24,10 @@ final class RemoteResourceResolver
         $this->ghProxy = $ghProxy ?? new GhProxy($this->context);
     }
 
+    /**
+     * 处理branch
+     * @return string
+     */
     public function branch(): string
     {
         $overrideBranch = $this->overrideBranch();
@@ -34,6 +43,10 @@ final class RemoteResourceResolver
         return 'master';
     }
 
+    /**
+     * 处理overrideBranch
+     * @return ?string
+     */
     public function overrideBranch(): ?string
     {
         $branch = trim((string)getenv('BRANCH'));
@@ -44,6 +57,10 @@ final class RemoteResourceResolver
         return $branch;
     }
 
+    /**
+     * 处理configuredBranch
+     * @return ?string
+     */
     public function configuredBranch(): ?string
     {
         $branch = trim((string)$this->context->config('app.branch', 'master'));
@@ -54,6 +71,11 @@ final class RemoteResourceResolver
         return $branch;
     }
 
+    /**
+     * 处理资源RawURL
+     * @param string $resourcePath
+     * @return string
+     */
     public function resourceRawUrl(string $resourcePath): string
     {
         return $this->rawUrl('resources/' . ltrim(str_replace('\\', '/', $resourcePath), '/'));
@@ -67,6 +89,11 @@ final class RemoteResourceResolver
         return $this->rawUrls('resources/' . ltrim(str_replace('\\', '/', $resourcePath), '/'));
     }
 
+    /**
+     * 处理rawURL
+     * @param string $path
+     * @return string
+     */
     public function rawUrl(string $path): string
     {
         $urls = $this->rawUrls($path);

@@ -91,6 +91,12 @@ final class NoticeMessageFactory
         return $info;
     }
 
+    /**
+     * 处理create
+     * @param string $type
+     * @param string $msg
+     * @return NoticeMessage
+     */
     public function create(string $type, string $msg): NoticeMessage
     {
         $info = $this->fillContent($type, $msg);
@@ -106,6 +112,10 @@ final class NoticeMessageFactory
         );
     }
 
+    /**
+     * 解析用户名称
+     * @return string
+     */
     private function resolveUserName(): string
     {
         if (is_callable($this->userNameResolver)) {

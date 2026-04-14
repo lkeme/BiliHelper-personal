@@ -14,6 +14,10 @@ class ApiEvent extends AbstractApiClient
         'Referer' => 'https://big.bilibili.com/mobile/bigPoint/task',
     ];
 
+    /**
+     * 初始化 ApiEvent
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

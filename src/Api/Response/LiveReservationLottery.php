@@ -4,6 +4,16 @@ namespace Bhp\Api\Response;
 
 final class LiveReservationLottery
 {
+    /**
+     * 初始化 LiveReservationLottery
+     * @param int $sid
+     * @param string $name
+     * @param int $vmid
+     * @param int $reserveTotal
+     * @param int $livePlanStartTime
+     * @param string $jumpUrl
+     * @param string $text
+     */
     public function __construct(
         public readonly int $sid,
         public readonly string $name,

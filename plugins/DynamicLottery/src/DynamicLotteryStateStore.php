@@ -8,6 +8,10 @@ final class DynamicLotteryStateStore
 {
     private const CACHE_SCOPE = 'DynamicLottery';
 
+    /**
+     * 初始化 DynamicLotteryStateStore
+     * @param Cache $cache
+     */
     public function __construct(
         private readonly Cache $cache,
     ) {

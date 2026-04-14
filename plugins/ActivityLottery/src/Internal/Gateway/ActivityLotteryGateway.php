@@ -13,6 +13,11 @@ final class ActivityLotteryGateway
      */
     private readonly mixed $noticePusher;
 
+    /**
+     * 初始化 ActivityLotteryGateway
+     * @param callable $pageHtmlFetcher
+     * @param callable $noticePusher
+     */
     public function __construct(
         ?callable $pageHtmlFetcher = null,
         ?callable $noticePusher = null,
@@ -22,11 +27,22 @@ final class ActivityLotteryGateway
         };
     }
 
+    /**
+     * 获取Activity页面Html
+     * @param string $url
+     * @return string
+     */
     public function fetchActivityPageHtml(string $url): string
     {
         return (string)($this->pageHtmlFetcher)($url);
     }
 
+    /**
+     * 处理push通知
+     * @param string $channel
+     * @param string $message
+     * @return void
+     */
     public function pushNotice(string $channel, string $message): void
     {
         ($this->noticePusher)($channel, $message);

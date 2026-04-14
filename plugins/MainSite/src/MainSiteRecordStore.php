@@ -8,6 +8,10 @@ final class MainSiteRecordStore
 {
     private const CACHE_SCOPE = 'MainSite';
 
+    /**
+     * 初始化 MainSiteRecordStore
+     * @param Cache $cache
+     */
     public function __construct(
         private readonly Cache $cache,
     ) {

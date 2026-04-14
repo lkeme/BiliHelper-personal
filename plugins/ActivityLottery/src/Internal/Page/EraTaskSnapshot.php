@@ -63,46 +63,82 @@ final class EraTaskSnapshot
         );
     }
 
+    /**
+     * 处理任务Id
+     * @return string
+     */
     public function taskId(): string
     {
         return $this->taskId;
     }
 
+    /**
+     * 处理任务名称
+     * @return string
+     */
     public function taskName(): string
     {
         return $this->taskName;
     }
 
+    /**
+     * 处理capability
+     * @return string
+     */
     public function capability(): string
     {
         return $this->capability;
     }
 
+    /**
+     * 处理supportLevel
+     * @return string
+     */
     public function supportLevel(): string
     {
         return $this->supportLevel;
     }
 
+    /**
+     * 处理counter
+     * @return string
+     */
     public function counter(): string
     {
         return $this->counter;
     }
 
+    /**
+     * 处理jumpLink
+     * @return string
+     */
     public function jumpLink(): string
     {
         return $this->jumpLink;
     }
 
+    /**
+     * 处理话题Id
+     * @return string
+     */
     public function topicId(): string
     {
         return $this->topicId;
     }
 
+    /**
+     * 处理获奖记录名称
+     * @return string
+     */
     public function awardName(): string
     {
         return $this->awardName;
     }
 
+    /**
+     * 处理required观看Seconds
+     * @return int
+     */
     public function requiredWatchSeconds(): int
     {
         return $this->requiredWatchSeconds;
@@ -140,11 +176,19 @@ final class EraTaskSnapshot
         return $this->targetArchives;
     }
 
+    /**
+     * 处理targetAreaId
+     * @return int
+     */
     public function targetAreaId(): int
     {
         return $this->targetAreaId;
     }
 
+    /**
+     * 处理targetParentAreaId
+     * @return int
+     */
     public function targetParentAreaId(): int
     {
         return $this->targetParentAreaId;
@@ -166,11 +210,19 @@ final class EraTaskSnapshot
         return $this->btnBehavior;
     }
 
+    /**
+     * 处理任务状态
+     * @return int
+     */
     public function taskStatus(): int
     {
         return $this->taskStatus;
     }
 
+    /**
+     * 处理任务获奖记录类型
+     * @return int
+     */
     public function taskAwardType(): int
     {
         return $this->taskAwardType;

@@ -10,6 +10,10 @@ use Bhp\Plugin\Builtin\ActivityInfoUpdate\Internal\ActivityInfoUpdateRunner;
 final class ActivityInfoUpdatePlugin extends BasePlugin
 {
 
+    /**
+     * 初始化 ActivityInfoUpdatePlugin
+     * @param Plugin $plugin
+     */
     public function __construct(Plugin &$plugin)
     {
         $this->bootPlugin($plugin, false);
@@ -63,6 +67,10 @@ final class ActivityInfoUpdatePlugin extends BasePlugin
         ];
     }
 
+    /**
+     * 处理runner
+     * @return ActivityInfoUpdateRunner
+     */
     private function runner(): ActivityInfoUpdateRunner
     {
         return new ActivityInfoUpdateRunner($this->appContext());

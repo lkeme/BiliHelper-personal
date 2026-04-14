@@ -7,6 +7,10 @@ use Bhp\Request\Request;
 
 final class ApiRecommend extends AbstractApiClient
 {
+    /**
+     * 初始化 ApiRecommend
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

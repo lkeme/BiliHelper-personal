@@ -13,16 +13,31 @@ final class ExecuteDrawNodeRunner implements NodeRunnerInterface
 {
     private const RETRY_DELAY_SECONDS = 300;
 
+    /**
+     * 初始化 ExecuteDrawNodeRunner
+     * @param DrawGateway $drawGateway
+     */
     public function __construct(
         private readonly DrawGateway $drawGateway,
     ) {
     }
 
+    /**
+     * 获取类型标识
+     * @return string
+     */
     public function type(): string
     {
         return 'execute_draw';
     }
 
+    /**
+     * 启动执行流程
+     * @param ActivityFlow $flow
+     * @param ActivityNode $node
+     * @param int $now
+     * @return ActivityNodeResult
+     */
     public function run(ActivityFlow $flow, ActivityNode $node, int $now): ActivityNodeResult
     {
         $flowContext = $flow->context()->toArray();
@@ -162,6 +177,11 @@ final class ExecuteDrawNodeRunner implements NodeRunnerInterface
         return new ActivityNodeResult(true, '执行抽奖成功', $resultPayload, $now);
     }
 
+    /**
+     * 解析抽奖数量
+     * @param int $remaining
+     * @return int
+     */
     private function resolveDrawCount(int $remaining): int
     {
         return $remaining >= 10 ? 10 : 1;

@@ -34,7 +34,11 @@ class AppCommand extends Command
     protected string $desc = '[主要模式] 默认功能';
 
     /**
-     *
+     * 初始化 AppCommand
+     * @param Log $log
+     * @param Closure $schedulerResolver
+     * @param Closure $pluginResolver
+     * @param Closure $cacheResetServiceResolver
      */
     public function __construct(
         private readonly Log $log,
@@ -84,6 +88,10 @@ class AppCommand extends Command
         $scheduler->run();
     }
 
+    /**
+     * 处理scheduler
+     * @return Scheduler
+     */
     private function scheduler(): Scheduler
     {
         $scheduler = $this->schedulerResolver instanceof Closure ? ($this->schedulerResolver)() : null;
@@ -94,6 +102,10 @@ class AppCommand extends Command
         throw new LogicException('AppCommand scheduler dependency is not configured.');
     }
 
+    /**
+     * 处理插件
+     * @return Plugin
+     */
     private function plugin(): Plugin
     {
         $plugin = $this->pluginResolver instanceof Closure ? ($this->pluginResolver)() : null;
@@ -104,6 +116,10 @@ class AppCommand extends Command
         throw new LogicException('AppCommand plugin dependency is not configured.');
     }
 
+    /**
+     * 处理缓存Reset服务
+     * @return ProfileCacheResetService
+     */
     private function cacheResetService(): ProfileCacheResetService
     {
         $service = $this->cacheResetServiceResolver instanceof Closure ? ($this->cacheResetServiceResolver)() : null;

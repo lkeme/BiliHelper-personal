@@ -6,6 +6,12 @@ trait Bonus
 {
     use CommonTaskInfo;
 
+    /**
+     * 处理奖励
+     * @param array $data
+     * @param string $name
+     * @return bool
+     */
     public function bonus(array $data, string $name): bool
     {
         $title = '福利任务';

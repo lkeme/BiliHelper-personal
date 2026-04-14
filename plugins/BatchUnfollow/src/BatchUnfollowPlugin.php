@@ -23,6 +23,10 @@ class BatchUnfollowPlugin extends BasePlugin
      */
     protected array $wait_unfollows = [];
 
+    /**
+     * 初始化 BatchUnfollowPlugin
+     * @param Plugin $plugin
+     */
     public function __construct(Plugin &$plugin)
     {
         $this->authFailureClassifier = new AuthFailureClassifier();
@@ -51,6 +55,10 @@ class BatchUnfollowPlugin extends BasePlugin
         }
     }
 
+    /**
+     * 获取Follows
+     * @return void
+     */
     protected function fetchFollows(): void
     {
         $follows = [];
@@ -107,6 +115,10 @@ class BatchUnfollowPlugin extends BasePlugin
         $this->info('批量取关: 获取关注列表成功 Count: ' . count($follows));
     }
 
+    /**
+     * 处理取关
+     * @return bool
+     */
     protected function unfollow(): bool
     {
         $follow = $this->wait_unfollows[0] ?? null;
@@ -132,6 +144,10 @@ class BatchUnfollowPlugin extends BasePlugin
         return true;
     }
 
+    /**
+     * 处理关系API
+     * @return ApiRelation
+     */
     private function relationApi(): ApiRelation
     {
         return $this->relationApi ??= new ApiRelation($this->appContext()->request());

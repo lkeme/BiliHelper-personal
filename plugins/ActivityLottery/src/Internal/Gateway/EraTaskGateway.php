@@ -18,6 +18,13 @@ final class EraTaskGateway
     private readonly mixed $receiveRewardFetcher;
     private readonly AuthFailureClassifier $authFailureClassifier;
 
+    /**
+     * 初始化 EraTaskGateway
+     * @param ApiMission $apiMission
+     * @param callable $taskInfoFetcher
+     * @param callable $receiveRewardFetcher
+     * @param AuthFailureClassifier $authFailureClassifier
+     */
     public function __construct(
         ApiMission $apiMission,
         ?callable $taskInfoFetcher = null,

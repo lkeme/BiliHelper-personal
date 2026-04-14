@@ -10,11 +10,22 @@ use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNodeStatus;
 
 final class ValidateActivityNodeRunner implements NodeRunnerInterface
 {
+    /**
+     * 获取类型标识
+     * @return string
+     */
     public function type(): string
     {
         return 'validate_activity_window';
     }
 
+    /**
+     * 启动执行流程
+     * @param ActivityFlow $flow
+     * @param ActivityNode $node
+     * @param int $now
+     * @return ActivityNodeResult
+     */
     public function run(ActivityFlow $flow, ActivityNode $node, int $now): ActivityNodeResult
     {
         $activityView = ResolvedActivityView::fromFlow($flow);

@@ -21,6 +21,10 @@ use Bhp\Request\Request;
 
 class ApiMain
 {
+    /**
+     * 初始化 ApiMain
+     * @param Request $request
+     */
     public function __construct(
         private readonly Request $request,
     ) {

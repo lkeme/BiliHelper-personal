@@ -4,6 +4,12 @@ namespace Bhp\Api\Response;
 
 final class ArchiveInfo
 {
+    /**
+     * 初始化 ArchiveInfo
+     * @param string $aid
+     * @param string $cid
+     * @param int $duration
+     */
     public function __construct(
         public readonly string $aid,
         public readonly string $cid,

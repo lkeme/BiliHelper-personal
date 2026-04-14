@@ -34,16 +34,29 @@ final class DynamicLotteryRuntimeState
         return $this->state;
     }
 
+    /**
+     * 处理biz日期
+     * @return string
+     */
     public function bizDate(): string
     {
         return (string)$this->state['biz_date'];
     }
 
+    /**
+     * 处理来源Synced
+     * @return bool
+     */
     public function sourceSynced(): bool
     {
         return (bool)$this->state['source_synced'];
     }
 
+    /**
+     * 处理resetForBiz日期
+     * @param string $bizDate
+     * @return void
+     */
     public function resetForBizDate(string $bizDate): void
     {
         if ($this->bizDate() === $bizDate) {
@@ -74,6 +87,10 @@ final class DynamicLotteryRuntimeState
         $this->state['wait_lottery_list'] = [];
     }
 
+    /**
+     * 处理shift待处理Dynamic
+     * @return ?int
+     */
     public function shiftPendingDynamic(): ?int
     {
         $dynamic = array_shift($this->state['wait_dynamic_list']);
@@ -81,6 +98,11 @@ final class DynamicLotteryRuntimeState
         return is_int($dynamic) ? $dynamic : null;
     }
 
+    /**
+     * 处理requeueDynamic
+     * @param int $dynamicId
+     * @return void
+     */
     public function requeueDynamic(int $dynamicId): void
     {
         if ($dynamicId <= 0 || in_array($dynamicId, $this->state['wait_dynamic_list'], true)) {
@@ -93,16 +115,28 @@ final class DynamicLotteryRuntimeState
         }
     }
 
+    /**
+     * 处理totalDynamic数量
+     * @return int
+     */
     public function totalDynamicCount(): int
     {
         return count($this->state['dynamic_list']);
     }
 
+    /**
+     * 处理待处理Dynamic数量
+     * @return int
+     */
     public function pendingDynamicCount(): int
     {
         return count($this->state['wait_dynamic_list']);
     }
 
+    /**
+     * 处理processedDynamic数量
+     * @return int
+     */
     public function processedDynamicCount(): int
     {
         return max(0, $this->totalDynamicCount() - $this->pendingDynamicCount());
@@ -149,11 +183,19 @@ final class DynamicLotteryRuntimeState
         $this->state['wait_lottery_list'][$key] = $lottery;
     }
 
+    /**
+     * 处理待处理抽奖数量
+     * @return int
+     */
     public function pendingLotteryCount(): int
     {
         return count($this->state['wait_lottery_list']);
     }
 
+    /**
+     * 判断Work是否满足条件
+     * @return bool
+     */
     public function hasWork(): bool
     {
         return $this->pendingDynamicCount() > 0 || $this->pendingLotteryCount() > 0;

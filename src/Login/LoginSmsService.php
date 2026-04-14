@@ -9,6 +9,11 @@ use Bhp\Util\Exceptions\LoginException;
 
 class LoginSmsService
 {
+    /**
+     * 初始化 LoginSmsService
+     * @param AppContext $context
+     * @param ApiLogin $apiLogin
+     */
     public function __construct(
         protected AppContext $context,
         private readonly ApiLogin $apiLogin,
@@ -16,6 +21,15 @@ class LoginSmsService
     {
     }
 
+    /**
+     * 处理send短信
+     * @param string $phone
+     * @param string $cid
+     * @param string $validate
+     * @param string $challenge
+     * @param string $recaptchaToken
+     * @return SmsSendResult
+     */
     public function sendSms(
         string $phone,
         string $cid,
@@ -49,6 +63,11 @@ class LoginSmsService
         throw new LoginException("短信验证码发送失败 {$raw}", 600);
     }
 
+    /**
+     * 请求Send短信
+     * @param array $payload
+     * @return string
+     */
     protected function requestSendSms(array $payload): string
     {
         return $this->apiLogin->sendSms($payload);

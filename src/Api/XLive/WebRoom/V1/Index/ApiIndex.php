@@ -8,6 +8,10 @@ use Bhp\WbiSign\WbiSign;
 
 class ApiIndex extends AbstractApiClient
 {
+    /**
+     * 初始化 ApiIndex
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

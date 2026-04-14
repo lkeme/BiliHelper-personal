@@ -11,11 +11,21 @@ class HttpRequestTrafficMonitor
      */
     private array $samples = [];
 
+    /**
+     * 处理初始化
+     * @return void
+     */
     public function init(): void
     {
         $this->samples = [];
     }
 
+    /**
+     * 处理record
+     * @param string $host
+     * @param bool $success
+     * @return void
+     */
     public function record(string $host, bool $success): void
     {
         $this->samples[] = [
@@ -27,6 +37,12 @@ class HttpRequestTrafficMonitor
         $this->prune(self::DEFAULT_WINDOW_SECONDS);
     }
 
+    /**
+     * 处理主机请求数量
+     * @param string $host
+     * @param int $windowSeconds
+     * @return int
+     */
     public function hostRequestCount(string $host, int $windowSeconds = self::DEFAULT_WINDOW_SECONDS): int
     {
         return count(array_filter(
@@ -35,6 +51,14 @@ class HttpRequestTrafficMonitor
         ));
     }
 
+    /**
+     * 处理cooldownRemaining
+     * @param string $host
+     * @param int $windowSeconds
+     * @param int $maxRequestsPerHost
+     * @param int $cooldownSeconds
+     * @return float
+     */
     public function cooldownRemaining(
         string $host,
         int $windowSeconds,
@@ -146,6 +170,11 @@ class HttpRequestTrafficMonitor
         ));
     }
 
+    /**
+     * 处理prune
+     * @param int $windowSeconds
+     * @return void
+     */
     private function prune(int $windowSeconds): void
     {
         $cutoff = microtime(true) - max(1, $windowSeconds);

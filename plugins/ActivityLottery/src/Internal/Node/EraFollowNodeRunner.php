@@ -23,6 +23,12 @@ final class EraFollowNodeRunner implements NodeRunnerInterface
     private readonly AuthFailureClassifier $authFailureClassifier;
     private readonly ?ApiRelation $apiRelation;
 
+    /**
+     * 初始化 EraFollowNodeRunner
+     * @param callable $followAction
+     * @param AuthFailureClassifier $authFailureClassifier
+     * @param ApiRelation $apiRelation
+     */
     public function __construct(?callable $followAction = null, ?AuthFailureClassifier $authFailureClassifier = null, ?ApiRelation $apiRelation = null)
     {
         $this->apiRelation = $apiRelation;
@@ -36,11 +42,22 @@ final class EraFollowNodeRunner implements NodeRunnerInterface
         $this->authFailureClassifier = $authFailureClassifier ?? new AuthFailureClassifier();
     }
 
+    /**
+     * 获取类型标识
+     * @return string
+     */
     public function type(): string
     {
         return 'era_task_follow';
     }
 
+    /**
+     * 启动执行流程
+     * @param ActivityFlow $flow
+     * @param ActivityNode $node
+     * @param int $now
+     * @return ActivityNodeResult
+     */
     public function run(ActivityFlow $flow, ActivityNode $node, int $now): ActivityNodeResult
     {
         $taskView = ResolvedEraTaskView::fromFlowAndNode($flow, $node);

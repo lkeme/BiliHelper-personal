@@ -9,6 +9,14 @@ use Bhp\Util\Common\Common;
 
 final class LoginAuthenticationService
 {
+    /**
+     * 初始化 LoginAuthenticationService
+     * @param LoginCredentialService $credentialService
+     * @param LoginModeExecutor $modeExecutor
+     * @param LoginSmsService $smsService
+     * @param LoginResponseService $responseService
+     * @param ApiLogin $apiLogin
+     */
     public function __construct(
         private readonly LoginCredentialService $credentialService,
         private readonly LoginModeExecutor $modeExecutor,
@@ -18,6 +26,12 @@ final class LoginAuthenticationService
     ) {
     }
 
+    /**
+     * 处理prepareCredentials
+     * @param LoginRuntimeState $state
+     * @param int $modeId
+     * @return void
+     */
     public function prepareCredentials(LoginRuntimeState $state, int $modeId): void
     {
         $credentials = $this->credentialService->resolveCredentials($modeId);

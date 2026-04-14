@@ -27,8 +27,20 @@ use JsonSerializable;
  */
 interface CollectionInterface extends ArrayAccess, Countable, IteratorAggregate, JsonSerializable
 {
+    /**
+     * 处理设置
+     * @param string $key
+     * @param mixed $value
+     * @return void
+     */
     public function set(string $key, mixed $value): void;
 
+    /**
+     * 处理get
+     * @param string $key
+     * @param mixed $default
+     * @return mixed
+     */
     public function get(string $key, $default = null): mixed;
 
     /**
@@ -56,7 +68,8 @@ interface CollectionInterface extends ArrayAccess, Countable, IteratorAggregate,
     public function remove(string $key): void;
 
     /**
-     * clear all data
+     * 清空数据
+     * @return void
      */
     public function clear(): void;
 }

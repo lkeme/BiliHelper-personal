@@ -4,6 +4,15 @@ namespace Bhp\Api\Response;
 
 final class DynamicReserveLottery
 {
+    /**
+     * 初始化 DynamicReserveLottery
+     * @param int $reserveTotal
+     * @param int $rid
+     * @param string $title
+     * @param int $upMid
+     * @param string $prize
+     * @param string $idStr
+     */
     public function __construct(
         public readonly int $reserveTotal,
         public readonly int $rid,

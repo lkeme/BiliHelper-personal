@@ -22,6 +22,11 @@ use Bhp\Util\Resource\BaseResource;
 
 class FilterWords extends BaseResource
 {
+    /**
+     * 初始化 FilterWords
+     * @param ProfileContext $profileContext
+     * @param string $filename
+     */
     public function __construct(
         private readonly ProfileContext $profileContext,
         string $filename = 'filter_library.json',

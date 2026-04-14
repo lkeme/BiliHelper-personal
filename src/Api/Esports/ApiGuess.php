@@ -7,6 +7,10 @@ use Bhp\Request\Request;
 
 class ApiGuess extends AbstractApiClient
 {
+    /**
+     * 初始化 ApiGuess
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

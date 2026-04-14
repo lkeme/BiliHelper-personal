@@ -135,6 +135,11 @@ class UUID
         );
     }
 
+    /**
+     * 处理nsResolve
+     * @param mixed $namespace
+     * @return mixed
+     */
     private static function nsResolve($namespace)
     {
         if (self::isValid($namespace)) {

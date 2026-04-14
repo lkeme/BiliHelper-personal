@@ -8,6 +8,13 @@ use JetBrains\PhpStorm\NoReturn;
 final class AppTerminator
 {
     #[NoReturn]
+    /**
+     * 处理fail
+     * @param mixed $message
+     * @param array $context
+     * @param int $delay
+     * @return void
+     */
     public static function fail(mixed $message = 'exit', array $context = [], int $delay = 120): void
     {
         self::writeError($message, $context);
@@ -21,6 +28,12 @@ final class AppTerminator
         exit(1);
     }
 
+    /**
+     * 处理writeError
+     * @param mixed $message
+     * @param array $context
+     * @return void
+     */
     private static function writeError(mixed $message, array $context): void
     {
         $normalizedMessage = trim((string)$message);

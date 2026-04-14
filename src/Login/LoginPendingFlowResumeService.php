@@ -6,6 +6,11 @@ use Bhp\Login\LoginRuntimeState;
 
 final class LoginPendingFlowResumeService
 {
+    /**
+     * 初始化 LoginPendingFlowResumeService
+     * @param LoginFlowController $flowController
+     * @param LoginPendingFlowLifecycleService $pendingFlowLifecycleService
+     */
     public function __construct(
         private readonly LoginFlowController $flowController,
         private readonly LoginPendingFlowLifecycleService $pendingFlowLifecycleService,

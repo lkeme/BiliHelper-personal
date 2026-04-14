@@ -4,6 +4,11 @@ namespace Bhp\Profile;
 
 class ProfileInspector
 {
+    /**
+     * 处理inspect
+     * @param ProfileContext $profile
+     * @return ProfileInspectionResult
+     */
     public function inspect(ProfileContext $profile): ProfileInspectionResult
     {
         $logWritable = $this->isDirectoryWritable($profile->logPath());
@@ -25,16 +30,31 @@ class ProfileInspector
         );
     }
 
+    /**
+     * 判断DirectoryWritable是否满足条件
+     * @param string $path
+     * @return bool
+     */
     protected function isDirectoryWritable(string $path): bool
     {
         return is_dir($path) && is_writable($path);
     }
 
+    /**
+     * 处理defaultDevicePath
+     * @param ProfileContext $profile
+     * @return string
+     */
     protected function defaultDevicePath(ProfileContext $profile): string
     {
         return rtrim(str_replace('\\', '/', $profile->appRoot()), '/') . '/resources/device/default.yaml';
     }
 
+    /**
+     * 处理deviceOverride模式
+     * @param ProfileContext $profile
+     * @return string
+     */
     protected function deviceOverrideMode(ProfileContext $profile): string
     {
         $replaceOverride = $profile->configPath() . 'device.override.yaml';

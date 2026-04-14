@@ -6,6 +6,12 @@ trait ViewFilmChannel
 {
     use CommonTaskInfo;
 
+    /**
+     * 处理viewFilm渠道
+     * @param array $data
+     * @param string $name
+     * @return bool
+     */
     public function viewFilmChannel(array $data, string $name): bool
     {
         $title = '日常任务';

@@ -9,6 +9,10 @@ final class SpaceArticleSourceConfig
     private const ARTICLE_PAGE_SIZE = 20;
     private const RETENTION_DAYS = 3;
 
+    /**
+     * 处理主机Mid
+     * @return string
+     */
     public function hostMid(): string
     {
         $decoded = base64_decode(self::ENCODED_HOST_MID, true);
@@ -16,16 +20,28 @@ final class SpaceArticleSourceConfig
         return is_string($decoded) ? trim($decoded) : '';
     }
 
+    /**
+     * 处理文章页面
+     * @return int
+     */
     public function articlePage(): int
     {
         return self::ARTICLE_PAGE;
     }
 
+    /**
+     * 处理文章页面Size
+     * @return int
+     */
     public function articlePageSize(): int
     {
         return self::ARTICLE_PAGE_SIZE;
     }
 
+    /**
+     * 处理retentionDays
+     * @return int
+     */
     public function retentionDays(): int
     {
         return self::RETENTION_DAYS;
@@ -50,11 +66,21 @@ final class SpaceArticleSourceConfig
         ];
     }
 
+    /**
+     * 处理startOfDay时间戳
+     * @param int $now
+     * @return int
+     */
     public function startOfDayTimestamp(int $now): int
     {
         return strtotime(date('Y-m-d 00:00:00', $now)) ?: 0;
     }
 
+    /**
+     * 处理biz日期
+     * @param int $now
+     * @return string
+     */
     public function bizDate(int $now): string
     {
         return date('Y-m-d', $now);

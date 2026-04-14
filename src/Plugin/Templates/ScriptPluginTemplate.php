@@ -5,6 +5,10 @@ use Bhp\Plugin\Plugin;
 
 final class ScriptPluginTemplate extends BasePlugin
 {
+    /**
+     * 初始化 ScriptPluginTemplate
+     * @param Plugin $plugin
+     */
     public function __construct(Plugin &$plugin)
     {
         $this->bootPlugin($plugin, false);

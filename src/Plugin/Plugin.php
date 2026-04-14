@@ -55,6 +55,17 @@ class Plugin
 
     private bool $pluginNamespaceAutoloaderRegistered = false;
 
+    /**
+     * 初始化 Plugin
+     * @param Config $config
+     * @param string $runtimeMode
+     * @param string $appRoot
+     * @param AppContext $context
+     * @param Notice $notice
+     * @param Log $log
+     * @param CorePluginRegistry $corePluginRegistry
+     * @param ExternalPluginRegistry $externalPluginRegistry
+     */
     public function __construct(
         private readonly Config $config,
         private readonly string $runtimeMode,
@@ -100,21 +111,38 @@ class Plugin
         return $this->_registry;
     }
 
+    /**
+     * 处理应用上下文
+     * @return AppContext
+     */
     public function appContext(): AppContext
     {
         return $this->context;
     }
 
+    /**
+     * 处理通知
+     * @return Notice
+     */
     public function notice(): Notice
     {
         return $this->notice;
     }
 
+    /**
+     * 处理日志
+     * @return Log
+     */
     public function log(): Log
     {
         return $this->log;
     }
 
+    /**
+     * 判断插件是否满足条件
+     * @param string $hook
+     * @return bool
+     */
     public function hasPlugin(string $hook): bool
     {
         return array_key_exists($hook, $this->_plugins);
@@ -131,6 +159,12 @@ class Plugin
         return is_array($plugin) ? $plugin : [];
     }
 
+    /**
+     * 处理trigger
+     * @param string $hook
+     * @param mixed[] $params
+     * @return string
+     */
     public function trigger(string $hook, mixed ...$params): string
     {
         $pluginFuncResult = '';
@@ -159,6 +193,11 @@ class Plugin
         return $pluginFuncResult;
     }
 
+    /**
+     * 处理运行任务
+     * @param string $hook
+     * @return TaskResult
+     */
     public function runTask(string $hook): TaskResult
     {
         if (!$this->canItRun($hook)) {
@@ -181,6 +220,12 @@ class Plugin
         return TaskResult::keepSchedule();
     }
 
+    /**
+     * 处理注册
+     * @param object $classObject
+     * @param string $method
+     * @return void
+     */
     public function register(object $classObject, string $method): void
     {
         $className = get_class($classObject);
@@ -264,6 +309,10 @@ class Plugin
         return $info;
     }
 
+    /**
+     * 处理detector
+     * @return void
+     */
     protected function detector(): void
     {
         $validator = new PluginManifestValidator();
@@ -370,6 +419,12 @@ class Plugin
         );
     }
 
+    /**
+     * 处理sortPlugins
+     * @param string $columnKey
+     * @param int $sortOrder
+     * @return void
+     */
     protected function sortPlugins(string $columnKey = 'priority', int $sortOrder = SORT_ASC): void
     {
         uasort($this->_plugins, static function (array $left, array $right) use ($columnKey, $sortOrder): int {
@@ -379,6 +434,10 @@ class Plugin
         });
     }
 
+    /**
+     * 处理preloadPlugins
+     * @return void
+     */
     protected function preloadPlugins(): void
     {
         if (!in_array($this->runtimeMode(), ['app', 'debug'], true)) {
@@ -410,6 +469,11 @@ class Plugin
         }
     }
 
+    /**
+     * 判断It运行是否满足条件
+     * @param string $hook
+     * @return bool
+     */
     protected function canItRun(string $hook): bool
     {
         $plugin = $this->_plugins[$hook] ?? null;
@@ -431,6 +495,11 @@ class Plugin
         return $this->isWithinTimeRange($start, $end);
     }
 
+    /**
+     * 处理shortClass名称
+     * @param string $className
+     * @return string
+     */
     protected function shortClassName(string $className): string
     {
         $normalized = str_replace('\\', '/', $className);
@@ -438,6 +507,12 @@ class Plugin
         return basename($normalized);
     }
 
+    /**
+     * 判断Within时间Range是否满足条件
+     * @param string $start
+     * @param string $end
+     * @return bool
+     */
     protected function isWithinTimeRange(string $start, string $end): bool
     {
         $nowTime = $this->currentTimestamp();
@@ -458,6 +533,11 @@ class Plugin
         return $nowTime >= $startTime && $nowTime <= $endTime;
     }
 
+    /**
+     * 判断插件Expired当前时间是否满足条件
+     * @param string $hook
+     * @return bool
+     */
     private function isPluginExpiredNow(string $hook): bool
     {
         $manifest = $this->_registry[$hook]['manifest'] ?? null;
@@ -489,6 +569,12 @@ class Plugin
         return 'valid_until=' . (string)($manifest['valid_until'] ?? '');
     }
 
+    /**
+     * 处理mark插件Expired
+     * @param string $hook
+     * @param string $source
+     * @return void
+     */
     private function markPluginExpired(string $hook, string $source): void
     {
         $status = (string)($this->_registry[$hook]['status'] ?? '');
@@ -509,21 +595,39 @@ class Plugin
         $this->log->recordWarning("插件 {$hook} 已过期，跳过执行 [{$source}]: {$message}");
     }
 
+    /**
+     * 处理current日期时间
+     * @return DateTimeImmutable
+     */
     private function currentDateTime(): DateTimeImmutable
     {
         return new DateTimeImmutable('now', $this->manifestTimezone());
     }
 
+    /**
+     * 处理manifestTimezone
+     * @return DateTimeZone
+     */
     private function manifestTimezone(): DateTimeZone
     {
         return new DateTimeZone('Asia/Shanghai');
     }
 
+    /**
+     * 处理current时间戳
+     * @return int
+     */
     protected function currentTimestamp(): int
     {
         return time();
     }
 
+    /**
+     * 解析时间窗口Boundary
+     * @param string $time
+     * @param int $referenceTimestamp
+     * @return ?int
+     */
     protected function parseTimeWindowBoundary(string $time, int $referenceTimestamp): ?int
     {
         $normalized = trim($time);
@@ -536,6 +640,11 @@ class Plugin
         return $boundary === false ? null : $boundary;
     }
 
+    /**
+     * 标准化Trigger结果
+     * @param mixed $result
+     * @return ?string
+     */
     protected function normalizeTriggerResult(mixed $result): ?string
     {
         return match (true) {
@@ -545,6 +654,11 @@ class Plugin
         };
     }
 
+    /**
+     * 解析ObjectPath
+     * @param object $object
+     * @return string
+     */
     protected function resolveObjectPath(object $object): string
     {
         try {
@@ -556,6 +670,11 @@ class Plugin
         }
     }
 
+    /**
+     * 解析EnableMark
+     * @param string $hook
+     * @return string
+     */
     protected function resolveEnableMark(string $hook): string
     {
         foreach ($this->configKeyCandidates($hook) as $key) {
@@ -597,11 +716,20 @@ class Plugin
         };
     }
 
+    /**
+     * 处理运行时模式
+     * @return string
+     */
     protected function runtimeMode(): string
     {
         return $this->runtimeMode;
     }
 
+    /**
+     * 解析HookForClass
+     * @param string $className
+     * @return string
+     */
     private function resolveHookForClass(string $className): string
     {
         foreach ($this->_registry as $hook => $entry) {

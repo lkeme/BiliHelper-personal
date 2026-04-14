@@ -15,16 +15,31 @@ final class NotifyDrawResultNodeRunner implements NodeRunnerInterface
     private const AWARD_RECORD_URL_TEMPLATE = 'https://www.bilibili.com/blackboard/era/new-award-record.html?activity_id=%s';
     private const RETRY_DELAY_SECONDS = 300;
 
+    /**
+     * 初始化 NotifyDrawResultNodeRunner
+     * @param ActivityLotteryGateway $activityGateway
+     */
     public function __construct(
         private readonly ActivityLotteryGateway $activityGateway = new ActivityLotteryGateway(),
     ) {
     }
 
+    /**
+     * 获取类型标识
+     * @return string
+     */
     public function type(): string
     {
         return 'notify_draw_result';
     }
 
+    /**
+     * 启动执行流程
+     * @param ActivityFlow $flow
+     * @param ActivityNode $node
+     * @param int $now
+     * @return ActivityNodeResult
+     */
     public function run(ActivityFlow $flow, ActivityNode $node, int $now): ActivityNodeResult
     {
         $payload = $node->payload();

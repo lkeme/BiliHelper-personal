@@ -21,12 +21,20 @@ class Silver2CoinPlugin extends BasePlugin implements PluginTaskInterface
      * @var array<string, int|string>
      */
 
+    /**
+     * 初始化 Silver2CoinPlugin
+     * @param Plugin $plugin
+     */
     public function __construct(Plugin &$plugin)
     {
         $this->authFailureClassifier = new AuthFailureClassifier();
         $this->bootPlugin($plugin, true);
     }
 
+    /**
+     * 执行一次任务
+     * @return TaskResult
+     */
     public function runOnce(): TaskResult
     {
         if (!$this->enabled('silver2coin')) {
@@ -46,11 +54,19 @@ class Silver2CoinPlugin extends BasePlugin implements PluginTaskInterface
         return TaskResult::nextDayAt(10, 0, 0, 1, 60);
     }
 
+    /**
+     * 处理after
+     * @return void
+     */
     protected function after(): void
     {
         $this->revenueWalletApi()->myWallet();
     }
 
+    /**
+     * 处理before
+     * @return bool
+     */
     protected function before(): bool
     {
         $response = $this->revenueWalletApi()->getStatus();
@@ -78,6 +94,10 @@ class Silver2CoinPlugin extends BasePlugin implements PluginTaskInterface
         }
     }
 
+    /**
+     * 处理exchange任务
+     * @return bool
+     */
     protected function exchangeTask(): bool
     {
         $response = $this->revenueWalletApi()->appSilver2coin();
@@ -114,6 +134,10 @@ class Silver2CoinPlugin extends BasePlugin implements PluginTaskInterface
 
         return false;
     }
+    /**
+     * 处理revenue钱包API
+     * @return ApiRevenueWallet
+     */
     private function revenueWalletApi(): ApiRevenueWallet
     {
         return $this->revenueWalletApi ??= new ApiRevenueWallet($this->appContext()->request());

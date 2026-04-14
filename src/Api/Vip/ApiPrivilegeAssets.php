@@ -29,6 +29,10 @@ class ApiPrivilegeAssets extends AbstractApiClient
         'Referer' => 'https://big.bilibili.com/mobile/cardBag?closable=1&navhide=1&tab=all',
     ];
 
+    /**
+     * 初始化 ApiPrivilegeAssets
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

@@ -154,6 +154,13 @@ final class ActivityFlowPlanner
         return $contracts;
     }
 
+    /**
+     * 处理plan
+     * @param ActivityCatalogItem $item
+     * @param EraPageSnapshot $pageSnapshot
+     * @param string $bizDate
+     * @return ActivityFlow
+     */
     public function plan(ActivityCatalogItem $item, ?EraPageSnapshot $pageSnapshot, string $bizDate): ActivityFlow
     {
         $nodes = array_merge(
@@ -300,6 +307,11 @@ final class ActivityFlowPlanner
         ];
     }
 
+    /**
+     * 处理节点ByContract
+     * @param string $type
+     * @return ActivityNode
+     */
     private function nodeByContract(string $type): ActivityNode
     {
         $contracts = self::nodeTypeContracts();
@@ -311,6 +323,11 @@ final class ActivityFlowPlanner
         return new ActivityNode($type, ['lane' => $contract['default_lane']], $contract['default_status']);
     }
 
+    /**
+     * 处理defaultLaneFor节点类型
+     * @param string $type
+     * @return string
+     */
     private function defaultLaneForNodeType(string $type): string
     {
         $contracts = self::nodeTypeContracts();
@@ -321,6 +338,11 @@ final class ActivityFlowPlanner
         return $contracts[$type]['default_lane'];
     }
 
+    /**
+     * 处理dynamic任务Priority
+     * @param string $capability
+     * @return int
+     */
     private function dynamicTaskPriority(string $capability): int
     {
         return self::DYNAMIC_CAPABILITY_PRIORITY[$capability] ?? 1_000;

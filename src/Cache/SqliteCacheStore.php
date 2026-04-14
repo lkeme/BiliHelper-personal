@@ -7,16 +7,30 @@ final class SqliteCacheStore implements CacheStoreInterface
     private ?\SQLite3 $connection = null;
     private readonly SqliteSchemaManager $schemaManager;
 
+    /**
+     * 初始化 SqliteCacheStore
+     * @param string $databasePath
+     */
     public function __construct(private readonly string $databasePath)
     {
         $this->schemaManager = new SqliteSchemaManager();
     }
 
+    /**
+     * 处理databasePath
+     * @return string
+     */
     public function databasePath(): string
     {
         return $this->databasePath;
     }
 
+    /**
+     * 处理get
+     * @param string $scope
+     * @param string $key
+     * @return mixed
+     */
     public function get(string $scope, string $key): mixed
     {
         $statement = $this->connection()->prepare(
@@ -43,6 +57,13 @@ final class SqliteCacheStore implements CacheStoreInterface
         return json_decode($row['value'], true, 512, JSON_THROW_ON_ERROR);
     }
 
+    /**
+     * 处理设置
+     * @param string $scope
+     * @param string $key
+     * @param mixed $value
+     * @return void
+     */
     public function set(string $scope, string $key, mixed $value): void
     {
         $statement = $this->connection()->prepare(
@@ -84,6 +105,10 @@ final class SqliteCacheStore implements CacheStoreInterface
         }
     }
 
+    /**
+     * 清空数据
+     * @return void
+     */
     public function clear(): void
     {
         $path = $this->databasePath;
@@ -110,6 +135,10 @@ final class SqliteCacheStore implements CacheStoreInterface
         }
     }
 
+    /**
+     * 处理connection
+     * @return \SQLite3
+     */
     private function connection(): \SQLite3
     {
         if ($this->connection instanceof \SQLite3) {
@@ -126,6 +155,11 @@ final class SqliteCacheStore implements CacheStoreInterface
         return $this->connection = $connection;
     }
 
+    /**
+     * 处理purgeEntries
+     * @param \SQLite3 $connection
+     * @return void
+     */
     private function purgeEntries(\SQLite3 $connection): void
     {
         $this->schemaManager->ensureCacheSchema($connection);

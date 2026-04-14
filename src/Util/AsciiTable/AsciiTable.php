@@ -393,11 +393,23 @@ class AsciiTable
         return $th_list;
     }
 
+    /**
+     * 处理displayWidth
+     * @param string $value
+     * @return int
+     */
     protected static function displayWidth(string $value): int
     {
         return (int)((strlen($value) + mb_strlen($value, 'UTF-8')) / 2);
     }
 
+    /**
+     * 处理padDisplay
+     * @param string $value
+     * @param int $width
+     * @param int $alignment
+     * @return string
+     */
     protected static function padDisplay(string $value, int $width, int $alignment): string
     {
         $visible = self::displayWidth($value);
@@ -438,6 +450,10 @@ class AsciiTable
         $this->widths[$lastKey] = ($this->widths[$lastKey] ?? 0) + ($requiredInnerWidth - $currentInnerWidth);
     }
 
+    /**
+     * 处理innerWidth
+     * @return int
+     */
     protected function innerWidth(): int
     {
         if ($this->keys === []) {
@@ -447,6 +463,11 @@ class AsciiTable
         return array_sum($this->widths) + count($this->keys) * 3 - 1;
     }
 
+    /**
+     * 处理renderTitleOnly表格
+     * @param string $indentation
+     * @return string
+     */
     protected function renderTitleOnlyTable(string $indentation): string
     {
         if ($this->title === null || $this->title === '') {

@@ -40,6 +40,12 @@ final class Notice
         $this->channels = $channels ?? self::defaultChannels($this->context);
     }
 
+    /**
+     * 处理publish
+     * @param string $type
+     * @param string $msg
+     * @return void
+     */
     public function publish(string $type, string $msg = ''): void
     {
         if (!$this->enabled('notify')) {
@@ -53,6 +59,11 @@ final class Notice
         $this->dispatchMessage($this->messageFactory->create($type, $msg));
     }
 
+    /**
+     * 分发消息
+     * @param NoticeMessage $message
+     * @return void
+     */
     protected function dispatchMessage(NoticeMessage $message): void
     {
         $payload = $message->toArray();
@@ -69,6 +80,11 @@ final class Notice
         }
     }
 
+    /**
+     * 处理过滤MsgWords
+     * @param string $msg
+     * @return bool
+     */
     protected function filterMsgWords(string $msg): bool
     {
         $defaultWords = $this->filterWords->get('Notice.default');
@@ -94,6 +110,12 @@ final class Notice
         return false;
     }
 
+    /**
+     * 处理enabled
+     * @param string $key
+     * @param bool $default
+     * @return bool
+     */
     protected function enabled(string $key, bool $default = false): bool
     {
         return $this->context->enabled($key, $default);

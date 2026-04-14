@@ -7,6 +7,10 @@ use Bhp\Login\LoginRuntimeState;
 
 final class LoginPendingFlowStateService
 {
+    /**
+     * 初始化 LoginPendingFlowStateService
+     * @param LoginPendingFlowStore $store
+     */
     public function __construct(
         private readonly LoginPendingFlowStore $store,
     ) {
@@ -21,6 +25,11 @@ final class LoginPendingFlowStateService
         $this->store->save($flow);
     }
 
+    /**
+     * 清空数据
+     * @param LoginRuntimeState $state
+     * @return void
+     */
     public function clear(LoginRuntimeState $state): void
     {
         $state->clearPendingFlow();

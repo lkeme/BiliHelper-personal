@@ -14,6 +14,11 @@ use Throwable;
 
 final class RequestFailureClassifier
 {
+    /**
+     * 处理classifyThrowable
+     * @param Throwable $throwable
+     * @return string
+     */
     public function classifyThrowable(Throwable $throwable): string
     {
         if ($throwable instanceof Exception) {
@@ -23,6 +28,11 @@ final class RequestFailureClassifier
         return $this->classifyMessage($throwable->getMessage());
     }
 
+    /**
+     * 处理classify
+     * @param Exception $exception
+     * @return string
+     */
     public function classify(Exception $exception): string
     {
         return match (true) {
@@ -37,6 +47,11 @@ final class RequestFailureClassifier
         };
     }
 
+    /**
+     * 处理classify消息
+     * @param string $message
+     * @return string
+     */
     public function classifyMessage(string $message): string
     {
         $normalized = strtolower($message);

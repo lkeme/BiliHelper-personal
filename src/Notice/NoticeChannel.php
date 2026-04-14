@@ -4,8 +4,16 @@ namespace Bhp\Notice;
 
 interface NoticeChannel
 {
+    /**
+     * 处理名称
+     * @return string
+     */
     public function name(): string;
 
+    /**
+     * 处理supports
+     * @return bool
+     */
     public function supports(): bool;
 
     /**

@@ -118,16 +118,28 @@ final class EraActivityTask
         ];
     }
 
+    /**
+     * 判断Runnable当前时间是否满足条件
+     * @return bool
+     */
     public function isRunnableNow(): bool
     {
         return $this->supportLevel === self::SUPPORT_NOW;
     }
 
+    /**
+     * 判断直播Target是否满足条件
+     * @return bool
+     */
     public function hasLiveTarget(): bool
     {
         return $this->targetRoomIds !== [] || $this->targetAreaId > 0;
     }
 
+    /**
+     * 判断直播AreaTarget是否满足条件
+     * @return bool
+     */
     public function hasLiveAreaTarget(): bool
     {
         return $this->targetAreaId > 0;

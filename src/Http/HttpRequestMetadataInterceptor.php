@@ -4,6 +4,11 @@ namespace Bhp\Http;
 
 final class HttpRequestMetadataInterceptor implements HttpClientInterceptor
 {
+    /**
+     * 处理beforeSend
+     * @param HttpRequestContext $context
+     * @return HttpRequestContext
+     */
     public function beforeSend(HttpRequestContext $context): HttpRequestContext
     {
         $parts = parse_url($context->url);
@@ -20,10 +25,22 @@ final class HttpRequestMetadataInterceptor implements HttpClientInterceptor
         return $context;
     }
 
+    /**
+     * 处理after响应
+     * @param HttpRequestContext $context
+     * @param HttpResponse $response
+     * @return void
+     */
     public function afterResponse(HttpRequestContext $context, HttpResponse $response): void
     {
     }
 
+    /**
+     * 处理after失败
+     * @param HttpRequestContext $context
+     * @param \Throwable $exception
+     * @return void
+     */
     public function afterFailure(HttpRequestContext $context, \Throwable $exception): void
     {
     }

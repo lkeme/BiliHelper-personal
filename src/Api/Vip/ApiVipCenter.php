@@ -29,6 +29,10 @@ class ApiVipCenter extends AbstractApiClient
         'Referer' => 'https://big.bilibili.com/mobile/index',
     ];
 
+    /**
+     * 初始化 ApiVipCenter
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

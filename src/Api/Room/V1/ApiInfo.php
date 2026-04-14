@@ -7,6 +7,10 @@ use Bhp\Request\Request;
 
 class ApiInfo extends AbstractApiClient
 {
+    /**
+     * 初始化 ApiInfo
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

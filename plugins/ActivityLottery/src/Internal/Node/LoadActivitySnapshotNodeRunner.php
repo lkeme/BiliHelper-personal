@@ -14,16 +14,31 @@ final class LoadActivitySnapshotNodeRunner implements NodeRunnerInterface
 {
     private const RETRY_DELAY_SECONDS = 300;
 
+    /**
+     * 初始化 LoadActivitySnapshotNodeRunner
+     * @param ActivityLotteryGateway $activityGateway
+     */
     public function __construct(
         private readonly ActivityLotteryGateway $activityGateway = new ActivityLotteryGateway(),
     ) {
     }
 
+    /**
+     * 获取类型标识
+     * @return string
+     */
     public function type(): string
     {
         return 'load_activity_snapshot';
     }
 
+    /**
+     * 启动执行流程
+     * @param ActivityFlow $flow
+     * @param ActivityNode $node
+     * @param int $now
+     * @return ActivityNodeResult
+     */
     public function run(ActivityFlow $flow, ActivityNode $node, int $now): ActivityNodeResult
     {
         $activity = $flow->activity();

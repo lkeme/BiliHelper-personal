@@ -7,6 +7,10 @@ use Bhp\Request\Request;
 
 class ApiJury extends AbstractApiClient
 {
+    /**
+     * 初始化 ApiJury
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

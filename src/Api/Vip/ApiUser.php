@@ -23,6 +23,10 @@ use Bhp\WbiSign\WbiSign;
 
 class ApiUser extends AbstractApiClient
 {
+    /**
+     * 初始化 ApiUser
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

@@ -45,6 +45,20 @@ final class WatchLiveGateway
     private \Closure $areaRoomPicker;
     private \Closure $logger;
 
+    /**
+     * 初始化 WatchLiveGateway
+     * @param ApiList $apiList
+     * @param ApiRecommend $apiRecommend
+     * @param ApiIndex $apiIndex
+     * @param callable $startAction
+     * @param callable $heartbeatAction
+     * @param LiveWatchService $watchService
+     * @param callable $roomResolver
+     * @param callable $areaRoomPicker
+     * @param callable $areaTagPageFetcher
+     * @param callable $userAgentResolver
+     * @param callable $logger
+     */
     public function __construct(
         ApiList $apiList,
         ApiRecommend $apiRecommend,
@@ -283,6 +297,12 @@ final class WatchLiveGateway
         return null;
     }
 
+    /**
+     * 解析AreaWebId
+     * @param int $areaId
+     * @param int $parentAreaId
+     * @return string
+     */
     private function resolveAreaWebId(int $areaId, int $parentAreaId): string
     {
         $cacheKey = $parentAreaId . ':' . $areaId;
@@ -449,6 +469,10 @@ final class WatchLiveGateway
         $this->log('debug', $message);
     }
 
+    /**
+     * 处理观看服务
+     * @return LiveWatchService
+     */
     private function watchService(): LiveWatchService
     {
         if ($this->watchService instanceof LiveWatchService) {
@@ -460,6 +484,10 @@ final class WatchLiveGateway
         return $this->watchService;
     }
 
+    /**
+     * 处理resetLookup状态
+     * @return void
+     */
     private function resetLookupState(): void
     {
         $this->directRoomLookupFailed = false;
@@ -469,6 +497,10 @@ final class WatchLiveGateway
         $this->recommendLookupSucceeded = false;
     }
 
+    /**
+     * 解析待处理Start失败
+     * @return ?RequestException
+     */
     private function resolvePendingStartFailure(): ?RequestException
     {
         if ($this->directRoomLookupFailed) {
@@ -486,6 +518,11 @@ final class WatchLiveGateway
         return null;
     }
 
+    /**
+     * 解析观看运行时失败
+     * @param \RuntimeException $exception
+     * @return ?RequestException
+     */
     private function resolveWatchRuntimeFailure(\RuntimeException $exception): ?RequestException
     {
         $message = trim($exception->getMessage());

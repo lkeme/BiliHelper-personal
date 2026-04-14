@@ -7,6 +7,14 @@ trait CommonTaskInfo
 {
     protected const VIEW_DELAY_TASK_KEY = 'DelayedAction';
 
+    /**
+     * 判断Complete是否满足条件
+     * @param array $data
+     * @param string $name
+     * @param mixed $title
+     * @param mixed $code
+     * @return bool
+     */
     protected function isComplete(array $data, string $name, mixed $title, mixed $code): bool
     {
         $item = $this->getTaskInfo($data, (string)$title, (string)$code);
@@ -58,6 +66,16 @@ trait CommonTaskInfo
         return [];
     }
 
+    /**
+     * 处理worker
+     * @param array $data
+     * @param string $name
+     * @param string $title
+     * @param string $code
+     * @param int $c
+     * @param string $arg
+     * @return bool
+     */
     protected function worker(array $data, string $name, string $title, string $code, int $c, string $arg = ''): bool
     {
         $item = $this->getTaskInfo($data, $title, $code);
@@ -82,6 +100,12 @@ trait CommonTaskInfo
         };
     }
 
+    /**
+     * 处理complete
+     * @param string $task_code
+     * @param string $name
+     * @return bool
+     */
     protected function complete(string $task_code, string $name): bool
     {
         $response = $this->vipPointScoreTaskApi()->complete($task_code);
@@ -96,6 +120,13 @@ trait CommonTaskInfo
         return true;
     }
 
+    /**
+     * 处理completeView
+     * @param string $task_code
+     * @param string $name
+     * @param string $channel
+     * @return bool
+     */
     protected function completeView(string $task_code, string $name, string $channel): bool
     {
         $action = $this->getTask(self::VIEW_DELAY_TASK_KEY);
@@ -137,6 +168,12 @@ trait CommonTaskInfo
         return true;
     }
 
+    /**
+     * 处理complete大会员MallView
+     * @param string $task_code
+     * @param string $name
+     * @return bool
+     */
     protected function completeVipMallView(string $task_code, string $name): bool
     {
         $action = $this->getTask(self::VIEW_DELAY_TASK_KEY);

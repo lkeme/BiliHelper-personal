@@ -4,6 +4,11 @@ namespace Bhp\Api\Support;
 
 final class ApiResponseDecoder
 {
+    /**
+     * 初始化 ApiResponseDecoder
+     * @param ApiResponseNormalizerInterface $defaultJsonNormalizer
+     * @param ApiResponseNormalizerInterface $defaultRawNormalizer
+     */
     public function __construct(
         private readonly ?ApiResponseNormalizerInterface $defaultJsonNormalizer = null,
         private readonly ?ApiResponseNormalizerInterface $defaultRawNormalizer = null,
@@ -28,6 +33,13 @@ final class ApiResponseDecoder
         ];
     }
 
+    /**
+     * 处理decodeRaw
+     * @param string $raw
+     * @param string $label
+     * @param ApiResponseNormalizerInterface $normalizer
+     * @return mixed
+     */
     public function decodeRaw(
         string $raw,
         string $label,
@@ -36,11 +48,21 @@ final class ApiResponseDecoder
         return $this->resolveRawNormalizer($normalizer)->normalize($raw, $label);
     }
 
+    /**
+     * 解析JSONNormalizer
+     * @param ApiResponseNormalizerInterface $normalizer
+     * @return ApiResponseNormalizerInterface
+     */
     private function resolveJsonNormalizer(?ApiResponseNormalizerInterface $normalizer): ApiResponseNormalizerInterface
     {
         return $normalizer ?? $this->defaultJsonNormalizer ?? new StandardBilibiliNormalizer();
     }
 
+    /**
+     * 解析RawNormalizer
+     * @param ApiResponseNormalizerInterface $normalizer
+     * @return ApiResponseNormalizerInterface
+     */
     private function resolveRawNormalizer(?ApiResponseNormalizerInterface $normalizer): ApiResponseNormalizerInterface
     {
         return $normalizer ?? $this->defaultRawNormalizer ?? new RawTextNormalizer();

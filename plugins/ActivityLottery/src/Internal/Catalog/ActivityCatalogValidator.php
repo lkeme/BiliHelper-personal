@@ -6,6 +6,10 @@ final class ActivityCatalogValidator
 {
     private \Closure $logger;
 
+    /**
+     * 初始化 ActivityCatalogValidator
+     * @param callable $logger
+     */
     public function __construct(?callable $logger = null)
     {
         $this->logger = $logger !== null
@@ -46,6 +50,11 @@ final class ActivityCatalogValidator
         return $valid;
     }
 
+    /**
+     * 处理rejectReason
+     * @param ActivityCatalogItem $item
+     * @return ?string
+     */
     private function rejectReason(ActivityCatalogItem $item): ?string
     {
         $row = $item->toArray();

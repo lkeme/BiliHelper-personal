@@ -7,6 +7,10 @@ use Bhp\Request\Request;
 
 final class ApiTopic extends AbstractApiClient
 {
+    /**
+     * 初始化 ApiTopic
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

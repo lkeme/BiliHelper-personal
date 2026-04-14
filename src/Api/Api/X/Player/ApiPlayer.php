@@ -7,6 +7,10 @@ use Bhp\Request\Request;
 
 class ApiPlayer extends AbstractApiClient
 {
+    /**
+     * 初始化 ApiPlayer
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

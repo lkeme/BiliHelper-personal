@@ -11,6 +11,10 @@ final class ActivityInfoUpdateRunner
 {
     private ?ApiActivity $apiActivity = null;
 
+    /**
+     * 初始化 ActivityInfoUpdateRunner
+     * @param AppContext $appContext
+     */
     public function __construct(
         private readonly AppContext $appContext,
     ) {
@@ -84,6 +88,10 @@ final class ActivityInfoUpdateRunner
         ];
     }
 
+    /**
+     * 断言Authenticated
+     * @return void
+     */
     private function assertAuthenticated(): void
     {
         $cookie = $this->appContext->auth('cookie');
@@ -92,6 +100,10 @@ final class ActivityInfoUpdateRunner
         }
     }
 
+    /**
+     * 处理资源Path
+     * @return string
+     */
     private function resourcePath(): string
     {
         $appRoot = rtrim(str_replace('\\', '/', $this->appContext->appRoot()), '/');
@@ -245,6 +257,11 @@ final class ActivityInfoUpdateRunner
         return $normalized;
     }
 
+    /**
+     * 标准化URL
+     * @param string $url
+     * @return string
+     */
     private function normalizeUrl(string $url): string
     {
         $url = trim($url);
@@ -330,6 +347,10 @@ final class ActivityInfoUpdateRunner
         ];
     }
 
+    /**
+     * 处理APIActivity
+     * @return ApiActivity
+     */
     private function apiActivity(): ApiActivity
     {
         return $this->apiActivity ??= new ApiActivity($this->appContext->request());

@@ -5,16 +5,29 @@ namespace Bhp\Notice\Channel;
 
 final class SctNoticeChannel extends AbstractNoticeChannel
 {
+    /**
+     * 处理名称
+     * @return string
+     */
     public function name(): string
     {
         return 'server-chan-turbo';
     }
 
+    /**
+     * 处理supports
+     * @return bool
+     */
     public function supports(): bool
     {
         return trim((string)$this->config('notify_sct.sctkey', '', 'string')) !== '';
     }
 
+    /**
+     * 处理分发
+     * @param array $payload
+     * @return void
+     */
     public function dispatch(array $payload): void
     {
         $this->info('使用ServerChan(Turbo)推送消息');

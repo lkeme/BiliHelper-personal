@@ -8,6 +8,19 @@ use Bhp\Util\AppTerminator;
 
 final class LoginManualInterventionPolicy
 {
+    /**
+     * 初始化 LoginManualInterventionPolicy
+     * @param AppContext $context
+     * @param LoginPendingFlowStore $pendingFlowStore
+     * @param Notice $notice
+     * @param mixed $clock
+     * @param mixed $noticePusher
+     * @param mixed $terminator
+     * @param string $modeOverride
+     * @param int $notifyAfterSecondsOverride
+     * @param int $notifyIntervalSecondsOverride
+     * @param int $timeoutSecondsOverride
+     */
     public function __construct(
         private readonly AppContext $context,
         private readonly LoginPendingFlowStore $pendingFlowStore,
@@ -22,6 +35,10 @@ final class LoginManualInterventionPolicy
     ) {
     }
 
+    /**
+     * 处理enforce
+     * @return void
+     */
     public function enforce(): void
     {
         $flow = $this->pendingFlowStore->load();
@@ -58,6 +75,12 @@ final class LoginManualInterventionPolicy
         $this->terminate(sprintf('登录流程需要人工介入，超时退出: %s', $type));
     }
 
+    /**
+     * 判断通知是否满足条件
+     * @param array $flow
+     * @param int $now
+     * @return bool
+     */
     private function shouldNotify(array $flow, int $now): bool
     {
         $lastNotifiedAt = (int)($flow['last_notified_at'] ?? 0);
@@ -68,6 +91,10 @@ final class LoginManualInterventionPolicy
         return ($now - $lastNotifiedAt) >= $this->notifyIntervalSeconds();
     }
 
+    /**
+     * 判断Unattended是否满足条件
+     * @return bool
+     */
     private function isUnattended(): bool
     {
         $mode = $this->modeOverride;
@@ -82,6 +109,10 @@ final class LoginManualInterventionPolicy
         };
     }
 
+    /**
+     * 判断InteractiveConsole是否满足条件
+     * @return bool
+     */
     private function isInteractiveConsole(): bool
     {
         if (!defined('STDIN')) {
@@ -95,6 +126,10 @@ final class LoginManualInterventionPolicy
         return false;
     }
 
+    /**
+     * 处理通知AfterSeconds
+     * @return int
+     */
     private function notifyAfterSeconds(): int
     {
         if ($this->notifyAfterSecondsOverride !== null) {
@@ -104,6 +139,10 @@ final class LoginManualInterventionPolicy
         return max(0, (int)$this->context->config('login_policy.notify_after_seconds', 60));
     }
 
+    /**
+     * 处理通知IntervalSeconds
+     * @return int
+     */
     private function notifyIntervalSeconds(): int
     {
         if ($this->notifyIntervalSecondsOverride !== null) {
@@ -113,6 +152,10 @@ final class LoginManualInterventionPolicy
         return max(1, (int)$this->context->config('login_policy.notify_interval_seconds', 300));
     }
 
+    /**
+     * 处理timeoutSeconds
+     * @return int
+     */
     private function timeoutSeconds(): int
     {
         if ($this->timeoutSecondsOverride !== null) {
@@ -122,6 +165,12 @@ final class LoginManualInterventionPolicy
         return max(1, (int)$this->context->config('login_policy.pending_timeout_seconds', 900));
     }
 
+    /**
+     * 处理通知
+     * @param string $type
+     * @param string $message
+     * @return void
+     */
     private function notify(string $type, string $message): void
     {
         if (is_callable($this->noticePusher)) {
@@ -137,6 +186,11 @@ final class LoginManualInterventionPolicy
         throw new \LogicException('LoginManualInterventionPolicy notice dependency is not configured.');
     }
 
+    /**
+     * 处理terminate
+     * @param string $message
+     * @return void
+     */
     private function terminate(string $message): void
     {
         if (is_callable($this->terminator)) {
@@ -147,6 +201,10 @@ final class LoginManualInterventionPolicy
         AppTerminator::fail($message, [], 0);
     }
 
+    /**
+     * 获取当前时间
+     * @return int
+     */
     private function now(): int
     {
         if (is_callable($this->clock)) {

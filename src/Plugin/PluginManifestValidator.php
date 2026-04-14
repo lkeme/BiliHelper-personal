@@ -146,6 +146,11 @@ final class PluginManifestValidator
         return "插件 {$hook} 缺少能力声明: " . implode(', ', $missing);
     }
 
+    /**
+     * 处理toTypedManifest
+     * @param array|PluginManifest $manifest
+     * @return PluginManifest
+     */
     private function toTypedManifest(array|PluginManifest $manifest): PluginManifest
     {
         return $manifest instanceof PluginManifest ? $manifest : PluginManifest::fromArray($manifest);
@@ -219,6 +224,11 @@ final class PluginManifestValidator
         return null;
     }
 
+    /**
+     * 处理shortClass名称
+     * @param string $className
+     * @return string
+     */
     private function shortClassName(string $className): string
     {
         $normalized = str_replace('\\', '/', $className);

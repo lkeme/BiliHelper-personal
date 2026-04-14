@@ -30,6 +30,10 @@ final class MainSiteRuntimeState
         return $this->records;
     }
 
+    /**
+     * 处理标准化
+     * @return self
+     */
     private function normalize(): self
     {
         foreach (self::MARKER_BUCKETS as $bucket) {
@@ -42,6 +46,11 @@ final class MainSiteRuntimeState
         return $this;
     }
 
+    /**
+     * 标准化MarkerBucket
+     * @param string $bucket
+     * @return void
+     */
     private function normalizeMarkerBucket(string $bucket): void
     {
         $markers = $this->records[$bucket] ?? [];
@@ -55,6 +64,12 @@ final class MainSiteRuntimeState
         )));
     }
 
+    /**
+     * 判断Marker是否满足条件
+     * @param string $bucket
+     * @param string $key
+     * @return bool
+     */
     public function hasMarker(string $bucket, string $key): bool
     {
         $this->normalizeMarkerBucket($bucket);
@@ -62,6 +77,12 @@ final class MainSiteRuntimeState
         return in_array($key, $this->records[$bucket], true);
     }
 
+    /**
+     * 处理markCompleted
+     * @param string $bucket
+     * @param string $key
+     * @return void
+     */
     public function markCompleted(string $bucket, string $key): void
     {
         $this->normalizeMarkerBucket($bucket);
@@ -90,6 +111,10 @@ final class MainSiteRuntimeState
         $this->normalizePendingWatch();
     }
 
+    /**
+     * 删除或清理待处理观看
+     * @return void
+     */
     public function clearPendingWatch(): void
     {
         $this->records['watch_pending'] = null;
@@ -114,11 +139,19 @@ final class MainSiteRuntimeState
         $this->normalizePendingCoins();
     }
 
+    /**
+     * 删除或清理待处理Coins
+     * @return void
+     */
     public function clearPendingCoins(): void
     {
         $this->records['coin_pending'] = [];
     }
 
+    /**
+     * 标准化待处理观看
+     * @return void
+     */
     private function normalizePendingWatch(): void
     {
         $pending = $this->records['watch_pending'] ?? null;
@@ -137,6 +170,10 @@ final class MainSiteRuntimeState
         $this->records['watch_pending'] = $normalized === [] ? null : $normalized;
     }
 
+    /**
+     * 标准化待处理Coins
+     * @return void
+     */
     private function normalizePendingCoins(): void
     {
         $pending = $this->records['coin_pending'] ?? [];

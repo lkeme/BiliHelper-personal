@@ -17,11 +17,21 @@ class HttpClientInterceptorRegistry
         $this->replace($providers);
     }
 
+    /**
+     * 处理注册
+     * @param HttpClientInterceptorProvider $provider
+     * @return void
+     */
     public function register(HttpClientInterceptorProvider $provider): void
     {
         $this->providers[$provider->name()] = $provider;
     }
 
+    /**
+     * 处理unregister
+     * @param string $name
+     * @return void
+     */
     public function unregister(string $name): void
     {
         unset($this->providers[$name]);

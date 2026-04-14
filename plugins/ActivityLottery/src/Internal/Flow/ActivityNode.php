@@ -65,11 +65,19 @@ final class ActivityNode
         );
     }
 
+    /**
+     * 获取类型标识
+     * @return string
+     */
     public function type(): string
     {
         return $this->type;
     }
 
+    /**
+     * 处理状态
+     * @return string
+     */
     public function status(): string
     {
         return $this->status;
@@ -91,11 +99,19 @@ final class ActivityNode
         return $this->context;
     }
 
+    /**
+     * 处理结果
+     * @return ?ActivityNodeResult
+     */
     public function result(): ?ActivityNodeResult
     {
         return $this->result;
     }
 
+    /**
+     * 处理attempts
+     * @return int
+     */
     public function attempts(): int
     {
         return $this->attempts;
@@ -131,6 +147,13 @@ final class ActivityNode
         ];
     }
 
+    /**
+     * 断言Valid
+     * @param string $type
+     * @param string $status
+     * @param int $attempts
+     * @return void
+     */
     private static function assertValid(string $type, string $status, int $attempts): void
     {
         if (trim($type) === '') {

@@ -4,6 +4,18 @@ namespace Bhp\Plugin\Builtin\ActivityLottery\Internal\Catalog;
 
 final class ActivityCatalogItem
 {
+    /**
+     * 初始化 ActivityCatalogItem
+     * @param string $id
+     * @param string $title
+     * @param string $updateTime
+     * @param string $activityId
+     * @param string $pageId
+     * @param string $lotteryId
+     * @param string $url
+     * @param int $startTime
+     * @param int $endTime
+     */
     public function __construct(
         private readonly string $id,
         private readonly string $title,
@@ -42,32 +54,56 @@ final class ActivityCatalogItem
         );
     }
 
+    /**
+     * 处理id
+     * @return string
+     */
     public function id(): string
     {
         return $this->id;
     }
 
+    /**
+     * 处理title
+     * @return string
+     */
     public function title(): string
     {
         return $this->title;
     }
 
+    /**
+     * 保存或更新时间
+     * @return string
+     */
     public function updateTime(): string
     {
         return $this->updateTime;
     }
 
+    /**
+     * 保存或更新时间戳
+     * @return int
+     */
     public function updateTimestamp(): int
     {
         $timestamp = strtotime($this->updateTime);
         return $timestamp === false ? 0 : $timestamp;
     }
 
+    /**
+     * 处理start时间
+     * @return int
+     */
     public function startTime(): int
     {
         return $this->startTime;
     }
 
+    /**
+     * 处理end时间
+     * @return int
+     */
     public function endTime(): int
     {
         return $this->endTime;
@@ -91,6 +127,15 @@ final class ActivityCatalogItem
         ];
     }
 
+    /**
+     * 解析Unique键
+     * @param string $activityId
+     * @param string $pageId
+     * @param string $lotteryId
+     * @param string $url
+     * @param string $fallbackId
+     * @return string
+     */
     private static function resolveUniqueKey(
         string $activityId,
         string $pageId,

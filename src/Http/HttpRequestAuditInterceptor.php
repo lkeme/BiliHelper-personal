@@ -4,6 +4,11 @@ namespace Bhp\Http;
 
 final class HttpRequestAuditInterceptor implements HttpClientInterceptor
 {
+    /**
+     * 处理beforeSend
+     * @param HttpRequestContext $context
+     * @return HttpRequestContext
+     */
     public function beforeSend(HttpRequestContext $context): HttpRequestContext
     {
         $context->attributes['body_mode'] = $this->resolveBodyMode($context->options);
@@ -15,14 +20,31 @@ final class HttpRequestAuditInterceptor implements HttpClientInterceptor
         return $context;
     }
 
+    /**
+     * 处理after响应
+     * @param HttpRequestContext $context
+     * @param HttpResponse $response
+     * @return void
+     */
     public function afterResponse(HttpRequestContext $context, HttpResponse $response): void
     {
     }
 
+    /**
+     * 处理after失败
+     * @param HttpRequestContext $context
+     * @param \Throwable $exception
+     * @return void
+     */
     public function afterFailure(HttpRequestContext $context, \Throwable $exception): void
     {
     }
 
+    /**
+     * 解析Body模式
+     * @param RequestOptions $options
+     * @return string
+     */
     private function resolveBodyMode(RequestOptions $options): string
     {
         if ($options->json !== null) {
@@ -44,6 +66,11 @@ final class HttpRequestAuditInterceptor implements HttpClientInterceptor
         return 'none';
     }
 
+    /**
+     * 解析Body字段数量
+     * @param RequestOptions $options
+     * @return int
+     */
     private function resolveBodyFieldCount(RequestOptions $options): int
     {
         if ($options->json !== null) {
@@ -57,6 +84,11 @@ final class HttpRequestAuditInterceptor implements HttpClientInterceptor
         return 0;
     }
 
+    /**
+     * 解析RawBodyBytes
+     * @param RequestOptions $options
+     * @return int
+     */
     private function resolveRawBodyBytes(RequestOptions $options): int
     {
         if ($options->body === null || $options->body === '') {

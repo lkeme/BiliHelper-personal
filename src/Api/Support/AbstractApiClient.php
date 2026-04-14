@@ -7,6 +7,12 @@ use Throwable;
 
 abstract class AbstractApiClient
 {
+    /**
+     * 初始化 AbstractApiClient
+     * @param Request $request
+     * @param ApiTransport $transport
+     * @param ApiResponseDecoder $decoder
+     */
     public function __construct(
         private readonly Request $request,
         private readonly ?ApiTransport $transport = null,
@@ -14,6 +20,10 @@ abstract class AbstractApiClient
     ) {
     }
 
+    /**
+     * 处理请求
+     * @return Request
+     */
     protected function request(): Request
     {
         return $this->request;
@@ -150,11 +160,19 @@ abstract class AbstractApiClient
         return $this->decoder()->decodeJson($raw, $label, $normalizer);
     }
 
+    /**
+     * 处理transport
+     * @return ApiTransport
+     */
     protected function transport(): ApiTransport
     {
         return $this->transport ?? new ApiTransport();
     }
 
+    /**
+     * 处理decoder
+     * @return ApiResponseDecoder
+     */
     protected function decoder(): ApiResponseDecoder
     {
         return $this->decoder ?? new ApiResponseDecoder();

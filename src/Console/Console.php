@@ -123,6 +123,10 @@ LOGO;
         return array_values($argv);
     }
 
+    /**
+     * 处理注册
+     * @return void
+     */
     public function register(): void
     {
         $env = $this->env;
@@ -156,6 +160,10 @@ LOGO;
         return array_values(array_map('strval', $this->argv));
     }
 
+    /**
+     * 处理模式
+     * @return string
+     */
     public function mode(): string
     {
         return self::resolveMode($this->argv());
@@ -187,6 +195,11 @@ LOGO;
         return 'app';
     }
 
+    /**
+     * 判断命令令牌是否满足条件
+     * @param string $token
+     * @return bool
+     */
     private static function isCommandToken(string $token): bool
     {
         return in_array($token, self::COMMAND_TOKENS, true);
@@ -211,11 +224,21 @@ LOGO;
         }
     }
 
+    /**
+     * 处理looksLike命令令牌
+     * @param string $token
+     * @return bool
+     */
     private static function looksLikeCommandToken(string $token): bool
     {
         return preg_match('/^(?:m|mode):/i', $token) === 1;
     }
 
+    /**
+     * 判断Strip画像令牌是否满足条件
+     * @param string $token
+     * @return bool
+     */
     private function shouldStripProfileToken(string $token): bool
     {
         return $token !== ''
@@ -223,6 +246,11 @@ LOGO;
             && !self::isCommandToken($token);
     }
 
+    /**
+     * 判断Safe画像名称是否满足条件
+     * @param string $name
+     * @return bool
+     */
     private static function isSafeProfileName(string $name): bool
     {
         return preg_match('/^[A-Za-z0-9](?:[A-Za-z0-9_-]{0,63})$/', $name) === 1;

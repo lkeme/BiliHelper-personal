@@ -23,12 +23,20 @@ class GameForecastPlugin extends BasePlugin implements PluginTaskInterface
      * @var array<string, int|string>
      */
 
+    /**
+     * 初始化 GameForecastPlugin
+     * @param Plugin $plugin
+     */
     public function __construct(Plugin &$plugin)
     {
         $this->authFailureClassifier = new AuthFailureClassifier();
         $this->bootPlugin($plugin, true);
     }
 
+    /**
+     * 执行一次任务
+     * @return TaskResult
+     */
     public function runOnce(): TaskResult
     {
         if (!$this->enabled('game_forecast')) {
@@ -108,6 +116,10 @@ class GameForecastPlugin extends BasePlugin implements PluginTaskInterface
         return $guess;
     }
 
+    /**
+     * 处理startStake
+     * @return void
+     */
     protected function startStake(): void
     {
         $maxGuess = $this->config('game_forecast.max_num', 0, 'int');
@@ -218,6 +230,10 @@ class GameForecastPlugin extends BasePlugin implements PluginTaskInterface
         return false;
     }
 
+    /**
+     * 处理guessAPI
+     * @return ApiGuess
+     */
     private function guessApi(): ApiGuess
     {
         return $this->guessApi ??= new ApiGuess($this->appContext()->request());

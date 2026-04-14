@@ -9,6 +9,13 @@ use Bhp\Util\Exceptions\LoginException;
 
 final class LoginPendingFlowLifecycleService
 {
+    /**
+     * 初始化 LoginPendingFlowLifecycleService
+     * @param LoginCaptchaService $captchaService
+     * @param LoginPendingFlowFactory $pendingFlowFactory
+     * @param LoginPendingFlowStateService $pendingFlowStateService
+     * @param Log $log
+     */
     public function __construct(
         private readonly LoginCaptchaService $captchaService,
         private readonly LoginPendingFlowFactory $pendingFlowFactory,

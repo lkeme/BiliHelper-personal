@@ -33,6 +33,15 @@ class Scheduler
     private ?LoginGateStateService $loginGateStateService = null;
     private ?LoginManualInterventionPolicy $loginManualInterventionPolicy = null;
 
+    /**
+     * 初始化 Scheduler
+     * @param Plugin $plugin
+     * @param Log $log
+     * @param LoginGateStateService $loginGateStateService
+     * @param LoginManualInterventionPolicy $loginManualInterventionPolicy
+     * @param HttpRequestTrafficMonitor $httpRequestTrafficMonitor
+     * @param SchedulerStateStore $schedulerStateStore
+     */
     public function __construct(
         private readonly Plugin $plugin,
         private readonly Log $log,
@@ -45,6 +54,11 @@ class Scheduler
         $this->loginManualInterventionPolicy = $loginManualInterventionPolicy;
     }
 
+    /**
+     * 注册Plugins
+     * @param array $plugins
+     * @return void
+     */
     public function registerPlugins(array $plugins): void
     {
         $now = $this->monotonicNowNs();
@@ -97,6 +111,10 @@ class Scheduler
         }
     }
 
+    /**
+     * 启动执行流程
+     * @return void
+     */
     public function run(): void
     {
         if ($this->started) {
@@ -157,6 +175,10 @@ class Scheduler
         return $rows;
     }
 
+    /**
+     * 处理运行InitialRound
+     * @return void
+     */
     private function runInitialRound(): void
     {
         $this->loginManualInterventionPolicy()->enforce();
@@ -199,6 +221,11 @@ class Scheduler
         }
     }
 
+    /**
+     * 处理tick
+     * @param bool $highFrequency
+     * @return void
+     */
     private function tick(bool $highFrequency): void
     {
         $this->loginManualInterventionPolicy()->enforce();
@@ -235,6 +262,10 @@ class Scheduler
         }
     }
 
+    /**
+     * 判断HighFrequencyTasks是否满足条件
+     * @return bool
+     */
     private function hasHighFrequencyTasks(): bool
     {
         foreach ($this->tasks as $task) {
@@ -246,6 +277,12 @@ class Scheduler
         return false;
     }
 
+    /**
+     * 处理分发
+     * @param ScheduledTask $task
+     * @param float $nowNs
+     * @return void
+     */
     private function dispatch(ScheduledTask $task, float $nowNs): void
     {
         $running = $this->running[$task->hook] ?? 0;
@@ -312,6 +349,12 @@ class Scheduler
         });
     }
 
+    /**
+     * 分发同步
+     * @param ScheduledTask $task
+     * @param float $nowNs
+     * @return TaskResult
+     */
     private function dispatchSync(ScheduledTask $task, float $nowNs): TaskResult
     {
         $this->log->recordDebug("[SCHEDULER.INIT] dispatch {$task->name} priority={$task->priority}", [
@@ -363,6 +406,13 @@ class Scheduler
         return $result;
     }
 
+    /**
+     * 应用任务结果
+     * @param ScheduledTask $task
+     * @param TaskResult $result
+     * @param float $referenceNs
+     * @return void
+     */
     private function applyTaskResult(ScheduledTask $task, TaskResult $result, float $referenceNs): void
     {
         if ($result->nextRunAfterSeconds !== null) {
@@ -378,11 +428,23 @@ class Scheduler
         $this->refreshLoginRecoveryState($task);
     }
 
+    /**
+     * 预留下次运行Slot
+     * @param ScheduledTask $task
+     * @param float $referenceNs
+     * @return void
+     */
     private function reserveNextRunSlot(ScheduledTask $task, float $referenceNs): void
     {
         $this->advanceNextRunAt($task, $referenceNs);
     }
 
+    /**
+     * 完成Scheduled下次运行
+     * @param ScheduledTask $task
+     * @param float $referenceNs
+     * @return void
+     */
     private function finalizeScheduledNextRun(ScheduledTask $task, float $referenceNs): void
     {
         if ($task->nextRunAtNs === 0.0) {
@@ -402,6 +464,12 @@ class Scheduler
         $this->advanceNextRunAt($task, $referenceNs);
     }
 
+    /**
+     * 推进下次运行At
+     * @param ScheduledTask $task
+     * @param float $nowNs
+     * @return void
+     */
     private function advanceNextRunAt(ScheduledTask $task, float $nowNs): void
     {
         $intervalNs = max(1.0, round($task->intervalSeconds * 1_000_000_000));
@@ -416,16 +484,30 @@ class Scheduler
         } while ($task->nextRunAtNs <= $nowNs);
     }
 
+    /**
+     * 处理monotonic当前时间Ns
+     * @return float
+     */
     private function monotonicNowNs(): float
     {
         return (float) hrtime(true);
     }
 
+    /**
+     * 处理wall时间当前时间Seconds
+     * @return float
+     */
     private function wallTimeNowSeconds(): float
     {
         return microtime(true);
     }
 
+    /**
+     * 格式化下次运行延迟
+     * @param ScheduledTask $task
+     * @param float $nowNs
+     * @return string
+     */
     private function formatNextRunDelay(ScheduledTask $task, float $nowNs): string
     {
         if ($task->nextRunAtNs >= (float)PHP_INT_MAX) {
@@ -435,6 +517,11 @@ class Scheduler
         return (string)round(max(0.0, ($task->nextRunAtNs - $nowNs) / 1_000_000_000), 2);
     }
 
+    /**
+     * 解析CycleToSeconds
+     * @param string $cycle
+     * @return float
+     */
     private function parseCycleToSeconds(string $cycle): float
     {
         if ($cycle === '') {
@@ -458,6 +545,12 @@ class Scheduler
         };
     }
 
+    /**
+     * 判断CircuitOpen是否满足条件
+     * @param ScheduledTask $task
+     * @param float $nowNs
+     * @return bool
+     */
     private function isCircuitOpen(ScheduledTask $task, float $nowNs): bool
     {
         if ($task->circuitOpenUntilNs <= $nowNs) {
@@ -480,6 +573,13 @@ class Scheduler
         return true;
     }
 
+    /**
+     * 记录任务Outcome
+     * @param ScheduledTask $task
+     * @param TaskResult $result
+     * @param float $referenceNs
+     * @return void
+     */
     private function recordTaskOutcome(ScheduledTask $task, TaskResult $result, float $referenceNs): void
     {
         if ($result->success) {
@@ -504,6 +604,12 @@ class Scheduler
         ]);
     }
 
+    /**
+     * 应用治理Backoff
+     * @param ScheduledTask $task
+     * @param float $nowNs
+     * @return bool
+     */
     private function applyGovernanceBackoff(ScheduledTask $task, float $nowNs): bool
     {
         if ($task->governanceHosts === []
@@ -538,6 +644,12 @@ class Scheduler
         return true;
     }
 
+    /**
+     * 应用分组ConcurrencyBackoff
+     * @param ScheduledTask $task
+     * @param float $nowNs
+     * @return bool
+     */
     private function applyGroupConcurrencyBackoff(ScheduledTask $task, float $nowNs): bool
     {
         if ($task->governanceGroup === '' || $task->governanceGroupMaxConcurrency < 1) {
@@ -567,6 +679,11 @@ class Scheduler
         return true;
     }
 
+    /**
+     * 解析治理分组BackoffSeconds
+     * @param ScheduledTask $task
+     * @return float
+     */
     private function resolveGovernanceGroupBackoffSeconds(ScheduledTask $task): float
     {
         if ($task->governanceGroupBackoffSeconds > 0.0) {
@@ -580,6 +697,11 @@ class Scheduler
         };
     }
 
+    /**
+     * 解析治理CooldownMultiplier
+     * @param ScheduledTask $task
+     * @return float
+     */
     private function resolveGovernanceCooldownMultiplier(ScheduledTask $task): float
     {
         if ($task->governanceCooldownMultiplier > 0.0) {
@@ -593,11 +715,20 @@ class Scheduler
         };
     }
 
+    /**
+     * 处理状态存储
+     * @return SchedulerStateStore
+     */
     private function stateStore(): SchedulerStateStore
     {
         return $this->stateStore ??= $this->schedulerStateStore;
     }
 
+    /**
+     * 判断Hold任务For登录待处理流程是否满足条件
+     * @param ScheduledTask $task
+     * @return bool
+     */
     private function shouldHoldTaskForLoginPendingFlow(ScheduledTask $task): bool
     {
         if ($task->hook === 'Login') {
@@ -611,11 +742,19 @@ class Scheduler
         return $this->loginGateStateService()->shouldBlockBusinessTasks();
     }
 
+    /**
+     * 判断待处理登录流程是否满足条件
+     * @return bool
+     */
     private function hasPendingLoginFlow(): bool
     {
         return $this->loginGateStateService()->hasPendingFlow();
     }
 
+    /**
+     * 处理登录闸门状态服务
+     * @return LoginGateStateService
+     */
     private function loginGateStateService(): LoginGateStateService
     {
         if (!$this->loginGateStateService instanceof LoginGateStateService) {
@@ -625,6 +764,10 @@ class Scheduler
         return $this->loginGateStateService;
     }
 
+    /**
+     * 处理登录手动Intervention策略
+     * @return LoginManualInterventionPolicy
+     */
     private function loginManualInterventionPolicy(): LoginManualInterventionPolicy
     {
         if (!$this->loginManualInterventionPolicy instanceof LoginManualInterventionPolicy) {
@@ -634,6 +777,13 @@ class Scheduler
         return $this->loginManualInterventionPolicy;
     }
 
+    /**
+     * 请求登录恢复
+     * @param ScheduledTask $sourceTask
+     * @param float $nowNs
+     * @param string $reason
+     * @return void
+     */
     private function requestLoginRecovery(ScheduledTask $sourceTask, float $nowNs, string $reason): void
     {
         $this->loginRecoveryRequested = true;
@@ -653,6 +803,11 @@ class Scheduler
         ]);
     }
 
+    /**
+     * 刷新登录恢复状态
+     * @param ScheduledTask $task
+     * @return void
+     */
     private function refreshLoginRecoveryState(ScheduledTask $task): void
     {
         if ($task->hook !== 'Login') {
@@ -662,6 +817,14 @@ class Scheduler
         $this->loginRecoveryRequested = $this->loginGateStateService()->shouldBlockBusinessTasks();
     }
 
+    /**
+     * 恢复截止时间From状态
+     * @param mixed $epochSeconds
+     * @param float $nowNs
+     * @param float $nowEpoch
+     * @param float $default
+     * @return float
+     */
     private function restoreDeadlineFromState(
         mixed $epochSeconds,
         float $nowNs,
@@ -680,6 +843,11 @@ class Scheduler
         return $nowNs + (($deadlineEpoch - $nowEpoch) * 1_000_000_000);
     }
 
+    /**
+     * 保存或更新任务状态
+     * @param ScheduledTask $task
+     * @return void
+     */
     private function persistTaskState(ScheduledTask $task): void
     {
         $this->stateStore()->saveTaskState(
@@ -690,6 +858,11 @@ class Scheduler
         );
     }
 
+    /**
+     * 处理截止时间ToEpochSeconds
+     * @param float $deadlineNs
+     * @return float
+     */
     private function deadlineToEpochSeconds(float $deadlineNs): float
     {
         if ($deadlineNs <= 0.0) {

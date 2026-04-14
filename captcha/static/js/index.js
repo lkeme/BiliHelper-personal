@@ -11,6 +11,7 @@ window.onload = function () {
     const newChallengeInput = document.querySelector("#new-challenge")
     const validateInput = document.querySelector("#validate")
     const seccodeInput = document.querySelector("#seccode")
+    let isSubmitting = false
 
     class GeeTest {
         constructor(gt, challenge) {
@@ -83,29 +84,13 @@ window.onload = function () {
         new GeeTest(gt, challenge).init(true);
     }
 
-    const search = location.search;
-
-    if (search !== '') {
+    if (location.search !== '') {
         hide(genBtn);
         show(wait);
 
-        let gt = '';
-        let challenge = '';
-
-        const arr = search.substring(1).split("&");
-        for (const i in arr) {
-            const t = arr[i].split("=");
-            switch (t[0]) {
-                case "gt":
-                    gt = t[1];
-                    break;
-                case "challenge":
-                    challenge = t[1];
-                    break;
-                default:
-                    break;
-            }
-        }
+        const params = new URLSearchParams(location.search);
+        const gt = params.get("gt") || '';
+        const challenge = params.get("challenge") || '';
         if (gt !== '' && challenge !== '') {
             gtInput.value = gt;
             challengeInput.value = challenge;
@@ -118,44 +103,51 @@ window.onload = function () {
     }
 
     resultBtn.onclick = () => {
-        const text = "validate=" + validateInput.value + "&seccode=" + seccodeInput.value
-        // const clipboard = navigator.clipboard
-        // if (clipboard === undefined) {
-        //     const el = document.createElement('input');
-        //     el.setAttribute('value', text);
-        //     document.body.appendChild(el);
-        //     el.select();
-        //     const res = document.execCommand('copy');
-        //     document.body.removeChild(el);
-        //     showToastBox(res? "复制成功" : "复制失败");
-        // } else clipboard.writeText(text).then(() => {
-        //     console.log("复制成功");
-        //     showToastBox("复制成功");
-        // }, err => {
-        //     console.log("复制失败");
-        //     console.log(err);
-        //     showToastBox("复制失败");
-        // });
+        if (isSubmitting) {
+            return;
+        }
 
-        $.ajax({
-            url: 'feedback',
-            type: 'POST',
-            dataType: 'json',
-            data: {
+        if (challengeInput.value === '' || newChallengeInput.value === '' || validateInput.value === '' || seccodeInput.value === '') {
+            showToastBox("请先完成验证码并生成结果", 3000);
+            return;
+        }
+
+        isSubmitting = true;
+        setButtonBusy(resultBtn, true, "提交中...");
+
+        fetch('feedback', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+            },
+            body: new URLSearchParams({
                 challenge: challengeInput.value,
                 new_challenge: newChallengeInput.value,
                 validate: validateInput.value,
                 seccode: seccodeInput.value
-            },
-            success: function (data) {
-                if (data.code === 10003) {
-                    showToastBox("提交反馈成功");
-                } else {
-                    showToastBox("提交反馈失败");
-                }
-            },
-            error: function (err) {
-                showToastBox('error: ' + err.status + ' ' + err.statusText);
+            })
+        }).then(async response => {
+            const data = await response.json().catch(() => ({}));
+            return {ok: response.ok, data};
+        }).then(({ok, data}) => {
+            if (!ok) {
+                showToastBox(data.message || "提交反馈失败");
+                return;
+            }
+
+            if (data.code === 10003) {
+                showToastBox("提交反馈成功");
+                setButtonBusy(resultBtn, true, "提交成功");
+                return;
+            }
+
+            showToastBox(data.message || "提交反馈失败");
+        }).catch(err => {
+            showToastBox('error: ' + err.message);
+        }).finally(() => {
+            if (resultBtn.textContent !== "提交成功") {
+                isSubmitting = false;
+                setButtonBusy(resultBtn, false, "提交反馈结果");
             }
         });
     }
@@ -163,7 +155,7 @@ window.onload = function () {
     let timer = null
 
     function showToastBox(text, timeout = 2000) {
-        toastBox.innerHTML = text;
+        toastBox.textContent = text;
         toastBox.style.opacity = 1;
         toastBox.style.top = '50px';
         if (timer != null) clearTimeout(timer)
@@ -179,5 +171,10 @@ window.onload = function () {
 
     function show(el) {
         el.classList.remove("hide")
+    }
+
+    function setButtonBusy(el, busy, text) {
+        el.textContent = text;
+        el.classList.toggle("is-disabled", busy);
     }
 }

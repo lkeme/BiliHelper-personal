@@ -21,6 +21,12 @@ final class EraShareNodeRunner implements NodeRunnerInterface
     private readonly mixed $shareAction;
     private readonly AuthFailureClassifier $authFailureClassifier;
 
+    /**
+     * 初始化 EraShareNodeRunner
+     * @param ApiActivity $apiActivity
+     * @param callable $shareAction
+     * @param AuthFailureClassifier $authFailureClassifier
+     */
     public function __construct(ApiActivity $apiActivity, ?callable $shareAction = null, ?AuthFailureClassifier $authFailureClassifier = null)
     {
         $this->apiActivity = $apiActivity;
@@ -28,11 +34,22 @@ final class EraShareNodeRunner implements NodeRunnerInterface
         $this->authFailureClassifier = $authFailureClassifier ?? new AuthFailureClassifier();
     }
 
+    /**
+     * 获取类型标识
+     * @return string
+     */
     public function type(): string
     {
         return 'era_task_share';
     }
 
+    /**
+     * 启动执行流程
+     * @param ActivityFlow $flow
+     * @param ActivityNode $node
+     * @param int $now
+     * @return ActivityNodeResult
+     */
     public function run(ActivityFlow $flow, ActivityNode $node, int $now): ActivityNodeResult
     {
         $taskView = ResolvedEraTaskView::fromFlowAndNode($flow, $node);

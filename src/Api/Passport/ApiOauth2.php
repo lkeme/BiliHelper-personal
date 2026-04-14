@@ -22,6 +22,10 @@ use Bhp\Request\Request;
 
 class ApiOauth2 extends AbstractApiClient
 {
+    /**
+     * 初始化 ApiOauth2
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

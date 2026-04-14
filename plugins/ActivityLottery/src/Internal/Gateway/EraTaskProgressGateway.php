@@ -14,6 +14,12 @@ final class EraTaskProgressGateway
     private readonly mixed $taskProgressFetcher;
     private readonly AuthFailureClassifier $authFailureClassifier;
 
+    /**
+     * 初始化 EraTaskProgressGateway
+     * @param ApiTask $apiTask
+     * @param callable $taskProgressFetcher
+     * @param AuthFailureClassifier $authFailureClassifier
+     */
     public function __construct(
         ApiTask $apiTask,
         ?callable $taskProgressFetcher = null,

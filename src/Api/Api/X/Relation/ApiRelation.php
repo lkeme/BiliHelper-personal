@@ -29,6 +29,10 @@ class ApiRelation extends AbstractApiClient
     public const SOURCE_CREATOR_INCENTIVE = 192;
     public const SOURCE_ACTIVITY_PAGE = 222;
 
+    /**
+     * 初始化 ApiRelation
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

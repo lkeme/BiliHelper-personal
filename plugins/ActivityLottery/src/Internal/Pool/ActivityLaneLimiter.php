@@ -37,12 +37,24 @@ final class ActivityLaneLimiter
         }
     }
 
+    /**
+     * 判断Pass是否满足条件
+     * @param string $lane
+     * @param int $now
+     * @return bool
+     */
     public function canPass(string $lane, int $now): bool
     {
         $this->assertKnownLane($lane);
         return $this->blockedUntil($lane) <= $now;
     }
 
+    /**
+     * 处理预留
+     * @param string $lane
+     * @param int $now
+     * @return void
+     */
     public function reserve(string $lane, int $now): void
     {
         $this->assertKnownLane($lane);
@@ -55,12 +67,22 @@ final class ActivityLaneLimiter
         $this->laneNextRunAt[$lane] = $now + $cooldown;
     }
 
+    /**
+     * 处理cooldownSeconds
+     * @param string $lane
+     * @return int
+     */
     public function cooldownSeconds(string $lane): int
     {
         $this->assertKnownLane($lane);
         return (int)($this->laneCooldownSeconds[$lane] ?? 0);
     }
 
+    /**
+     * 处理blockedUntil
+     * @param string $lane
+     * @return int
+     */
     public function blockedUntil(string $lane): int
     {
         $this->assertKnownLane($lane);
@@ -112,6 +134,11 @@ final class ActivityLaneLimiter
         return $normalized;
     }
 
+    /**
+     * 断言KnownLane
+     * @param string $lane
+     * @return void
+     */
     private function assertKnownLane(string $lane): void
     {
         $name = trim($lane);

@@ -4,6 +4,12 @@ namespace Bhp\Api\Response;
 
 final class SpaceArticleSummary
 {
+    /**
+     * 初始化 SpaceArticleSummary
+     * @param int $id
+     * @param string $title
+     * @param int $publishTime
+     */
     public function __construct(
         public readonly int $id,
         public readonly string $title,

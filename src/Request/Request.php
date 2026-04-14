@@ -28,6 +28,15 @@ class Request
     private readonly RequestFailureClassifier $failureClassifier;
     private readonly \Closure $sleep;
 
+    /**
+     * 初始化 Request
+     * @param HttpClient $httpClient
+     * @param AppContext $context
+     * @param Cache $cache
+     * @param RequestRetryPolicy $retryPolicy
+     * @param callable $sleep
+     * @param float $timeout
+     */
     public function __construct(
         protected readonly HttpClient $httpClient,
         protected readonly AppContext $context,
@@ -51,6 +60,10 @@ class Request
         $this->timeout = $timeout;
     }
 
+    /**
+     * 处理buvid值
+     * @return string
+     */
     public function buvidValue(): string
     {
         if ($this->buvid === null) {
@@ -62,21 +75,38 @@ class Request
         return $this->buvid;
     }
 
+    /**
+     * 处理csrf值
+     * @return string
+     */
     public function csrfValue(): string
     {
         return $this->context->csrf();
     }
 
+    /**
+     * 处理UID值
+     * @return string
+     */
     public function uidValue(): string
     {
         return $this->context->uid();
     }
 
+    /**
+     * 处理sid值
+     * @return string
+     */
     public function sidValue(): string
     {
         return $this->context->sid();
     }
 
+    /**
+     * 处理签名AndroidPayload
+     * @param array $payload
+     * @return array
+     */
     public function signAndroidPayload(array $payload): array
     {
         $appKey = base64_decode((string)$this->context->device('app.bili_a.app_key_n'));
@@ -99,6 +129,11 @@ class Request
         return self::signPayload(array_merge($payload, $default), (string)$appSecret);
     }
 
+    /**
+     * 处理签名登录Payload
+     * @param array $payload
+     * @return array
+     */
     public function signLoginPayload(array $payload): array
     {
         return match ((int)$this->context->config('login_mode.mode')) {
@@ -107,6 +142,12 @@ class Request
         };
     }
 
+    /**
+     * 处理签名CommonPayload
+     * @param array $payload
+     * @param bool $includeStatistics
+     * @return array
+     */
     public function signCommonPayload(array $payload, bool $includeStatistics = false): array
     {
         $appKey = base64_decode((string)$this->context->device('app.bili_a.app_key'));
@@ -131,6 +172,15 @@ class Request
         return self::signPayload(array_merge($payload, $default), (string)$appSecret);
     }
 
+    /**
+     * 获取响应Instance
+     * @param string $os
+     * @param string $url
+     * @param array $params
+     * @param array $headers
+     * @param float $timeout
+     * @return HttpResponse
+     */
     public function getResponseInstance(string $os, string $url, array $params = [], array $headers = [], float $timeout = 30.0): HttpResponse
     {
         $requestId = $this->startRequest();
@@ -152,11 +202,29 @@ class Request
         }
     }
 
+    /**
+     * 获取Text
+     * @param string $os
+     * @param string $url
+     * @param array $params
+     * @param array $headers
+     * @param float $timeout
+     * @return string
+     */
     public function getText(string $os, string $url, array $params = [], array $headers = [], float $timeout = 30.0): string
     {
         return $this->getResponseInstance($os, $url, $params, $headers, $timeout)->getBody();
     }
 
+    /**
+     * 处理post响应Instance
+     * @param string $os
+     * @param string $url
+     * @param array $params
+     * @param array $headers
+     * @param float $timeout
+     * @return HttpResponse
+     */
     public function postResponseInstance(string $os, string $url, array $params = [], array $headers = [], float $timeout = 30.0): HttpResponse
     {
         $requestId = $this->startRequest();
@@ -178,11 +246,30 @@ class Request
         }
     }
 
+    /**
+     * 处理postText
+     * @param string $os
+     * @param string $url
+     * @param array $params
+     * @param array $headers
+     * @param float $timeout
+     * @return string
+     */
     public function postText(string $os, string $url, array $params = [], array $headers = [], float $timeout = 30.0): string
     {
         return $this->postResponseInstance($os, $url, $params, $headers, $timeout)->getBody();
     }
 
+    /**
+     * 处理postTextWithQuery
+     * @param string $os
+     * @param string $url
+     * @param array $formParams
+     * @param array $query
+     * @param array $headers
+     * @param float $timeout
+     * @return string
+     */
     public function postTextWithQuery(
         string $os,
         string $url,
@@ -216,6 +303,15 @@ class Request
         }
     }
 
+    /**
+     * 处理postJSONBodyText
+     * @param string $os
+     * @param string $url
+     * @param array $params
+     * @param array $headers
+     * @param float $timeout
+     * @return string
+     */
     public function postJsonBodyText(string $os, string $url, array $params = [], array $headers = [], float $timeout = 30.0): string
     {
         $requestId = $this->startRequest();
@@ -237,6 +333,15 @@ class Request
         }
     }
 
+    /**
+     * 处理put响应Instance
+     * @param string $os
+     * @param string $url
+     * @param array $params
+     * @param array $headers
+     * @param float $timeout
+     * @return HttpResponse
+     */
     public function putResponseInstance(string $os, string $url, array $params = [], array $headers = [], float $timeout = 30.0): HttpResponse
     {
         $requestId = $this->startRequest();
@@ -258,11 +363,30 @@ class Request
         }
     }
 
+    /**
+     * 处理putText
+     * @param string $os
+     * @param string $url
+     * @param array $params
+     * @param array $headers
+     * @param float $timeout
+     * @return string
+     */
     public function putText(string $os, string $url, array $params = [], array $headers = [], float $timeout = 30.0): string
     {
         return $this->putResponseInstance($os, $url, $params, $headers, $timeout)->getBody();
     }
 
+    /**
+     * 处理sendSingle
+     * @param string $method
+     * @param string $url
+     * @param array $payload
+     * @param array $headers
+     * @param int $timeout
+     * @param bool $quiet
+     * @return bool|string|null
+     */
     public function sendSingle(string $method, string $url, array $payload = [], array $headers = [], int $timeout = 10, bool $quiet = false): bool|string|null
     {
         $this->context->log()->recordDebug("[SINGLE] {$url}", $payload);
@@ -298,6 +422,15 @@ class Request
         }
     }
 
+    /**
+     * 获取Headers
+     * @param string $os
+     * @param string $url
+     * @param array $params
+     * @param array $headers
+     * @param float $timeout
+     * @return array
+     */
     public function fetchHeaders(string $os, string $url, array $params = [], array $headers = [], float $timeout = 30.0): array
     {
         $requestId = $this->startRequest();
@@ -346,6 +479,10 @@ class Request
         ];
     }
 
+    /**
+     * 处理start请求
+     * @return string
+     */
     protected function startRequest(): string
     {
         $requestId = Fake::hash();
@@ -354,11 +491,24 @@ class Request
         return $requestId;
     }
 
+    /**
+     * 设置请求
+     * @param string $requestId
+     * @param string $key
+     * @param mixed $values
+     * @return void
+     */
     protected function setRequest(string $requestId, string $key, mixed $values): void
     {
         $this->caches[$requestId][$key] = $values;
     }
 
+    /**
+     * 获取请求
+     * @param string $requestId
+     * @param string $key
+     * @return mixed
+     */
     protected function getRequest(string $requestId, string $key): mixed
     {
         if (!isset($this->caches[$requestId]) || !array_key_exists($key, $this->caches[$requestId])) {
@@ -368,11 +518,22 @@ class Request
         return $this->caches[$requestId][$key];
     }
 
+    /**
+     * 处理stop请求
+     * @param string $requestId
+     * @return void
+     */
     protected function stopRequest(string $requestId): void
     {
         unset($this->caches[$requestId]);
     }
 
+    /**
+     * 处理withURL
+     * @param string $requestId
+     * @param string $url
+     * @return static
+     */
     protected function withUrl(string $requestId, string $url): static
     {
         $this->setRequest($requestId, 'url', $url);
@@ -380,6 +541,12 @@ class Request
         return $this;
     }
 
+    /**
+     * 处理withMethod
+     * @param string $requestId
+     * @param string $method
+     * @return static
+     */
     protected function withMethod(string $requestId, string $method): static
     {
         $this->setRequest($requestId, 'method', strtolower($method));
@@ -387,6 +554,13 @@ class Request
         return $this;
     }
 
+    /**
+     * 处理withHeaders
+     * @param string $requestId
+     * @param string $os
+     * @param array $headers
+     * @return static
+     */
     protected function withHeaders(string $requestId, string $os = 'app', array $headers = []): static
     {
         $this->setRequest($requestId, 'headers', array_merge($this->defaultHeadersForOs($os), $headers));
@@ -394,6 +568,13 @@ class Request
         return $this;
     }
 
+    /**
+     * 处理with选项
+     * @param string $requestId
+     * @param array $addOptions
+     * @param float $timeout
+     * @return static
+     */
     protected function withOptions(string $requestId, array $addOptions, float $timeout = 30.0): static
     {
         $defaultOptions = [
@@ -411,11 +592,21 @@ class Request
         return $this;
     }
 
+    /**
+     * 处理handle
+     * @param string $requestId
+     * @return HttpResponse
+     */
     protected function handle(string $requestId): HttpResponse
     {
         return $this->handleWithHttpClient($requestId);
     }
 
+    /**
+     * 处理handleWithHTTP客户端
+     * @param string $requestId
+     * @return HttpResponse
+     */
     protected function handleWithHttpClient(string $requestId): HttpResponse
     {
         $url = (string)$this->getRequest($requestId, 'url');
@@ -482,6 +673,12 @@ class Request
         );
     }
 
+    /**
+     * 处理签名Payload
+     * @param array $payload
+     * @param string $appSecret
+     * @return array
+     */
     protected static function signPayload(array $payload, string $appSecret): array
     {
         if (isset($payload['sign'])) {
@@ -494,6 +691,11 @@ class Request
         return $payload;
     }
 
+    /**
+     * 处理toHTTP请求选项
+     * @param array $options
+     * @return RequestOptions
+     */
     protected function toHttpRequestOptions(array $options): RequestOptions
     {
         $requestOptions = new RequestOptions();
@@ -511,6 +713,10 @@ class Request
         return $requestOptions;
     }
 
+    /**
+     * 处理上下文
+     * @return AppContext
+     */
     protected function context(): AppContext
     {
         return $this->context;
@@ -556,6 +762,11 @@ class Request
         return $defaultHeaders;
     }
 
+    /**
+     * 处理sleep
+     * @param float $seconds
+     * @return void
+     */
     private function sleep(float $seconds): void
     {
         ($this->sleep)($seconds);

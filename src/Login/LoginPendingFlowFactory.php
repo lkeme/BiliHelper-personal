@@ -41,6 +41,11 @@ final class LoginPendingFlowFactory
         ];
     }
 
+    /**
+     * 处理extractRecaptcha令牌
+     * @param string $targetUrl
+     * @return string
+     */
     private function extractRecaptchaToken(string $targetUrl): string
     {
         preg_match('/recaptcha_token=([a-zA-Z0-9_-]+)/', $targetUrl, $matches);

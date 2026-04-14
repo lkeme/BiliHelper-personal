@@ -9,6 +9,10 @@ final class LoginPendingFlowStore
     private const CACHE_SCOPE = 'Login';
     private const CACHE_KEY = 'pending_login_flow';
 
+    /**
+     * 初始化 LoginPendingFlowStore
+     * @param Cache $cache
+     */
     public function __construct(
         private readonly Cache $cache,
     ) {
@@ -34,6 +38,10 @@ final class LoginPendingFlowStore
         $this->cache->put(self::CACHE_KEY, $flow, self::CACHE_SCOPE);
     }
 
+    /**
+     * 清空数据
+     * @return void
+     */
     public function clear(): void
     {
         $this->cache->initializeScope(self::CACHE_SCOPE);

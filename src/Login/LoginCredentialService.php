@@ -8,6 +8,11 @@ use Bhp\Util\Exceptions\LoginException;
 
 class LoginCredentialService
 {
+    /**
+     * 初始化 LoginCredentialService
+     * @param AppContext $context
+     * @param ApiOauth2 $apiOauth2
+     */
     public function __construct(
         protected AppContext $context,
         private readonly ApiOauth2 $apiOauth2,
@@ -44,6 +49,11 @@ class LoginCredentialService
         ];
     }
 
+    /**
+     * 处理encryptPassword
+     * @param string $plaintext
+     * @return string
+     */
     public function encryptPassword(string $plaintext): string
     {
         $this->context->log()->recordInfo('正在载入公钥');

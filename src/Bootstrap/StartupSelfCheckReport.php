@@ -23,6 +23,10 @@ final class StartupSelfCheckReport
     ) {
     }
 
+    /**
+     * 判断BlockingIssues是否满足条件
+     * @return bool
+     */
     public function hasBlockingIssues(): bool
     {
         return $this->blockingIssues !== [];

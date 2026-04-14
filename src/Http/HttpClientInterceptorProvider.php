@@ -4,8 +4,16 @@ namespace Bhp\Http;
 
 interface HttpClientInterceptorProvider
 {
+    /**
+     * 处理名称
+     * @return string
+     */
     public function name(): string;
 
+    /**
+     * 处理priority
+     * @return int
+     */
     public function priority(): int;
 
     /**

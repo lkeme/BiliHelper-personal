@@ -6,6 +6,12 @@ trait DressView
 {
     use CommonTaskInfo;
 
+    /**
+     * 处理dressView
+     * @param array $data
+     * @param string $name
+     * @return bool
+     */
     public function dressView(array $data, string $name): bool
     {
         $title = '日常任务';

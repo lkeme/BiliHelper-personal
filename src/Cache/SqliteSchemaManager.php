@@ -8,6 +8,11 @@ final class SqliteSchemaManager
     private const CACHE_SCHEMA_VERSION = 1;
     private const ACTIVITY_FLOW_SCHEMA_VERSION = 1;
 
+    /**
+     * 处理ensure缓存结构
+     * @param \SQLite3 $connection
+     * @return void
+     */
     public function ensureCacheSchema(\SQLite3 $connection): void
     {
         $this->ensureMetaTable($connection);
@@ -23,6 +28,12 @@ final class SqliteSchemaManager
         $this->recordSchemaVersion($connection, 'cache_entries', self::CACHE_SCHEMA_VERSION);
     }
 
+    /**
+     * 处理ensureActivity流程结构
+     * @param \SQLite3 $connection
+     * @param string $tableName
+     * @return void
+     */
     public function ensureActivityFlowSchema(\SQLite3 $connection, string $tableName = 'activity_flow_entries'): void
     {
         $this->ensureMetaTable($connection);
@@ -39,6 +50,11 @@ final class SqliteSchemaManager
         $this->recordSchemaVersion($connection, $tableName, self::ACTIVITY_FLOW_SCHEMA_VERSION);
     }
 
+    /**
+     * 处理ensureMeta表格
+     * @param \SQLite3 $connection
+     * @return void
+     */
     private function ensureMetaTable(\SQLite3 $connection): void
     {
         $connection->exec(
@@ -50,6 +66,13 @@ final class SqliteSchemaManager
         );
     }
 
+    /**
+     * 记录结构Version
+     * @param \SQLite3 $connection
+     * @param string $schemaName
+     * @param int $version
+     * @return void
+     */
     private function recordSchemaVersion(\SQLite3 $connection, string $schemaName, int $version): void
     {
         $statement = $connection->prepare(

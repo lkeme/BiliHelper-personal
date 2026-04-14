@@ -141,6 +141,12 @@ final class PluginManifest
         return array_values($normalized);
     }
 
+    /**
+     * 解析Manifest日期时间
+     * @param string $value
+     * @param DateTimeZone $timezone
+     * @return ?DateTimeImmutable
+     */
     public static function parseManifestDateTime(string $value, ?DateTimeZone $timezone = null): ?DateTimeImmutable
     {
         $normalized = trim($value);

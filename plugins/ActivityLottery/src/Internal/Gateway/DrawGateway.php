@@ -18,6 +18,13 @@ final class DrawGateway
     private readonly mixed $drawOnceFetcher;
     private readonly AuthFailureClassifier $authFailureClassifier;
 
+    /**
+     * 初始化 DrawGateway
+     * @param ApiActivity $apiActivity
+     * @param callable $refreshTimesFetcher
+     * @param callable $drawOnceFetcher
+     * @param AuthFailureClassifier $authFailureClassifier
+     */
     public function __construct(
         ApiActivity $apiActivity,
         ?callable $refreshTimesFetcher = null,

@@ -17,11 +17,19 @@ class CheckUpdatePlugin extends BasePlugin implements PluginTaskInterface
      * @var array<string, int|string|bool>
      */
 
+    /**
+     * 初始化 CheckUpdatePlugin
+     * @param Plugin $plugin
+     */
     public function __construct(Plugin $plugin)
     {
         $this->bootPlugin($plugin, true);
     }
 
+    /**
+     * 执行一次任务
+     * @return TaskResult
+     */
     public function runOnce(): TaskResult
     {
         if (!$this->enabled('check_update')) {
@@ -33,6 +41,10 @@ class CheckUpdatePlugin extends BasePlugin implements PluginTaskInterface
             : TaskResult::after(3 * 60 * 60);
     }
 
+    /**
+     * 检查更新
+     * @return bool
+     */
     protected function checkUpdate(): bool
     {
         $this->info('开始检查项目更新');
@@ -68,16 +80,28 @@ class CheckUpdatePlugin extends BasePlugin implements PluginTaskInterface
         return true;
     }
 
+    /**
+     * 获取OfflineVersion
+     * @return Resource
+     */
     protected function fetchOfflineVersion(): Resource
     {
         return (new Resource())->loadF($this->versionResourcePath(), 'json');
     }
 
+    /**
+     * 处理version资源Path
+     * @return string
+     */
     protected function versionResourcePath(): string
     {
         return rtrim(str_replace('\\', '/', $this->appContext()->appRoot()), '/') . '/resources/version.json';
     }
 
+    /**
+     * 获取OnlineVersion
+     * @return object
+     */
     protected function fetchOnlineVersion(): object
     {
         $resolver = new RemoteResourceResolver($this->appContext());
@@ -109,6 +133,12 @@ class CheckUpdatePlugin extends BasePlugin implements PluginTaskInterface
         return (object)$last;
     }
 
+    /**
+     * 处理compareVersion
+     * @param string $off
+     * @param string $on
+     * @return bool
+     */
     protected static function compareVersion(string $off, string $on): bool
     {
         $off = trim($off);

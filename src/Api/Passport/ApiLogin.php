@@ -22,6 +22,10 @@ use Bhp\Request\Request;
 
 class ApiLogin extends AbstractApiClient
 {
+    /**
+     * 初始化 ApiLogin
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

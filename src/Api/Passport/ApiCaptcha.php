@@ -7,6 +7,10 @@ use Bhp\Request\Request;
 
 class ApiCaptcha extends AbstractApiClient
 {
+    /**
+     * 初始化 ApiCaptcha
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

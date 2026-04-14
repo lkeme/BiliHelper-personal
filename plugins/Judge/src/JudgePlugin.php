@@ -25,12 +25,20 @@ class JudgePlugin extends BasePlugin implements PluginTaskInterface
      */
     protected array $wait_case = [];
 
+    /**
+     * 初始化 JudgePlugin
+     * @param Plugin $plugin
+     */
     public function __construct(Plugin &$plugin)
     {
         $this->authFailureClassifier = new AuthFailureClassifier();
         $this->bootPlugin($plugin, true);
     }
 
+    /**
+     * 执行一次任务
+     * @return TaskResult
+     */
     public function runOnce(): TaskResult
     {
         $this->resetTaskResult();
@@ -48,6 +56,10 @@ class JudgePlugin extends BasePlugin implements PluginTaskInterface
         return $this->resolveTaskResult(TaskResult::after(mt_rand(15, 30) * 60));
     }
 
+    /**
+     * 处理judgement任务
+     * @return void
+     */
     protected function judgementTask(): void
     {
         if (empty($this->wait_case)) {
@@ -71,6 +83,11 @@ class JudgePlugin extends BasePlugin implements PluginTaskInterface
         array_pop($this->wait_case);
     }
 
+    /**
+     * 处理case检查
+     * @param string $caseId
+     * @return bool
+     */
     protected function caseCheck(string $caseId): bool
     {
         if ($caseId === '') {
@@ -97,6 +114,12 @@ class JudgePlugin extends BasePlugin implements PluginTaskInterface
         return false;
     }
 
+    /**
+     * 处理vote
+     * @param string $caseId
+     * @param int $vote
+     * @return bool
+     */
     private function vote(string $caseId, int $vote): bool
     {
         $response = $this->juryApi()->vote($caseId, $vote, '', 0, array_rand([0, 1]));
@@ -111,6 +134,11 @@ class JudgePlugin extends BasePlugin implements PluginTaskInterface
         }
     }
 
+    /**
+     * 处理randInt
+     * @param int $max
+     * @return string
+     */
     protected function randInt(int $max = 17): string
     {
         $temp = [];
@@ -121,6 +149,10 @@ class JudgePlugin extends BasePlugin implements PluginTaskInterface
         return implode('', $temp);
     }
 
+    /**
+     * 处理probability
+     * @return int
+     */
     protected function probability(): int
     {
         $result = 0;
@@ -172,6 +204,10 @@ class JudgePlugin extends BasePlugin implements PluginTaskInterface
         return $response['data']['vote_items'];
     }
 
+    /**
+     * 处理caseObtain
+     * @return string
+     */
     protected function caseObtain(): string
     {
         $response = $this->juryApi()->caseNext();
@@ -206,6 +242,10 @@ class JudgePlugin extends BasePlugin implements PluginTaskInterface
         return '';
     }
 
+    /**
+     * 处理jury信息
+     * @return bool
+     */
     protected function juryInfo(): bool
     {
         $response = $this->juryApi()->jury();
@@ -232,6 +272,10 @@ class JudgePlugin extends BasePlugin implements PluginTaskInterface
         return false;
     }
 
+    /**
+     * 处理juryApply
+     * @return void
+     */
     protected function juryApply(): void
     {
         $response = $this->juryApi()->juryApply();
@@ -244,6 +288,10 @@ class JudgePlugin extends BasePlugin implements PluginTaskInterface
         }
     }
 
+    /**
+     * 处理judgementIndex
+     * @return bool
+     */
     private function judgementIndex(): bool
     {
         $response = $this->juryApi()->caseList();
@@ -275,6 +323,10 @@ class JudgePlugin extends BasePlugin implements PluginTaskInterface
 
         return true;
     }
+    /**
+     * 处理juryAPI
+     * @return ApiJury
+     */
     private function juryApi(): ApiJury
     {
         return $this->juryApi ??= new ApiJury($this->appContext()->request());

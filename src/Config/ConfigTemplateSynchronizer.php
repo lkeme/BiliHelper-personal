@@ -4,6 +4,12 @@ namespace Bhp\Config;
 
 final class ConfigTemplateSynchronizer
 {
+    /**
+     * 处理synchronize
+     * @param string $templatePath
+     * @param string $targetPath
+     * @return ConfigTemplateSyncResult
+     */
     public function synchronize(string $templatePath, string $targetPath): ConfigTemplateSyncResult
     {
         $templateContent = (string)file_get_contents($templatePath);
@@ -104,6 +110,11 @@ final class ConfigTemplateSynchronizer
         return ($hasBom ? "\xEF\xBB\xBF" : '') . $rendered;
     }
 
+    /**
+     * 处理detectNewline
+     * @param string $content
+     * @return string
+     */
     private function detectNewline(string $content): string
     {
         if (str_contains($content, "\r\n")) {
@@ -127,6 +138,11 @@ final class ConfigTemplateSynchronizer
         return is_array($lines) ? $lines : [$content];
     }
 
+    /**
+     * 处理extractTrailingSection请求头
+     * @param string $line
+     * @return ?string
+     */
     private function extractTrailingSectionHeader(string $line): ?string
     {
         if ($line === '' || (!str_starts_with($line, ';') && !str_starts_with($line, '#'))) {

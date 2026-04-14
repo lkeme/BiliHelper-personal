@@ -17,6 +17,11 @@ final class ActivityFlowStore
     private ?SQLite3 $connection = null;
     private readonly SqliteSchemaManager $schemaManager;
 
+    /**
+     * 初始化 ActivityFlowStore
+     * @param string $databasePath
+     * @param string $scope
+     */
     public function __construct(
         private readonly string $databasePath,
         private readonly string $scope = 'ActivityLottery',
@@ -198,6 +203,10 @@ final class ActivityFlowStore
         }
     }
 
+    /**
+     * 处理connection
+     * @return SQLite3
+     */
     private function connection(): SQLite3
     {
         if ($this->connection instanceof SQLite3) {
@@ -295,6 +304,12 @@ final class ActivityFlowStore
         return $connection->changes();
     }
 
+    /**
+     * 处理compactDatabaseIfNeeded
+     * @param SQLite3 $connection
+     * @param int $deletedRows
+     * @return void
+     */
     private function compactDatabaseIfNeeded(SQLite3 $connection, int $deletedRows): void
     {
         if ($deletedRows <= 0) {
@@ -322,11 +337,24 @@ final class ActivityFlowStore
         }
     }
 
+    /**
+     * 检查积分Wal
+     * @param SQLite3 $connection
+     * @return void
+     */
     private function checkpointWal(SQLite3 $connection): void
     {
         @$connection->exec('PRAGMA wal_checkpoint(TRUNCATE)');
     }
 
+    /**
+     * 断言流程Biz日期MatchesBucket
+     * @param ActivityFlow $flow
+     * @param string $bucketBizDate
+     * @param string $operation
+     * @param int $index
+     * @return void
+     */
     private function assertFlowBizDateMatchesBucket(
         ActivityFlow $flow,
         string $bucketBizDate,

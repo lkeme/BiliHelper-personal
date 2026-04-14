@@ -22,6 +22,10 @@ use Bhp\Request\Request;
 
 class ApiCoin extends AbstractApiClient
 {
+    /**
+     * 初始化 ApiCoin
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

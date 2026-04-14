@@ -4,6 +4,10 @@ namespace Bhp\Plugin\Builtin\PolishMedal;
 
 final class PolishMedalRoundPlanner
 {
+    /**
+     * 初始化 PolishMedalRoundPlanner
+     * @param int $maxLightQueue
+     */
     public function __construct(
         private readonly int $maxLightQueue = 30,
     ) {

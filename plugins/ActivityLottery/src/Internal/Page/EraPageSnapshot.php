@@ -46,31 +46,55 @@ final class EraPageSnapshot
         );
     }
 
+    /**
+     * 处理title
+     * @return string
+     */
     public function title(): string
     {
         return $this->title;
     }
 
+    /**
+     * 处理页面Id
+     * @return string
+     */
     public function pageId(): string
     {
         return $this->pageId;
     }
 
+    /**
+     * 处理activityId
+     * @return string
+     */
     public function activityId(): string
     {
         return $this->activityId;
     }
 
+    /**
+     * 处理抽奖Id
+     * @return string
+     */
     public function lotteryId(): string
     {
         return $this->lotteryId;
     }
 
+    /**
+     * 处理start时间
+     * @return int
+     */
     public function startTime(): int
     {
         return $this->startTime;
     }
 
+    /**
+     * 处理end时间
+     * @return int
+     */
     public function endTime(): int
     {
         return $this->endTime;
@@ -84,12 +108,22 @@ final class EraPageSnapshot
         return $this->tasks;
     }
 
+    /**
+     * 判断Expired是否满足条件
+     * @param int $now
+     * @return bool
+     */
     public function isExpired(?int $now = null): bool
     {
         $now ??= time();
         return $this->endTime > 0 && $this->endTime <= $now;
     }
 
+    /**
+     * 判断NotStarted是否满足条件
+     * @param int $now
+     * @return bool
+     */
     public function isNotStarted(?int $now = null): bool
     {
         $now ??= time();

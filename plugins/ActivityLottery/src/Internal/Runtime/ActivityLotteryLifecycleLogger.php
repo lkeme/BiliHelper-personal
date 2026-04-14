@@ -14,6 +14,12 @@ final class ActivityLotteryLifecycleLogger
 {
     /** @var array<string, array{fingerprint: string, logged_at: int}> */
     private array $waitingLogState = [];
+    /**
+     * 构建节点执行日志
+     * @param ActivityFlow $flow
+     * @param \Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNode $node
+     * @return array
+     */
     public function buildNodeExecuteLog(ActivityFlow $flow, \Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNode $node): array
     {
         $context = $this->buildNodeBusinessContext($flow, $node);
@@ -171,6 +177,11 @@ final class ActivityLotteryLifecycleLogger
         return $context;
     }
 
+    /**
+     * 处理节点Label
+     * @param string $nodeType
+     * @return string
+     */
     private function nodeLabel(string $nodeType): string
     {
         return match ($nodeType) {
@@ -334,6 +345,11 @@ final class ActivityLotteryLifecycleLogger
         return 'info';
     }
 
+    /**
+     * 处理looksLike失败消息
+     * @param string $message
+     * @return bool
+     */
     private function looksLikeFailureMessage(string $message): bool
     {
         $message = trim($message);
@@ -367,6 +383,11 @@ final class ActivityLotteryLifecycleLogger
         return [$stage, $detail];
     }
 
+    /**
+     * 处理节点状态Label
+     * @param string $status
+     * @return string
+     */
     private function nodeStatusLabel(string $status): string
     {
         return match ($status) {
@@ -378,6 +399,11 @@ final class ActivityLotteryLifecycleLogger
         };
     }
 
+    /**
+     * 处理流程状态Label
+     * @param string $status
+     * @return string
+     */
     private function flowStatusLabel(string $status): string
     {
         return match ($status) {
@@ -736,6 +762,11 @@ final class ActivityLotteryLifecycleLogger
         return $aid !== '' ? 'aid=' . $aid : '';
     }
 
+    /**
+     * 解析Wait延迟Seconds
+     * @param ActivityFlow $flow
+     * @return int
+     */
     private function resolveWaitDelaySeconds(ActivityFlow $flow): int
     {
         $nextRunAt = $flow->nextRunAt();
@@ -746,6 +777,11 @@ final class ActivityLotteryLifecycleLogger
         return max(0, $nextRunAt - $flow->updatedAt());
     }
 
+    /**
+     * 格式化延迟Suffix
+     * @param int $delaySeconds
+     * @return string
+     */
     private function formatDelaySuffix(int $delaySeconds): string
     {
         if ($delaySeconds <= 0) {
@@ -762,6 +798,11 @@ final class ActivityLotteryLifecycleLogger
         return sprintf('，%d 秒后继续', $delaySeconds);
     }
 
+    /**
+     * 解析DisplayTargetSeconds
+     * @param EraTaskSnapshot $task
+     * @return int
+     */
     private function resolveDisplayTargetSeconds(?EraTaskSnapshot $task = null): int
     {
         if ($task === null) {

@@ -22,6 +22,10 @@ use Bhp\Request\Request;
 
 class ApiShare extends AbstractApiClient
 {
+    /**
+     * 初始化 ApiShare
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

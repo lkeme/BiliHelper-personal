@@ -42,16 +42,32 @@ final class VipPointRuntimeState
         return $this->tasks;
     }
 
+    /**
+     * 设置任务
+     * @param string $key
+     * @param mixed $value
+     * @return void
+     */
     public function setTask(string $key, mixed $value): void
     {
         $this->tasks[$this->date][$key] = $value;
     }
 
+    /**
+     * 处理任务
+     * @param string $key
+     * @return mixed
+     */
     public function task(string $key): mixed
     {
         return $this->tasks[$this->date][$key] ?? null;
     }
 
+    /**
+     * 删除或清理任务
+     * @param string $key
+     * @return void
+     */
     public function deleteTask(string $key): void
     {
         unset($this->tasks[$this->date][$key]);
@@ -75,6 +91,10 @@ final class VipPointRuntimeState
         return is_array($action) ? $action : null;
     }
 
+    /**
+     * 删除或清理DelayedAction
+     * @return void
+     */
     public function clearDelayedAction(): void
     {
         $this->setTask('DelayedAction', null);
@@ -93,6 +113,12 @@ final class VipPointRuntimeState
         ]);
     }
 
+    /**
+     * 处理matchesDelayedAction
+     * @param string $taskCode
+     * @param string $type
+     * @return bool
+     */
     public function matchesDelayedAction(string $taskCode, string $type): bool
     {
         $action = $this->delayedAction();

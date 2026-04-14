@@ -73,6 +73,10 @@ final class ConfigSchemaDefinition
         ];
     }
 
+    /**
+     * 处理example配置Path
+     * @return string
+     */
     public function exampleConfigPath(): string
     {
         return str_replace("\\", "/", dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'profile' . DIRECTORY_SEPARATOR . 'example' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'user.ini');

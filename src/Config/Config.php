@@ -22,6 +22,11 @@ use Bhp\Util\Resource\BaseResource;
 
 class Config extends BaseResource
 {
+    /**
+     * 初始化 Config
+     * @param ProfileContext $profileContext
+     * @param string $filename
+     */
     public function __construct(
         private readonly ProfileContext $profileContext,
         string $filename = 'user.ini',

@@ -7,12 +7,22 @@ use Bhp\Runtime\AppContext;
 
 final class ProfileCacheResetService
 {
+    /**
+     * 初始化 ProfileCacheResetService
+     * @param AppContext $context
+     * @param Cache $cache
+     */
     public function __construct(
         private readonly AppContext $context,
         private readonly Cache $cache,
     ) {
     }
 
+    /**
+     * 处理reset
+     * @param bool $purgeAuth
+     * @return void
+     */
     public function reset(bool $purgeAuth = false): void
     {
         $authSnapshot = $purgeAuth ? [] : $this->context->authSnapshot();

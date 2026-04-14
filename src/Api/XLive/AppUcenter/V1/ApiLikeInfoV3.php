@@ -10,6 +10,10 @@ final class ApiLikeInfoV3 extends AbstractApiClient
 {
     private const LIKE_REPORT_URL = 'https://api.live.bilibili.com/xlive/app-ucenter/v1/like_info_v3/like/likeReportV3';
 
+    /**
+     * 初始化 ApiLikeInfoV3
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

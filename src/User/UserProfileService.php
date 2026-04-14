@@ -9,6 +9,11 @@ use Bhp\Util\Common\Common;
 
 class UserProfileService
 {
+    /**
+     * 初始化 UserProfileService
+     * @param Log $log
+     * @param ApiUser $apiUser
+     */
     public function __construct(
         private readonly Log $log,
         private readonly ApiUser $apiUser,
@@ -30,6 +35,13 @@ class UserProfileService
      */
     private array $reportedVipRequirementMisses = [];
 
+    /**
+     * 判断大会员是否满足条件
+     * @param string $title
+     * @param array $scope
+     * @param string $info
+     * @return bool
+     */
     public function isVip(string $title = '用户信息', array $scope = [1, 2], string $info = '大会员'): bool
     {
         $response = $this->vipInfo();
@@ -52,11 +64,22 @@ class UserProfileService
         return false;
     }
 
+    /**
+     * 判断Year大会员是否满足条件
+     * @param string $title
+     * @param array $scope
+     * @param string $info
+     * @return bool
+     */
     public function isYearVip(string $title = '用户信息', array $scope = [2], string $info = '年度大会员'): bool
     {
         return $this->isVip($title, $scope, $info);
     }
 
+    /**
+     * 处理nav信息
+     * @return object
+     */
     public function navInfo(): object
     {
         $response = $this->navInfoResponse();
@@ -134,11 +157,23 @@ class UserProfileService
         return $this->apiUser->userNavInfo();
     }
 
+    /**
+     * 处理日志大会员RequirementNotMet
+     * @param string $title
+     * @param string $info
+     * @return void
+     */
     protected function logVipRequirementNotMet(string $title, string $info): void
     {
         $this->log->recordWarning(sprintf('%s: 当前账号不是有效的%s，已跳过', $title, $info));
     }
 
+    /**
+     * 处理report大会员RequirementMiss
+     * @param string $title
+     * @param string $info
+     * @return void
+     */
     private function reportVipRequirementMiss(string $title, string $info): void
     {
         $key = $title . '|' . $info;

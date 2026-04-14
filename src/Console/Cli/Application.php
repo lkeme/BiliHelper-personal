@@ -17,12 +17,24 @@ final class Application
     private ?string $defaultCommand = null;
     private string $logo = '';
 
+    /**
+     * 初始化 Application
+     * @param string $name
+     * @param string $version
+     */
     public function __construct(
         private readonly string $name,
         private readonly string $version = '',
     ) {
     }
 
+    /**
+     * 处理add
+     * @param Command $command
+     * @param string $alias
+     * @param bool $default
+     * @return static
+     */
     public function add(Command $command, string $alias = '', bool $default = false): static
     {
         $this->commands[$command->name()] = $command;
@@ -38,6 +50,11 @@ final class Application
         return $this;
     }
 
+    /**
+     * 处理logo
+     * @param string $logo
+     * @return static
+     */
     public function logo(string $logo): static
     {
         $this->logo = $logo;
@@ -45,6 +62,11 @@ final class Application
         return $this;
     }
 
+    /**
+     * 处理解析
+     * @param array $argv
+     * @return InputResult
+     */
     public function parse(array $argv): InputResult
     {
         $args = [];
@@ -67,6 +89,11 @@ final class Application
         return new InputResult($args);
     }
 
+    /**
+     * 处理handle
+     * @param array $argv
+     * @return void
+     */
     public function handle(array $argv): void
     {
         [$command, $tokens] = $this->resolveCommand($argv);
@@ -124,6 +151,11 @@ final class Application
         return [$this->defaultCommand !== null ? ($this->commands[$this->defaultCommand] ?? null) : null, $tokens];
     }
 
+    /**
+     * 解析Alias
+     * @param string $alias
+     * @return ?Command
+     */
     private function resolveAlias(string $alias): ?Command
     {
         $name = $this->aliases[$alias] ?? null;
@@ -196,6 +228,11 @@ final class Application
         return in_array('--help', $tokens, true) || in_array('-h', $tokens, true);
     }
 
+    /**
+     * 处理renderHelp
+     * @param Command $command
+     * @return void
+     */
     private function renderHelp(Command $command): void
     {
         if ($this->logo !== '') {
@@ -246,6 +283,10 @@ final class Application
             );
     }
 
+    /**
+     * 处理renderOverview
+     * @return void
+     */
     private function renderOverview(): void
     {
         if ($this->logo !== '') {
@@ -262,6 +303,11 @@ final class Application
         }
     }
 
+    /**
+     * 标准化UsageText
+     * @param string $text
+     * @return string
+     */
     private function normalizeUsageText(string $text): string
     {
         $normalized = str_replace('<eol/>', PHP_EOL, $text);
@@ -269,6 +315,11 @@ final class Application
         return preg_replace('/<[^>]+>/', '', $normalized) ?? $normalized;
     }
 
+    /**
+     * 处理looksLike命令令牌
+     * @param string $token
+     * @return bool
+     */
     private function looksLikeCommandToken(string $token): bool
     {
         return preg_match('/^(?:m|mode):/i', $token) === 1;

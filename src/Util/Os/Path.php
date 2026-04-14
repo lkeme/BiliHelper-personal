@@ -55,6 +55,11 @@ class Path
         }
     }
 
+    /**
+     * 处理移除DirectoryRecursively
+     * @param string $path
+     * @return bool
+     */
     public static function RemoveDirectoryRecursively(string $path): bool
     {
         if (!is_dir($path)) {

@@ -21,6 +21,11 @@ final class ColoredLineFormatter extends LineFormatter
         600 => "\033[1;35m",
     ];
 
+    /**
+     * 处理格式
+     * @param LogRecord $record
+     * @return string
+     */
     public function format(LogRecord $record): string
     {
         $formatted = trim(parent::format($record));

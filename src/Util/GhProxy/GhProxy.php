@@ -21,6 +21,10 @@ use Bhp\Runtime\AppContext;
 
 final class GhProxy
 {
+    /**
+     * 初始化 GhProxy
+     * @param AppContext $context
+     */
     public function __construct(
         private readonly AppContext $context,
     ) {

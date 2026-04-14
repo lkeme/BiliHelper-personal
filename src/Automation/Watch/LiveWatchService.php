@@ -107,6 +107,11 @@ final class LiveWatchService
         ]);
     }
 
+    /**
+     * 处理heartbeat
+     * @param LiveWatchSession $session
+     * @return LiveWatchSession
+     */
     public function heartbeat(LiveWatchSession $session): LiveWatchSession
     {
         $this->assertHeartbeatSessionBoundary($session);
@@ -151,6 +156,11 @@ final class LiveWatchService
         return $session->with($nextContext);
     }
 
+    /**
+     * 断言Start会话Boundary
+     * @param LiveWatchSession $session
+     * @return void
+     */
     private function assertStartSessionBoundary(LiveWatchSession $session): void
     {
         if (
@@ -165,6 +175,11 @@ final class LiveWatchService
         }
     }
 
+    /**
+     * 断言Heartbeat会话Boundary
+     * @param LiveWatchSession $session
+     * @return void
+     */
     private function assertHeartbeatSessionBoundary(LiveWatchSession $session): void
     {
         if (

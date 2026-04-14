@@ -34,12 +34,20 @@ class MainSitePlugin extends BasePlugin implements PluginTaskInterface
      * @var array<string, int|string>
      */
 
+    /**
+     * 初始化 MainSitePlugin
+     * @param Plugin $plugin
+     */
     public function __construct(Plugin &$plugin)
     {
         $this->authFailureClassifier = new AuthFailureClassifier();
         $this->bootPlugin($plugin, true);
     }
 
+    /**
+     * 执行一次任务
+     * @return TaskResult
+     */
     public function runOnce(): TaskResult
     {
         if (!$this->enabled('main_site')) {
@@ -179,6 +187,10 @@ class MainSitePlugin extends BasePlugin implements PluginTaskInterface
         }
     }
 
+    /**
+     * 获取CoinAlready
+     * @return int
+     */
     protected function getCoinAlready(): int
     {
         $response = $this->coinApi()->addLog();
@@ -219,6 +231,10 @@ class MainSitePlugin extends BasePlugin implements PluginTaskInterface
         return $coins;
     }
 
+    /**
+     * 获取CoinStock
+     * @return int
+     */
     protected function getCoinStock(): int
     {
         $response = $this->coinApi()->getCoin();
@@ -270,6 +286,11 @@ class MainSitePlugin extends BasePlugin implements PluginTaskInterface
         }
     }
 
+    /**
+     * 处理观看任务
+     * @param string $key
+     * @return bool
+     */
     protected function watchTask(string $key = 'watch'): bool
     {
         if (!$this->config('main_site.watch', false, 'bool')) {
@@ -407,11 +428,19 @@ class MainSitePlugin extends BasePlugin implements PluginTaskInterface
         return [];
     }
 
+    /**
+     * 获取键
+     * @return string
+     */
     protected function getKey(): string
     {
         return substr(md5(md5(date('Y-m-d', time()))), 8, 8);
     }
 
+    /**
+     * 处理状态
+     * @return MainSiteRuntimeState
+     */
     protected function state(): MainSiteRuntimeState
     {
         if ($this->state === null) {
@@ -424,6 +453,10 @@ class MainSitePlugin extends BasePlugin implements PluginTaskInterface
         return $this->state;
     }
 
+    /**
+     * 保存或更新状态
+     * @return void
+     */
     protected function persistState(): void
     {
         if ($this->state !== null) {
@@ -431,11 +464,19 @@ class MainSitePlugin extends BasePlugin implements PluginTaskInterface
         }
     }
 
+    /**
+     * 记录存储
+     * @return MainSiteRecordStore
+     */
     protected function recordStore(): MainSiteRecordStore
     {
         return $this->recordStore ??= new MainSiteRecordStore($this->cache());
     }
 
+    /**
+     * 处理archive服务
+     * @return MainSiteArchiveService
+     */
     protected function archiveService(): MainSiteArchiveService
     {
         $request = $this->appContext()->request();
@@ -458,6 +499,12 @@ class MainSitePlugin extends BasePlugin implements PluginTaskInterface
         return is_int($aid) || is_string($aid) ? (string) $aid : '';
     }
 
+    /**
+     * 处理数量CoinDeltaFor日志
+     * @param mixed $log
+     * @param string $today
+     * @return int
+     */
     protected function countCoinDeltaForLog(mixed $log, string $today): int
     {
         if (!is_array($log)) {
@@ -495,21 +542,37 @@ class MainSitePlugin extends BasePlugin implements PluginTaskInterface
         return $this->videoApi()->newlist($pageNumber, $pageSize);
     }
 
+    /**
+     * 处理视频API
+     * @return ApiVideo
+     */
     protected function videoApi(): ApiVideo
     {
         return $this->videoApi ??= new ApiVideo($this->appContext()->request());
     }
 
+    /**
+     * 处理coinAPI
+     * @return ApiCoin
+     */
     protected function coinApi(): ApiCoin
     {
         return $this->coinApi ??= new ApiCoin($this->appContext()->request());
     }
 
+    /**
+     * 处理shareAPI
+     * @return ApiShare
+     */
     protected function shareApi(): ApiShare
     {
         return $this->shareApi ??= new ApiShare($this->appContext()->request());
     }
 
+    /**
+     * 处理观看API
+     * @return ApiWatch
+     */
     protected function watchApi(): ApiWatch
     {
         return $this->watchApi ??= new ApiWatch($this->appContext()->request());

@@ -7,6 +7,10 @@ use Bhp\Request\Request;
 
 class ApiPrivilege extends AbstractApiClient
 {
+    /**
+     * 初始化 ApiPrivilege
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

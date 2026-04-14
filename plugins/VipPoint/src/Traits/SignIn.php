@@ -4,6 +4,12 @@ namespace Bhp\Plugin\Builtin\VipPoint\Traits;
 
 trait SignIn
 {
+    /**
+     * 处理签名In
+     * @param array $data
+     * @param string $name
+     * @return bool
+     */
     public function signIn(array $data, string $name): bool
     {
         if ($this->isSignIn($data, $name)) {
@@ -15,6 +21,11 @@ trait SignIn
         return false;
     }
 
+    /**
+     * 处理签名In
+     * @param string $name
+     * @return bool
+     */
     protected function _signIn(string $name): bool
     {
         $response = $this->vipPointScoreTaskApi()->sign();
@@ -35,6 +46,12 @@ trait SignIn
         return true;
     }
 
+    /**
+     * 处理is签名In
+     * @param array $data
+     * @param string $name
+     * @return bool
+     */
     protected function _isSignIn(array $data, string $name): bool
     {
         $response = $this->vipPointTaskApi()->homepageCombine();
@@ -57,6 +74,12 @@ trait SignIn
         return false;
     }
 
+    /**
+     * 判断签名In是否满足条件
+     * @param array $data
+     * @param string $name
+     * @return bool
+     */
     protected function isSignIn(array $data, string $name): bool
     {
         return $this->_isSignIn($data, $name);

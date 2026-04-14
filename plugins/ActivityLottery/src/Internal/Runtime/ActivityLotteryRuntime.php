@@ -43,6 +43,19 @@ final class ActivityLotteryRuntime
     private \Closure $logger;
     private readonly ActivityLotteryLifecycleLogger $lifecycleLogger;
 
+    /**
+     * 初始化 ActivityLotteryRuntime
+     * @param ActivityCatalogLoader $catalogLoader
+     * @param ActivityFlowStore $flowStore
+     * @param ActivityLotteryWindow $window
+     * @param string $windowStartAt
+     * @param string $windowEndAt
+     * @param array $runners
+     * @param ActivityFlowPlanner $planner
+     * @param ActivityFlowPool $flowPool
+     * @param ActivityLotteryClock $clock
+     * @param callable $logger
+     */
     public function __construct(
         private readonly ActivityCatalogLoader $catalogLoader,
         private readonly ActivityFlowStore $flowStore,
@@ -67,11 +80,19 @@ final class ActivityLotteryRuntime
         }
     }
 
+    /**
+     * 处理biz日期
+     * @return string
+     */
     public function bizDate(): string
     {
         return date('Y-m-d', $this->clock->now());
     }
 
+    /**
+     * 处理tick
+     * @return TaskResult
+     */
     public function tick(): TaskResult
     {
         $now = $this->clock->now();
@@ -194,6 +215,12 @@ final class ActivityLotteryRuntime
         ];
     }
 
+    /**
+     * 执行流程
+     * @param ActivityFlow $flow
+     * @param int $now
+     * @return ActivityFlow
+     */
     private function executeFlow(ActivityFlow $flow, int $now): ActivityFlow
     {
         $currentNode = $flow->nodes()[$flow->currentNodeIndex()];
@@ -224,6 +251,12 @@ final class ActivityLotteryRuntime
         return $this->applyNodeResult($flow, $result, $now);
     }
 
+    /**
+     * 推进WithoutRunner
+     * @param ActivityFlow $flow
+     * @param int $now
+     * @return ActivityFlow
+     */
     private function advanceWithoutRunner(ActivityFlow $flow, int $now): ActivityFlow
     {
         $row = $flow->toArray();
@@ -239,6 +272,13 @@ final class ActivityLotteryRuntime
         return ActivityFlow::fromArray($row);
     }
 
+    /**
+     * 应用节点结果
+     * @param ActivityFlow $flow
+     * @param object $result
+     * @param int $now
+     * @return ActivityFlow
+     */
     private function applyNodeResult(ActivityFlow $flow, object $result, int $now): ActivityFlow
     {
         $row = $flow->toArray();
@@ -354,6 +394,11 @@ final class ActivityLotteryRuntime
         return (float)($nextDelay ?? 300);
     }
 
+    /**
+     * 处理secondsUntil窗口Start
+     * @param int $now
+     * @return float
+     */
     private function secondsUntilWindowStart(int $now): float
     {
         [$hour, $minute, $second] = $this->parseTime($this->windowStartAt);
@@ -365,6 +410,11 @@ final class ActivityLotteryRuntime
         return max(1.0, (float)($target - $now));
     }
 
+    /**
+     * 格式化延迟Label
+     * @param float $seconds
+     * @return string
+     */
     private function formatDelayLabel(float $seconds): string
     {
         $delay = max(1, (int)ceil($seconds));
@@ -391,6 +441,13 @@ final class ActivityLotteryRuntime
         ];
     }
 
+    /**
+     * 处理日志
+     * @param string $level
+     * @param string $message
+     * @param array $context
+     * @return void
+     */
     private function log(string $level, string $message, array $context = []): void
     {
         ($this->logger)($level, $message, $context);

@@ -11,6 +11,11 @@ class ApiHeartBeat extends AbstractApiClient
 {
     private readonly ApiCalcSign $calcSignApi;
 
+    /**
+     * 初始化 ApiHeartBeat
+     * @param Request $request
+     * @param ApiCalcSign $calcSignApi
+     */
     public function __construct(
         Request $request,
         ?ApiCalcSign $calcSignApi = null,

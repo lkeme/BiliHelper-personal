@@ -132,6 +132,11 @@ class WbiSign
         return [$imgKey, $subKey];
     }
 
+    /**
+     * 处理extractWBI键FromURL
+     * @param string $url
+     * @return string
+     */
     protected static function extractWbiKeyFromUrl(string $url): string
     {
         $path = parse_url($url, PHP_URL_PATH);
@@ -142,11 +147,20 @@ class WbiSign
         return pathinfo($path, PATHINFO_FILENAME);
     }
 
+    /**
+     * 初始化strap
+     * @param ApiUser $apiUser
+     * @return void
+     */
     public static function bootstrap(ApiUser $apiUser): void
     {
         self::$apiUser = $apiUser;
     }
 
+    /**
+     * 处理API用户
+     * @return ApiUser
+     */
     private static function apiUser(): ApiUser
     {
         if (self::$apiUser instanceof ApiUser) {

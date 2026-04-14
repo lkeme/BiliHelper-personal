@@ -21,12 +21,21 @@ use Bhp\Scheduler\Scheduler;
 
 final class Bootstrap
 {
+    /**
+     * 初始化 Bootstrap
+     * @param ServiceContainer $container
+     * @param bool $readOnlyRequest
+     */
     public function __construct(
         private readonly ServiceContainer $container,
         private readonly bool $readOnlyRequest = false,
     ) {
     }
 
+    /**
+     * 处理boot
+     * @return void
+     */
     public function boot(): void
     {
         if ($this->readOnlyRequest) {

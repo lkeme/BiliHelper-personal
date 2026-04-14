@@ -35,6 +35,10 @@ final class SpaceArticleCatalog
         );
     }
 
+    /**
+     * 判断Successful是否满足条件
+     * @return bool
+     */
     public function isSuccessful(): bool
     {
         return $this->code === 0;

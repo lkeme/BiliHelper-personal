@@ -9,12 +9,22 @@ final class SpaceArticleCacheStore
     private const CACHE_SCOPE = 'SpaceArticleSource';
     private const CACHE_KEY = 'daily_snapshots';
 
+    /**
+     * 初始化 SpaceArticleCacheStore
+     * @param Cache $cache
+     * @param int $retentionDays
+     */
     public function __construct(
         private readonly Cache $cache,
         private readonly int $retentionDays = 3,
     ) {
     }
 
+    /**
+     * 处理加载
+     * @param string $bizDate
+     * @return ?SpaceArticleDailySnapshot
+     */
     public function load(string $bizDate): ?SpaceArticleDailySnapshot
     {
         $this->cache->initializeScope(self::CACHE_SCOPE);
@@ -26,6 +36,11 @@ final class SpaceArticleCacheStore
         return SpaceArticleDailySnapshot::fromArray($snapshots[$bizDate]);
     }
 
+    /**
+     * 处理保存
+     * @param SpaceArticleDailySnapshot $snapshot
+     * @return void
+     */
     public function save(SpaceArticleDailySnapshot $snapshot): void
     {
         $this->cache->initializeScope(self::CACHE_SCOPE);

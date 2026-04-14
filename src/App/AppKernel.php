@@ -58,6 +58,10 @@ final class AppKernel
     ) {
     }
 
+    /**
+     * 处理boot
+     * @return BootstrapResult
+     */
     public function boot(): BootstrapResult
     {
         if ($this->bootResult instanceof BootstrapResult) {

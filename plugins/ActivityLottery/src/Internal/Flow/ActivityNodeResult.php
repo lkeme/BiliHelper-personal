@@ -30,11 +30,19 @@ final class ActivityNodeResult
         );
     }
 
+    /**
+     * 处理ok
+     * @return bool
+     */
     public function ok(): bool
     {
         return $this->ok;
     }
 
+    /**
+     * 处理消息
+     * @return string
+     */
     public function message(): string
     {
         return $this->message;
@@ -48,6 +56,10 @@ final class ActivityNodeResult
         return $this->payload;
     }
 
+    /**
+     * 创建dAt
+     * @return int
+     */
     public function createdAt(): int
     {
         return $this->createdAt;

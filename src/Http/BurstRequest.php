@@ -6,6 +6,10 @@ use Amp\DeferredCancellation;
 
 class BurstRequest
 {
+    /**
+     * 初始化 BurstRequest
+     * @param HttpClient $httpClient
+     */
     public function __construct(
         private readonly HttpClient $httpClient,
     ) {

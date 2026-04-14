@@ -28,12 +28,20 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
     private ?LiveReservationStateStore $stateStore = null;
     private ?LiveReservationWindow $window = null;
 
+    /**
+     * 初始化 LiveReservationPlugin
+     * @param Plugin $plugin
+     */
     public function __construct(Plugin &$plugin)
     {
         $this->authFailureClassifier = new AuthFailureClassifier();
         $this->bootPlugin($plugin, true);
     }
 
+    /**
+     * 执行一次任务
+     * @return TaskResult
+     */
     public function runOnce(): TaskResult
     {
         if (!$this->enabled('live_reservation')) {
@@ -105,6 +113,11 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
         return TaskResult::after(mt_rand(1, 3) * 60 * 60);
     }
 
+    /**
+     * 发现预约Tasks
+     * @param LiveReservationRuntimeState $state
+     * @return TaskResult
+     */
     protected function discoverReservationTasks(LiveReservationRuntimeState $state): TaskResult
     {
         $upMid = $state->shiftPendingUpMid();
@@ -159,6 +172,11 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
         );
     }
 
+    /**
+     * 执行预约任务
+     * @param LiveReservationRuntimeState $state
+     * @return TaskResult
+     */
     protected function executeReservationTask(LiveReservationRuntimeState $state): TaskResult
     {
         $reservation = $state->shiftPendingReservation();
@@ -335,36 +353,67 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
         ];
     }
 
+    /**
+     * 处理文章来源
+     * @return SpaceArticleSourceService
+     */
     protected function articleSource(): SpaceArticleSourceService
     {
         return $this->articleSourceService ??= new SpaceArticleSourceService($this->appContext());
     }
 
+    /**
+     * 处理状态存储
+     * @return LiveReservationStateStore
+     */
     protected function stateStore(): LiveReservationStateStore
     {
         return $this->stateStore ??= new LiveReservationStateStore($this->cache());
     }
 
+    /**
+     * 处理预约API
+     * @return ApiReservation
+     */
     protected function reservationApi(): ApiReservation
     {
         return $this->reservationApi ??= new ApiReservation($this->appContext()->request());
     }
 
+    /**
+     * 处理窗口
+     * @return LiveReservationWindow
+     */
     protected function window(): LiveReservationWindow
     {
         return $this->window ??= new LiveReservationWindow($this->pluginWindowStartAt(), $this->pluginWindowEndAt());
     }
 
+    /**
+     * 获取当前时间
+     * @return int
+     */
     protected function now(): int
     {
         return time();
     }
 
+    /**
+     * 处理biz日期
+     * @param int $timestamp
+     * @return string
+     */
     protected function bizDate(int $timestamp): string
     {
         return date('Y-m-d', $timestamp);
     }
 
+    /**
+     * 处理随机延迟
+     * @param int $minSeconds
+     * @param int $maxSeconds
+     * @return int
+     */
     protected function randomDelay(int $minSeconds, int $maxSeconds): int
     {
         return mt_rand($minSeconds, $maxSeconds);

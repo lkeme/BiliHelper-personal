@@ -29,11 +29,19 @@ class VipPrivilegePlugin extends BasePlugin implements PluginTaskInterface
      * @var array<string, int|string>
      */
 
+    /**
+     * 初始化 VipPrivilegePlugin
+     * @param Plugin $plugin
+     */
     public function __construct(Plugin &$plugin)
     {
         $this->bootPlugin($plugin, true);
     }
 
+    /**
+     * 执行一次任务
+     * @return TaskResult
+     */
     public function runOnce(): TaskResult
     {
         if (!$this->enabled('vip_privilege')) {
@@ -178,6 +186,10 @@ class VipPrivilegePlugin extends BasePlugin implements PluginTaskInterface
         return $privilegeList;
     }
 
+    /**
+     * 处理extraExp
+     * @return bool
+     */
     protected function extraExp(): bool
     {
         $response = $this->experienceApi()->add();
@@ -255,6 +267,10 @@ class VipPrivilegePlugin extends BasePlugin implements PluginTaskInterface
         $this->cacheSet(self::CACHE_KEY, array_values($privileges), self::CACHE_SCOPE);
     }
 
+    /**
+     * 删除或清理待处理Privileges
+     * @return void
+     */
     protected function clearPendingPrivileges(): void
     {
         $this->cacheSet(self::CACHE_DATE_KEY, '', self::CACHE_SCOPE);
@@ -280,6 +296,11 @@ class VipPrivilegePlugin extends BasePlugin implements PluginTaskInterface
         return array_values(array_filter(array_map(static fn (mixed $token): string => trim((string)$token), $tokens), static fn (string $token): bool => $token !== ''));
     }
 
+    /**
+     * 处理rememberHandled权益令牌
+     * @param string $token
+     * @return void
+     */
     protected function rememberHandledPrivilegeToken(string $token): void
     {
         $token = trim($token);
@@ -309,16 +330,28 @@ class VipPrivilegePlugin extends BasePlugin implements PluginTaskInterface
         return in_array($token, $handledTokens, true);
     }
 
+    /**
+     * 处理大会员CenterAPI
+     * @return ApiVipCenter
+     */
     private function vipCenterApi(): ApiVipCenter
     {
         return $this->vipCenterApi ??= new ApiVipCenter($this->appContext()->request());
     }
 
+    /**
+     * 处理权益AssetsAPI
+     * @return ApiPrivilegeAssets
+     */
     private function privilegeAssetsApi(): ApiPrivilegeAssets
     {
         return $this->privilegeAssetsApi ??= new ApiPrivilegeAssets($this->appContext()->request());
     }
 
+    /**
+     * 处理experienceAPI
+     * @return ApiExperience
+     */
     private function experienceApi(): ApiExperience
     {
         return $this->experienceApi ??= new ApiExperience($this->appContext()->request());

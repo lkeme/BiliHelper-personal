@@ -5,17 +5,30 @@ namespace Bhp\Notice\Channel;
 
 final class TelegramNoticeChannel extends AbstractNoticeChannel
 {
+    /**
+     * 处理名称
+     * @return string
+     */
     public function name(): string
     {
         return 'telegram';
     }
 
+    /**
+     * 处理supports
+     * @return bool
+     */
     public function supports(): bool
     {
         return trim((string)$this->config('notify_telegram.bottoken', '', 'string')) !== ''
             && trim((string)$this->config('notify_telegram.chatid', '', 'string')) !== '';
     }
 
+    /**
+     * 处理分发
+     * @param array $payload
+     * @return void
+     */
     public function dispatch(array $payload): void
     {
         $this->info('使用Tele机器人推送消息');

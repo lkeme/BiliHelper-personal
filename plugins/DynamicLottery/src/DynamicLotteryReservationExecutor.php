@@ -12,6 +12,11 @@ class DynamicLotteryReservationExecutor
 {
     private AuthFailureClassifier $authFailureClassifier;
 
+    /**
+     * 初始化 DynamicLotteryReservationExecutor
+     * @param DynamicLotteryReservationService $reservationService
+     * @param Request $request
+     */
     public function __construct(
         private readonly DynamicLotteryReservationService $reservationService,
         private readonly Request $request,

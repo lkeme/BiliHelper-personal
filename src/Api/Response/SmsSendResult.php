@@ -29,11 +29,19 @@ final class SmsSendResult
         return new self($payload, $recaptchaUrl);
     }
 
+    /**
+     * 处理requires验证码
+     * @return bool
+     */
     public function requiresCaptcha(): bool
     {
         return $this->recaptchaUrl !== '';
     }
 
+    /**
+     * 处理验证码键
+     * @return string
+     */
     public function captchaKey(): string
     {
         return (string)($this->payload['captcha_key'] ?? '');

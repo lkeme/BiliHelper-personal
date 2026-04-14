@@ -92,6 +92,11 @@ final class ExternalPluginRegistry
         ];
     }
 
+    /**
+     * 处理namespacePrefix
+     * @param string $className
+     * @return string
+     */
     private function namespacePrefix(string $className): string
     {
         $position = strrpos($className, '\\');

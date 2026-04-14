@@ -7,6 +7,10 @@ use Bhp\Request\Request;
 
 class ApiDanMu extends AbstractApiClient
 {
+    /**
+     * 初始化 ApiDanMu
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

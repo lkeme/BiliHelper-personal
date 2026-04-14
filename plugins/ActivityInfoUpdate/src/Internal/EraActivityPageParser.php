@@ -4,6 +4,11 @@ namespace Bhp\Plugin\Builtin\ActivityInfoUpdate\Internal;
 
 final class EraActivityPageParser
 {
+    /**
+     * 处理解析
+     * @param string $html
+     * @return ?EraActivityPage
+     */
     public function parse(string $html): ?EraActivityPage
     {
         $initialState = $this->extractAssignedJson($html, 'window.__initialState');
@@ -66,6 +71,12 @@ final class EraActivityPageParser
         return is_array($decoded) ? $decoded : null;
     }
 
+    /**
+     * 处理extractJSONObject
+     * @param string $source
+     * @param int $start
+     * @return ?string
+     */
     private function extractJsonObject(string $source, int $start): ?string
     {
         $length = strlen($source);
@@ -456,6 +467,11 @@ final class EraActivityPageParser
         return $this->deduplicateArchives($archives);
     }
 
+    /**
+     * 处理extractRequired观看Seconds
+     * @param string $taskName
+     * @return int
+     */
     private function extractRequiredWatchSeconds(string $taskName): int
     {
         if (preg_match('/(\d+)\s*分钟/u', $taskName, $matches) === 1) {
@@ -588,6 +604,11 @@ final class EraActivityPageParser
         return $this->normalizeStringArray($matches[1] ?? []);
     }
 
+    /**
+     * 处理extract话题IdFromLink
+     * @param string $jumpLink
+     * @return string
+     */
     private function extractTopicIdFromLink(string $jumpLink): string
     {
         if (preg_match('~topic_id=(\d+)~', $jumpLink, $matches) === 1) {

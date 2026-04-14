@@ -6,11 +6,22 @@ use Bhp\Util\Exceptions\NoLoginException;
 
 final class AuthFailureClassifier
 {
+    /**
+     * 判断认证失败是否满足条件
+     * @param array $response
+     * @return bool
+     */
     public function isAuthFailure(array $response): bool
     {
         return $this->reason($response) !== null;
     }
 
+    /**
+     * 断言Not认证失败
+     * @param array $response
+     * @param string $fallbackMessage
+     * @return void
+     */
     public function assertNotAuthFailure(array $response, string $fallbackMessage = '账号未登录'): void
     {
         $reason = $this->reason($response);
@@ -21,6 +32,11 @@ final class AuthFailureClassifier
         throw new NoLoginException($reason !== '' ? $reason : $fallbackMessage);
     }
 
+    /**
+     * 处理reason
+     * @param array $response
+     * @return ?string
+     */
     public function reason(array $response): ?string
     {
         $code = $this->resolveCode($response);
@@ -56,6 +72,11 @@ final class AuthFailureClassifier
         return null;
     }
 
+    /**
+     * 解析状态码
+     * @param array $response
+     * @return int
+     */
     private function resolveCode(array $response): int
     {
         foreach (['code', 'errno', 'errcode'] as $key) {
@@ -72,6 +93,11 @@ final class AuthFailureClassifier
         return 0;
     }
 
+    /**
+     * 解析String状态码
+     * @param array $response
+     * @return string
+     */
     private function resolveStringCode(array $response): string
     {
         foreach (['code', 'errno', 'errcode'] as $key) {
@@ -84,6 +110,11 @@ final class AuthFailureClassifier
         return '';
     }
 
+    /**
+     * 解析消息
+     * @param array $response
+     * @return string
+     */
     private function resolveMessage(array $response): string
     {
         foreach (['message', 'msg', 'errmsg'] as $key) {

@@ -8,6 +8,10 @@ use Bhp\Util\Os\Path;
 
 final class Core
 {
+    /**
+     * 初始化 Core
+     * @param ProfileContext $profileContext
+     */
     public function __construct(
         private readonly ProfileContext $profileContext,
     ) {
@@ -15,6 +19,10 @@ final class Core
         $this->initSystemConstant();
     }
 
+    /**
+     * 初始化SystemConstant
+     * @return void
+     */
     protected function initSystemConstant(): void
     {
         $this->defineConstant('APP_MICROSECOND', 1000000);
@@ -24,6 +32,12 @@ final class Core
         }
     }
 
+    /**
+     * 处理defineConstant
+     * @param string $name
+     * @param mixed $value
+     * @return void
+     */
     protected function defineConstant(string $name, mixed $value): void
     {
         if (!defined($name)) {
@@ -31,6 +45,10 @@ final class Core
         }
     }
 
+    /**
+     * 初始化SystemPath
+     * @return void
+     */
     protected function initSystemPath(): void
     {
         $legacyDevicePath = $this->nativePath($this->profileContext->rootPath() . 'device');
@@ -51,6 +69,11 @@ final class Core
         }
     }
 
+    /**
+     * 处理nativePath
+     * @param string $path
+     * @return string
+     */
     protected function nativePath(string $path): string
     {
         return rtrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;

@@ -7,6 +7,10 @@ use Bhp\Request\Request;
 
 class ApiRevenueWallet extends AbstractApiClient
 {
+    /**
+     * 初始化 ApiRevenueWallet
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

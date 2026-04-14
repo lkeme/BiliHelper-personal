@@ -6,6 +6,12 @@ trait ViewVipMall
 {
     use CommonTaskInfo;
 
+    /**
+     * 处理view大会员Mall
+     * @param array $data
+     * @param string $name
+     * @return bool
+     */
     public function viewVipMall(array $data, string $name): bool
     {
         $title = '日常任务';

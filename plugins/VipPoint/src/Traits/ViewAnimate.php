@@ -6,6 +6,12 @@ trait ViewAnimate
 {
     use CommonTaskInfo;
 
+    /**
+     * 处理viewAnimate
+     * @param array $data
+     * @param string $name
+     * @return bool
+     */
     public function viewAnimate(array $data, string $name): bool
     {
         $title = '日常任务';

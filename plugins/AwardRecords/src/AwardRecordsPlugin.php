@@ -45,12 +45,20 @@ class AwardRecordsPlugin extends BasePlugin implements PluginTaskInterface
      * @var array<string, int|string>
      */
 
+    /**
+     * 初始化 AwardRecordsPlugin
+     * @param Plugin $plugin
+     */
     public function __construct(Plugin &$plugin)
     {
         $this->authFailureClassifier = new AuthFailureClassifier();
         $this->bootPlugin($plugin, true);
     }
 
+    /**
+     * 执行一次任务
+     * @return TaskResult
+     */
     public function runOnce(): TaskResult
     {
         if (!$this->enabled('award_records')) {
@@ -62,6 +70,10 @@ class AwardRecordsPlugin extends BasePlugin implements PluginTaskInterface
         return TaskResult::after(5 * 60);
     }
 
+    /**
+     * 处理获奖记录记录任务
+     * @return void
+     */
     protected function awardRecordsTask(): void
     {
         $this->records = ($tmp = $this->cacheGet('records', self::CACHE_SCOPE, null)) ? $tmp : $this->initRecords();
@@ -82,6 +94,11 @@ class AwardRecordsPlugin extends BasePlugin implements PluginTaskInterface
         $this->cacheSet('records', $this->records, self::CACHE_SCOPE);
     }
 
+    /**
+     * 处理运营奖惩
+     * @param string $title
+     * @return bool
+     */
     protected function operation(string $title = '运营奖惩'): bool
     {
         try {
@@ -122,6 +139,11 @@ class AwardRecordsPlugin extends BasePlugin implements PluginTaskInterface
         return true;
     }
 
+    /**
+     * 处理获奖记录
+     * @param string $title
+     * @return bool
+     */
     protected function award(string $title = '获奖记录'): bool
     {
         try {
@@ -159,6 +181,11 @@ class AwardRecordsPlugin extends BasePlugin implements PluginTaskInterface
         return true;
     }
 
+    /**
+     * 处理天选时刻
+     * @param string $title
+     * @return bool
+     */
     protected function celestial(string $title = '天选时刻'): bool
     {
         try {
@@ -196,6 +223,11 @@ class AwardRecordsPlugin extends BasePlugin implements PluginTaskInterface
         return true;
     }
 
+    /**
+     * 处理奖励
+     * @param string $title
+     * @return bool
+     */
     protected function bonus(string $title = '航海回馈'): bool
     {
         try {
@@ -249,26 +281,47 @@ class AwardRecordsPlugin extends BasePlugin implements PluginTaskInterface
         ];
     }
 
+    /**
+     * 处理运营奖惩钱包API
+     * @return ApiWallet
+     */
     private function operationWalletApi(): ApiWallet
     {
         return $this->operationWalletApi ??= new ApiWallet($this->appContext()->request());
     }
 
+    /**
+     * 处理获奖记录API
+     * @return ApiAward
+     */
     private function awardApi(): ApiAward
     {
         return $this->awardApi ??= new ApiAward($this->appContext()->request());
     }
 
+    /**
+     * 处理主播API
+     * @return ApiAnchor
+     */
     private function anchorApi(): ApiAnchor
     {
         return $this->anchorApi ??= new ApiAnchor($this->appContext()->request());
     }
 
+    /**
+     * 处理舰长回馈API
+     * @return ApiGuardBenefit
+     */
     private function guardBenefitApi(): ApiGuardBenefit
     {
         return $this->guardBenefitApi ??= new ApiGuardBenefit($this->appContext()->request());
     }
 
+    /**
+     * 判断Today日期时间是否满足条件
+     * @param string $value
+     * @return bool
+     */
     private function isTodayDateTime(string $value): bool
     {
         $timestamp = strtotime(trim($value));
@@ -279,6 +332,12 @@ class AwardRecordsPlugin extends BasePlugin implements PluginTaskInterface
         return date('Y-m-d', $timestamp) === date('Y-m-d');
     }
 
+    /**
+     * 处理失败锁At
+     * @param int $code
+     * @param int $fallbackSeconds
+     * @return int
+     */
     private function failureLockAt(int $code, int $fallbackSeconds): int
     {
         return time() + ($code === -500 ? self::TRANSIENT_RETRY_SECONDS : $fallbackSeconds);

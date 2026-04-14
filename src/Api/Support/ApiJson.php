@@ -41,6 +41,11 @@ final class ApiJson
         return $decoded;
     }
 
+    /**
+     * 标准化RawJSON响应
+     * @param string $raw
+     * @return string
+     */
     public static function normalizeRawJsonResponse(string $raw): string
     {
         $raw = self::decodeCompressedResponse($raw);
@@ -59,6 +64,11 @@ final class ApiJson
         return trim($raw);
     }
 
+    /**
+     * 处理decodeCompressed响应
+     * @param string $raw
+     * @return string
+     */
     protected static function decodeCompressedResponse(string $raw): string
     {
         if ($raw === '') {
@@ -86,6 +96,11 @@ final class ApiJson
         return $raw;
     }
 
+    /**
+     * 处理looksLikePlainJSON
+     * @param string $raw
+     * @return bool
+     */
     private static function looksLikePlainJson(string $raw): bool
     {
         $trimmed = ltrim($raw);
@@ -96,6 +111,11 @@ final class ApiJson
         return str_starts_with($trimmed, '{') || str_starts_with($trimmed, '[');
     }
 
+    /**
+     * 处理looksLikeDecodedText
+     * @param string $raw
+     * @return bool
+     */
     private static function looksLikeDecodedText(string $raw): bool
     {
         if ($raw === '') {
@@ -109,6 +129,11 @@ final class ApiJson
         return preg_match('//u', $raw) === 1;
     }
 
+    /**
+     * 处理looksLikeZlibStream
+     * @param string $raw
+     * @return bool
+     */
     private static function looksLikeZlibStream(string $raw): bool
     {
         if (strlen($raw) < 2) {
@@ -129,6 +154,11 @@ final class ApiJson
         return true;
     }
 
+    /**
+     * 标准化Utf8
+     * @param string $raw
+     * @return string
+     */
     private static function normalizeUtf8(string $raw): string
     {
         if ($raw === '') {

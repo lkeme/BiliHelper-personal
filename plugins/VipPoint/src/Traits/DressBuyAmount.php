@@ -6,6 +6,12 @@ trait DressBuyAmount
 {
     use CommonTaskInfo;
 
+    /**
+     * 处理dressBuy数量
+     * @param array $data
+     * @param string $name
+     * @return bool
+     */
     public function dressBuyAmount(array $data, string $name): bool
     {
         $title = '日常任务';

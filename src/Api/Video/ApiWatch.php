@@ -22,6 +22,10 @@ use Bhp\Request\Request;
 
 class ApiWatch extends AbstractApiClient
 {
+    /**
+     * 初始化 ApiWatch
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

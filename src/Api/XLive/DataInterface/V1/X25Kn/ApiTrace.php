@@ -8,6 +8,10 @@ use Bhp\WbiSign\WbiSign;
 
 final class ApiTrace extends AbstractApiClient
 {
+    /**
+     * 初始化 ApiTrace
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {
@@ -145,6 +149,11 @@ final class ApiTrace extends AbstractApiClient
         return array_values(array_map(static fn (mixed $rule): int => (int)$rule, $rules));
     }
 
+    /**
+     * 处理algoByRule
+     * @param int $rule
+     * @return string
+     */
     private static function algoByRule(int $rule): string
     {
         return match ($rule) {

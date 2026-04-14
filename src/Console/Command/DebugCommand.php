@@ -35,7 +35,11 @@ final class DebugCommand extends Command
     protected string $desc = '[Debug模式] 开发测试使用';
 
     /**
-     *
+     * 初始化 DebugCommand
+     * @param Log $log
+     * @param Closure $schedulerResolver
+     * @param Closure $pluginResolver
+     * @param Closure $cacheResetServiceResolver
      */
     public function __construct(
         private readonly Log $log,
@@ -140,6 +144,10 @@ final class DebugCommand extends Command
         return false;
     }
 
+    /**
+     * 处理scheduler
+     * @return Scheduler
+     */
     private function scheduler(): Scheduler
     {
         $scheduler = $this->schedulerResolver instanceof Closure ? ($this->schedulerResolver)() : null;
@@ -150,6 +158,10 @@ final class DebugCommand extends Command
         throw new LogicException('DebugCommand scheduler dependency is not configured.');
     }
 
+    /**
+     * 处理插件
+     * @return Plugin
+     */
     private function plugin(): Plugin
     {
         $plugin = $this->pluginResolver instanceof Closure ? ($this->pluginResolver)() : null;
@@ -160,6 +172,10 @@ final class DebugCommand extends Command
         throw new LogicException('DebugCommand plugin dependency is not configured.');
     }
 
+    /**
+     * 处理缓存Reset服务
+     * @return ProfileCacheResetService
+     */
     private function cacheResetService(): ProfileCacheResetService
     {
         $service = $this->cacheResetServiceResolver instanceof Closure ? ($this->cacheResetServiceResolver)() : null;

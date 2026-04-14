@@ -8,6 +8,10 @@ use Bhp\WbiSign\WbiSign;
 
 final class ApiOpusSpace extends AbstractApiClient
 {
+    /**
+     * 初始化 ApiOpusSpace
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

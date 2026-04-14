@@ -14,16 +14,31 @@ final class FinalClaimRewardNodeRunner implements NodeRunnerInterface
 {
     private const RETRY_DELAY_SECONDS = 300;
 
+    /**
+     * 初始化 FinalClaimRewardNodeRunner
+     * @param EraTaskGateway $taskGateway
+     */
     public function __construct(
         private readonly EraTaskGateway $taskGateway,
     ) {
     }
 
+    /**
+     * 获取类型标识
+     * @return string
+     */
     public function type(): string
     {
         return 'final_claim_reward';
     }
 
+    /**
+     * 启动执行流程
+     * @param ActivityFlow $flow
+     * @param ActivityNode $node
+     * @param int $now
+     * @return ActivityNodeResult
+     */
     public function run(ActivityFlow $flow, ActivityNode $node, int $now): ActivityNodeResult
     {
         $context = $flow->context()->toArray();

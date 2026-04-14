@@ -35,6 +35,12 @@ class Resource extends Collection
     protected string $file_path = '';
     protected string $parser = '';
 
+    /**
+     * 获取F
+     * @param string|array $file_path
+     * @param string $parser
+     * @return Resource
+     */
     public function loadF(string|array $file_path, string $parser): Resource
     {
         if (!is_string($file_path)) {
@@ -68,6 +74,10 @@ class Resource extends Collection
         };
     }
 
+    /**
+     * 处理reload
+     * @return Resource
+     */
     protected function reload(): Resource
     {
         $expanded = $this->expandArrayProperties($this->config);

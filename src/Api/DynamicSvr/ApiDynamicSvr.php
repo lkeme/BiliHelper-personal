@@ -7,6 +7,10 @@ use Bhp\Request\Request;
 
 class ApiDynamicSvr extends AbstractApiClient
 {
+    /**
+     * 初始化 ApiDynamicSvr
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

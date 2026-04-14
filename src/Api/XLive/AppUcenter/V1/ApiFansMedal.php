@@ -7,6 +7,10 @@ use Bhp\Request\Request;
 
 class ApiFansMedal extends AbstractApiClient
 {
+    /**
+     * 初始化 ApiFansMedal
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

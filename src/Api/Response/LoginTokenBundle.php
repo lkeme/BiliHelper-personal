@@ -4,6 +4,15 @@ namespace Bhp\Api\Response;
 
 final class LoginTokenBundle
 {
+    /**
+     * 初始化 LoginTokenBundle
+     * @param string $accessToken
+     * @param string $refreshToken
+     * @param string $cookie
+     * @param string $uid
+     * @param string $csrf
+     * @param string $sid
+     */
     public function __construct(
         public readonly string $accessToken,
         public readonly string $refreshToken,

@@ -11,6 +11,13 @@ use Bhp\Util\ArrayR\ArrayR;
 
 class MainSiteArchiveService
 {
+    /**
+     * 初始化 MainSiteArchiveService
+     * @param Log $log
+     * @param ApiVideo $apiVideo
+     * @param ApiDynamicSvr $dynamicSvrApi
+     * @param ApiPlayer $playerApi
+     */
     public function __construct(
         private readonly Log $log,
         private readonly ApiVideo $apiVideo,
@@ -257,6 +264,11 @@ class MainSiteArchiveService
         return is_array($archiveInfo) ? $archiveInfo : [];
     }
 
+    /**
+     * 判断ValidArchive是否满足条件
+     * @param mixed $archive
+     * @return bool
+     */
     protected function isValidArchive(mixed $archive): bool
     {
         return is_array($archive)
@@ -264,6 +276,10 @@ class MainSiteArchiveService
             && (is_int($archive['aid']) || is_string($archive['aid']));
     }
 
+    /**
+     * 处理dynamicSvrAPI
+     * @return ApiDynamicSvr
+     */
     private function dynamicSvrApi(): ApiDynamicSvr
     {
         if ($this->dynamicSvrApi instanceof ApiDynamicSvr) {
@@ -273,6 +289,10 @@ class MainSiteArchiveService
         throw new \LogicException('MainSiteArchiveService requires an explicit ApiDynamicSvr.');
     }
 
+    /**
+     * 处理playerAPI
+     * @return ApiPlayer
+     */
     private function playerApi(): ApiPlayer
     {
         if ($this->playerApi instanceof ApiPlayer) {

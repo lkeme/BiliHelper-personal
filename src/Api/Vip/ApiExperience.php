@@ -22,6 +22,10 @@ use Bhp\Request\Request;
 
 class ApiExperience extends AbstractApiClient
 {
+    /**
+     * 初始化 ApiExperience
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

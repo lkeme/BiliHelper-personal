@@ -4,6 +4,10 @@ namespace Bhp\Login;
 
 final class LoginCookieMaintenanceService
 {
+    /**
+     * 初始化 LoginCookieMaintenanceService
+     * @param LoginCookiePatchService $cookiePatchService
+     */
     public function __construct(
         private readonly LoginCookiePatchService $cookiePatchService,
     ) {

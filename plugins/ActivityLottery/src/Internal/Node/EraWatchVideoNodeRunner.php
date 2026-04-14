@@ -15,6 +15,11 @@ final class EraWatchVideoNodeRunner implements NodeRunnerInterface
 {
     private const RETRY_DELAY_SECONDS = 300;
 
+    /**
+     * 初始化 EraWatchVideoNodeRunner
+     * @param string $nodeType
+     * @param WatchVideoGateway $watchGateway
+     */
     public function __construct(
         private readonly string $nodeType,
         private readonly ?WatchVideoGateway $watchGateway = null,
@@ -24,11 +29,22 @@ final class EraWatchVideoNodeRunner implements NodeRunnerInterface
         }
     }
 
+    /**
+     * 获取类型标识
+     * @return string
+     */
     public function type(): string
     {
         return $this->nodeType;
     }
 
+    /**
+     * 启动执行流程
+     * @param ActivityFlow $flow
+     * @param ActivityNode $node
+     * @param int $now
+     * @return ActivityNodeResult
+     */
     public function run(ActivityFlow $flow, ActivityNode $node, int $now): ActivityNodeResult
     {
         $taskView = ResolvedEraTaskView::fromFlowAndNode($flow, $node);
@@ -317,6 +333,10 @@ final class EraWatchVideoNodeRunner implements NodeRunnerInterface
         return $normalized;
     }
 
+    /**
+     * 处理generate会话Id
+     * @return string
+     */
     private static function generateSessionId(): string
     {
         try {

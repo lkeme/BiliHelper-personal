@@ -46,11 +46,19 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
 
     private ?ActivityLotteryRuntime $runtimeInstance = null;
 
+    /**
+     * 初始化 ActivityLotteryPlugin
+     * @param Plugin $plugin
+     */
     public function __construct(Plugin &$plugin)
     {
         $this->bootPlugin($plugin, true);
     }
 
+    /**
+     * 执行一次任务
+     * @return TaskResult
+     */
     public function runOnce(): TaskResult
     {
         if (!$this->enabled('activity_lottery')) {
@@ -60,6 +68,10 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
         return $this->runtime()->tick();
     }
 
+    /**
+     * 处理运行时
+     * @return ActivityLotteryRuntime
+     */
     protected function runtime(): ActivityLotteryRuntime
     {
         if ($this->runtimeInstance instanceof ActivityLotteryRuntime) {
@@ -174,6 +186,10 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
         return $this->runtimeInstance;
     }
 
+    /**
+     * 处理activityInfosLocalPath
+     * @return string
+     */
     private function activityInfosLocalPath(): string
     {
         return rtrim(str_replace('\\', '/', $this->appContext()->appRoot()), '/') . '/resources/activity_lottery_infos.json';

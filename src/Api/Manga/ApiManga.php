@@ -22,6 +22,10 @@ use Bhp\Request\Request;
 
 class ApiManga extends AbstractApiClient
 {
+    /**
+     * 初始化 ApiManga
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

@@ -10,6 +10,12 @@ use Bhp\Util\Exceptions\NoLoginException;
 
 class LoginTokenLifecycleService
 {
+    /**
+     * 初始化 LoginTokenLifecycleService
+     * @param AppContext $context
+     * @param LoginCookiePatchService $cookiePatchService
+     * @param ApiOauth2 $apiOauth2
+     */
     public function __construct(
         protected AppContext $context,
         protected LoginCookiePatchService $cookiePatchService,
@@ -17,6 +23,14 @@ class LoginTokenLifecycleService
     ) {
     }
 
+    /**
+     * 处理ensure会话Alive
+     * @param string $token
+     * @param string $refreshToken
+     * @param callable $loginFallback
+     * @param callable $patchCookie
+     * @return bool
+     */
     public function ensureSessionAlive(
         string $token,
         string $refreshToken,
@@ -42,6 +56,11 @@ class LoginTokenLifecycleService
         return true;
     }
 
+    /**
+     * 校验令牌
+     * @param string $token
+     * @return bool
+     */
     public function validateToken(string $token): bool
     {
         $response = $this->requestTokenInfo($token);
@@ -56,6 +75,12 @@ class LoginTokenLifecycleService
         return !$response['data']['refresh'] && $response['data']['expires_in'] > 14400;
     }
 
+    /**
+     * 刷新令牌
+     * @param string $token
+     * @param string $refreshToken
+     * @return bool
+     */
     public function refreshToken(string $token, string $refreshToken): bool
     {
         $response = $this->requestTokenRefresh($token, $refreshToken);
@@ -72,6 +97,11 @@ class LoginTokenLifecycleService
         return true;
     }
 
+    /**
+     * 处理my信息
+     * @param string $token
+     * @return bool
+     */
     public function myInfo(string $token): bool
     {
         $response = $this->requestMyInfo($token);
@@ -196,6 +226,11 @@ class LoginTokenLifecycleService
         };
     }
 
+    /**
+     * 格式化Coins
+     * @param float $coins
+     * @return string
+     */
     protected function formatCoins(float $coins): string
     {
         if ((float)(int)$coins === $coins) {

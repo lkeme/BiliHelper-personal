@@ -23,12 +23,20 @@ final class DynamicLotteryPlugin extends BasePlugin implements PluginTaskInterfa
     private ?SpaceArticleSourceService $articleSourceService = null;
     private ?DynamicLotteryWindow $window = null;
 
+    /**
+     * 初始化 DynamicLotteryPlugin
+     * @param Plugin $plugin
+     */
     public function __construct(Plugin &$plugin)
     {
         $this->authFailureClassifier = new AuthFailureClassifier();
         $this->bootPlugin($plugin, true);
     }
 
+    /**
+     * 执行一次任务
+     * @return TaskResult
+     */
     public function runOnce(): TaskResult
     {
         if (!$this->enabled('dynamic_lottery')) {
@@ -76,6 +84,11 @@ final class DynamicLotteryPlugin extends BasePlugin implements PluginTaskInterfa
         return TaskResult::after(mt_rand(10, 25) * 60);
     }
 
+    /**
+     * 处理join抽奖
+     * @param DynamicLotteryRuntimeState $state
+     * @return void
+     */
     protected function joinLottery(DynamicLotteryRuntimeState $state): void
     {
         $lottery = $state->shiftPendingLottery();
@@ -121,6 +134,11 @@ final class DynamicLotteryPlugin extends BasePlugin implements PluginTaskInterfa
         return $result;
     }
 
+    /**
+     * 获取Dynamic预留
+     * @param DynamicLotteryRuntimeState $state
+     * @return void
+     */
     protected function fetchDynamicReserve(DynamicLotteryRuntimeState $state): void
     {
         $dynamicId = $state->shiftPendingDynamic();
@@ -187,11 +205,21 @@ final class DynamicLotteryPlugin extends BasePlugin implements PluginTaskInterfa
         $this->info("动态抽奖: 动态 {$lottery->idStr} 发现互动抽奖，已入队");
     }
 
+    /**
+     * 设置DynamicURL
+     * @param int $dynamicId
+     * @return string
+     */
     protected function setDynamicUrl(int $dynamicId): string
     {
         return 'https://t.bilibili.com/' . $dynamicId;
     }
 
+    /**
+     * 处理过滤ContentWords
+     * @param string $content
+     * @return bool
+     */
     protected function filterContentWords(string $content): bool
     {
         $sensitiveWords = $this->filterWords('DynamicLottery.sensitive', [], 'array');
@@ -204,36 +232,65 @@ final class DynamicLotteryPlugin extends BasePlugin implements PluginTaskInterfa
         return false;
     }
 
+    /**
+     * 处理状态存储
+     * @return DynamicLotteryStateStore
+     */
     protected function stateStore(): DynamicLotteryStateStore
     {
         return $this->stateStore ??= new DynamicLotteryStateStore($this->cache());
     }
 
+    /**
+     * 处理预约Executor
+     * @return DynamicLotteryReservationExecutor
+     */
     protected function reservationExecutor(): DynamicLotteryReservationExecutor
     {
         return $this->reservationExecutor ??= new DynamicLotteryReservationExecutor(new DynamicLotteryReservationService(), $this->appContext()->request());
     }
 
+    /**
+     * 处理认证失败Classifier
+     * @return ?AuthFailureClassifier
+     */
     protected function authFailureClassifier(): ?AuthFailureClassifier
     {
         return $this->authFailureClassifier;
     }
 
+    /**
+     * 处理文章来源
+     * @return SpaceArticleSourceService
+     */
     protected function articleSource(): SpaceArticleSourceService
     {
         return $this->articleSourceService ??= new SpaceArticleSourceService($this->appContext());
     }
 
+    /**
+     * 处理详情API
+     * @return ApiDetail
+     */
     private function detailApi(): ApiDetail
     {
         return $this->detailApi ??= new ApiDetail($this->appContext()->request());
     }
 
+    /**
+     * 处理抽奖通知API
+     * @return ApiLotteryNotice
+     */
     private function lotteryNoticeApi(): ApiLotteryNotice
     {
         return $this->lotteryNoticeApi ??= new ApiLotteryNotice($this->appContext()->request());
     }
 
+    /**
+     * 获取抽奖通知
+     * @param int $dynamicId
+     * @return ?DynamicLotteryNotice
+     */
     private function fetchLotteryNotice(int $dynamicId): ?DynamicLotteryNotice
     {
         $response = $this->lotteryNoticeApi()->notice($dynamicId);
@@ -242,16 +299,29 @@ final class DynamicLotteryPlugin extends BasePlugin implements PluginTaskInterfa
         return DynamicLotteryNotice::fromResponse($response);
     }
 
+    /**
+     * 处理窗口
+     * @return DynamicLotteryWindow
+     */
     private function window(): DynamicLotteryWindow
     {
         return $this->window ??= new DynamicLotteryWindow($this->pluginWindowStartAt(), $this->pluginWindowEndAt());
     }
 
+    /**
+     * 获取当前时间
+     * @return int
+     */
     private function now(): int
     {
         return time();
     }
 
+    /**
+     * 处理biz日期
+     * @param int $timestamp
+     * @return string
+     */
     private function bizDate(int $timestamp): string
     {
         return date('Y-m-d', $timestamp);

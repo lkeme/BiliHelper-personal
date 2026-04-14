@@ -22,6 +22,12 @@ final class EraUnfollowNodeRunner implements NodeRunnerInterface
     private readonly AuthFailureClassifier $authFailureClassifier;
     private readonly ?ApiRelation $apiRelation;
 
+    /**
+     * 初始化 EraUnfollowNodeRunner
+     * @param callable $unfollowAction
+     * @param AuthFailureClassifier $authFailureClassifier
+     * @param ApiRelation $apiRelation
+     */
     public function __construct(?callable $unfollowAction = null, ?AuthFailureClassifier $authFailureClassifier = null, ?ApiRelation $apiRelation = null)
     {
         $this->apiRelation = $apiRelation;
@@ -35,11 +41,22 @@ final class EraUnfollowNodeRunner implements NodeRunnerInterface
         $this->authFailureClassifier = $authFailureClassifier ?? new AuthFailureClassifier();
     }
 
+    /**
+     * 获取类型标识
+     * @return string
+     */
     public function type(): string
     {
         return 'era_task_unfollow';
     }
 
+    /**
+     * 启动执行流程
+     * @param ActivityFlow $flow
+     * @param ActivityNode $node
+     * @param int $now
+     * @return ActivityNodeResult
+     */
     public function run(ActivityFlow $flow, ActivityNode $node, int $now): ActivityNodeResult
     {
         $taskView = ResolvedEraTaskView::fromFlowAndNode($flow, $node);
@@ -52,6 +69,13 @@ final class EraUnfollowNodeRunner implements NodeRunnerInterface
         return $this->runTemporaryFollowCleanup($flow, $now);
     }
 
+    /**
+     * 处理运行Explicit取关
+     * @param ResolvedEraTaskView $taskView
+     * @param \Bhp\Plugin\Builtin\ActivityLottery\Internal\Page\EraTaskSnapshot $task
+     * @param int $now
+     * @return ActivityNodeResult
+     */
     private function runExplicitUnfollow(ResolvedEraTaskView $taskView, \Bhp\Plugin\Builtin\ActivityLottery\Internal\Page\EraTaskSnapshot $task, int $now): ActivityNodeResult
     {
         if ($taskView->resolvedTaskStatus() !== 1) {
@@ -117,6 +141,12 @@ final class EraUnfollowNodeRunner implements NodeRunnerInterface
         ], $now);
     }
 
+    /**
+     * 处理运行TemporaryFollowCleanup
+     * @param ActivityFlow $flow
+     * @param int $now
+     * @return ActivityNodeResult
+     */
     private function runTemporaryFollowCleanup(ActivityFlow $flow, int $now): ActivityNodeResult
     {
         $context = $flow->context()->toArray();

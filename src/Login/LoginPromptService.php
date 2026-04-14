@@ -4,6 +4,12 @@ namespace Bhp\Login;
 
 class LoginPromptService
 {
+    /**
+     * 处理prompt
+     * @param string $message
+     * @param int $maxChar
+     * @return string
+     */
     public function prompt(string $message, int $maxChar = 100): string
     {
         $stdin = fopen('php://stdin', 'r');

@@ -7,6 +7,10 @@ use Bhp\Request\Request;
 
 class ApiXLiveSign extends AbstractApiClient
 {
+    /**
+     * 初始化 ApiXLiveSign
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

@@ -29,12 +29,20 @@ final class PolishMedalPlugin extends BasePlugin implements PluginTaskInterface
     private ?PolishMedalWindow $window = null;
     private ?PolishMedalRoundPlanner $roundPlanner = null;
 
+    /**
+     * 初始化 PolishMedalPlugin
+     * @param Plugin $plugin
+     */
     public function __construct(Plugin &$plugin)
     {
         $this->authFailureClassifier = new AuthFailureClassifier();
         $this->bootPlugin($plugin, true);
     }
 
+    /**
+     * 执行一次任务
+     * @return TaskResult
+     */
     public function runOnce(): TaskResult
     {
         if (!$this->enabled('polish_medal')) {
@@ -103,26 +111,51 @@ final class PolishMedalPlugin extends BasePlugin implements PluginTaskInterface
         return TaskResult::after($this->randomInt(self::MIN_IDLE_DELAY_SECONDS, self::MAX_IDLE_DELAY_SECONDS));
     }
 
+    /**
+     * 获取当前时间
+     * @return int
+     */
     protected function now(): int
     {
         return time();
     }
 
+    /**
+     * 处理随机Int
+     * @param int $min
+     * @param int $max
+     * @return int
+     */
     protected function randomInt(int $min, int $max): int
     {
         return mt_rand($min, $max);
     }
 
+    /**
+     * 获取状态
+     * @return PolishMedalRuntimeState
+     */
     protected function loadState(): PolishMedalRuntimeState
     {
         return $this->stateStore()->load();
     }
 
+    /**
+     * 保存或更新状态
+     * @param PolishMedalRuntimeState $state
+     * @return void
+     */
     protected function saveState(PolishMedalRuntimeState $state): void
     {
         $this->stateStore()->save($state);
     }
 
+    /**
+     * 刷新Round状态
+     * @param PolishMedalRuntimeState $state
+     * @param int $now
+     * @return PolishMedalRuntimeState
+     */
     protected function refreshRoundState(PolishMedalRuntimeState $state, int $now): PolishMedalRuntimeState
     {
         $medals = $this->fetchMedals();
@@ -247,6 +280,11 @@ final class PolishMedalPlugin extends BasePlugin implements PluginTaskInterface
         return false;
     }
 
+    /**
+     * 处理medalExistsInPanel
+     * @param int $medalId
+     * @return ?bool
+     */
     protected function medalExistsInPanel(int $medalId): ?bool
     {
         if ($medalId <= 0) {
@@ -333,6 +371,12 @@ final class PolishMedalPlugin extends BasePlugin implements PluginTaskInterface
         return false;
     }
 
+    /**
+     * 处理handleOutside窗口
+     * @param PolishMedalRuntimeState $state
+     * @param int $now
+     * @return TaskResult
+     */
     protected function handleOutsideWindow(PolishMedalRuntimeState $state, int $now): TaskResult
     {
         $hadPendingRound = $state->roundRefreshedAt() > 0 || $state->hasDeleteQueue() || $state->hasLightQueue();
@@ -348,31 +392,55 @@ final class PolishMedalPlugin extends BasePlugin implements PluginTaskInterface
         return TaskResult::after($this->window()->secondsUntilNextStart($now));
     }
 
+    /**
+     * 处理medalManageAPI
+     * @return ApiMedalManage
+     */
     protected function medalManageApi(): ApiMedalManage
     {
         return $this->medalManageApi ??= new ApiMedalManage($this->appContext()->request());
     }
 
+    /**
+     * 处理like信息API
+     * @return ApiLikeInfoV3
+     */
     protected function likeInfoApi(): ApiLikeInfoV3
     {
         return $this->likeInfoApi ??= new ApiLikeInfoV3($this->appContext()->request());
     }
 
+    /**
+     * 处理状态存储
+     * @return PolishMedalStateStore
+     */
     protected function stateStore(): PolishMedalStateStore
     {
         return $this->stateStore ??= new PolishMedalStateStore($this->appContext()->cache());
     }
 
+    /**
+     * 处理窗口
+     * @return PolishMedalWindow
+     */
     protected function window(): PolishMedalWindow
     {
         return $this->window ??= new PolishMedalWindow($this->pluginWindowStartAt(), $this->pluginWindowEndAt());
     }
 
+    /**
+     * 处理roundPlanner
+     * @return PolishMedalRoundPlanner
+     */
     protected function roundPlanner(): PolishMedalRoundPlanner
     {
         return $this->roundPlanner ??= new PolishMedalRoundPlanner(self::MAX_LIGHT_QUEUE_PER_ROUND);
     }
 
+    /**
+     * 处理cleanupInvalidMedalEnabled
+     * @return bool
+     */
     protected function cleanupInvalidMedalEnabled(): bool
     {
         return $this->config('polish_medal.cleanup_invalid_medal', false, 'bool');
@@ -389,6 +457,11 @@ final class PolishMedalPlugin extends BasePlugin implements PluginTaskInterface
         return sprintf('Lv.%d %s', $level, $medalName);
     }
 
+    /**
+     * 处理lightProgressLabel
+     * @param int $remainingBeforePop
+     * @return string
+     */
     private function lightProgressLabel(int $remainingBeforePop): string
     {
         if ($remainingBeforePop <= 0) {

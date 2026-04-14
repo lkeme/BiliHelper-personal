@@ -11,6 +11,10 @@ class LoginCaptchaService
 {
     private ?ApiCaptcha $captchaApi = null;
 
+    /**
+     * 初始化 LoginCaptchaService
+     * @param AppContext $context
+     */
     public function __construct(protected AppContext $context)
     {
     }
@@ -31,6 +35,10 @@ class LoginCaptchaService
         return ['gt' => $gt, 'challenge' => $challenge];
     }
 
+    /**
+     * 断言验证码服务Ready
+     * @return void
+     */
     public function assertCaptchaServiceReady(): void
     {
         $errorMessage = '请参考以下验证码文档(https://github.com/lkeme/BiliHelper-personal/blob/master/docs/CAPTCHA.md)修正';
@@ -89,6 +97,10 @@ class LoginCaptchaService
         return $this->captchaApi()->fetch((string)$this->context->config('login_captcha.url'), $challenge);
     }
 
+    /**
+     * 处理验证码API
+     * @return ApiCaptcha
+     */
     private function captchaApi(): ApiCaptcha
     {
         return $this->captchaApi ??= new ApiCaptcha($this->context->request());

@@ -22,6 +22,10 @@ use Bhp\Request\Request;
 
 class ApiPay extends AbstractApiClient
 {
+    /**
+     * 初始化 ApiPay
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

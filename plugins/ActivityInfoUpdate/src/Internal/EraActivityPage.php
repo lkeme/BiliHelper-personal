@@ -88,6 +88,12 @@ final class EraActivityPage
         ];
     }
 
+    /**
+     * 处理with时间Range
+     * @param int $startTime
+     * @param int $endTime
+     * @return self
+     */
     public function withTimeRange(int $startTime, int $endTime): self
     {
         return new self(
@@ -106,6 +112,11 @@ final class EraActivityPage
         );
     }
 
+    /**
+     * 判断Expired是否满足条件
+     * @param int $now
+     * @return bool
+     */
     public function isExpired(?int $now = null): bool
     {
         $now ??= time();
@@ -113,6 +124,11 @@ final class EraActivityPage
         return $this->endTime > 0 && $this->endTime <= $now;
     }
 
+    /**
+     * 判断NotStarted是否满足条件
+     * @param int $now
+     * @return bool
+     */
     public function isNotStarted(?int $now = null): bool
     {
         $now ??= time();

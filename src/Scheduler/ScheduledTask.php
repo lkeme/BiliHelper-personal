@@ -4,6 +4,30 @@ namespace Bhp\Scheduler;
 
 final class ScheduledTask
 {
+    /**
+     * 初始化 ScheduledTask
+     * @param string $hook
+     * @param string $name
+     * @param int $priority
+     * @param float $intervalSeconds
+     * @param string $policy
+     * @param int $maxConcurrency
+     * @param float $timeoutSeconds
+     * @param float $nextRunAtNs
+     * @param bool $highFrequency
+     * @param bool $bootstrapFirst
+     * @param array $governanceHosts
+     * @param int $governanceWindowSeconds
+     * @param int $governanceMaxRequestsPerHost
+     * @param int $governanceCooldownSeconds
+     * @param string $governanceGroup
+     * @param int $governanceGroupMaxConcurrency
+     * @param string $governanceProfile
+     * @param float $governanceGroupBackoffSeconds
+     * @param float $governanceCooldownMultiplier
+     * @param int $failureCount
+     * @param float $circuitOpenUntilNs
+     */
     public function __construct(
         public readonly string $hook,
         public readonly string $name,

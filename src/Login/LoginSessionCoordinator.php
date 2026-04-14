@@ -4,6 +4,10 @@ namespace Bhp\Login;
 
 final class LoginSessionCoordinator
 {
+    /**
+     * 初始化 LoginSessionCoordinator
+     * @param LoginFlowController $flowController
+     */
     public function __construct(
         private readonly LoginFlowController $flowController,
     ) {

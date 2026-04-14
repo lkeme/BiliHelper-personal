@@ -114,6 +114,11 @@ final class ActivityFlow
         );
     }
 
+    /**
+     * 标准化Biz日期
+     * @param string $bizDate
+     * @return string
+     */
     public static function normalizeBizDate(string $bizDate): string
     {
         $normalized = trim($bizDate);
@@ -124,11 +129,19 @@ final class ActivityFlow
         return $normalized;
     }
 
+    /**
+     * 处理id
+     * @return string
+     */
     public function id(): string
     {
         return $this->flowId;
     }
 
+    /**
+     * 处理biz日期
+     * @return string
+     */
     public function bizDate(): string
     {
         return $this->bizDate;
@@ -142,11 +155,19 @@ final class ActivityFlow
         return $this->activity;
     }
 
+    /**
+     * 处理状态
+     * @return string
+     */
     public function status(): string
     {
         return $this->status;
     }
 
+    /**
+     * 处理current节点Index
+     * @return int
+     */
     public function currentNodeIndex(): int
     {
         return $this->currentNodeIndex;
@@ -160,16 +181,28 @@ final class ActivityFlow
         return $this->nodes;
     }
 
+    /**
+     * 处理下次运行At
+     * @return int
+     */
     public function nextRunAt(): int
     {
         return $this->nextRunAt;
     }
 
+    /**
+     * 处理attempts
+     * @return int
+     */
     public function attempts(): int
     {
         return $this->attempts;
     }
 
+    /**
+     * 处理上下文
+     * @return ActivityFlowContext
+     */
     public function context(): ActivityFlowContext
     {
         return $this->context;
@@ -183,11 +216,19 @@ final class ActivityFlow
         return $this->logs;
     }
 
+    /**
+     * 创建dAt
+     * @return int
+     */
     public function createdAt(): int
     {
         return $this->createdAt;
     }
 
+    /**
+     * 保存或更新dAt
+     * @return int
+     */
     public function updatedAt(): int
     {
         return $this->updatedAt;
@@ -364,6 +405,11 @@ final class ActivityFlow
         return $value;
     }
 
+    /**
+     * 判断ValidBiz日期是否满足条件
+     * @param string $bizDate
+     * @return bool
+     */
     private static function isValidBizDate(string $bizDate): bool
     {
         if ($bizDate === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $bizDate)) {

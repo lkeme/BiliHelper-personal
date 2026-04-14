@@ -7,6 +7,10 @@ use Bhp\Request\Request;
 
 final class ApiLotteryNotice extends AbstractApiClient
 {
+    /**
+     * 初始化 ApiLotteryNotice
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

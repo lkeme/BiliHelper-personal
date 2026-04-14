@@ -33,6 +33,10 @@ class Collection implements ArrayAccess, Countable, \IteratorAggregate
     public int $mergeDepth = 3;
     public string $keyPathSep = '.';
 
+    /**
+     * 清空数据
+     * @return static
+     */
     public function clear(): static
     {
         $this->data = [];
@@ -40,6 +44,12 @@ class Collection implements ArrayAccess, Countable, \IteratorAggregate
         return $this;
     }
 
+    /**
+     * 处理设置
+     * @param string $key
+     * @param mixed $value
+     * @return static
+     */
     public function set(string $key, mixed $value): static
     {
         if ($this->keyPathSep !== '' && strpos($key, $this->keyPathSep) > 0) {
@@ -53,6 +63,12 @@ class Collection implements ArrayAccess, Countable, \IteratorAggregate
         return $this;
     }
 
+    /**
+     * 处理get
+     * @param string $key
+     * @param mixed $default
+     * @return mixed
+     */
     public function get(string $key, mixed $default = null): mixed
     {
         if ($this->keyPathSep !== '' && strpos($key, $this->keyPathSep) > 0) {
@@ -62,11 +78,23 @@ class Collection implements ArrayAccess, Countable, \IteratorAggregate
         return $this->data[$key] ?? $default;
     }
 
+    /**
+     * 获取Int
+     * @param string $key
+     * @param mixed $default
+     * @return int
+     */
     public function getInt(string $key, mixed $default = null): int
     {
         return (int)$this->get($key, $default);
     }
 
+    /**
+     * 获取String
+     * @param string $key
+     * @param mixed $default
+     * @return string
+     */
     public function getString(string $key, mixed $default = null): string
     {
         $value = $this->get($key, $default);
@@ -82,6 +110,12 @@ class Collection implements ArrayAccess, Countable, \IteratorAggregate
         return '';
     }
 
+    /**
+     * 获取Bool
+     * @param string $key
+     * @param mixed $default
+     * @return bool
+     */
     public function getBool(string $key, mixed $default = null): bool
     {
         $value = $this->get($key, $default);
@@ -103,11 +137,21 @@ class Collection implements ArrayAccess, Countable, \IteratorAggregate
         return is_array($value) ? $value : (is_array($default) ? $default : []);
     }
 
+    /**
+     * 处理exists
+     * @param string $key
+     * @return bool
+     */
     public function exists(string $key): bool
     {
         return $this->get($key) !== null;
     }
 
+    /**
+     * 处理has
+     * @param string $key
+     * @return bool
+     */
     public function has(string $key): bool
     {
         return $this->exists($key);
@@ -129,16 +173,30 @@ class Collection implements ArrayAccess, Countable, \IteratorAggregate
         return $this->data;
     }
 
+    /**
+     * 获取键PathSep
+     * @return string
+     */
     public function getKeyPathSep(): string
     {
         return $this->keyPathSep;
     }
 
+    /**
+     * 设置键PathSep
+     * @param string $keyPathSep
+     * @return void
+     */
     public function setKeyPathSep(string $keyPathSep): void
     {
         $this->keyPathSep = $keyPathSep;
     }
 
+    /**
+     * 处理加载
+     * @param array|Traversable $data
+     * @return self
+     */
     public function load(array|Traversable $data): self
     {
         $this->bindData($this->data, $data);
@@ -146,6 +204,11 @@ class Collection implements ArrayAccess, Countable, \IteratorAggregate
         return $this;
     }
 
+    /**
+     * 获取数据
+     * @param array|Traversable $data
+     * @return self
+     */
     public function loadData(array|Traversable $data): self
     {
         $this->bindData($this->data, $data);
@@ -184,36 +247,68 @@ class Collection implements ArrayAccess, Countable, \IteratorAggregate
         return array_keys($this->data);
     }
 
+    /**
+     * 获取Iterator
+     * @return Traversable
+     */
     public function getIterator(): Traversable
     {
         return new RecursiveArrayIterator($this->data);
     }
 
+    /**
+     * 处理offsetExists
+     * @param mixed $offset
+     * @return bool
+     */
     public function offsetExists(mixed $offset): bool
     {
         return isset($this->data[(string)$offset]);
     }
 
+    /**
+     * 处理offsetGet
+     * @param mixed $offset
+     * @return mixed
+     */
     public function offsetGet(mixed $offset): mixed
     {
         return $this->get((string)$offset);
     }
 
+    /**
+     * 处理offset设置
+     * @param mixed $offset
+     * @param mixed $value
+     * @return void
+     */
     public function offsetSet(mixed $offset, mixed $value): void
     {
         $this->set((string)$offset, $value);
     }
 
+    /**
+     * 处理offsetUnset
+     * @param mixed $offset
+     * @return void
+     */
     public function offsetUnset(mixed $offset): void
     {
         $this->set((string)$offset, null);
     }
 
+    /**
+     * 获取数量
+     * @return int
+     */
     public function count(): int
     {
         return count($this->data);
     }
 
+    /**
+     * 克隆当前实例
+     */
     public function __clone()
     {
         $copy = unserialize(serialize($this->data));

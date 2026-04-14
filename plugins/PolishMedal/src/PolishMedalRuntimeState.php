@@ -50,6 +50,10 @@ final class PolishMedalRuntimeState
         return $this->state;
     }
 
+    /**
+     * 处理roundRefreshedAt
+     * @return int
+     */
     public function roundRefreshedAt(): int
     {
         return (int)$this->state['round_refreshed_at'];
@@ -85,16 +89,32 @@ final class PolishMedalRuntimeState
         return $stats;
     }
 
+    /**
+     * 判断DeleteQueue是否满足条件
+     * @return bool
+     */
     public function hasDeleteQueue(): bool
     {
         return $this->roundDeleteQueue() !== [];
     }
 
+    /**
+     * 判断LightQueue是否满足条件
+     * @return bool
+     */
     public function hasLightQueue(): bool
     {
         return $this->roundLightQueue() !== [];
     }
 
+    /**
+     * 设置Round
+     * @param int $refreshedAt
+     * @param array $deleteQueue
+     * @param array $lightQueue
+     * @param array $stats
+     * @return void
+     */
     public function setRound(int $refreshedAt, array $deleteQueue, array $lightQueue, array $stats): void
     {
         $this->state['round_refreshed_at'] = max(0, $refreshedAt);
@@ -164,6 +184,10 @@ final class PolishMedalRuntimeState
         $this->state['round_stats']['queued_light_count'] = count($queue);
     }
 
+    /**
+     * 删除或清理Round
+     * @return void
+     */
     public function clearRound(): void
     {
         $this->state = self::defaults();

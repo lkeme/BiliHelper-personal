@@ -6,16 +6,31 @@ use Bhp\Log\Log;
 
 final class HttpRequestLogInterceptor implements HttpClientInterceptor
 {
+    /**
+     * 初始化 HttpRequestLogInterceptor
+     * @param Log $log
+     */
     public function __construct(
         private readonly Log $log,
     ) {
     }
 
+    /**
+     * 处理beforeSend
+     * @param HttpRequestContext $context
+     * @return HttpRequestContext
+     */
     public function beforeSend(HttpRequestContext $context): HttpRequestContext
     {
         return $context;
     }
 
+    /**
+     * 处理after响应
+     * @param HttpRequestContext $context
+     * @param HttpResponse $response
+     * @return void
+     */
     public function afterResponse(HttpRequestContext $context, HttpResponse $response): void
     {
         if (($context->attributes['quiet'] ?? false) === true) {
@@ -54,6 +69,12 @@ final class HttpRequestLogInterceptor implements HttpClientInterceptor
         );
     }
 
+    /**
+     * 处理after失败
+     * @param HttpRequestContext $context
+     * @param \Throwable $exception
+     * @return void
+     */
     public function afterFailure(HttpRequestContext $context, \Throwable $exception): void
     {
         if (($context->attributes['quiet'] ?? false) === true) {
@@ -91,6 +112,11 @@ final class HttpRequestLogInterceptor implements HttpClientInterceptor
         );
     }
 
+    /**
+     * 处理transport摘要
+     * @param HttpRequestContext $context
+     * @return string
+     */
     private function transportSummary(HttpRequestContext $context): string
     {
         $segments = [];

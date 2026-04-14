@@ -120,6 +120,10 @@ final class ScriptCommand extends Command
         }
     }
 
+    /**
+     * 处理renderScript插件列表
+     * @return void
+     */
     protected function renderScriptPluginList(): void
     {
         $plugins = $this->discoverScriptPlugins();
@@ -181,6 +185,10 @@ final class ScriptCommand extends Command
         return $plugins;
     }
 
+    /**
+     * 处理插件
+     * @return Plugin
+     */
     private function plugin(): Plugin
     {
         $plugin = $this->pluginResolver instanceof Closure ? ($this->pluginResolver)() : null;
@@ -191,6 +199,10 @@ final class ScriptCommand extends Command
         throw new LogicException('ScriptCommand plugin dependency is not configured.');
     }
 
+    /**
+     * 处理缓存Reset服务
+     * @return ProfileCacheResetService
+     */
     private function cacheResetService(): ProfileCacheResetService
     {
         $service = $this->cacheResetServiceResolver instanceof Closure ? ($this->cacheResetServiceResolver)() : null;

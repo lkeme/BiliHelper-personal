@@ -8,6 +8,10 @@ final class LiveReservationStateStore
 {
     private const CACHE_SCOPE = 'LiveReservation';
 
+    /**
+     * 初始化 LiveReservationStateStore
+     * @param Cache $cache
+     */
     public function __construct(
         private readonly Cache $cache,
     ) {

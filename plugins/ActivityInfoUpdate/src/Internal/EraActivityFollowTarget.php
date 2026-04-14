@@ -4,6 +4,12 @@ namespace Bhp\Plugin\Builtin\ActivityInfoUpdate\Internal;
 
 final class EraActivityFollowTarget
 {
+    /**
+     * 初始化 EraActivityFollowTarget
+     * @param string $uid
+     * @param string $uname
+     * @param bool $addLotteryTimes
+     */
     public function __construct(
         public readonly string $uid,
         public readonly string $uname,

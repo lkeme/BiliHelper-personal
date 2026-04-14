@@ -7,6 +7,10 @@ use Bhp\Request\Request;
 
 class ApiAnchor extends AbstractApiClient
 {
+    /**
+     * 初始化 ApiAnchor
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

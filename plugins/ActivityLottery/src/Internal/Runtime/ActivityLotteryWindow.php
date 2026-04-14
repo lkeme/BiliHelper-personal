@@ -7,6 +7,11 @@ final class ActivityLotteryWindow
     private int $startSeconds;
     private int $endSeconds;
 
+    /**
+     * 初始化 ActivityLotteryWindow
+     * @param string $startAt
+     * @param string $endAt
+     */
     public function __construct(
         private readonly string $startAt,
         private readonly string $endAt,
@@ -15,6 +20,11 @@ final class ActivityLotteryWindow
         $this->endSeconds = self::toSeconds($this->endAt);
     }
 
+    /**
+     * 处理contains
+     * @param int $timestamp
+     * @return bool
+     */
     public function contains(int $timestamp): bool
     {
         $seconds = (int)date('H', $timestamp) * 3600 + (int)date('i', $timestamp) * 60 + (int)date('s', $timestamp);
@@ -26,6 +36,11 @@ final class ActivityLotteryWindow
         return $seconds >= $this->startSeconds || $seconds < $this->endSeconds;
     }
 
+    /**
+     * 处理toSeconds
+     * @param string $time
+     * @return int
+     */
     private static function toSeconds(string $time): int
     {
         $chunks = explode(':', trim($time));

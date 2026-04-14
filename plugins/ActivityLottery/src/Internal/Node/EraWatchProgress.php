@@ -135,6 +135,11 @@ final class EraWatchProgress
         return min($playableDuration, 15);
     }
 
+    /**
+     * 处理bufferSeconds
+     * @param int $thresholdSeconds
+     * @return int
+     */
     private static function bufferSeconds(int $thresholdSeconds): int
     {
         if ($thresholdSeconds >= 3600) {

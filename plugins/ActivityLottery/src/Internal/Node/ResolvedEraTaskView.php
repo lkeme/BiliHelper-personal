@@ -22,6 +22,12 @@ final class ResolvedEraTaskView
     ) {
     }
 
+    /**
+     * 处理from流程And节点
+     * @param ActivityFlow $flow
+     * @param ActivityNode $node
+     * @return self
+     */
     public static function fromFlowAndNode(ActivityFlow $flow, ActivityNode $node): self
     {
         $taskId = trim((string)($node->payload()['task_id'] ?? ''));
@@ -53,11 +59,19 @@ final class ResolvedEraTaskView
         return new self($taskId, $task, $runtimeMap, $flow->activity(), $progressMap);
     }
 
+    /**
+     * 处理任务Id
+     * @return string
+     */
     public function taskId(): string
     {
         return $this->taskId;
     }
 
+    /**
+     * 处理任务
+     * @return ?EraTaskSnapshot
+     */
     public function task(): ?EraTaskSnapshot
     {
         return $this->task;
@@ -97,6 +111,10 @@ final class ResolvedEraTaskView
         return is_array($snapshot) ? $snapshot : [];
     }
 
+    /**
+     * 解析d任务状态
+     * @return int
+     */
     public function resolvedTaskStatus(): int
     {
         $progress = $this->taskProgress();

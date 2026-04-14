@@ -83,6 +83,8 @@ class Login extends BasePlugin implements PluginTaskInterface
     }
 
     /**
+     * 执行一次任务
+     * @return \Bhp\Scheduler\TaskResult
      */
     public function runOnce(): \Bhp\Scheduler\TaskResult
     {
@@ -130,11 +132,19 @@ class Login extends BasePlugin implements PluginTaskInterface
         return $this->resolveTaskResult(\Bhp\Scheduler\TaskResult::after(7200));
     }
 
+    /**
+     * 判断登录Tokens是否满足条件
+     * @return bool
+     */
     protected function hasLoginTokens(): bool
     {
         return $this->auth('access_token') !== '' && $this->auth('refresh_token') !== '';
     }
 
+    /**
+     * 判断待处理登录流程是否满足条件
+     * @return bool
+     */
     protected function hasPendingLoginFlow(): bool
     {
         return $this->currentPendingLoginFlow() !== null;
@@ -149,6 +159,10 @@ class Login extends BasePlugin implements PluginTaskInterface
         $this->syncRuntimeState();
     }
 
+    /**
+     * 删除或清理待处理登录流程
+     * @return void
+     */
     protected function clearPendingLoginFlow(): void
     {
         $this->pendingFlowStateService()->clear($this->state());
@@ -157,6 +171,7 @@ class Login extends BasePlugin implements PluginTaskInterface
 
     /**
      * 初始化登录
+     * @return void
      */
     protected function initLogin(): void
     {
@@ -179,7 +194,8 @@ class Login extends BasePlugin implements PluginTaskInterface
     }
 
     /**
-     * 登录控制中心
+     * 处理登录
+     * @return void
      */
     protected function login(): void
     {
@@ -198,7 +214,8 @@ class Login extends BasePlugin implements PluginTaskInterface
     }
 
     /**
-     * 保持认证
+     * 处理keep登录
+     * @return void
      */
     protected function keepLogin(): void
     {
@@ -226,6 +243,10 @@ class Login extends BasePlugin implements PluginTaskInterface
         );
     }
 
+    /**
+     * 判断Configured登录Fallback是否满足条件
+     * @return bool
+     */
     protected function hasConfiguredLoginFallback(): bool
     {
         $modeId = (int)$this->config('login_mode.mode');
@@ -239,6 +260,11 @@ class Login extends BasePlugin implements PluginTaskInterface
         };
     }
 
+    /**
+     * 断言登录Ready
+     * @param string $message
+     * @return void
+     */
     protected function assertLoginReady(string $message): void
     {
         if ($this->hasPendingLoginFlow() || !$this->gateStateService()->authReady()) {
@@ -246,6 +272,10 @@ class Login extends BasePlugin implements PluginTaskInterface
         }
     }
 
+    /**
+     * 处理resume待处理登录流程
+     * @return void
+     */
     protected function resumePendingLoginFlow(): void
     {
         $flow = $this->currentPendingLoginFlow();
@@ -291,6 +321,11 @@ class Login extends BasePlugin implements PluginTaskInterface
         );
     }
 
+    /**
+     * 处理begin验证码登录
+     * @param string $targetUrl
+     * @return void
+     */
     protected function beginCaptchaLogin(string $targetUrl): void
     {
         $this->invalidateSessionAuth();
@@ -304,6 +339,13 @@ class Login extends BasePlugin implements PluginTaskInterface
         $this->announcePendingCaptcha((string)$result['display_url'], (float)$result['delay_seconds']);
     }
 
+    /**
+     * 处理begin短信验证码登录
+     * @param string $phone
+     * @param string $cid
+     * @param string $targetUrl
+     * @return void
+     */
     protected function beginSmsCaptchaLogin(string $phone, string $cid, string $targetUrl): void
     {
         $this->invalidateSessionAuth();
@@ -334,7 +376,8 @@ class Login extends BasePlugin implements PluginTaskInterface
     }
 
     /**
-     * CookiePatch
+     * 处理修补Cookie
+     * @return void
      */
     public function patchCookie(): void
     {
@@ -354,16 +397,28 @@ class Login extends BasePlugin implements PluginTaskInterface
         }
     }
 
+    /**
+     * 处理Cookie修补服务
+     * @return LoginCookiePatchService
+     */
     protected function cookiePatchService(): LoginCookiePatchService
     {
         return $this->cookiePatchService ??= new LoginCookiePatchService();
     }
 
+    /**
+     * 处理CookieMaintenance服务
+     * @return LoginCookieMaintenanceService
+     */
     protected function cookieMaintenanceService(): LoginCookieMaintenanceService
     {
         return $this->cookieMaintenanceService ??= new LoginCookieMaintenanceService($this->cookiePatchService());
     }
 
+    /**
+     * 处理令牌生命周期服务
+     * @return LoginTokenLifecycleService
+     */
     protected function tokenLifecycleService(): LoginTokenLifecycleService
     {
         return $this->tokenLifecycleService ??= new LoginTokenLifecycleService(
@@ -373,36 +428,64 @@ class Login extends BasePlugin implements PluginTaskInterface
         );
     }
 
+    /**
+     * 处理验证码服务
+     * @return LoginCaptchaService
+     */
     protected function captchaService(): LoginCaptchaService
     {
         return $this->captchaService ??= new LoginCaptchaService($this->appContext());
     }
 
+    /**
+     * 处理凭证服务
+     * @return LoginCredentialService
+     */
     protected function credentialService(): LoginCredentialService
     {
         return $this->credentialService ??= new LoginCredentialService($this->appContext(), $this->apiOauth2());
     }
 
+    /**
+     * 处理prompt服务
+     * @return LoginPromptService
+     */
     protected function promptService(): LoginPromptService
     {
         return $this->promptService ??= new LoginPromptService();
     }
 
+    /**
+     * 处理响应服务
+     * @return LoginResponseService
+     */
     protected function responseService(): LoginResponseService
     {
         return $this->responseService ??= new LoginResponseService();
     }
 
+    /**
+     * 处理决策Applier服务
+     * @return LoginDecisionApplierService
+     */
     protected function decisionApplierService(): LoginDecisionApplierService
     {
         return $this->decisionApplierService ??= new LoginDecisionApplierService();
     }
 
+    /**
+     * 处理模式Executor
+     * @return LoginModeExecutor
+     */
     protected function modeExecutor(): LoginModeExecutor
     {
         return $this->modeExecutor ??= new LoginModeExecutor();
     }
 
+    /**
+     * 处理authentication服务
+     * @return LoginAuthenticationService
+     */
     protected function authenticationService(): LoginAuthenticationService
     {
         return $this->authenticationService ??= new LoginAuthenticationService(
@@ -414,21 +497,37 @@ class Login extends BasePlugin implements PluginTaskInterface
         );
     }
 
+    /**
+     * 处理短信服务
+     * @return LoginSmsService
+     */
     protected function smsService(): LoginSmsService
     {
         return $this->smsService ??= new LoginSmsService($this->appContext(), $this->apiLogin());
     }
 
+    /**
+     * 处理待处理流程存储
+     * @return LoginPendingFlowStore
+     */
     protected function pendingFlowStore(): LoginPendingFlowStore
     {
         return $this->pendingFlowStore ??= new LoginPendingFlowStore($this->cache());
     }
 
+    /**
+     * 处理待处理流程状态服务
+     * @return LoginPendingFlowStateService
+     */
     protected function pendingFlowStateService(): LoginPendingFlowStateService
     {
         return $this->pendingFlowStateService ??= new LoginPendingFlowStateService($this->pendingFlowStore());
     }
 
+    /**
+     * 处理待处理流程生命周期服务
+     * @return LoginPendingFlowLifecycleService
+     */
     protected function pendingFlowLifecycleService(): LoginPendingFlowLifecycleService
     {
         return $this->pendingFlowLifecycleService ??= new LoginPendingFlowLifecycleService(
@@ -439,6 +538,10 @@ class Login extends BasePlugin implements PluginTaskInterface
         );
     }
 
+    /**
+     * 处理待处理流程Resume服务
+     * @return LoginPendingFlowResumeService
+     */
     protected function pendingFlowResumeService(): LoginPendingFlowResumeService
     {
         return $this->pendingFlowResumeService ??= new LoginPendingFlowResumeService(
@@ -447,21 +550,37 @@ class Login extends BasePlugin implements PluginTaskInterface
         );
     }
 
+    /**
+     * 处理会话Coordinator
+     * @return LoginSessionCoordinator
+     */
     protected function sessionCoordinator(): LoginSessionCoordinator
     {
         return $this->sessionCoordinator ??= new LoginSessionCoordinator($this->flowController());
     }
 
+    /**
+     * 处理待处理流程Factory
+     * @return LoginPendingFlowFactory
+     */
     protected function pendingFlowFactory(): LoginPendingFlowFactory
     {
         return $this->pendingFlowFactory ??= new LoginPendingFlowFactory();
     }
 
+    /**
+     * 处理流程Controller
+     * @return LoginFlowController
+     */
     protected function flowController(): LoginFlowController
     {
         return $this->flowController ??= new LoginFlowController();
     }
 
+    /**
+     * 处理闸门状态服务
+     * @return LoginGateStateService
+     */
     protected function gateStateService(): LoginGateStateService
     {
         return $this->gateStateService ??= new LoginGateStateService($this->appContext(), $this->pendingFlowStore());
@@ -498,6 +617,12 @@ class Login extends BasePlugin implements PluginTaskInterface
         }
     }
 
+    /**
+     * 处理display键For日志
+     * @param string $key
+     * @param bool $hide
+     * @return string
+     */
     protected function displayKeyForLog(string $key, bool $hide): string
     {
         if ($hide && $key === 'pc_cookie') {
@@ -507,6 +632,13 @@ class Login extends BasePlugin implements PluginTaskInterface
         return $key;
     }
 
+    /**
+     * 格式化日志值For日志
+     * @param string $key
+     * @param mixed $value
+     * @param bool $hide
+     * @return string
+     */
     protected function formatLogValueForLog(string $key, mixed $value, bool $hide): string
     {
         $text = is_scalar($value) || $value === null ? (string)$value : json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -521,6 +653,11 @@ class Login extends BasePlugin implements PluginTaskInterface
         return Common::replaceStar($text, 6, 6);
     }
 
+    /**
+     * 处理maskCookie值Pairs
+     * @param string $cookie
+     * @return string
+     */
     protected function maskCookieValuePairs(string $cookie): string
     {
         $parts = preg_split('/;/', $cookie, -1, PREG_SPLIT_NO_EMPTY) ?: [];
@@ -567,12 +704,24 @@ class Login extends BasePlugin implements PluginTaskInterface
         });
     }
 
+    /**
+     * 处理handle验证码Challenge
+     * @param string $captchaUrl
+     * @param string $message
+     * @return void
+     */
     protected function handleCaptchaChallenge(string $captchaUrl, string $message): void
     {
         $this->warning($message);
         $this->beginCaptchaLogin($captchaUrl);
     }
 
+    /**
+     * 处理announce待处理验证码
+     * @param string $displayUrl
+     * @param float $delaySeconds
+     * @return void
+     */
     protected function announcePendingCaptcha(string $displayUrl, float $delaySeconds): void
     {
         $this->info('请在浏览器中打开以下链接，完成验证码识别');
@@ -581,6 +730,13 @@ class Login extends BasePlugin implements PluginTaskInterface
         $this->scheduleAfter($delaySeconds);
     }
 
+    /**
+     * 处理account登录
+     * @param string $validate
+     * @param string $challenge
+     * @param string $mode
+     * @return void
+     */
     protected function accountLogin(string $validate = '', string $challenge = '', string $mode = '账密模式'): void
     {
         $this->info("尝试 $mode 登录");
@@ -619,6 +775,8 @@ class Login extends BasePlugin implements PluginTaskInterface
 
     /**
      * 检查登录
+     * @param int $mode_id
+     * @return void
      */
     protected function checkLogin(int $mode_id): void
     {
@@ -637,11 +795,19 @@ class Login extends BasePlugin implements PluginTaskInterface
         return $this->promptService()->prompt($msg, $max_char);
     }
 
+    /**
+     * 获取PcCookie值
+     * @return string
+     */
     protected function getPcCookieValue(): string
     {
         return $this->auth('pc_cookie');
     }
 
+    /**
+     * 获取HomeHeaders
+     * @return array
+     */
     protected function fetchHomeHeaders(): array
     {
         $response = $this->apiMain()->home();
@@ -658,6 +824,10 @@ class Login extends BasePlugin implements PluginTaskInterface
         return $flow;
     }
 
+    /**
+     * 处理状态
+     * @return LoginRuntimeState
+     */
     protected function state(): LoginRuntimeState
     {
         return $this->runtimeState ??= new LoginRuntimeState(
@@ -667,6 +837,10 @@ class Login extends BasePlugin implements PluginTaskInterface
         );
     }
 
+    /**
+     * 处理invalidate会话认证
+     * @return void
+     */
     protected function invalidateSessionAuth(): void
     {
         foreach (['access_token', 'refresh_token', 'cookie', 'pc_cookie', 'uid', 'csrf', 'sid'] as $key) {
@@ -674,6 +848,10 @@ class Login extends BasePlugin implements PluginTaskInterface
         }
     }
 
+    /**
+     * 处理同步运行时状态
+     * @return void
+     */
     protected function syncRuntimeState(): void
     {
         $this->username = $this->state()->username();
@@ -681,16 +859,28 @@ class Login extends BasePlugin implements PluginTaskInterface
         $this->pendingLoginFlow = $this->state()->pendingFlow();
     }
 
+    /**
+     * 处理API登录
+     * @return ApiLogin
+     */
     private function apiLogin(): ApiLogin
     {
         return $this->apiLogin ??= new ApiLogin($this->appContext()->request());
     }
 
+    /**
+     * 处理APIOauth2
+     * @return ApiOauth2
+     */
     private function apiOauth2(): ApiOauth2
     {
         return $this->apiOauth2 ??= new ApiOauth2($this->appContext()->request());
     }
 
+    /**
+     * 处理APIMain
+     * @return ApiMain
+     */
     private function apiMain(): ApiMain
     {
         return $this->apiMain ??= new ApiMain($this->appContext()->request());

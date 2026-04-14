@@ -4,11 +4,20 @@ namespace Bhp\Plugin\Builtin\ActivityLottery\Internal\Page;
 
 final class EraPageParser
 {
+    /**
+     * 初始化 EraPageParser
+     * @param EraTaskCapabilityResolver $capabilityResolver
+     */
     public function __construct(
         private readonly EraTaskCapabilityResolver $capabilityResolver = new EraTaskCapabilityResolver(),
     ) {
     }
 
+    /**
+     * 处理解析
+     * @param string $html
+     * @return ?EraPageSnapshot
+     */
     public function parse(string $html): ?EraPageSnapshot
     {
         $initialState = $this->extractAssignedJson($html, 'window.__initialState');
@@ -115,6 +124,12 @@ final class EraPageParser
         return $tasks;
     }
 
+    /**
+     * 处理extractRequired观看Seconds
+     * @param string $taskName
+     * @param array $task
+     * @return int
+     */
     private function extractRequiredWatchSeconds(string $taskName, array $task): int
     {
         $explicit = (int)($task['requiredWatchSeconds'] ?? $task['required_watch_seconds'] ?? 0);
@@ -294,6 +309,11 @@ final class EraPageParser
         return $this->normalizeStringList($roomIds);
     }
 
+    /**
+     * 处理extract话题IdFromLink
+     * @param string $jumpLink
+     * @return string
+     */
     private function extractTopicIdFromLink(string $jumpLink): string
     {
         $query = parse_url(html_entity_decode($jumpLink, ENT_QUOTES | ENT_HTML5), PHP_URL_QUERY);
@@ -611,6 +631,12 @@ final class EraPageParser
         return is_array($decoded) ? $decoded : null;
     }
 
+    /**
+     * 处理extractJSONObject
+     * @param string $source
+     * @param int $start
+     * @return ?string
+     */
     private function extractJsonObject(string $source, int $start): ?string
     {
         $length = strlen($source);
@@ -657,6 +683,13 @@ final class EraPageParser
         return null;
     }
 
+    /**
+     * 处理extractNested
+     * @param mixed $value
+     * @param array $segments
+     * @param int $offset
+     * @return mixed
+     */
     private function extractNested(mixed $value, array $segments, int $offset = 0): mixed
     {
         if ($offset >= count($segments)) {

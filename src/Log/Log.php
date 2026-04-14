@@ -15,11 +15,19 @@ class Log
      */
     protected array $contextStacks = [];
 
+    /**
+     * 初始化 Log
+     * @param AppContext $context
+     */
     public function __construct(
         private readonly AppContext $context,
     ) {
     }
 
+    /**
+     * 获取Logger
+     * @return Logger
+     */
     protected function getLogger(): Logger
     {
         if (!$this->_logger instanceof Logger) {
@@ -38,6 +46,13 @@ class Log
         return $this->_logger;
     }
 
+    /**
+     * 处理日志
+     * @param string $level
+     * @param string $message
+     * @param array $context
+     * @return void
+     */
     protected function log(string $level, string $message, array $context = []): void
     {
         $context = $this->mergedContext($context);
@@ -83,31 +98,65 @@ class Log
         }
     }
 
+    /**
+     * 记录Error
+     * @param mixed $message
+     * @param array $context
+     * @return void
+     */
     public function recordError(mixed $message, array $context = []): void
     {
         $this->log('ERROR', (string)$message, $context);
     }
 
+    /**
+     * 记录Warning
+     * @param mixed $message
+     * @param array $context
+     * @return void
+     */
     public function recordWarning(mixed $message, array $context = []): void
     {
         $this->log('WARNING', (string)$message, $context);
     }
 
+    /**
+     * 记录通知
+     * @param mixed $message
+     * @param array $context
+     * @return void
+     */
     public function recordNotice(mixed $message, array $context = []): void
     {
         $this->log('NOTICE', (string)$message, $context);
     }
 
+    /**
+     * 记录信息
+     * @param mixed $message
+     * @param array $context
+     * @return void
+     */
     public function recordInfo(mixed $message, array $context = []): void
     {
         $this->log('INFO', (string)$message, $context);
     }
 
+    /**
+     * 记录Debug
+     * @param mixed $message
+     * @param array $context
+     * @return void
+     */
     public function recordDebug(mixed $message, array $context = []): void
     {
         $this->log('DEBUG', (string)$message, $context);
     }
 
+    /**
+     * 处理backtrace
+     * @return string
+     */
     protected function backtrace(): string
     {
         $backtraces = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
@@ -128,6 +177,10 @@ class Log
         return '(Log) => ';
     }
 
+    /**
+     * 处理prefix
+     * @return string
+     */
     protected function prefix(): string
     {
         if ($this->config('print.multiple', false, 'bool')) {
@@ -137,6 +190,12 @@ class Log
         return '';
     }
 
+    /**
+     * 处理write日志
+     * @param string $type
+     * @param string $message
+     * @return void
+     */
     protected function writeLog(string $type, string $message): void
     {
         if (!$this->enabled('log')) {
@@ -153,6 +212,13 @@ class Log
         file_put_contents($filename, $data, FILE_APPEND);
     }
 
+    /**
+     * 处理callback
+     * @param int $levelId
+     * @param string $level
+     * @param mixed $message
+     * @return void
+     */
     protected function callback(int $levelId, string $level, mixed $message): void
     {
         $callbackLevel = $this->config('log.callback_level') ?? Logger::ERROR;
@@ -181,6 +247,10 @@ class Log
         $this->contextStacks[$key][] = $context;
     }
 
+    /**
+     * 处理pop上下文
+     * @return void
+     */
     protected function popContext(): void
     {
         $key = $this->currentContextKey();
@@ -208,6 +278,10 @@ class Log
         return array_replace($merged, $context);
     }
 
+    /**
+     * 处理current上下文键
+     * @return string
+     */
     protected function currentContextKey(): string
     {
         $fiber = \Fiber::getCurrent();
@@ -231,11 +305,24 @@ class Log
         return '(' . $caller . ') => ';
     }
 
+    /**
+     * 处理配置
+     * @param string $key
+     * @param mixed $default
+     * @param string $type
+     * @return mixed
+     */
     protected function config(string $key, mixed $default = null, string $type = 'default'): mixed
     {
         return $this->context->config($key, $default, $type);
     }
 
+    /**
+     * 处理enabled
+     * @param string $key
+     * @param bool $default
+     * @return bool
+     */
     protected function enabled(string $key, bool $default = false): bool
     {
         return (bool)$this->config($key . '.enable', $default, 'bool');

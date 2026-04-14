@@ -11,6 +11,10 @@ final class ApiMedalManage extends AbstractApiClient
     private const DELETE_URL = 'https://api.live.bilibili.com/xlive/app-ucenter/v1/fansMedal/web_room/del_medal';
     private const LIST_PAGE_SIZE_MAX = 50;
 
+    /**
+     * 初始化 ApiMedalManage
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

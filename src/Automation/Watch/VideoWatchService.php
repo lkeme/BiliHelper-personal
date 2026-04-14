@@ -82,6 +82,12 @@ final class VideoWatchService
         return $session;
     }
 
+    /**
+     * 处理finish
+     * @param VideoWatchSession $session
+     * @param int $watchedSeconds
+     * @return bool
+     */
     public function finish(VideoWatchSession $session, int $watchedSeconds): bool
     {
         if (

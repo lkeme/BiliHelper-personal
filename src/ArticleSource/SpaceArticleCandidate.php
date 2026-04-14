@@ -4,6 +4,13 @@ namespace Bhp\ArticleSource;
 
 final class SpaceArticleCandidate
 {
+    /**
+     * 初始化 SpaceArticleCandidate
+     * @param int $cvId
+     * @param string $title
+     * @param string $summary
+     * @param int $publishTime
+     */
     public function __construct(
         public readonly int $cvId,
         public readonly string $title,

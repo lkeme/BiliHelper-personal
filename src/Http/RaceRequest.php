@@ -9,6 +9,10 @@ use function Amp\Future\awaitFirst;
 
 class RaceRequest
 {
+    /**
+     * 初始化 RaceRequest
+     * @param HttpClient $httpClient
+     */
     public function __construct(
         private readonly HttpClient $httpClient,
     ) {

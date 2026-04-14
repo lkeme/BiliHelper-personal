@@ -9,6 +9,10 @@ final class SchedulerStateStore
     private const CACHE_SCOPE = 'Scheduler';
     private const CACHE_KEY = 'tasks';
 
+    /**
+     * 初始化 SchedulerStateStore
+     * @param Cache $cache
+     */
     public function __construct(
         private readonly Cache $cache,
     ) {
@@ -34,6 +38,14 @@ final class SchedulerStateStore
         $this->cache->put(self::CACHE_KEY, $states, self::CACHE_SCOPE);
     }
 
+    /**
+     * 保存或更新任务状态
+     * @param string $hook
+     * @param float $nextRunAtEpoch
+     * @param int $failureCount
+     * @param float $circuitOpenUntilEpoch
+     * @return void
+     */
     public function saveTaskState(
         string $hook,
         float $nextRunAtEpoch,

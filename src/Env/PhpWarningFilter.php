@@ -8,6 +8,10 @@ final class PhpWarningFilter
 
     private static mixed $previousHandler = null;
 
+    /**
+     * 处理install
+     * @return void
+     */
     public static function install(): void
     {
         if (self::$installed) {
@@ -18,6 +22,12 @@ final class PhpWarningFilter
         self::$installed = true;
     }
 
+    /**
+     * 判断Suppress是否满足条件
+     * @param int $severity
+     * @param string $message
+     * @return bool
+     */
     public static function shouldSuppress(int $severity, string $message): bool
     {
         if (PHP_OS_FAMILY !== 'Windows') {
@@ -32,6 +42,14 @@ final class PhpWarningFilter
             && str_contains($message, 'Could not fetch DNS servers from WMI');
     }
 
+    /**
+     * 处理handle
+     * @param int $severity
+     * @param string $message
+     * @param string $file
+     * @param int $line
+     * @return bool
+     */
     private static function handle(int $severity, string $message, string $file = '', int $line = 0): bool
     {
         if (self::shouldSuppress($severity, $message)) {

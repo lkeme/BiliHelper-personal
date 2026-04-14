@@ -20,12 +20,20 @@ class MangaPlugin extends BasePlugin implements PluginTaskInterface
      * @var array<string, int|string>
      */
 
+    /**
+     * 初始化 MangaPlugin
+     * @param Plugin $plugin
+     */
     public function __construct(Plugin &$plugin)
     {
         $this->authFailureClassifier = new AuthFailureClassifier();
         $this->bootPlugin($plugin, true);
     }
 
+    /**
+     * 执行一次任务
+     * @return TaskResult
+     */
     public function runOnce(): TaskResult
     {
         if (!$this->enabled('manga')) {
@@ -37,6 +45,10 @@ class MangaPlugin extends BasePlugin implements PluginTaskInterface
         return $success ? TaskResult::nextDayAt(10, 0, 0, 1, 60) : TaskResult::after(3600);
     }
 
+    /**
+     * 处理签名In任务
+     * @return bool
+     */
     protected function signInTask(): bool
     {
         $response = $this->mangaApi()->ClockIn();
@@ -60,6 +72,10 @@ class MangaPlugin extends BasePlugin implements PluginTaskInterface
         return true;
     }
 
+    /**
+     * 处理share任务
+     * @return bool
+     */
     protected function shareTask(): bool
     {
         $response = $this->mangaApi()->ShareComic();
@@ -84,6 +100,10 @@ class MangaPlugin extends BasePlugin implements PluginTaskInterface
         return true;
     }
 
+    /**
+     * 处理签名In信息
+     * @return void
+     */
     protected function signInInfo(): void
     {
         $response = $this->mangaApi()->GetClockInInfo();
@@ -95,6 +115,10 @@ class MangaPlugin extends BasePlugin implements PluginTaskInterface
         }
     }
 
+    /**
+     * 处理mangaAPI
+     * @return ApiManga
+     */
     private function mangaApi(): ApiManga
     {
         return $this->mangaApi ??= new ApiManga($this->appContext()->request());

@@ -14,17 +14,31 @@ final class LoginRuntimeState
     ) {
     }
 
+    /**
+     * 设置Credentials
+     * @param string $username
+     * @param string $password
+     * @return void
+     */
     public function setCredentials(string $username, string $password): void
     {
         $this->username = $username;
         $this->password = $password;
     }
 
+    /**
+     * 处理username
+     * @return string
+     */
     public function username(): string
     {
         return $this->username;
     }
 
+    /**
+     * 处理password
+     * @return string
+     */
     public function password(): string
     {
         return $this->password;
@@ -46,11 +60,19 @@ final class LoginRuntimeState
         return $this->pendingFlow;
     }
 
+    /**
+     * 判断待处理流程是否满足条件
+     * @return bool
+     */
     public function hasPendingFlow(): bool
     {
         return is_array($this->pendingFlow);
     }
 
+    /**
+     * 删除或清理待处理流程
+     * @return void
+     */
     public function clearPendingFlow(): void
     {
         $this->pendingFlow = null;

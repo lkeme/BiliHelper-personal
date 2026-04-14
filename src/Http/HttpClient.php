@@ -17,6 +17,11 @@ class HttpClient
     private \Amp\Http\Client\HttpClient $client;
     private \Amp\Http\Client\HttpClient $noRedirectClient;
 
+    /**
+     * 初始化 HttpClient
+     * @param AppContext $context
+     * @param HttpClientInterceptorRegistry $interceptorRegistry
+     */
     public function __construct(
         private readonly AppContext $context,
         private readonly HttpClientInterceptorRegistry $interceptorRegistry,
@@ -26,6 +31,13 @@ class HttpClient
         $this->noRedirectClient = HttpClientFactory::create(false, (bool)$verifyPeer);
     }
 
+    /**
+     * 处理send
+     * @param string $method
+     * @param string $url
+     * @param RequestOptions $options
+     * @return HttpResponse
+     */
     public function send(string $method, string $url, RequestOptions $options): HttpResponse
     {
         $context = $this->applyBeforeSendInterceptors(new HttpRequestContext(
@@ -90,6 +102,12 @@ class HttpClient
         }
     }
 
+    /**
+     * 处理sendConcurrent
+     * @param array $requests
+     * @param int $concurrency
+     * @return array
+     */
     public function sendConcurrent(array $requests, int $concurrency = 5): array
     {
         if ($concurrency < 1) {
@@ -117,6 +135,12 @@ class HttpClient
         return $results;
     }
 
+    /**
+     * 处理appendQuery
+     * @param string $url
+     * @param array $query
+     * @return string
+     */
     private function appendQuery(string $url, array $query): string
     {
         if ($query === []) {
@@ -127,6 +151,13 @@ class HttpClient
         return $url . $separator . http_build_query($query);
     }
 
+    /**
+     * 处理consumeBody
+     * @param Payload $payload
+     * @param string $sink
+     * @param \Amp\Cancellation $cancellation
+     * @return string
+     */
     protected function consumeBody(Payload $payload, ?string $sink, ?\Amp\Cancellation $cancellation): string
     {
         if ($sink === null) {
@@ -151,6 +182,11 @@ class HttpClient
         return '';
     }
 
+    /**
+     * 应用BeforeSendInterceptors
+     * @param HttpRequestContext $context
+     * @return HttpRequestContext
+     */
     protected function applyBeforeSendInterceptors(HttpRequestContext $context): HttpRequestContext
     {
         $interceptors = $this->contextInterceptors($context);
@@ -163,6 +199,12 @@ class HttpClient
         return $context;
     }
 
+    /**
+     * 处理通知After响应
+     * @param HttpRequestContext $context
+     * @param HttpResponse $response
+     * @return void
+     */
     protected function notifyAfterResponse(HttpRequestContext $context, HttpResponse $response): void
     {
         foreach ($this->contextInterceptors($context) as $interceptor) {
@@ -170,6 +212,12 @@ class HttpClient
         }
     }
 
+    /**
+     * 处理通知After失败
+     * @param HttpRequestContext $context
+     * @param \Throwable $exception
+     * @return void
+     */
     protected function notifyAfterFailure(HttpRequestContext $context, \Throwable $exception): void
     {
         foreach ($this->contextInterceptors($context) as $interceptor) {
@@ -185,11 +233,19 @@ class HttpClient
         return $this->interceptorRegistry()->resolve($context);
     }
 
+    /**
+     * 处理interceptorRegistry
+     * @return HttpClientInterceptorRegistry
+     */
     protected function interceptorRegistry(): HttpClientInterceptorRegistry
     {
         return $this->interceptorRegistry;
     }
 
+    /**
+     * 处理应用上下文
+     * @return AppContext
+     */
     protected function appContext(): AppContext
     {
         return $this->context;

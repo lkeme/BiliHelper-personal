@@ -33,6 +33,17 @@ final class WatchVideoGateway
      */
     private readonly mixed $pageListFetcher;
 
+    /**
+     * 初始化 WatchVideoGateway
+     * @param ApiPlayer $apiPlayer
+     * @param ApiTopic $apiTopic
+     * @param callable $archiveNormalizer
+     * @param callable $topicArchiveFetcher
+     * @param callable $startAction
+     * @param callable $finishAction
+     * @param callable $pageListFetcher
+     * @param VideoWatchService $watchService
+     */
     public function __construct(
         ApiPlayer $apiPlayer,
         ApiTopic $apiTopic,
@@ -264,6 +275,11 @@ final class WatchVideoGateway
         return $archives;
     }
 
+    /**
+     * 处理aidFromBvid
+     * @param string $bvid
+     * @return string
+     */
     private function aidFromBvid(string $bvid): string
     {
         $bvid = trim($bvid);
@@ -292,6 +308,11 @@ final class WatchVideoGateway
         return (string)(($result - 8728348608) ^ 177451812);
     }
 
+    /**
+     * 解析观看失败
+     * @param \RuntimeException $exception
+     * @return ?RequestException
+     */
     private function resolveWatchFailure(\RuntimeException $exception): ?RequestException
     {
         $message = trim($exception->getMessage());

@@ -17,6 +17,10 @@ final class ConfigFieldRule
     ) {
     }
 
+    /**
+     * 判断Enum是否满足条件
+     * @return bool
+     */
     public function hasEnum(): bool
     {
         return $this->allowedValues !== [];

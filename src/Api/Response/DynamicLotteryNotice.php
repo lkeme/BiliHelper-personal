@@ -4,6 +4,15 @@ namespace Bhp\Api\Response;
 
 final class DynamicLotteryNotice
 {
+    /**
+     * 初始化 DynamicLotteryNotice
+     * @param int $businessId
+     * @param int $lotteryId
+     * @param int $status
+     * @param bool $participated
+     * @param bool $followed
+     * @param bool $reposted
+     */
     public function __construct(
         public readonly int $businessId,
         public readonly int $lotteryId,

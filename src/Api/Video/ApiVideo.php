@@ -22,6 +22,10 @@ use Bhp\Request\Request;
 
 class ApiVideo extends AbstractApiClient
 {
+    /**
+     * 初始化 ApiVideo
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

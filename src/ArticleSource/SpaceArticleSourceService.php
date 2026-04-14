@@ -35,6 +35,10 @@ final class SpaceArticleSourceService
     private readonly ?Closure $articleListLoader;
     private readonly ?Closure $clock;
 
+    /**
+     * 处理快照ForToday
+     * @return SpaceArticleDailySnapshot
+     */
     public function snapshotForToday(): SpaceArticleDailySnapshot
     {
         $now = $this->now();
@@ -59,6 +63,12 @@ final class SpaceArticleSourceService
         return $snapshot;
     }
 
+    /**
+     * 构建快照
+     * @param string $bizDate
+     * @param int $fetchedAt
+     * @return SpaceArticleDailySnapshot
+     */
     private function buildSnapshot(string $bizDate, int $fetchedAt): SpaceArticleDailySnapshot
     {
         $candidates = $this->fetchTodayCandidates($fetchedAt);
@@ -175,11 +185,19 @@ final class SpaceArticleSourceService
         return $matched[0];
     }
 
+    /**
+     * 处理文章API
+     * @return ApiArticle
+     */
     private function articleApi(): ApiArticle
     {
         return new ApiArticle($this->request());
     }
 
+    /**
+     * 处理请求
+     * @return \Bhp\Request\Request
+     */
     private function request(): \Bhp\Request\Request
     {
         if ($this->context instanceof AppContext) {
@@ -189,6 +207,10 @@ final class SpaceArticleSourceService
         throw new RuntimeException('SpaceArticleSourceService requires AppContext when no loaders are provided.');
     }
 
+    /**
+     * 处理缓存
+     * @return Cache
+     */
     private function cache(): Cache
     {
         if ($this->context instanceof AppContext) {
@@ -198,6 +220,10 @@ final class SpaceArticleSourceService
         throw new RuntimeException('SpaceArticleSourceService requires Cache when no cache store is provided.');
     }
 
+    /**
+     * 获取当前时间
+     * @return int
+     */
     private function now(): int
     {
         if (is_callable($this->clock)) {

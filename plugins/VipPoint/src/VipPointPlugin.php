@@ -86,12 +86,20 @@ class VipPointPlugin extends BasePlugin implements PluginTaskInterface
         'pointInfo' => '积分信息',
     ];
 
+    /**
+     * 初始化 VipPointPlugin
+     * @param Plugin $plugin
+     */
     public function __construct(Plugin &$plugin)
     {
         $this->authFailureClassifier = new AuthFailureClassifier();
         $this->bootPlugin($plugin, true);
     }
 
+    /**
+     * 执行一次任务
+     * @return TaskResult
+     */
     public function runOnce(): TaskResult
     {
         if (!$this->enabled('vip_point')) {
@@ -122,6 +130,12 @@ class VipPointPlugin extends BasePlugin implements PluginTaskInterface
         return TaskResult::nextAt(9);
     }
 
+    /**
+     * 执行任务
+     * @param string $target
+     * @param string $name
+     * @return void
+     */
     protected function executeTask(string $target, string $name): void
     {
         $response = $this->getTask('TaskList');
@@ -133,6 +147,10 @@ class VipPointPlugin extends BasePlugin implements PluginTaskInterface
         $this->setTask($target, $this->$target($response, $name));
     }
 
+    /**
+     * 初始化任务
+     * @return void
+     */
     protected function initTask(): void
     {
         $date = date('Y-m-d');
@@ -153,6 +171,10 @@ class VipPointPlugin extends BasePlugin implements PluginTaskInterface
         $this->persistTasks();
     }
 
+    /**
+     * 获取任务列表
+     * @return bool
+     */
     protected function getTaskList(): bool
     {
         $response = $this->vipPointTaskApi()->combine();
@@ -168,6 +190,12 @@ class VipPointPlugin extends BasePlugin implements PluginTaskInterface
         return true;
     }
 
+    /**
+     * 设置任务
+     * @param string $key
+     * @param mixed $value
+     * @return void
+     */
     protected function setTask(string $key, mixed $value): void
     {
         $state = $this->state();
@@ -176,11 +204,21 @@ class VipPointPlugin extends BasePlugin implements PluginTaskInterface
         $this->persistTasks();
     }
 
+    /**
+     * 获取任务
+     * @param string $key
+     * @return mixed
+     */
     protected function getTask(string $key): mixed
     {
         return $this->state()->task($key);
     }
 
+    /**
+     * 删除或清理任务
+     * @param string $key
+     * @return void
+     */
     protected function delTask(string $key): void
     {
         $state = $this->state();
@@ -189,6 +227,10 @@ class VipPointPlugin extends BasePlugin implements PluginTaskInterface
         $this->persistTasks();
     }
 
+    /**
+     * 处理状态
+     * @return VipPointRuntimeState
+     */
     private function state(): VipPointRuntimeState
     {
         if (!$this->runtimeState instanceof VipPointRuntimeState) {
@@ -198,31 +240,55 @@ class VipPointPlugin extends BasePlugin implements PluginTaskInterface
         return $this->runtimeState;
     }
 
+    /**
+     * 处理状态存储
+     * @return VipPointTaskStateStore
+     */
     private function stateStore(): VipPointTaskStateStore
     {
         return $this->stateStore ??= new VipPointTaskStateStore($this->cache());
     }
 
+    /**
+     * 保存或更新Tasks
+     * @return void
+     */
     private function persistTasks(): void
     {
         $this->stateStore()->save(is_array($this->tasks) ? $this->tasks : []);
     }
 
+    /**
+     * 处理大会员积分任务API
+     * @return ApiTask
+     */
     protected function vipPointTaskApi(): ApiTask
     {
         return $this->vipPointTaskApi ??= new ApiTask($this->appContext()->request());
     }
 
+    /**
+     * 处理大会员积分积分任务API
+     * @return VipPointScoreApiTask
+     */
     protected function vipPointScoreTaskApi(): VipPointScoreApiTask
     {
         return $this->vipPointScoreTaskApi ??= new VipPointScoreApiTask($this->appContext()->request());
     }
 
+    /**
+     * 处理大会员积分投递任务API
+     * @return VipPointDeliverApiTask
+     */
     protected function vipPointDeliverTaskApi(): VipPointDeliverApiTask
     {
         return $this->vipPointDeliverTaskApi ??= new VipPointDeliverApiTask($this->appContext()->request());
     }
 
+    /**
+     * 处理大会员积分事件API
+     * @return ApiEvent
+     */
     protected function vipPointEventApi(): ApiEvent
     {
         return $this->vipPointEventApi ??= new ApiEvent($this->appContext()->request());

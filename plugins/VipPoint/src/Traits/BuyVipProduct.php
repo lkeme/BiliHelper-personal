@@ -6,6 +6,12 @@ trait BuyVipProduct
 {
     use CommonTaskInfo;
 
+    /**
+     * 处理buy大会员Product
+     * @param array $data
+     * @param string $name
+     * @return bool
+     */
     public function buyVipProduct(array $data, string $name): bool
     {
         $title = '日常任务';

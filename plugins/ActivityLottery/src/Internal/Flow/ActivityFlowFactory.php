@@ -53,6 +53,12 @@ final class ActivityFlowFactory
         throw new RuntimeException('ActivityFlowFactory 缺少稳定唯一键，无法生成 flow');
     }
 
+    /**
+     * 构建流程Id
+     * @param string $stableActivityKey
+     * @param string $bizDate
+     * @return string
+     */
     private static function buildFlowId(string $stableActivityKey, string $bizDate): string
     {
         $raw = trim($stableActivityKey) . '|' . trim($bizDate);

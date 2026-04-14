@@ -7,6 +7,10 @@ use Bhp\Request\Request;
 
 final class ApiLike extends AbstractApiClient
 {
+    /**
+     * 初始化 ApiLike
+     * @param Request $request
+     */
     public function __construct(
         Request $request,
     ) {

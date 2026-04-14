@@ -9,11 +9,20 @@ final class ActivityFlowPicker
 {
     private int $cursor = 0;
 
+    /**
+     * 处理cursor
+     * @return int
+     */
     public function cursor(): int
     {
         return $this->cursor;
     }
 
+    /**
+     * 恢复Cursor
+     * @param int $cursor
+     * @return void
+     */
     public function restoreCursor(int $cursor): void
     {
         if ($cursor < 0) {

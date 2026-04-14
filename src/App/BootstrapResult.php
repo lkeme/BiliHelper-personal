@@ -7,6 +7,13 @@ use Bhp\Runtime\AppContext;
 
 final class BootstrapResult
 {
+    /**
+     * 初始化 BootstrapResult
+     * @param ServiceContainer $container
+     * @param AppContext $context
+     * @param Console $console
+     * @param string $mode
+     */
     public function __construct(
         public readonly ServiceContainer $container,
         public readonly AppContext $context,

@@ -16,12 +16,23 @@ abstract class Command extends Parser
 
     private string $usageText = '';
 
+    /**
+     * 初始化 Command
+     * @param string $name
+     * @param string $description
+     */
     public function __construct(
         private readonly string $name,
         private readonly string $description = '',
     ) {
     }
 
+    /**
+     * 处理option
+     * @param string $signature
+     * @param string $description
+     * @return static
+     */
     public function option(string $signature, string $description = ''): static
     {
         $short = null;
@@ -51,6 +62,11 @@ abstract class Command extends Parser
         return $this;
     }
 
+    /**
+     * 处理usage
+     * @param string $text
+     * @return static
+     */
     public function usage(string $text): static
     {
         $this->usageText = $text;
@@ -58,16 +74,28 @@ abstract class Command extends Parser
         return $this;
     }
 
+    /**
+     * 处理名称
+     * @return string
+     */
     public function name(): string
     {
         return $this->name;
     }
 
+    /**
+     * 处理description
+     * @return string
+     */
     public function description(): string
     {
         return $this->description;
     }
 
+    /**
+     * 处理usageText
+     * @return string
+     */
     public function usageText(): string
     {
         return $this->usageText;
@@ -89,6 +117,11 @@ abstract class Command extends Parser
         return $this->aliases;
     }
 
+    /**
+     * 处理addAlias
+     * @param string $alias
+     * @return void
+     */
     public function addAlias(string $alias): void
     {
         if ($alias === '') {
@@ -98,6 +131,11 @@ abstract class Command extends Parser
         $this->aliases[] = $alias;
     }
 
+    /**
+     * 处理interact
+     * @param Interactor $io
+     * @return void
+     */
     public function interact(Interactor $io): void
     {
     }

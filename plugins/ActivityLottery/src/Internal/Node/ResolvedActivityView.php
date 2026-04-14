@@ -16,6 +16,11 @@ final class ResolvedActivityView
     ) {
     }
 
+    /**
+     * 处理from流程
+     * @param ActivityFlow $flow
+     * @return self
+     */
     public static function fromFlow(ActivityFlow $flow): self
     {
         $context = $flow->context()->toArray();
@@ -26,6 +31,10 @@ final class ResolvedActivityView
         return new self($flow->activity(), $snapshot);
     }
 
+    /**
+     * 判断Stable键是否满足条件
+     * @return bool
+     */
     public function hasStableKey(): bool
     {
         return $this->activityId() !== ''
@@ -34,16 +43,28 @@ final class ResolvedActivityView
             || $this->url() !== '';
     }
 
+    /**
+     * 处理activityId
+     * @return string
+     */
     public function activityId(): string
     {
         return $this->firstNonEmpty('activity_id');
     }
 
+    /**
+     * 处理页面Id
+     * @return string
+     */
     public function pageId(): string
     {
         return $this->firstNonEmpty('page_id');
     }
 
+    /**
+     * 处理抽奖Id
+     * @return string
+     */
     public function lotteryId(): string
     {
         $lotteryId = $this->firstNonEmpty('lottery_id');
@@ -54,21 +75,37 @@ final class ResolvedActivityView
         return trim((string)($this->activity['sid'] ?? ''));
     }
 
+    /**
+     * 处理URL
+     * @return string
+     */
     public function url(): string
     {
         return trim((string)($this->activity['url'] ?? ''));
     }
 
+    /**
+     * 处理title
+     * @return string
+     */
     public function title(): string
     {
         return $this->firstNonEmpty('title');
     }
 
+    /**
+     * 处理start时间
+     * @return int
+     */
     public function startTime(): int
     {
         return $this->firstPositiveInt('start_time');
     }
 
+    /**
+     * 处理end时间
+     * @return int
+     */
     public function endTime(): int
     {
         return $this->firstPositiveInt('end_time');
@@ -91,6 +128,11 @@ final class ResolvedActivityView
         return $activity;
     }
 
+    /**
+     * 处理firstNonEmpty
+     * @param string $field
+     * @return string
+     */
     private function firstNonEmpty(string $field): string
     {
         $value = trim((string)($this->activity[$field] ?? ''));
@@ -101,6 +143,11 @@ final class ResolvedActivityView
         return trim((string)($this->eraPageSnapshot[$field] ?? ''));
     }
 
+    /**
+     * 处理firstPositiveInt
+     * @param string $field
+     * @return int
+     */
     private function firstPositiveInt(string $field): int
     {
         $value = (int)($this->activity[$field] ?? 0);

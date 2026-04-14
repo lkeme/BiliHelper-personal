@@ -9,6 +9,10 @@ final class VipPointTaskStateStore
     private const CACHE_SCOPE = 'VipPoint';
     private const CACHE_KEY = 'tasks';
 
+    /**
+     * 初始化 VipPointTaskStateStore
+     * @param Cache $cache
+     */
     public function __construct(
         private readonly Cache $cache,
     ) {

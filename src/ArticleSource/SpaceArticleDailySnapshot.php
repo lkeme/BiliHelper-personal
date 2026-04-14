@@ -21,6 +21,12 @@ final class SpaceArticleDailySnapshot
     ) {
     }
 
+    /**
+     * 处理empty
+     * @param string $bizDate
+     * @param int $fetchedAt
+     * @return self
+     */
     public static function empty(string $bizDate, int $fetchedAt): self
     {
         return new self(
@@ -36,6 +42,12 @@ final class SpaceArticleDailySnapshot
         );
     }
 
+    /**
+     * 处理待处理
+     * @param string $bizDate
+     * @param int $fetchedAt
+     * @return self
+     */
     public static function pending(string $bizDate, int $fetchedAt): self
     {
         return new self(
@@ -105,6 +117,11 @@ final class SpaceArticleDailySnapshot
         return array_values(array_unique($items));
     }
 
+    /**
+     * 标准化NullableString
+     * @param mixed $value
+     * @return ?string
+     */
     private static function normalizeNullableString(mixed $value): ?string
     {
         $normalized = trim((string)$value);

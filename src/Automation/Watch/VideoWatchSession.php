@@ -4,6 +4,14 @@ namespace Bhp\Automation\Watch;
 
 final class VideoWatchSession
 {
+    /**
+     * 初始化 VideoWatchSession
+     * @param string $archiveId
+     * @param string $cid
+     * @param string $sessionId
+     * @param string $bvid
+     * @param int $duration
+     */
     public function __construct(
         public readonly string $archiveId,
         public readonly string $cid,
@@ -32,6 +40,10 @@ final class VideoWatchSession
         );
     }
 
+    /**
+     * 处理generate会话Id
+     * @return string
+     */
     private static function generateSessionId(): string
     {
         try {

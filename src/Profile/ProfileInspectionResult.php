@@ -4,6 +4,19 @@ namespace Bhp\Profile;
 
 final class ProfileInspectionResult
 {
+    /**
+     * 初始化 ProfileInspectionResult
+     * @param string $profile
+     * @param bool $configDir
+     * @param bool $userIni
+     * @param bool $deviceDefault
+     * @param string $deviceOverride
+     * @param bool $logDir
+     * @param bool $cacheDir
+     * @param bool $logWritable
+     * @param bool $cacheWritable
+     * @param bool $cacheDatabase
+     */
     public function __construct(
         public readonly string $profile,
         public readonly bool $configDir,
@@ -18,6 +31,10 @@ final class ProfileInspectionResult
     ) {
     }
 
+    /**
+     * 判断Healthy是否满足条件
+     * @return bool
+     */
     public function isHealthy(): bool
     {
         return $this->configDir
@@ -49,6 +66,11 @@ final class ProfileInspectionResult
         ];
     }
 
+    /**
+     * 格式化Bool
+     * @param bool $value
+     * @return string
+     */
     private function formatBool(bool $value): string
     {
         return $value ? 'yes' : 'no';

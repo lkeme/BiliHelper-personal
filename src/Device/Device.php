@@ -24,6 +24,11 @@ use Symfony\Component\Yaml\Yaml;
 
 class Device extends BaseResource
 {
+    /**
+     * 初始化 Device
+     * @param ProfileContext $profileContext
+     * @param string $filename
+     */
     public function __construct(
         private readonly ProfileContext $profileContext,
         string $filename = 'default.yaml',
@@ -62,6 +67,11 @@ class Device extends BaseResource
         return str_replace("\\", "/", $this->profileContext->resourcesPath() . 'device/' . $filename);
     }
 
+    /**
+     * 处理画像OverridePath
+     * @param string $filename
+     * @return string
+     */
     protected function profileOverridePath(string $filename): string
     {
         return str_replace("\\", "/", $this->profileContext->configPath() . $filename);

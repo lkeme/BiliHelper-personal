@@ -6,6 +6,12 @@ trait Privilege
 {
     use CommonTaskInfo;
 
+    /**
+     * 处理权益
+     * @param array $data
+     * @param string $name
+     * @return bool
+     */
     public function privilege(array $data, string $name): bool
     {
         $title = '体验任务';

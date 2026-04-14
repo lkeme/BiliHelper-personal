@@ -20,6 +20,12 @@ final class ActivityFlowPool
     private int $pendingReservedStepCountInTick = 0;
     private float $accountedRuntimeMsInTick = 0.0;
 
+    /**
+     * 初始化 ActivityFlowPool
+     * @param ActivityFlowBudget $budget
+     * @param ActivityFlowPicker $picker
+     * @param ActivityLaneLimiter $laneLimiter
+     */
     public function __construct(
         private readonly ActivityFlowBudget $budget,
         private readonly ActivityFlowPicker $picker = new ActivityFlowPicker(),
@@ -88,6 +94,13 @@ final class ActivityFlowPool
         return $selected;
     }
 
+    /**
+     * 处理noteStepExecuted
+     * @param int $tickStartedAtMs
+     * @param string $flowId
+     * @param float $elapsedMs
+     * @return void
+     */
     public function noteStepExecuted(int $tickStartedAtMs, string $flowId, float $elapsedMs): void
     {
         $flowId = trim($flowId);
@@ -112,6 +125,12 @@ final class ActivityFlowPool
         $this->accountedRuntimeMsInTick += $elapsedMs;
     }
 
+    /**
+     * 判断Continue是否满足条件
+     * @param int $tickStartedAtMs
+     * @param float $nowMs
+     * @return bool
+     */
     public function canContinue(int $tickStartedAtMs, float $nowMs): bool
     {
         $this->prepareTickState($tickStartedAtMs);
@@ -132,6 +151,12 @@ final class ActivityFlowPool
         return true;
     }
 
+    /**
+     * 判断流程Eligible是否满足条件
+     * @param ActivityFlow $flow
+     * @param int $now
+     * @return bool
+     */
     private function isFlowEligible(ActivityFlow $flow, int $now): bool
     {
         if (!in_array($flow->status(), [
@@ -149,6 +174,11 @@ final class ActivityFlowPool
         return isset($flow->nodes()[$flow->currentNodeIndex()]);
     }
 
+    /**
+     * 解析Lane
+     * @param ActivityFlow $flow
+     * @return string
+     */
     private function resolveLane(ActivityFlow $flow): string
     {
         $node = $flow->nodes()[$flow->currentNodeIndex()];
@@ -205,6 +235,11 @@ final class ActivityFlowPool
         return $deduplicated;
     }
 
+    /**
+     * 处理prepareTick状态
+     * @param int $tickStartedAtMs
+     * @return void
+     */
     private function prepareTickState(int $tickStartedAtMs): void
     {
         if ($this->activeTickStartedAtMs === $tickStartedAtMs) {

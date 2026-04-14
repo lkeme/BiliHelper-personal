@@ -5,6 +5,12 @@ namespace Bhp\Plugin\Builtin\VipPoint\Traits;
 
 trait PointInfo
 {
+    /**
+     * 处理积分信息
+     * @param array $data
+     * @param string $name
+     * @return bool
+     */
     public function pointInfo(array $data, string $name): bool
     {
         $point = $data['data']['point_info']['point'];

@@ -9,11 +9,19 @@ final class PolishMedalStateStore
     private const CACHE_SCOPE = 'PolishMedal';
     private const CACHE_KEY = 'state';
 
+    /**
+     * 初始化 PolishMedalStateStore
+     * @param Cache $cache
+     */
     public function __construct(
         private readonly Cache $cache,
     ) {
     }
 
+    /**
+     * 处理加载
+     * @return PolishMedalRuntimeState
+     */
     public function load(): PolishMedalRuntimeState
     {
         $this->cache->initializeScope(self::CACHE_SCOPE);
@@ -22,6 +30,11 @@ final class PolishMedalStateStore
         return PolishMedalRuntimeState::bootstrap(is_array($state) ? $state : []);
     }
 
+    /**
+     * 处理保存
+     * @param PolishMedalRuntimeState $state
+     * @return void
+     */
     public function save(PolishMedalRuntimeState $state): void
     {
         $this->cache->initializeScope(self::CACHE_SCOPE);

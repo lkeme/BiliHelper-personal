@@ -7,6 +7,10 @@ final class ActivityRandomizer
     /** @var \Closure(int, int): int */
     private \Closure $intGenerator;
 
+    /**
+     * 初始化 ActivityRandomizer
+     * @param callable $intGenerator
+     */
     public function __construct(?callable $intGenerator = null)
     {
         $this->intGenerator = $intGenerator !== null

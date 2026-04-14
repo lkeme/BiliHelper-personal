@@ -24,6 +24,13 @@ use Bhp\Util\Resource\BaseResource;
 
 class Env extends BaseResource
 {
+    /**
+     * 初始化 Env
+     * @param ProfileContext $profileContext
+     * @param Log $log
+     * @param string $filename
+     * @param bool $metadataOnly
+     */
     public function __construct(
         private readonly ProfileContext $profileContext,
         private readonly Log $log,

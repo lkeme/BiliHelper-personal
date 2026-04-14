@@ -30,12 +30,21 @@ class Cache
     protected ?CacheStoreInterface $store = null;
     private readonly string $databasePath;
 
+    /**
+     * 初始化 Cache
+     * @param ProfileContext $profileContext
+     */
     public function __construct(ProfileContext $profileContext)
     {
         $this->databasePath = $profileContext->cachePath() . 'cache.sqlite3';
         $this->store = new SqliteCacheStore($this->databasePath);
     }
 
+    /**
+     * 初始化ializeScope
+     * @param string $classname
+     * @return void
+     */
     public function initializeScope(?string $classname = null): void
     {
         $scope = $this->resolveScope($classname);
@@ -46,12 +55,25 @@ class Cache
         $this->initializedScopes[$scope] = true;
     }
 
+    /**
+     * 处理put
+     * @param string $key
+     * @param mixed $value
+     * @param string $classname
+     * @return void
+     */
     public function put(string $key, mixed $value, ?string $classname = null): void
     {
         $scope = $this->ensureScopeInitialized($classname);
         $this->store()->set($scope, $key, $value);
     }
 
+    /**
+     * 处理pull
+     * @param string $key
+     * @param string $classname
+     * @return mixed
+     */
     public function pull(string $key, ?string $classname = null): mixed
     {
         $scope = $this->ensureScopeInitialized($classname);
@@ -59,12 +81,21 @@ class Cache
         return $this->store()->get($scope, $key);
     }
 
+    /**
+     * 处理flush
+     * @return void
+     */
     public function flush(): void
     {
         $this->initializedScopes = [];
         $this->store()->clear();
     }
 
+    /**
+     * 处理ensureScopeInitialized
+     * @param string $classname
+     * @return string
+     */
     protected function ensureScopeInitialized(?string $classname = null): string
     {
         $scope = $this->resolveScope($classname);
@@ -73,6 +104,11 @@ class Cache
         return $scope;
     }
 
+    /**
+     * 解析Scope
+     * @param string $classname
+     * @return string
+     */
     protected function resolveScope(?string $classname = null): string
     {
         $scope = trim((string)($classname ?? $this->getCallClassName()));
@@ -87,11 +123,19 @@ class Cache
         return $this->removeSpecStr($scope);
     }
 
+    /**
+     * 处理存储
+     * @return CacheStoreInterface
+     */
     protected function store(): CacheStoreInterface
     {
         return $this->store ??= new SqliteCacheStore($this->databasePath);
     }
 
+    /**
+     * 获取CallClass名称
+     * @return string
+     */
     protected function getCallClassName(): string
     {
         $backtraces = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
@@ -104,6 +148,11 @@ class Cache
         return $temp;
     }
 
+    /**
+     * 删除或清理SpecStr
+     * @param string $str
+     * @return string
+     */
     protected function removeSpecStr(string $str): string
     {
         $specs = str_split("-.,:;'*?~`!@#$%^&+=)(<>{}]|\\/、");

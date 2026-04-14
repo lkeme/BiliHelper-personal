@@ -5,16 +5,29 @@ namespace Bhp\Notice\Channel;
 
 final class DingTalkNoticeChannel extends AbstractNoticeChannel
 {
+    /**
+     * 处理名称
+     * @return string
+     */
     public function name(): string
     {
         return 'dingtalk';
     }
 
+    /**
+     * 处理supports
+     * @return bool
+     */
     public function supports(): bool
     {
         return trim((string)$this->config('notify_dingtalk.token', '', 'string')) !== '';
     }
 
+    /**
+     * 处理分发
+     * @param array $payload
+     * @return void
+     */
     public function dispatch(array $payload): void
     {
         $this->info('使用DingTalk机器人推送消息');
