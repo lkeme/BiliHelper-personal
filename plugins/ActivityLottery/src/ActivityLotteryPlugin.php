@@ -150,7 +150,7 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
         $windowEndAt = $this->pluginWindowEndAt();
 
         $this->runtimeInstance = new ActivityLotteryRuntime(
-            new ActivityCatalogLoader($sources, new ActivityCatalogValidator($logger)),
+            new ActivityCatalogLoader($sources, new ActivityCatalogValidator($logger), 86400),
             new ActivityFlowStore(
                 rtrim(str_replace('\\', '/', $this->appContext()->cachePath()), '/') . '/cache.sqlite3',
                 'ActivityLottery',
