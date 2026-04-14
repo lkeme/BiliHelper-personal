@@ -1438,7 +1438,7 @@
             "dist": {
                 "type": "zip",
                 "url": "https://mirrors.tencent.com/repository/composer/symfony/polyfill-ctype/1.x-dev/symfony-polyfill-ctype-1.x-dev.zip",
-                "reference": "a3cc8b044a6ea513310cbd48ef7333b384945638",
+                "reference": "141046a8f9477948ff284fa65be2095baafb94f2",
                 "shasum": ""
             },
             "require": {
@@ -1487,9 +1487,9 @@
                 "portable"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-ctype/tree/v1.33.0"
+                "source": "https://github.com/symfony/polyfill-ctype/tree/1.x"
             },
-            "time": "2024-09-09T11:45:10+00:00"
+            "time": "2026-04-10T16:19:22+00:00"
         },
         {
             "name": "symfony/yaml",
@@ -1751,7 +1751,7 @@
             "dist": {
                 "type": "zip",
                 "url": "https://mirrors.tencent.com/repository/composer/phpunit/php-code-coverage/12.5.x-dev/phpunit-php-code-coverage-12.5.x-dev.zip",
-                "reference": "8a75142ee61c758beb8026efc617667b09175333",
+                "reference": "a25bde1f8f83849f441ef5713c6466e470872a71",
                 "shasum": ""
             },
             "require": {
@@ -1805,9 +1805,9 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/php-code-coverage/issues",
                 "security": "https://github.com/sebastianbergmann/php-code-coverage/security/policy",
-                "source": "https://github.com/sebastianbergmann/php-code-coverage/tree/12.5"
+                "source": "https://github.com/sebastianbergmann/php-code-coverage/tree/12.5.5"
             },
-            "time": "2026-04-09T05:41:17+00:00"
+            "time": "2026-04-13T04:53:32+00:00"
         },
         {
             "name": "phpunit/php-file-iterator",
@@ -2008,11 +2008,11 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "12.5.17",
+            "version": "12.5.19",
             "dist": {
                 "type": "zip",
-                "url": "https://mirrors.tencent.com/repository/composer/phpunit/phpunit/12.5.17/phpunit-phpunit-12.5.17.zip",
-                "reference": "85b62adab1a340982df64e66daa4a4435eb5723b",
+                "url": "https://mirrors.tencent.com/repository/composer/phpunit/phpunit/12.5.19/phpunit-phpunit-12.5.19.zip",
+                "reference": "92f7744ca5f5701c9e4b4a60d9e143f2d84956da",
                 "shasum": ""
             },
             "require": {
@@ -2026,13 +2026,13 @@
                 "phar-io/manifest": "^2.0.4",
                 "phar-io/version": "^3.2.1",
                 "php": ">=8.3",
-                "phpunit/php-code-coverage": "^12.5.3",
+                "phpunit/php-code-coverage": "^12.5.5",
                 "phpunit/php-file-iterator": "^6.0.1",
                 "phpunit/php-invoker": "^6.0.0",
                 "phpunit/php-text-template": "^5.0.0",
                 "phpunit/php-timer": "^8.0.0",
                 "sebastian/cli-parser": "^4.2.0",
-                "sebastian/comparator": "^7.1.4",
+                "sebastian/comparator": "^7.1.5",
                 "sebastian/diff": "^7.0.0",
                 "sebastian/environment": "^8.0.4",
                 "sebastian/exporter": "^7.0.2",
@@ -2080,9 +2080,9 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/phpunit/issues",
                 "security": "https://github.com/sebastianbergmann/phpunit/security/policy",
-                "source": "https://github.com/sebastianbergmann/phpunit/tree/12.5.17"
+                "source": "https://github.com/sebastianbergmann/phpunit/tree/12.5.19"
             },
-            "time": "2026-04-08T03:04:19+00:00"
+            "time": "2026-04-13T05:38:19+00:00"
         },
         {
             "name": "sebastian/cli-parser",

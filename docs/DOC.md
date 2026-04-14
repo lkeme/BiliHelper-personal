@@ -63,26 +63,7 @@ entrypoint.sh init_profile
 
 ## 设备配置
 
-默认设备参数位于 `resources/device/default.yaml`。
-
-如需自定义，请在个人资源目录使用以下其一：
-
-- `profile/<name>/resources/device/device.override.yaml`
-- `profile/<name>/resources/device/device.override+.yaml`
-
-两者区别与示例见 [DEVICE_OVERRIDE.md](./DEVICE_OVERRIDE.md)。
-
-## 启动链与插件来源
-
-当前入口为 `app.php`，启动链为：
-
-1. `AppKernel`
-2. `ServiceContainer`
-3. `Bootstrap`
-4. `Console`
-
-核心只保留 `Login`，其余业务插件统一从 `plugins/<plugin>/plugin.json` 发现。
-项目自带插件位于 `plugins/*`，属于 bundled third-party plugins。
+如需自定义，见 [DEVICE_OVERRIDE.md](./DEVICE_OVERRIDE.md)。
 
 ## 命令模式
 
@@ -139,6 +120,7 @@ php app.php m:d -p VipPoint --reset-cache --purge-auth
 用于执行脚本插件：
 
 ```shell
+php app.php m:s --help
 php app.php m:s --list
 php app.php m:s --plugin ActivityInfoUpdate
 php app.php m:s -P BatchUnfollow,ActivityInfoUpdate
@@ -147,44 +129,17 @@ php app.php m:s --plugin ActivityInfoUpdate --reset-cache
 
 说明：
 
+- `--help`：显示帮助信息, 以及插件内建的参数说明
 - `--list`：列出当前脚本插件
 - `-p / --plugin`：执行单个脚本插件
 - `-P / --plugins`：执行多个脚本插件，逗号分隔
 - 同样支持 `--reset-cache` 和 `--purge-auth`
 
-## 配置补充
-
-示例配置 `profile/example/config/user.ini` 当前额外包含请求治理区段：
-
-```ini
-[request_governance]
-enable = false
-mode = observe
-window_seconds = 60
-max_requests_per_host = 60
-cooldown_seconds = 30
-```
-
-说明：
-
-- `mode` 仅支持 `observe` 与 `enforce`
-- 关闭时保持观测关闭，不会触发限流拦截
-
-## ActivityLottery 持久化
-
-`ActivityLottery` 当前使用 `ActivityFlowStore` 将活动流写入 `cache.sqlite3` 的行级记录中。
-
-当前特点：
-
-- 每个 flow 按 `scope + biz_date + flow_id` 存储
-- 同一天内多个 flow 独立 upsert
-- 不再使用按天聚合的大对象缓存
-
 ## Docker 使用指南
 
 ### 生产环境
 
-生产 Docker 运行时默认不可变，容器启动时不会再同步远程代码或刷新依赖。
+生产环境 Docker 运行时默认不可变，容器启动时不会再同步远程代码或刷新依赖。
 
 更新方式：
 
