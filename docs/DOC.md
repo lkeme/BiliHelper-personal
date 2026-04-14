@@ -65,12 +65,12 @@ entrypoint.sh init_profile
 
 默认设备参数位于 `resources/device/default.yaml`。
 
-如需自定义，请在个人配置目录使用以下其一：
+如需自定义，请在个人资源目录使用以下其一：
 
-- `profile/<name>/config/device.override.yaml`
-- `profile/<name>/config/device.override+.yaml`
+- `profile/<name>/resources/device/device.override.yaml`
+- `profile/<name>/resources/device/device.override+.yaml`
 
-旧的 `profile/<name>/device/device.yaml` 已不再读取。
+两者区别与示例见 [DEVICE_OVERRIDE.md](./DEVICE_OVERRIDE.md)。
 
 ## 启动链与插件来源
 

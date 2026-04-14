@@ -57,8 +57,8 @@ class ProfileInspector
      */
     protected function deviceOverrideMode(ProfileContext $profile): string
     {
-        $replaceOverride = $profile->configPath() . 'device.override.yaml';
-        $mergeOverride = $profile->configPath() . 'device.override+.yaml';
+        $replaceOverride = $profile->rootPath() . 'resources/device/device.override.yaml';
+        $mergeOverride = $profile->rootPath() . 'resources/device/device.override+.yaml';
 
         if (is_file($replaceOverride)) {
             return 'replace';

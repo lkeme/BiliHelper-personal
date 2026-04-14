@@ -41,8 +41,8 @@ class Device extends BaseResource
         $data = $this->readYamlFile($defaultPath);
         $activePath = $defaultPath;
 
-        $replaceOverride = $this->profileOverridePath('device.override.yaml');
-        $mergeOverride = $this->profileOverridePath('device.override+.yaml');
+        $replaceOverride = $this->profileDeviceOverridePath('device.override.yaml');
+        $mergeOverride = $this->profileDeviceOverridePath('device.override+.yaml');
 
         if (is_file($replaceOverride)) {
             $data = $this->readYamlFile($replaceOverride);
@@ -68,13 +68,13 @@ class Device extends BaseResource
     }
 
     /**
-     * 处理画像OverridePath
+     * 处理画像Device OverridePath
      * @param string $filename
      * @return string
      */
-    protected function profileOverridePath(string $filename): string
+    protected function profileDeviceOverridePath(string $filename): string
     {
-        return str_replace("\\", "/", $this->profileContext->configPath() . $filename);
+        return str_replace("\\", "/", $this->profileContext->rootPath() . 'resources/device/' . $filename);
     }
 
     /**

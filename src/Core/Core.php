@@ -58,6 +58,8 @@ final class Core
 
         $system_paths = [
             $this->nativePath($this->profileContext->configPath()),
+            $this->nativePath($this->profileContext->rootPath() . 'resources'),
+            $this->nativePath($this->profileContext->rootPath() . 'resources/device'),
             $this->nativePath($this->profileContext->logPath()),
             $this->nativePath($this->profileContext->cachePath()),
         ];
