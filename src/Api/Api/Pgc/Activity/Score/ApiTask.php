@@ -29,7 +29,7 @@ class ApiTask extends AbstractApiClient
      */
     public function sign(): array
     {
-        return $this->decodePost('pc', 'https://api.bilibili.com/pgc/activity/score/task/sign', [
+        return $this->decodePost('pc', 'https://api.bilibili.com/pgc/activity/score/task/sign2', [
             'csrf' => $this->request()->csrfValue(),
         ], self::HEADERS, 'pgc.score.sign');
     }
