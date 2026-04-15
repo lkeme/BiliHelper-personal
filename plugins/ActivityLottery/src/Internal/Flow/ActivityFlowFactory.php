@@ -10,7 +10,7 @@ final class ActivityFlowFactory
     /**
      * @param ActivityNode[] $nodes
      */
-    public static function create(ActivityCatalogItem $item, string $bizDate, array $nodes): ActivityFlow
+    public static function create(ActivityCatalogItem $item, string $bizDate, array $nodes, string $phase = ''): ActivityFlow
     {
         if ($nodes === []) {
             throw new RuntimeException('ActivityFlowFactory 不允许创建空节点 flow');
@@ -20,7 +20,7 @@ final class ActivityFlowFactory
         $activity = $item->toArray();
         $stableKey = self::resolveStableActivityKey($activity);
         $normalizedBizDate = ActivityFlow::normalizeBizDate($bizDate);
-        $flowId = self::buildFlowId($stableKey, $normalizedBizDate);
+        $flowId = self::buildFlowId($stableKey, $normalizedBizDate, $phase);
 
         return new ActivityFlow(
             $flowId,
@@ -57,11 +57,12 @@ final class ActivityFlowFactory
      * 构建流程Id
      * @param string $stableActivityKey
      * @param string $bizDate
+     * @param string $phase
      * @return string
      */
-    private static function buildFlowId(string $stableActivityKey, string $bizDate): string
+    private static function buildFlowId(string $stableActivityKey, string $bizDate, string $phase = ''): string
     {
-        $raw = trim($stableActivityKey) . '|' . trim($bizDate);
+        $raw = trim($stableActivityKey) . '|' . trim($bizDate) . ($phase !== '' ? '|' . $phase : '');
 
         return substr(sha1($raw), 0, 24);
     }

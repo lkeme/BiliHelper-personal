@@ -148,6 +148,10 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
         );
         $windowStartAt = $this->pluginWindowStartAt();
         $windowEndAt = $this->pluginWindowEndAt();
+        $definition = $this->pluginDefinition();
+        $taskEndAt = (string)($definition['task_end'] ?? '23:00:00');
+        $drawStartAt = (string)($definition['draw_start'] ?? '00:00:00');
+        $drawEndAt = (string)($definition['draw_end'] ?? '01:00:00');
 
         $this->runtimeInstance = new ActivityLotteryRuntime(
             new ActivityCatalogLoader($sources, new ActivityCatalogValidator($logger), 86400),
@@ -181,6 +185,8 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
             )),
             new ActivityLotteryClock(),
             $logger,
+            new ActivityLotteryWindow($windowStartAt, $taskEndAt),
+            new ActivityLotteryWindow($drawStartAt, $drawEndAt),
         );
 
         return $this->runtimeInstance;

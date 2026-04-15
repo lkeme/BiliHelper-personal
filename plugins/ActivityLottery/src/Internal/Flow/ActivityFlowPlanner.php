@@ -155,21 +155,53 @@ final class ActivityFlowPlanner
     }
 
     /**
-     * 处理plan
+     * 处理plan（委托给 planTask，保留兼容）
      * @param ActivityCatalogItem $item
-     * @param EraPageSnapshot $pageSnapshot
+     * @param EraPageSnapshot|null $pageSnapshot
      * @param string $bizDate
      * @return ActivityFlow
      */
     public function plan(ActivityCatalogItem $item, ?EraPageSnapshot $pageSnapshot, string $bizDate): ActivityFlow
     {
+        return $this->planTask($item, $pageSnapshot, $bizDate);
+    }
+
+    /**
+     * 规划任务 flow（做任务 + 领奖 + 取关，不含抽奖）
+     * @param ActivityCatalogItem $item
+     * @param EraPageSnapshot|null $pageSnapshot
+     * @param string $bizDate
+     * @return ActivityFlow
+     */
+    public function planTask(ActivityCatalogItem $item, ?EraPageSnapshot $pageSnapshot, string $bizDate): ActivityFlow
+    {
         $nodes = array_merge(
             $this->fixedPrefixNodes(),
             $this->dynamicEraNodes($pageSnapshot),
-            $this->fixedTailNodes(),
+            $this->taskTailNodes(),
         );
 
-        return ActivityFlowFactory::create($item, $bizDate, $nodes);
+        return ActivityFlowFactory::create($item, $bizDate, $nodes, 'task');
+    }
+
+    /**
+     * 规划抽奖 flow（仅抽奖相关节点）
+     * @param ActivityCatalogItem $item
+     * @param string $bizDate
+     * @return ActivityFlow
+     */
+    public function planDraw(ActivityCatalogItem $item, string $bizDate): ActivityFlow
+    {
+        $nodes = array_map(fn (string $type): ActivityNode => $this->nodeByContract($type), [
+            'validate_activity_window',
+            'refresh_draw_times',
+            'execute_draw',
+            'record_draw_result',
+            'notify_draw_result',
+            'finalize_flow',
+        ]);
+
+        return ActivityFlowFactory::create($item, $bizDate, $nodes, 'draw');
     }
 
     /**
@@ -185,17 +217,12 @@ final class ActivityFlowPlanner
     }
 
     /**
+     * 任务 flow 尾部节点（领奖 + 取关 + 结束，不含抽奖）
      * @return ActivityNode[]
      */
-    private function fixedTailNodes(): array
+    private function taskTailNodes(): array
     {
-        $nodes = array_map(fn (string $type): ActivityNode => $this->nodeByContract($type), [
-            'refresh_draw_times',
-            'execute_draw',
-            'record_draw_result',
-            'notify_draw_result',
-            'final_claim_reward',
-        ]);
+        $nodes = [$this->nodeByContract('final_claim_reward')];
         $nodes[] = new ActivityNode('era_task_unfollow', [
             'lane' => $this->defaultLaneForNodeType('era_task_unfollow'),
             'cleanup_scope' => 'temporary_follow_uids',

@@ -26,22 +26,18 @@ final class ActivityInfoUpdatePlugin extends BasePlugin
     public function execute(array $options = [], array $argv = []): void
     {
         $resolved = $this->resolveOptionsFromArgv($argv);
-        $result = $this->runner()->update(
-            $resolved['file'],
-            $resolved['urls'],
-        );
+        $result = $this->runner()->update($resolved['file']);
 
         $this->info("活动索引: 输出文件 {$result['path']}");
     }
 
     /**
      * @param string[] $argv
-     * @return array{file:?string,urls:?string}
+     * @return array{file:?string}
      */
     private function resolveOptionsFromArgv(array $argv): array
     {
         $file = null;
-        $urls = null;
         $count = count($argv);
         for ($index = 0; $index < $count; $index++) {
             $token = (string)$argv[$index];
@@ -51,19 +47,13 @@ final class ActivityInfoUpdatePlugin extends BasePlugin
                 continue;
             }
 
-            if (($token === '--urls' || $token === '-u') && isset($argv[$index + 1])) {
-                $urls = (string)$argv[$index + 1];
-                $index++;
+            if ($token === '--urls' || $token === '-u') {
+                throw new CliRuntimeException('ActivityInfoUpdate 已移除 --urls 参数，请改用 --file');
             }
-        }
-
-        if (($file === null || trim($file) === '') && ($urls === null || trim($urls) === '')) {
-            throw new CliRuntimeException('ActivityInfoUpdate 需要 --file 或 --urls');
         }
 
         return [
             'file' => $file !== null && trim($file) !== '' ? $file : null,
-            'urls' => $urls !== null && trim($urls) !== '' ? $urls : null,
         ];
     }
 

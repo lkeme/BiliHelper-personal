@@ -62,6 +62,8 @@ final class ActivityLotteryRuntime
      * @param ActivityFlowPool $flowPool
      * @param ActivityLotteryClock $clock
      * @param callable $logger
+     * @param ActivityLotteryWindow|null $taskWindow
+     * @param ActivityLotteryWindow|null $drawWindow
      */
     public function __construct(
         private readonly ActivityCatalogLoader $catalogLoader,
@@ -74,6 +76,8 @@ final class ActivityLotteryRuntime
         private readonly ActivityFlowPool $flowPool = new ActivityFlowPool(new ActivityFlowBudget(4, 6, 3000)),
         private readonly ActivityLotteryClock $clock = new ActivityLotteryClock(),
         ?callable $logger = null,
+        private readonly ?ActivityLotteryWindow $taskWindow = null,
+        private readonly ?ActivityLotteryWindow $drawWindow = null,
     ) {
         $this->logger = $logger !== null
             ? \Closure::fromCallable($logger)
@@ -94,6 +98,24 @@ final class ActivityLotteryRuntime
     public function bizDate(): string
     {
         return date('Y-m-d', $this->clock->now());
+    }
+
+    /**
+     * 判断是否为抽奖 flow
+     * @param ActivityFlow $flow
+     * @return bool
+     */
+    private function isDrawFlow(ActivityFlow $flow): bool
+    {
+        foreach ($flow->nodes() as $node) {
+            if ($node->type() === 'refresh_draw_times') {
+                return true;
+            }
+            if ($node->type() === 'parse_era_page') {
+                return false;
+            }
+        }
+        return false;
     }
 
     /**
@@ -138,13 +160,24 @@ final class ActivityLotteryRuntime
             }
         }
 
+        $allFlows = $flows;
+        if ($this->taskWindow !== null && $this->drawWindow !== null) {
+            $eligibleFlows = array_filter($flows, function (ActivityFlow $flow) use ($now): bool {
+                return $this->isDrawFlow($flow)
+                    ? $this->drawWindow->contains($now)
+                    : $this->taskWindow->contains($now);
+            });
+        } else {
+            $eligibleFlows = $flows;
+        }
+
         $tickStartedAtMs = (int)round(microtime(true) * 1000);
-        $pickedFlows = $this->flowPool->pick(array_values($flows), $now, $tickStartedAtMs);
+        $pickedFlows = $this->flowPool->pick(array_values($eligibleFlows), $now, $tickStartedAtMs);
         foreach ($pickedFlows as $flow) {
             $startedAt = microtime(true);
             $currentNode = $flow->nodes()[$flow->currentNodeIndex()];
             $updated = $this->executeFlow($flow, $now);
-            $flows[$updated->id()] = $updated;
+            $allFlows[$updated->id()] = $updated;
             $this->flowPool->noteStepExecuted($tickStartedAtMs, $flow->id(), (microtime(true) - $startedAt) * 1000);
             $executedNodeIndex = min($flow->currentNodeIndex(), count($updated->nodes()) - 1);
             $executedNode = $updated->nodes()[$executedNodeIndex];
@@ -177,12 +210,12 @@ final class ActivityLotteryRuntime
         }
 
         if ($prunedFlowCount > 0 || $newFlowCount > 0 || $pickedFlows !== []) {
-            $this->flowStore->save(array_values($flows));
+            $this->flowStore->save(array_values($allFlows));
         }
         $this->cachedFlowBizDate = $bizDate;
-        $this->cachedFlows = $flows;
+        $this->cachedFlows = $allFlows;
 
-        $delay = $this->resolveNextDelaySeconds(array_values($flows), $now);
+        $delay = $this->resolveNextDelaySeconds(array_values($allFlows), $now);
         $this->log('debug', sprintf(
             'ActivityLottery 本轮完成: 目录 %d 个，已有 flow %d 个，新增 %d 个，本轮执行 %d 个，下次 %s后继续',
             count($catalog),
@@ -197,7 +230,7 @@ final class ActivityLotteryRuntime
             'loaded_flow_count' => $loadedFlowCount,
             'existing_flow_count' => $existingFlowCount,
             'pruned_flow_count' => $prunedFlowCount,
-            'flow_count' => count($flows),
+            'flow_count' => count($allFlows),
             'new_flow_count' => $newFlowCount,
             'picked_flow_count' => count($pickedFlows),
             'next_delay_seconds' => $delay,
@@ -413,8 +446,10 @@ final class ActivityLotteryRuntime
 
         $plannedCatalogFlows = [];
         foreach ($catalog as $item) {
-            $planned = $this->planner->plan($item, null, $bizDate);
-            $plannedCatalogFlows[$planned->id()] = $planned;
+            $taskFlow = $this->planner->planTask($item, null, $bizDate);
+            $plannedCatalogFlows[$taskFlow->id()] = $taskFlow;
+            $drawFlow = $this->planner->planDraw($item, $bizDate);
+            $plannedCatalogFlows[$drawFlow->id()] = $drawFlow;
         }
 
         $this->cachedPlannedCatalogBizDate = $bizDate;

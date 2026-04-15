@@ -17,6 +17,7 @@ gen
 /vendor
 .venv/
 .worktrees/
+.claude
 worktrees/
 /build/
 /reference/
@@ -28,5 +29,3 @@ worktrees/
 
 .phpunit.*
 captcha/data.json
-
-plugin/FansMedalIntimacy/

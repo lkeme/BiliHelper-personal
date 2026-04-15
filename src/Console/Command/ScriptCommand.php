@@ -59,8 +59,8 @@ final class ScriptCommand extends Command
             ->usage(
                 '<bold>  $0</end> <comment>user mode:script --list</end><eol/>' .
                 '<bold>  $0</end> <comment>user mode:script --plugin ActivityInfoUpdate --file urls.txt</end><eol/>' .
+                '<bold>  $0</end> <comment>user mode:script --plugin ActivityInfoUpdate</end><eol/>' .
                 '<bold>  $0</end> <comment>user mode:script --plugin BatchUnfollow</end><eol/>' .
-                '<bold>  $0</end> <comment>user m:s --plugin ActivityInfoUpdate --urls "url1,url2"</end><eol/>' .
                 '<bold>  $0</end> <comment>m:s -P BatchUnfollow,ActivityInfoUpdate</end><eol/>' .
                 '<bold>  $0</end> <comment>m:s --plugin ActivityInfoUpdate --reset-cache</end>'
             );

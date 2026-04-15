@@ -122,7 +122,7 @@ php app.php m:d -p VipPoint --reset-cache --purge-auth
 ```shell
 php app.php m:s --help
 php app.php m:s --list
-php app.php m:s --plugin ActivityInfoUpdate
+php app.php m:s --plugin ActivityInfoUpdate --file urls.txt
 php app.php m:s -P BatchUnfollow,ActivityInfoUpdate
 php app.php m:s --plugin ActivityInfoUpdate --reset-cache
 ```
@@ -133,6 +133,7 @@ php app.php m:s --plugin ActivityInfoUpdate --reset-cache
 - `--list`：列出当前脚本插件
 - `-p / --plugin`：执行单个脚本插件
 - `-P / --plugins`：执行多个脚本插件，逗号分隔
+- `ActivityInfoUpdate`：仅支持 `--file` 追加 URL 来源；若不传 `--file`，则仅基于现有 `resources/plugins/ActivityLottery/catalog.json` 刷新
 - 同样支持 `--reset-cache` 和 `--purge-auth`
 
 ## Docker 使用指南
