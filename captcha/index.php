@@ -214,7 +214,7 @@ class HttpServer
             $seccode = $this->requestString($_POST, 'seccode');
             if (
                 !$this->isValidChallenge($challenge)
-                || !$this->isValidChallenge($new_challenge)
+                || !$this->isReasonableField($new_challenge, 256)
                 || !$this->isReasonableField($validate, 512)
                 || !$this->isReasonableField($seccode, 1024)
             ) {
