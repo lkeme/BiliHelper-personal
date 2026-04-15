@@ -468,6 +468,13 @@ final class ActivityLotteryLifecycleLogger
 
                 return sprintf('首次启动观看，%s当前累计 %s%s', $archivePrefix, $progress, $delay);
             }
+            if (str_contains($fallback, '视频观看初始化失败') || str_contains($fallback, '视频观看心跳失败')) {
+                if ($archivePrefix === '' && $currentSeconds <= 0) {
+                    return $fallback . $delay;
+                }
+
+                return sprintf('%s，%s当前累计 %s%s', $fallback, $archivePrefix, $progress, $delay);
+            }
             if ($archivePrefix === '' && $currentSeconds <= 0) {
                 return $fallback . $delay;
             }
@@ -508,6 +515,13 @@ final class ActivityLotteryLifecycleLogger
                 }
 
                 return sprintf('首次接入直播间，%s当前累计 %s%s', $roomPrefix, $progress, $delay);
+            }
+            if (str_contains($fallback, '直播观看初始化失败') || str_contains($fallback, '直播观看心跳失败')) {
+                if ($roomPrefix === '' && $currentSeconds <= 0) {
+                    return $fallback . $delay;
+                }
+
+                return sprintf('%s，%s当前累计 %s%s', $fallback, $roomPrefix, $progress, $delay);
             }
             if ($roomPrefix === '' && $currentSeconds <= 0) {
                 return $fallback . $delay;

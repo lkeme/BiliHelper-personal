@@ -21,6 +21,8 @@ final class WatchLiveGateway
     private bool $recommendLookupFailed = false;
     private bool $recommendLookupSucceeded = false;
     private ?LiveWatchService $watchService = null;
+    /** @var array<int, true> */
+    private array $excludedRoomIds = [];
     /** @var array<string, string> */
     private array $areaWebIds = [];
     /**
@@ -130,11 +132,13 @@ final class WatchLiveGateway
 
     /**
      * @param string[] $roomIds
+     * @param int[] $excludedRoomIds
      * @return array<string, mixed>|null
      */
-    public function start(array $roomIds, int $areaId = 0, int $parentAreaId = 0): ?array
+    public function start(array $roomIds, int $areaId = 0, int $parentAreaId = 0, array $excludedRoomIds = []): ?array
     {
         $this->resetLookupState();
+        $this->excludedRoomIds = $this->normalizeExcludedRoomIds($excludedRoomIds);
         try {
             $session = ($this->startAction)($roomIds, $areaId, $parentAreaId);
         } catch (\RuntimeException $exception) {
@@ -144,6 +148,8 @@ final class WatchLiveGateway
             }
 
             throw $exception;
+        } finally {
+            $this->excludedRoomIds = [];
         }
 
         if (is_array($session)) {
@@ -192,7 +198,7 @@ final class WatchLiveGateway
             }
 
             $room = ($this->roomResolver)($roomId);
-            if ($room !== null) {
+            if ($room !== null && !$this->isExcludedRoomId((int)($room['room_id'] ?? 0))) {
                 return $room;
             }
         }
@@ -268,6 +274,9 @@ final class WatchLiveGateway
                     $candidateRoomId = (int)($room['roomid'] ?? $room['room_id'] ?? 0);
                     $candidateRuid = (int)($room['uid'] ?? 0);
                     if ($candidateRoomId <= 0 || $candidateRuid <= 0) {
+                        continue;
+                    }
+                    if ($this->isExcludedRoomId($candidateRoomId)) {
                         continue;
                     }
 
@@ -383,6 +392,9 @@ final class WatchLiveGateway
             $candidateRoomId = (int)($room['roomid'] ?? 0);
             $candidateRuid = (int)($room['uid'] ?? 0);
             if ($candidateRoomId <= 0 || $candidateRuid <= 0 || $candidateAreaId <= 0) {
+                continue;
+            }
+            if ($this->isExcludedRoomId($candidateRoomId)) {
                 continue;
             }
 
@@ -533,6 +545,28 @@ final class WatchLiveGateway
         }
 
         return null;
+    }
+
+    /**
+     * @param int[] $roomIds
+     * @return array<int, true>
+     */
+    private function normalizeExcludedRoomIds(array $roomIds): array
+    {
+        $normalized = [];
+        foreach ($roomIds as $roomId) {
+            $normalizedRoomId = (int)$roomId;
+            if ($normalizedRoomId > 0) {
+                $normalized[$normalizedRoomId] = true;
+            }
+        }
+
+        return $normalized;
+    }
+
+    private function isExcludedRoomId(int $roomId): bool
+    {
+        return $roomId > 0 && isset($this->excludedRoomIds[$roomId]);
     }
 
     /**

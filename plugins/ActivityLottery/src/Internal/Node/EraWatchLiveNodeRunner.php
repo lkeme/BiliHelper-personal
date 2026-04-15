@@ -12,13 +12,15 @@ use Bhp\Util\Exceptions\RequestException;
 final class EraWatchLiveNodeRunner implements NodeRunnerInterface
 {
     private const RETRY_DELAY_SECONDS = 300;
+    private const HEARTBEAT_FAILURE_SWITCH_THRESHOLD = 3;
+    private const FAILED_ROOM_COOLDOWN_SECONDS = 1800;
 
     /**
      * 初始化 EraWatchLiveNodeRunner
      * @param WatchLiveGateway $watchGateway
      */
     public function __construct(
-        private readonly WatchLiveGateway $watchGateway = new WatchLiveGateway(),
+        private readonly WatchLiveGateway $watchGateway,
     ) {
     }
 
@@ -48,7 +50,7 @@ final class EraWatchLiveNodeRunner implements NodeRunnerInterface
             ], $now);
         }
 
-        $state = $taskView->taskRuntime();
+        $state = $this->pruneFailedRooms($taskView->taskRuntime(), $now);
         $progress = $taskView->taskProgress();
         $serverWatchSeconds = EraWatchProgress::currentSeconds($task, $progress);
         $localWatchSeconds = max(max(0, (int)($state['local_watch_seconds'] ?? 0)), $serverWatchSeconds);
@@ -57,7 +59,11 @@ final class EraWatchLiveNodeRunner implements NodeRunnerInterface
         }
 
         if ($taskView->resolvedTaskStatus() === 3) {
-            unset($state['live_session']);
+            unset(
+                $state['live_session'],
+                $state['live_failure_count'],
+                $state['live_failed_room_ids'],
+            );
             return new ActivityNodeResult(true, '直播观看任务完成', [
                 'node_status' => ActivityNodeStatus::SUCCEEDED,
                 'context_patch' => $taskView->replaceTaskRuntime($state),
@@ -65,17 +71,32 @@ final class EraWatchLiveNodeRunner implements NodeRunnerInterface
         }
 
         $session = is_array($state['live_session'] ?? null) ? $state['live_session'] : null;
+        $excludedRoomIds = $this->excludedRoomIds($state);
         if ($session === null) {
             try {
-                $session = $this->watchGateway->start($task->targetRoomIds(), $task->targetAreaId(), $task->targetParentAreaId());
+                $session = $this->watchGateway->start(
+                    $task->targetRoomIds(),
+                    $task->targetAreaId(),
+                    $task->targetParentAreaId(),
+                    $excludedRoomIds,
+                );
             } catch (RequestException $exception) {
                 return new ActivityNodeResult(false, '直播观看初始化失败: ' . $exception->getMessage(), [
                     'node_status' => ActivityNodeStatus::WAITING,
                     'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
+                    'context_patch' => $taskView->replaceTaskRuntime($state),
                 ], $now);
             }
 
             if ($session === null) {
+                if ($excludedRoomIds !== []) {
+                    return new ActivityNodeResult(false, '当前候选直播间均在冷却中，稍后重试', [
+                        'node_status' => ActivityNodeStatus::WAITING,
+                        'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
+                        'context_patch' => $taskView->replaceTaskRuntime($state),
+                    ], $now);
+                }
+
                 return new ActivityNodeResult(true, '当前没有可观看的直播间，按完成处理', [
                     'node_status' => ActivityNodeStatus::SUCCEEDED,
                     'context_patch' => $taskView->replaceTaskRuntime($state),
@@ -85,6 +106,7 @@ final class EraWatchLiveNodeRunner implements NodeRunnerInterface
             $waitSeconds = max(30, (int)($session['heartbeat_interval'] ?? 60));
             $nextState = array_replace($state, [
                 'live_session' => $session,
+                'live_failure_count' => 0,
             ]);
 
             return new ActivityNodeResult(true, '直播观看已启动', [
@@ -97,15 +119,30 @@ final class EraWatchLiveNodeRunner implements NodeRunnerInterface
         try {
             $nextSession = $this->watchGateway->heartbeat($session);
         } catch (RequestException $exception) {
-            return new ActivityNodeResult(false, '直播观看心跳失败: ' . $exception->getMessage(), [
+            $failureState = $this->applyHeartbeatFailure($state, $session, $now);
+            $message = '直播观看心跳失败: ' . $exception->getMessage();
+            if (($failureState['switched'] ?? false) === true) {
+                $message .= '，已切换候选直播间';
+            }
+
+            return new ActivityNodeResult(false, $message, [
                 'node_status' => ActivityNodeStatus::WAITING,
                 'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
+                'context_patch' => $taskView->replaceTaskRuntime($failureState['state']),
             ], $now);
         }
 
         if ($nextSession === []) {
-            return new ActivityNodeResult(false, '直播观看心跳失败', [
-                'node_status' => ActivityNodeStatus::FAILED,
+            $failureState = $this->applyHeartbeatFailure($state, $session, $now);
+            $message = '直播观看心跳失败';
+            if (($failureState['switched'] ?? false) === true) {
+                $message .= '，已切换候选直播间';
+            }
+
+            return new ActivityNodeResult(false, $message, [
+                'node_status' => ActivityNodeStatus::WAITING,
+                'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
+                'context_patch' => $taskView->replaceTaskRuntime($failureState['state']),
             ], $now);
         }
 
@@ -114,6 +151,7 @@ final class EraWatchLiveNodeRunner implements NodeRunnerInterface
         $nextState = array_replace($state, [
             'live_session' => $nextSession,
             'local_watch_seconds' => $localWatchSeconds,
+            'live_failure_count' => 0,
         ]);
 
         if (EraWatchProgress::targetSeconds($task, $progress, $localWatchSeconds) > 0) {
@@ -130,6 +168,86 @@ final class EraWatchLiveNodeRunner implements NodeRunnerInterface
             'node_status' => ActivityNodeStatus::SUCCEEDED,
             'context_patch' => $taskView->replaceTaskRuntime($nextState),
         ], $now);
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     * @return array<string, mixed>
+     */
+    private function pruneFailedRooms(array $state, int $now): array
+    {
+        $rawCooldowns = is_array($state['live_failed_room_ids'] ?? null) ? $state['live_failed_room_ids'] : [];
+        $cooldowns = [];
+        foreach ($rawCooldowns as $roomId => $expireAt) {
+            $normalizedRoomId = (int)$roomId;
+            $normalizedExpireAt = (int)$expireAt;
+            if ($normalizedRoomId <= 0 || $normalizedExpireAt <= $now) {
+                continue;
+            }
+
+            $cooldowns[(string)$normalizedRoomId] = $normalizedExpireAt;
+        }
+
+        if ($cooldowns === []) {
+            unset($state['live_failed_room_ids']);
+            return $state;
+        }
+
+        $state['live_failed_room_ids'] = $cooldowns;
+
+        return $state;
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     * @return int[]
+     */
+    private function excludedRoomIds(array $state): array
+    {
+        $rawCooldowns = is_array($state['live_failed_room_ids'] ?? null) ? $state['live_failed_room_ids'] : [];
+        $roomIds = [];
+        foreach ($rawCooldowns as $roomId => $expireAt) {
+            if ((int)$expireAt <= 0) {
+                continue;
+            }
+
+            $normalizedRoomId = (int)$roomId;
+            if ($normalizedRoomId > 0) {
+                $roomIds[] = $normalizedRoomId;
+            }
+        }
+
+        return array_values(array_unique($roomIds));
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     * @param array<string, mixed> $session
+     * @return array{state: array<string, mixed>, switched: bool}
+     */
+    private function applyHeartbeatFailure(array $state, array $session, int $now): array
+    {
+        $failureCount = max(0, (int)($state['live_failure_count'] ?? 0)) + 1;
+        $nextState = $state;
+        $nextState['live_failure_count'] = $failureCount;
+        $roomId = max(0, (int)($session['room_id'] ?? 0));
+        if ($roomId <= 0 || $failureCount < self::HEARTBEAT_FAILURE_SWITCH_THRESHOLD) {
+            return [
+                'state' => $nextState,
+                'switched' => false,
+            ];
+        }
+
+        $cooldowns = is_array($nextState['live_failed_room_ids'] ?? null) ? $nextState['live_failed_room_ids'] : [];
+        $cooldowns[(string)$roomId] = $now + self::FAILED_ROOM_COOLDOWN_SECONDS;
+        $nextState['live_failed_room_ids'] = $cooldowns;
+        $nextState['live_failure_count'] = 0;
+        unset($nextState['live_session']);
+
+        return [
+            'state' => $nextState,
+            'switched' => true,
+        ];
     }
 }
 
