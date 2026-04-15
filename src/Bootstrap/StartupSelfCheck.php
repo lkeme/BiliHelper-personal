@@ -82,7 +82,6 @@ final class StartupSelfCheck
             [
                 'state' => $this->loginGateStateService?->state() ?? 'unknown',
                 'auth_ready' => ($this->loginGateStateService?->authReady() ?? false) ? 'yes' : 'no',
-                'pending_flow' => ($this->loginGateStateService?->hasPendingFlow() ?? false) ? 'yes' : 'no',
             ],
             [
                 'total' => (string)count($pluginRegistry),

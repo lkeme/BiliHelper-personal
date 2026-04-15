@@ -46,10 +46,6 @@ class Login extends BasePlugin implements PluginTaskInterface
      */
     protected ?string $password = '';
 
-    /**
-     * @var array<string, mixed>|null
-     */
-    protected ?array $pendingLoginFlow = null;
     private ?LoginCaptchaService $captchaService = null;
     private ?LoginCookieMaintenanceService $cookieMaintenanceService = null;
     private ?LoginCookiePatchService $cookiePatchService = null;
@@ -61,11 +57,7 @@ class Login extends BasePlugin implements PluginTaskInterface
     private ?LoginPromptService $promptService = null;
     private ?LoginResponseService $responseService = null;
     private ?LoginSmsService $smsService = null;
-    private ?LoginPendingFlowFactory $pendingFlowFactory = null;
     private ?LoginPendingFlowStore $pendingFlowStore = null;
-    private ?LoginPendingFlowStateService $pendingFlowStateService = null;
-    private ?LoginPendingFlowLifecycleService $pendingFlowLifecycleService = null;
-    private ?LoginPendingFlowResumeService $pendingFlowResumeService = null;
     private ?LoginSessionCoordinator $sessionCoordinator = null;
     private ?LoginTokenLifecycleService $tokenLifecycleService = null;
     private ?LoginRuntimeState $runtimeState = null;
@@ -73,6 +65,8 @@ class Login extends BasePlugin implements PluginTaskInterface
     private ?ApiLogin $apiLogin = null;
     private ?ApiOauth2 $apiOauth2 = null;
     private ?ApiMain $apiMain = null;
+    private bool $notifyOnCurrentLoginFailure = false;
+    private bool $runtimeReloginFailureHandled = false;
 
     /**
      * @param Plugin $plugin
@@ -89,23 +83,15 @@ class Login extends BasePlugin implements PluginTaskInterface
     public function runOnce(): \Bhp\Scheduler\TaskResult
     {
         $this->resetTaskResult();
+        $this->runtimeReloginFailureHandled = false;
         try {
             if ($this->hasPendingLoginFlow()) {
-                $this->resumePendingLoginFlow();
-                if ($this->hasPendingLoginFlow()) {
-                    return $this->resolveTaskResult(\Bhp\Scheduler\TaskResult::after(2.0));
-                }
-
-                $this->keepLogin();
-                return $this->resolveTaskResult(\Bhp\Scheduler\TaskResult::after(7200));
+                $this->warning('检测到历史登录挂起状态，已清理并重新开始完整登录流程');
+                $this->clearPendingLoginFlow();
             }
 
             if (!$this->hasLoginTokens()) {
                 $this->initLogin();
-                if ($this->hasPendingLoginFlow()) {
-                    return $this->resolveTaskResult(\Bhp\Scheduler\TaskResult::after(2.0));
-                }
-
                 $this->assertLoginReady('No valid login state available');
                 return $this->resolveTaskResult(\Bhp\Scheduler\TaskResult::after(7200));
             }
@@ -117,11 +103,6 @@ class Login extends BasePlugin implements PluginTaskInterface
         } catch (RequestException $e) {
             return $this->retryAfterRequestException($e, '登录', 10 * 60);
         } catch (LoginException $e) {
-            if ($this->hasPendingLoginFlow()) {
-                $this->warning("登录: {$e->getMessage()}");
-                return $this->retryAfter($e->getRetryAfterSeconds());
-            }
-
             if (!$this->hasLoginTokens()) {
                 throw new NoLoginException($e->getMessage());
             }
@@ -147,16 +128,7 @@ class Login extends BasePlugin implements PluginTaskInterface
      */
     protected function hasPendingLoginFlow(): bool
     {
-        return $this->currentPendingLoginFlow() !== null;
-    }
-
-    /**
-     * @param array<string, mixed> $flow
-     */
-    protected function setPendingLoginFlow(array $flow): void
-    {
-        $this->pendingFlowStateService()->set($this->state(), $flow);
-        $this->syncRuntimeState();
+        return $this->pendingFlowStore()->load() !== null;
     }
 
     /**
@@ -165,8 +137,7 @@ class Login extends BasePlugin implements PluginTaskInterface
      */
     protected function clearPendingLoginFlow(): void
     {
-        $this->pendingFlowStateService()->clear($this->state());
-        $this->syncRuntimeState();
+        $this->pendingFlowStore()->clear();
     }
 
     /**
@@ -182,9 +153,6 @@ class Login extends BasePlugin implements PluginTaskInterface
         $this->info('启动登录程序');
         $this->info('准备载入登录令牌');
         $this->login();
-        if ($this->hasPendingLoginFlow()) {
-            return;
-        }
 
         if (!$this->hasLoginTokens()) {
             throw new NoLoginException('No valid login state available');
@@ -197,20 +165,26 @@ class Login extends BasePlugin implements PluginTaskInterface
      * 处理登录
      * @return void
      */
-    protected function login(): void
+    protected function login(bool $notifyOnFailure = false): void
     {
-        $this->sessionCoordinator()->dispatchMode(
-            (int)$this->config('login_mode.mode'),
-            function (int $modeId): void {
-                $this->checkLogin($modeId);
-            },
-            function (): void {
-                $this->accountLogin();
-            },
-            function (): void {
-                $this->smsLogin();
-            },
-        );
+        $previousNotifyState = $this->notifyOnCurrentLoginFailure;
+        $this->notifyOnCurrentLoginFailure = $notifyOnFailure;
+        try {
+            $this->sessionCoordinator()->dispatchMode(
+                (int)$this->config('login_mode.mode'),
+                function (int $modeId): void {
+                    $this->checkLogin($modeId);
+                },
+                function (): void {
+                    $this->accountLogin();
+                },
+                function (): void {
+                    $this->smsLogin();
+                },
+            );
+        } finally {
+            $this->notifyOnCurrentLoginFailure = $previousNotifyState;
+        }
     }
 
     /**
@@ -219,28 +193,51 @@ class Login extends BasePlugin implements PluginTaskInterface
      */
     protected function keepLogin(): void
     {
-        $this->sessionCoordinator()->maintainSession(
-            $this->auth('access_token'),
-            $this->auth('refresh_token'),
-            $this->tokenLifecycleService(),
-            function (): void {
-                if (!$this->hasConfiguredLoginFallback()) {
-                    throw new NoLoginException('登录令牌已失效，且未配置可回退登录方式');
-                }
+        try {
+            $this->sessionCoordinator()->maintainSession(
+                $this->auth('access_token'),
+                $this->auth('refresh_token'),
+                $this->tokenLifecycleService(),
+                function (): void {
+                    if (!$this->hasConfiguredLoginFallback()) {
+                        $this->restartFreshLogin(
+                            '运行中的登录状态已失效，且未配置可重新登录的方式',
+                            true,
+                        );
+                    }
 
-                $this->login();
-                if ($this->hasPendingLoginFlow()) {
-                    throw new LoginException('Login flow is still pending', 2);
-                }
+                    try {
+                        $this->login(true);
+                    } catch (NoLoginException $e) {
+                        throw $e;
+                    } catch (LoginException $e) {
+                        $this->restartFreshLogin(
+                            '运行中的登录状态已失效，重新登录失败: ' . $e->getMessage(),
+                            true,
+                        );
+                    }
 
-                if (!$this->hasLoginTokens()) {
-                    throw new NoLoginException('No valid login state available');
-                }
-            },
-            function (): void {
-                $this->patchCookie();
-            },
-        );
+                    if (!$this->hasLoginTokens()) {
+                        $this->restartFreshLogin(
+                            '运行中的登录状态已失效，重新登录后仍未生成有效登录信息',
+                            true,
+                        );
+                    }
+                },
+                function (): void {
+                    $this->patchCookie();
+                },
+            );
+        } catch (NoLoginException $e) {
+            if ($this->runtimeReloginFailureHandled) {
+                throw $e;
+            }
+
+            $this->restartFreshLogin(
+                '运行中的登录状态已失效，需要重新登录: ' . $e->getMessage(),
+                true,
+            );
+        }
     }
 
     /**
@@ -267,58 +264,9 @@ class Login extends BasePlugin implements PluginTaskInterface
      */
     protected function assertLoginReady(string $message): void
     {
-        if ($this->hasPendingLoginFlow() || !$this->gateStateService()->authReady()) {
+        if (!$this->gateStateService()->authReady()) {
             throw new NoLoginException($message);
         }
-    }
-
-    /**
-     * 处理resume待处理登录流程
-     * @return void
-     */
-    protected function resumePendingLoginFlow(): void
-    {
-        $flow = $this->currentPendingLoginFlow();
-        if ($flow === null) {
-            return;
-        }
-
-        $this->pendingFlowResumeService()->resume(
-            $flow,
-            $this->state(),
-            function (float $seconds): void {
-                $this->scheduleAfter($seconds);
-            },
-            function (): void {
-                $this->clearPendingLoginFlow();
-            },
-            function (array $flow): void {
-                $current = $this->currentPendingLoginFlow();
-                if ($current !== null && $current === $flow) {
-                    $this->clearPendingLoginFlow();
-                }
-            },
-            function (string $validate, string $challenge, string $mode): void {
-                $this->checkLogin(1);
-                $this->accountLogin($validate, $challenge, $mode);
-            },
-            fn (string $phone, string $cid, string $validate, string $challenge, string $recaptchaToken): ?array => $this->authenticationService()->sendSms(
-                $phone,
-                $cid,
-                $validate,
-                $challenge,
-                $recaptchaToken,
-                function (string $phone, string $cid, string $targetUrl): void {
-                    $this->warning("此次请求需要行为验证码");
-                    $this->beginSmsCaptchaLogin($phone, $cid, $targetUrl);
-                },
-            ),
-            fn (string $message): string => $this->cliInput($message),
-            function (array $payload, string $code): void {
-                $response = $this->authenticationService()->submitSmsLogin($payload, $code);
-                $this->completeLoginResponse('短信模式', $response);
-            },
-        );
     }
 
     /**
@@ -328,15 +276,11 @@ class Login extends BasePlugin implements PluginTaskInterface
      */
     protected function beginCaptchaLogin(string $targetUrl): void
     {
-        $this->invalidateSessionAuth();
-        $result = $this->pendingFlowLifecycleService()->beginAccountCaptcha(
-            $this->state(),
+        $captcha = $this->waitForManualCaptchaResolution(
             $targetUrl,
-            (string)$this->config('login_captcha.url'),
-            time() + 120,
+            '账密登录需要人工完成行为验证码，本次运行将等待人工处理结果，不会保留到下次运行',
         );
-        $this->syncRuntimeState();
-        $this->announcePendingCaptcha((string)$result['display_url'], (float)$result['delay_seconds']);
+        $this->accountLogin($captcha['validate'], $captcha['challenge'], '账密模式(行为验证码)');
     }
 
     /**
@@ -348,31 +292,106 @@ class Login extends BasePlugin implements PluginTaskInterface
      */
     protected function beginSmsCaptchaLogin(string $phone, string $cid, string $targetUrl): void
     {
-        $this->invalidateSessionAuth();
-        $result = $this->pendingFlowLifecycleService()->beginSmsCaptcha(
-            $this->state(),
+        $captcha = $this->waitForManualCaptchaResolution(
+            $targetUrl,
+            '短信登录需要人工完成行为验证码，本次运行将等待人工处理结果，不会保留到下次运行',
+        );
+        $recaptchaToken = $this->extractCaptchaQueryParam($targetUrl, 'recaptcha_token');
+        if ($recaptchaToken === '') {
+            throw new LoginException('短信登录验证码参数提取失败', 600);
+        }
+
+        $payload = $this->authenticationService()->sendSms(
             $phone,
             $cid,
-            $targetUrl,
-            (string)$this->config('login_captcha.url'),
-            time() + 120,
+            $captcha['validate'],
+            $captcha['challenge'],
+            $recaptchaToken,
+            function (string $retryPhone, string $retryCid, string $retryTargetUrl): void {
+                $this->beginSmsCaptchaLogin($retryPhone, $retryCid, $retryTargetUrl);
+            },
         );
-        $this->syncRuntimeState();
-        $this->announcePendingCaptcha((string)$result['display_url'], (float)$result['delay_seconds']);
+        if ($payload === null) {
+            return;
+        }
+
+        $code = $this->cliInput('请输入收到的短信验证码: ');
+        if ($code === '') {
+            throw new LoginException('短信验证码不能为空', 3600);
+        }
+
+        $response = $this->authenticationService()->submitSmsLogin($payload, $code);
+        $this->completeLoginResponse('短信模式', $response);
     }
 
     /**
-     * @return array<string, string>|null
+     * 等待人工完成验证码处理
+     * @param string $targetUrl
+     * @param string $message
+     * @return array{validate:string,challenge:string}
      */
-    protected function fetchCaptchaResult(string $challenge): ?array
+    protected function waitForManualCaptchaResolution(string $targetUrl, string $message): array
     {
-        $response = $this->pendingFlowLifecycleService()->fetchCaptchaResult($this->state(), $challenge);
-        if ($response !== null) {
-            $this->notice('Captcha recognized successfully');
-            return $response;
+        $this->warning($message);
+        $this->captchaService()->assertCaptchaServiceReady();
+        $captchaInfo = $this->captchaService()->matchCaptcha($targetUrl);
+        $manualCaptchaUrl = $this->captchaService()->buildManualCaptchaUrl($captchaInfo);
+        $expiresAt = time() + 120;
+        $nextProgressLogAt = time() + 10;
+
+        $this->info('验证码处理页: ' . $manualCaptchaUrl);
+        $this->info('请在浏览器中打开验证码链接，完成验证后当前进程会继续执行，最长等待 120 秒');
+        while (true) {
+            try {
+                $result = $this->captchaService()->pollCaptchaResult($captchaInfo['challenge'], $expiresAt);
+            } catch (LoginException $e) {
+                if ($e->getMessage() === '验证码识别超时') {
+                    throw new LoginException('行为验证码等待超时，本次运行结束，请重新开始登录流程', 300);
+                }
+
+                throw $e;
+            }
+
+            if ($result['state'] === 'resolved') {
+                $this->notice('行为验证码处理成功，继续登录流程');
+                return $result['data'];
+            }
+
+            if ($result['state'] !== 'pending') {
+                $detail = trim((string)($result['message'] ?? ''));
+                throw new LoginException(
+                    $detail !== '' ? '行为验证码处理失败: ' . $detail : '行为验证码处理失败',
+                    300,
+                );
+            }
+
+            $now = time();
+            if ($now >= $nextProgressLogAt) {
+                $remainingSeconds = max(0, $expiresAt - $now);
+                $this->info(sprintf('仍在等待人工完成行为验证码，剩余约 %d 秒', $remainingSeconds));
+                $nextProgressLogAt = $now + 10;
+            }
+
+            usleep(2_000_000);
+        }
+    }
+
+    /**
+     * 提取验证码链接参数
+     * @param string $targetUrl
+     * @param string $key
+     * @return string
+     */
+    protected function extractCaptchaQueryParam(string $targetUrl, string $key): string
+    {
+        $query = parse_url($targetUrl, PHP_URL_QUERY);
+        if (!is_string($query) || $query === '') {
+            return '';
         }
 
-        return null;
+        parse_str($query, $params);
+        $value = $params[$key] ?? '';
+        return is_scalar($value) ? trim((string)$value) : '';
     }
 
     /**
@@ -516,56 +535,12 @@ class Login extends BasePlugin implements PluginTaskInterface
     }
 
     /**
-     * 处理待处理流程状态服务
-     * @return LoginPendingFlowStateService
-     */
-    protected function pendingFlowStateService(): LoginPendingFlowStateService
-    {
-        return $this->pendingFlowStateService ??= new LoginPendingFlowStateService($this->pendingFlowStore());
-    }
-
-    /**
-     * 处理待处理流程生命周期服务
-     * @return LoginPendingFlowLifecycleService
-     */
-    protected function pendingFlowLifecycleService(): LoginPendingFlowLifecycleService
-    {
-        return $this->pendingFlowLifecycleService ??= new LoginPendingFlowLifecycleService(
-            $this->captchaService(),
-            $this->pendingFlowFactory(),
-            $this->pendingFlowStateService(),
-            $this->appContext()->log(),
-        );
-    }
-
-    /**
-     * 处理待处理流程Resume服务
-     * @return LoginPendingFlowResumeService
-     */
-    protected function pendingFlowResumeService(): LoginPendingFlowResumeService
-    {
-        return $this->pendingFlowResumeService ??= new LoginPendingFlowResumeService(
-            $this->flowController(),
-            $this->pendingFlowLifecycleService(),
-        );
-    }
-
-    /**
      * 处理会话Coordinator
      * @return LoginSessionCoordinator
      */
     protected function sessionCoordinator(): LoginSessionCoordinator
     {
         return $this->sessionCoordinator ??= new LoginSessionCoordinator($this->flowController());
-    }
-
-    /**
-     * 处理待处理流程Factory
-     * @return LoginPendingFlowFactory
-     */
-    protected function pendingFlowFactory(): LoginPendingFlowFactory
-    {
-        return $this->pendingFlowFactory ??= new LoginPendingFlowFactory();
     }
 
     /**
@@ -583,7 +558,7 @@ class Login extends BasePlugin implements PluginTaskInterface
      */
     protected function gateStateService(): LoginGateStateService
     {
-        return $this->gateStateService ??= new LoginGateStateService($this->appContext(), $this->pendingFlowStore());
+        return $this->gateStateService ??= new LoginGateStateService($this->appContext());
     }
 
     /**
@@ -717,17 +692,23 @@ class Login extends BasePlugin implements PluginTaskInterface
     }
 
     /**
-     * 处理announce待处理验证码
-     * @param string $displayUrl
-     * @param float $delaySeconds
-     * @return void
+     * 清理当前登录状态，并要求下次重新开始完整登录流程
+     * @param string $message
+     * @param bool $notifyRemote
+     * @return never
      */
-    protected function announcePendingCaptcha(string $displayUrl, float $delaySeconds): void
+    protected function restartFreshLogin(string $message, bool $notifyRemote): never
     {
-        $this->info('请在浏览器中打开以下链接，完成验证码识别');
-        $this->info($displayUrl);
-        $this->info('Please finish captcha verification within 2 minutes');
-        $this->scheduleAfter($delaySeconds);
+        $this->runtimeReloginFailureHandled = $notifyRemote;
+        $this->clearPendingLoginFlow();
+        $this->invalidateSessionAuth();
+        $this->warning($message);
+
+        if ($notifyRemote) {
+            $this->notify('login_relogin_required', $message);
+        }
+
+        throw new NoLoginException($message);
     }
 
     /**
@@ -815,16 +796,6 @@ class Login extends BasePlugin implements PluginTaskInterface
     }
 
     /**
-     * @return array<string, mixed>|null
-     */
-    protected function currentPendingLoginFlow(): ?array
-    {
-        $flow = $this->pendingFlowStateService()->current($this->state());
-        $this->syncRuntimeState();
-        return $flow;
-    }
-
-    /**
      * 处理状态
      * @return LoginRuntimeState
      */
@@ -833,7 +804,6 @@ class Login extends BasePlugin implements PluginTaskInterface
         return $this->runtimeState ??= new LoginRuntimeState(
             (string)($this->username ?? ''),
             (string)($this->password ?? ''),
-            is_array($this->pendingLoginFlow) ? $this->pendingLoginFlow : null,
         );
     }
 
@@ -856,7 +826,6 @@ class Login extends BasePlugin implements PluginTaskInterface
     {
         $this->username = $this->state()->username();
         $this->password = $this->state()->password();
-        $this->pendingLoginFlow = $this->state()->pendingFlow();
     }
 
     /**

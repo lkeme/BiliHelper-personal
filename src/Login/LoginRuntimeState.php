@@ -4,13 +4,9 @@ namespace Bhp\Login;
 
 final class LoginRuntimeState
 {
-    /**
-     * @param array<string, mixed>|null $pendingFlow
-     */
     public function __construct(
         private string $username = '',
         private string $password = '',
-        private ?array $pendingFlow = null,
     ) {
     }
 
@@ -42,39 +38,5 @@ final class LoginRuntimeState
     public function password(): string
     {
         return $this->password;
-    }
-
-    /**
-     * @param array<string, mixed> $flow
-     */
-    public function setPendingFlow(array $flow): void
-    {
-        $this->pendingFlow = $flow;
-    }
-
-    /**
-     * @return array<string, mixed>|null
-     */
-    public function pendingFlow(): ?array
-    {
-        return $this->pendingFlow;
-    }
-
-    /**
-     * 判断待处理流程是否满足条件
-     * @return bool
-     */
-    public function hasPendingFlow(): bool
-    {
-        return is_array($this->pendingFlow);
-    }
-
-    /**
-     * 删除或清理待处理流程
-     * @return void
-     */
-    public function clearPendingFlow(): void
-    {
-        $this->pendingFlow = null;
     }
 }

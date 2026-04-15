@@ -137,12 +137,10 @@ final class AppKernel
         ));
         $container->set(LoginGateStateService::class, static fn (ServiceContainer $services): LoginGateStateService => new LoginGateStateService(
             $services->get(AppContext::class),
-            $services->get(LoginPendingFlowStore::class),
         ));
         $container->set(LoginManualInterventionPolicy::class, static fn (ServiceContainer $services): LoginManualInterventionPolicy => new LoginManualInterventionPolicy(
             $services->get(AppContext::class),
             $services->get(LoginPendingFlowStore::class),
-            $services->get(Notice::class),
         ));
         $container->set(StartupSelfCheck::class, static fn (ServiceContainer $services): StartupSelfCheck => new StartupSelfCheck(
             $services->get(AppContext::class),

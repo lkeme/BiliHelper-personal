@@ -36,6 +36,22 @@ class LoginCaptchaService
     }
 
     /**
+     * 构造手动验证码处理地址
+     * @param array{gt:string,challenge:string} $captchaInfo
+     * @return string
+     */
+    public function buildManualCaptchaUrl(array $captchaInfo): string
+    {
+        $baseUrl = rtrim((string)$this->context->config('login_captcha.url'), '/');
+        return sprintf(
+            '%s/geetest?gt=%s&challenge=%s',
+            $baseUrl,
+            rawurlencode($captchaInfo['gt']),
+            rawurlencode($captchaInfo['challenge']),
+        );
+    }
+
+    /**
      * 断言验证码服务Ready
      * @return void
      */

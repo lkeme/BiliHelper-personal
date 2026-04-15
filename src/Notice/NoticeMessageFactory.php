@@ -60,6 +60,10 @@ final class NoticeMessageFactory
                 'title' => '网络异常 ',
                 'content' => "[$nowTime] 用户: $userName 错误详情: $msg",
             ],
+            'login_relogin_required' => [
+                'title' => '登录状态失效',
+                'content' => "[$nowTime] 用户: $userName 详情: $msg",
+            ],
             'key_expired' => [
                 'title' => '监控KEY异常',
                 'content' => "[$nowTime] 用户: $userName 监控KEY到期或者错误，请及时查错或续期后重试哦~",

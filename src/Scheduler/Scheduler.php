@@ -193,7 +193,7 @@ class Scheduler
 
         $now = $this->monotonicNowNs();
         foreach ($tasks as $task) {
-            if ($this->shouldHoldTaskForLoginPendingFlow($task)) {
+            if ($this->shouldHoldTaskForLoginRecovery($task)) {
                 continue;
             }
 
@@ -231,7 +231,7 @@ class Scheduler
         $this->loginManualInterventionPolicy()->enforce();
         $now = $this->monotonicNowNs();
         foreach ($this->tasks as $task) {
-            if ($this->shouldHoldTaskForLoginPendingFlow($task)) {
+            if ($this->shouldHoldTaskForLoginRecovery($task)) {
                 continue;
             }
 
@@ -725,11 +725,11 @@ class Scheduler
     }
 
     /**
-     * 判断Hold任务For登录待处理流程是否满足条件
+     * 判断是否需要因登录恢复而暂停任务
      * @param ScheduledTask $task
      * @return bool
      */
-    private function shouldHoldTaskForLoginPendingFlow(ScheduledTask $task): bool
+    private function shouldHoldTaskForLoginRecovery(ScheduledTask $task): bool
     {
         if ($task->hook === 'Login') {
             return false;
@@ -740,15 +740,6 @@ class Scheduler
         }
 
         return $this->loginGateStateService()->shouldBlockBusinessTasks();
-    }
-
-    /**
-     * 判断待处理登录流程是否满足条件
-     * @return bool
-     */
-    private function hasPendingLoginFlow(): bool
-    {
-        return $this->loginGateStateService()->hasPendingFlow();
     }
 
     /**

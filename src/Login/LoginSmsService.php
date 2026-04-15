@@ -60,6 +60,10 @@ class LoginSmsService
             return SmsSendResult::captchaRequired((string)$response['data']['recaptcha_url'], $payload);
         }
 
+        if (($response['code'] ?? null) == -105 && isset($response['data']['url']) && $response['data']['url'] !== '') {
+            return SmsSendResult::captchaRequired((string)$response['data']['url'], $payload);
+        }
+
         throw new LoginException("短信验证码发送失败 {$raw}", 600);
     }
 

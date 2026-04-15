@@ -17,14 +17,8 @@ final class LoginGateStateService
         'csrf',
     ];
 
-    /**
-     * 初始化 LoginGateStateService
-     * @param AppContext $context
-     * @param LoginPendingFlowStore $pendingFlowStore
-     */
     public function __construct(
         private readonly AppContext $context,
-        private readonly LoginPendingFlowStore $pendingFlowStore,
     ) {
     }
 
@@ -44,21 +38,12 @@ final class LoginGateStateService
     }
 
     /**
-     * 判断待处理流程是否满足条件
-     * @return bool
-     */
-    public function hasPendingFlow(): bool
-    {
-        return $this->pendingFlowStore->load() !== null;
-    }
-
-    /**
      * 判断BlockBusinessTasks是否满足条件
      * @return bool
      */
     public function shouldBlockBusinessTasks(): bool
     {
-        return $this->hasPendingFlow() || !$this->authReady();
+        return !$this->authReady();
     }
 
     /**
@@ -67,10 +52,6 @@ final class LoginGateStateService
      */
     public function state(): string
     {
-        if ($this->hasPendingFlow()) {
-            return 'pending_manual_intervention';
-        }
-
         return $this->authReady() ? 'auth_ready' : 'missing_auth';
     }
 }
