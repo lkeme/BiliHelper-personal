@@ -8,7 +8,7 @@
 ; 验证码手动识别/服务地址
 [login_captcha]
 enable = false
-url = "http://localhost:50001"
+url = "http://127.0.0.1:50001"
 ```
 
 ### 如何开启验证码手动识别服务地址
@@ -34,7 +34,7 @@ docker run -itd --rm -e CAPTCHA=1 -e CAPTCHA_HOST=localhost -e CAPTCHA_PORT=5000
 ##### 本地用户
 
 ```bash
-cd captcha && php -S localhost:50001
+cd captcha && php -S 127.0.0.1:50001
 cd captcha && php -S localhost:50002
 ```
 
