@@ -132,14 +132,14 @@ final class ActivityFlowPlanner
     {
         $contracts = [
             'load_activity_snapshot' => ['default_lane' => 'page_fetch', 'allowed_lanes' => ['page_fetch'], 'default_status' => ActivityNodeStatus::PENDING],
-            'validate_activity_window' => ['default_lane' => 'task_status', 'allowed_lanes' => ['task_status'], 'default_status' => ActivityNodeStatus::PENDING],
+            'validate_activity_window' => ['default_lane' => 'task_status', 'allowed_lanes' => ['task_status', 'draw_validate'], 'default_status' => ActivityNodeStatus::PENDING],
             'parse_era_page' => ['default_lane' => 'page_fetch', 'allowed_lanes' => ['page_fetch'], 'default_status' => ActivityNodeStatus::PENDING],
             'refresh_draw_times' => ['default_lane' => 'draw_refresh', 'allowed_lanes' => ['draw_refresh'], 'default_status' => ActivityNodeStatus::PENDING],
             'execute_draw' => ['default_lane' => 'draw_execute', 'allowed_lanes' => ['draw_execute'], 'default_status' => ActivityNodeStatus::PENDING],
-            'record_draw_result' => ['default_lane' => 'task_status', 'allowed_lanes' => ['task_status'], 'default_status' => ActivityNodeStatus::PENDING],
-            'notify_draw_result' => ['default_lane' => 'task_status', 'allowed_lanes' => ['task_status'], 'default_status' => ActivityNodeStatus::PENDING],
+            'record_draw_result' => ['default_lane' => 'task_status', 'allowed_lanes' => ['task_status', 'draw_record'], 'default_status' => ActivityNodeStatus::PENDING],
+            'notify_draw_result' => ['default_lane' => 'task_status', 'allowed_lanes' => ['task_status', 'draw_notify'], 'default_status' => ActivityNodeStatus::PENDING],
             'final_claim_reward' => ['default_lane' => 'claim_reward', 'allowed_lanes' => ['claim_reward'], 'default_status' => ActivityNodeStatus::PENDING],
-            'finalize_flow' => ['default_lane' => 'task_status', 'allowed_lanes' => ['task_status'], 'default_status' => ActivityNodeStatus::PENDING],
+            'finalize_flow' => ['default_lane' => 'task_status', 'allowed_lanes' => ['task_status', 'draw_finalize'], 'default_status' => ActivityNodeStatus::PENDING],
             'era_task_skipped' => ['default_lane' => 'task_status', 'allowed_lanes' => ['task_status'], 'default_status' => ActivityNodeStatus::SKIPPED],
         ];
 
@@ -192,14 +192,14 @@ final class ActivityFlowPlanner
      */
     public function planDraw(ActivityCatalogItem $item, string $bizDate): ActivityFlow
     {
-        $nodes = array_map(fn (string $type): ActivityNode => $this->nodeByContract($type), [
-            'validate_activity_window',
-            'refresh_draw_times',
-            'execute_draw',
-            'record_draw_result',
-            'notify_draw_result',
-            'finalize_flow',
-        ]);
+        $nodes = [
+            $this->nodeByContractWithLane('validate_activity_window', 'draw_validate'),
+            $this->nodeByContract('refresh_draw_times'),
+            $this->nodeByContract('execute_draw'),
+            $this->nodeByContractWithLane('record_draw_result', 'draw_record'),
+            $this->nodeByContractWithLane('notify_draw_result', 'draw_notify'),
+            $this->nodeByContractWithLane('finalize_flow', 'draw_finalize'),
+        ];
 
         return ActivityFlowFactory::create($item, $bizDate, $nodes, 'draw');
     }
@@ -348,6 +348,21 @@ final class ActivityFlowPlanner
 
         $contract = $contracts[$type];
         return new ActivityNode($type, ['lane' => $contract['default_lane']], $contract['default_status']);
+    }
+
+    /**
+     * 处理节点 ByContract 并覆盖 lane
+     * @param string $type
+     * @param string $lane
+     * @return ActivityNode
+     */
+    private function nodeByContractWithLane(string $type, string $lane): ActivityNode
+    {
+        $node = $this->nodeByContract($type);
+        $payload = $node->payload();
+        $payload['lane'] = trim($lane);
+
+        return new ActivityNode($type, $payload, $node->status());
     }
 
     /**
