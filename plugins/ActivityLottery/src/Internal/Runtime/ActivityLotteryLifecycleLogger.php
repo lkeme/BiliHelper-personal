@@ -434,7 +434,11 @@ final class ActivityLotteryLifecycleLogger
         }
 
         if ($afterNode->status() === ActivityNodeStatus::SUCCEEDED && $total > 0) {
-            return sprintf('%s，已完成 %d/%d', $fallback, $completed, $total);
+            $displayCompleted = str_contains($fallback, '已完成')
+                ? max($completed, $total)
+                : $completed;
+
+            return sprintf('%s，已完成 %d/%d', $fallback, $displayCompleted, $total);
         }
 
         return $fallback;

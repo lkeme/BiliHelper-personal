@@ -233,6 +233,7 @@ final class EraWatchVideoNodeRunner implements NodeRunnerInterface
         if ($archives === []) {
             $archives = array_merge(
                 $this->normalizeArchives($task->targetArchives()),
+                $this->archivesFromVideoIds($task),
                 $task->topicId() !== '' ? $this->watchGateway->fetchTopicArchives($task->topicId()) : [],
             );
             $archives = $this->normalizeArchives($archives);
@@ -264,6 +265,14 @@ final class EraWatchVideoNodeRunner implements NodeRunnerInterface
             return $archives;
         }
 
+        return $this->normalizeArchives($this->archivesFromVideoIds($task));
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function archivesFromVideoIds(EraTaskSnapshot $task): array
+    {
         $normalized = [];
         foreach ($task->targetVideoIds() as $videoId) {
             $label = trim($videoId);
@@ -277,7 +286,7 @@ final class EraWatchVideoNodeRunner implements NodeRunnerInterface
             ];
         }
 
-        return $this->normalizeArchives($normalized);
+        return $normalized;
     }
 
     /**
