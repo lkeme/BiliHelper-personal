@@ -146,10 +146,12 @@ final class EraWatchLiveNodeRunner implements NodeRunnerInterface
         try {
             $nextSession = $this->watchGateway->heartbeat($session);
         } catch (RequestException $exception) {
-            $failureState = $this->applyHeartbeatFailure($state, $session, $now);
+            $failureState = $this->applyHeartbeatFailure($state, $session, $now, $exception);
             $message = '直播观看心跳失败: ' . $exception->getMessage();
             if (($failureState['switched'] ?? false) === true) {
                 $message .= '，已切换候选直播间';
+            } elseif (($failureState['restarted'] ?? false) === true) {
+                $message .= '，已重建直播会话';
             }
 
             return new ActivityNodeResult(false, $message, [
@@ -253,10 +255,22 @@ final class EraWatchLiveNodeRunner implements NodeRunnerInterface
     /**
      * @param array<string, mixed> $state
      * @param array<string, mixed> $session
-     * @return array{state: array<string, mixed>, switched: bool}
+     * @return array{state: array<string, mixed>, switched: bool, restarted: bool}
      */
-    private function applyHeartbeatFailure(array $state, array $session, int $now): array
+    private function applyHeartbeatFailure(array $state, array $session, int $now, ?RequestException $exception = null): array
     {
+        if ($this->shouldRestartSessionAfterHeartbeatFailure($exception)) {
+            $nextState = $state;
+            unset($nextState['live_session']);
+            $nextState['live_failure_count'] = 0;
+
+            return [
+                'state' => $nextState,
+                'switched' => false,
+                'restarted' => true,
+            ];
+        }
+
         $failureCount = max(0, (int)($state['live_failure_count'] ?? 0)) + 1;
         $nextState = $state;
         $nextState['live_failure_count'] = $failureCount;
@@ -265,6 +279,7 @@ final class EraWatchLiveNodeRunner implements NodeRunnerInterface
             return [
                 'state' => $nextState,
                 'switched' => false,
+                'restarted' => false,
             ];
         }
 
@@ -277,6 +292,7 @@ final class EraWatchLiveNodeRunner implements NodeRunnerInterface
         return [
             'state' => $nextState,
             'switched' => true,
+            'restarted' => false,
         ];
     }
 
@@ -317,6 +333,17 @@ final class EraWatchLiveNodeRunner implements NodeRunnerInterface
         }
 
         return (int)($state['live_init_strategy_until'] ?? 0) > $now;
+    }
+
+    private function shouldRestartSessionAfterHeartbeatFailure(?RequestException $exception): bool
+    {
+        if (!$exception instanceof RequestException) {
+            return false;
+        }
+
+        $message = trim($exception->getMessage());
+        return str_contains($message, '1012002')
+            || str_contains($message, 'time check failed');
     }
 }
 
