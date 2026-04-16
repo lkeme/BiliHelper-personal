@@ -23,6 +23,7 @@ final class WatchLiveGateway
     private ?LiveWatchService $watchService = null;
     /** @var array<int, true> */
     private array $excludedRoomIds = [];
+    private bool $preferRecommendOnly = false;
     /** @var array<string, string> */
     private array $areaWebIds = [];
     /**
@@ -135,10 +136,11 @@ final class WatchLiveGateway
      * @param int[] $excludedRoomIds
      * @return array<string, mixed>|null
      */
-    public function start(array $roomIds, int $areaId = 0, int $parentAreaId = 0, array $excludedRoomIds = []): ?array
+    public function start(array $roomIds, int $areaId = 0, int $parentAreaId = 0, array $excludedRoomIds = [], bool $preferRecommendOnly = false): ?array
     {
         $this->resetLookupState();
         $this->excludedRoomIds = $this->normalizeExcludedRoomIds($excludedRoomIds);
+        $this->preferRecommendOnly = $preferRecommendOnly;
         try {
             $session = ($this->startAction)($roomIds, $areaId, $parentAreaId);
         } catch (\RuntimeException $exception) {
@@ -150,6 +152,7 @@ final class WatchLiveGateway
             throw $exception;
         } finally {
             $this->excludedRoomIds = [];
+            $this->preferRecommendOnly = false;
         }
 
         if (is_array($session)) {
@@ -205,6 +208,10 @@ final class WatchLiveGateway
 
         if ($areaId <= 0) {
             return null;
+        }
+
+        if ($this->preferRecommendOnly) {
+            return $this->pickRecommendedAreaLiveRoom($areaId, $parentAreaId);
         }
 
         return ($this->areaRoomPicker)($areaId, $parentAreaId);

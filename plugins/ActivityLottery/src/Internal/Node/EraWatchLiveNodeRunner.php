@@ -12,6 +12,8 @@ use Bhp\Util\Exceptions\RequestException;
 final class EraWatchLiveNodeRunner implements NodeRunnerInterface
 {
     private const RETRY_DELAY_SECONDS = 300;
+    private const INIT_FAILURE_SWITCH_THRESHOLD = 3;
+    private const INIT_PREFER_RECOMMEND_COOLDOWN_SECONDS = 1800;
     private const HEARTBEAT_FAILURE_SWITCH_THRESHOLD = 3;
     private const FAILED_ROOM_COOLDOWN_SECONDS = 1800;
 
@@ -50,7 +52,7 @@ final class EraWatchLiveNodeRunner implements NodeRunnerInterface
             ], $now);
         }
 
-        $state = $this->pruneFailedRooms($taskView->taskRuntime(), $now);
+        $state = $this->pruneState($taskView->taskRuntime(), $now);
         $progress = $taskView->taskProgress();
         $serverWatchSeconds = EraWatchProgress::currentSeconds($task, $progress);
         $localWatchSeconds = max(max(0, (int)($state['local_watch_seconds'] ?? 0)), $serverWatchSeconds);
@@ -63,6 +65,9 @@ final class EraWatchLiveNodeRunner implements NodeRunnerInterface
                 $state['live_session'],
                 $state['live_failure_count'],
                 $state['live_failed_room_ids'],
+                $state['live_init_failure_count'],
+                $state['live_init_strategy'],
+                $state['live_init_strategy_until'],
             );
             return new ActivityNodeResult(true, '直播观看任务完成', [
                 'node_status' => ActivityNodeStatus::SUCCEEDED,
@@ -73,18 +78,26 @@ final class EraWatchLiveNodeRunner implements NodeRunnerInterface
         $session = is_array($state['live_session'] ?? null) ? $state['live_session'] : null;
         $excludedRoomIds = $this->excludedRoomIds($state);
         if ($session === null) {
+            $preferRecommendOnly = $this->preferRecommendOnly($state, $now);
             try {
                 $session = $this->watchGateway->start(
                     $task->targetRoomIds(),
                     $task->targetAreaId(),
                     $task->targetParentAreaId(),
                     $excludedRoomIds,
+                    $preferRecommendOnly,
                 );
             } catch (RequestException $exception) {
-                return new ActivityNodeResult(false, '直播观看初始化失败: ' . $exception->getMessage(), [
+                $failureState = $this->applyInitFailure($state, $now);
+                $message = '直播观看初始化失败: ' . $exception->getMessage();
+                if (($failureState['switched'] ?? false) === true) {
+                    $message .= '，已切换推荐兜底';
+                }
+
+                return new ActivityNodeResult(false, $message, [
                     'node_status' => ActivityNodeStatus::WAITING,
                     'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
-                    'context_patch' => $taskView->replaceTaskRuntime($state),
+                    'context_patch' => $taskView->replaceTaskRuntime($failureState['state']),
                 ], $now);
             }
 
@@ -97,17 +110,31 @@ final class EraWatchLiveNodeRunner implements NodeRunnerInterface
                     ], $now);
                 }
 
+                if ($preferRecommendOnly) {
+                    return new ActivityNodeResult(false, '推荐兜底暂未命中可用直播间，稍后重试', [
+                        'node_status' => ActivityNodeStatus::WAITING,
+                        'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
+                        'context_patch' => $taskView->replaceTaskRuntime($state),
+                    ], $now);
+                }
+
                 return new ActivityNodeResult(true, '当前没有可观看的直播间，按完成处理', [
                     'node_status' => ActivityNodeStatus::SUCCEEDED,
                     'context_patch' => $taskView->replaceTaskRuntime($state),
                 ], $now);
             }
 
+            $session['room_pick_mode'] = $preferRecommendOnly ? 'recommend_only' : 'default';
             $waitSeconds = max(30, (int)($session['heartbeat_interval'] ?? 60));
             $nextState = array_replace($state, [
                 'live_session' => $session,
                 'live_failure_count' => 0,
+                'live_init_failure_count' => 0,
             ]);
+            unset(
+                $nextState['live_init_strategy'],
+                $nextState['live_init_strategy_until']
+            );
 
             return new ActivityNodeResult(true, '直播观看已启动', [
                 'node_status' => ActivityNodeStatus::WAITING,
@@ -174,7 +201,7 @@ final class EraWatchLiveNodeRunner implements NodeRunnerInterface
      * @param array<string, mixed> $state
      * @return array<string, mixed>
      */
-    private function pruneFailedRooms(array $state, int $now): array
+    private function pruneState(array $state, int $now): array
     {
         $rawCooldowns = is_array($state['live_failed_room_ids'] ?? null) ? $state['live_failed_room_ids'] : [];
         $cooldowns = [];
@@ -190,10 +217,13 @@ final class EraWatchLiveNodeRunner implements NodeRunnerInterface
 
         if ($cooldowns === []) {
             unset($state['live_failed_room_ids']);
-            return $state;
+        } else {
+            $state['live_failed_room_ids'] = $cooldowns;
         }
 
-        $state['live_failed_room_ids'] = $cooldowns;
+        if (!$this->preferRecommendOnly($state, $now)) {
+            unset($state['live_init_strategy'], $state['live_init_strategy_until']);
+        }
 
         return $state;
     }
@@ -248,6 +278,45 @@ final class EraWatchLiveNodeRunner implements NodeRunnerInterface
             'state' => $nextState,
             'switched' => true,
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     * @return array{state: array<string, mixed>, switched: bool}
+     */
+    private function applyInitFailure(array $state, int $now): array
+    {
+        $failureCount = max(0, (int)($state['live_init_failure_count'] ?? 0)) + 1;
+        $nextState = $state;
+        $nextState['live_init_failure_count'] = $failureCount;
+
+        if ($this->preferRecommendOnly($state, $now) || $failureCount < self::INIT_FAILURE_SWITCH_THRESHOLD) {
+            return [
+                'state' => $nextState,
+                'switched' => false,
+            ];
+        }
+
+        $nextState['live_init_failure_count'] = 0;
+        $nextState['live_init_strategy'] = 'recommend_only';
+        $nextState['live_init_strategy_until'] = $now + self::INIT_PREFER_RECOMMEND_COOLDOWN_SECONDS;
+
+        return [
+            'state' => $nextState,
+            'switched' => true,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     */
+    private function preferRecommendOnly(array $state, int $now): bool
+    {
+        if (trim((string)($state['live_init_strategy'] ?? '')) !== 'recommend_only') {
+            return false;
+        }
+
+        return (int)($state['live_init_strategy_until'] ?? 0) > $now;
     }
 }
 
