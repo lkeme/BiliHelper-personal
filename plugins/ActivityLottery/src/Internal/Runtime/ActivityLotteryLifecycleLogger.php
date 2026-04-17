@@ -543,9 +543,7 @@ final class ActivityLotteryLifecycleLogger
         $roomId = max(0, (int)($context['room_id'] ?? 0));
         $currentSeconds = max(0, (int)($context['local_watch_seconds'] ?? 0));
         $targetSeconds = max(0, (int)($context['display_target_seconds'] ?? 0));
-        $progress = $targetSeconds > 0
-            ? sprintf('%d/%d 秒', $currentSeconds, $targetSeconds)
-            : sprintf('%d 秒', $currentSeconds);
+        $progress = $this->formatWatchLiveProgress($currentSeconds, $targetSeconds);
         $roomPrefix = $roomId > 0 ? sprintf('房间 %d，', $roomId) : '';
 
         if ($afterNode->status() === ActivityNodeStatus::WAITING) {
@@ -715,7 +713,7 @@ final class ActivityLotteryLifecycleLogger
     ): string {
         $currentSeconds = max(0, (int)($context['local_watch_seconds'] ?? 0));
         $targetSeconds = max(0, (int)($context['display_target_seconds'] ?? 0));
-        $progress = $targetSeconds > 0 ? sprintf('%d/%d 秒', $currentSeconds, $targetSeconds) : sprintf('%d 秒', $currentSeconds);
+        $progress = $this->formatWatchLiveProgress($currentSeconds, $targetSeconds);
         $roomId = max(0, (int)($context['room_id'] ?? 0));
         $prefix = $roomId > 0 ? sprintf('观看直播，房间 %d，', $roomId) : '观看直播，';
 
@@ -884,6 +882,42 @@ final class ActivityLotteryLifecycleLogger
         }
 
         return sprintf('，%d 秒后继续', $delaySeconds);
+    }
+
+    private function formatWatchLiveProgress(int $currentSeconds, int $targetSeconds): string
+    {
+        if ($this->shouldDisplayWatchLiveInMinutes($targetSeconds)) {
+            $currentLabel = $this->formatDurationAsMinutes($currentSeconds, true);
+            $targetLabel = $this->formatDurationAsMinutes($targetSeconds, false);
+            return sprintf('%s/%s', $currentLabel, $targetLabel);
+        }
+
+        if ($targetSeconds > 0) {
+            return sprintf('%d/%d 秒', $currentSeconds, $targetSeconds);
+        }
+
+        return sprintf('%d 秒', $currentSeconds);
+    }
+
+    private function shouldDisplayWatchLiveInMinutes(int $targetSeconds): bool
+    {
+        return $targetSeconds >= 600 && $targetSeconds % 60 === 0;
+    }
+
+    private function formatDurationAsMinutes(int $seconds, bool $allowSecondsRemainder): string
+    {
+        $seconds = max(0, $seconds);
+        $minutes = intdiv($seconds, 60);
+        $remainder = $seconds % 60;
+
+        if (!$allowSecondsRemainder || $remainder === 0) {
+            return sprintf('%d 分钟', $minutes);
+        }
+        if ($minutes <= 0) {
+            return sprintf('%d 秒', $remainder);
+        }
+
+        return sprintf('%d 分 %d 秒', $minutes, $remainder);
     }
 
     /**

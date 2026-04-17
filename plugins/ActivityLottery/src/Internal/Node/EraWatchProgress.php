@@ -6,6 +6,8 @@ use Bhp\Plugin\Builtin\ActivityLottery\Internal\Page\EraTaskSnapshot;
 
 final class EraWatchProgress
 {
+    private const WATCH_LIVE_MINUTE_THRESHOLD = 200;
+
     /**
      * @param array<string, mixed>|null $progress
      * @return int[]
@@ -38,7 +40,7 @@ final class EraWatchProgress
 
                     $limit = (int)($indicator['limit'] ?? $indicator['target_val'] ?? 0);
                     if ($limit > 0) {
-                        $thresholds[] = $limit;
+                        $thresholds[] = self::normalizeDurationValue($task, $limit);
                     }
                 }
             }
@@ -73,7 +75,8 @@ final class EraWatchProgress
                             continue;
                         }
 
-                        $current = max($current, (int)($indicator['cur_value'] ?? $indicator['current_val'] ?? 0));
+                        $value = (int)($indicator['cur_value'] ?? $indicator['current_val'] ?? 0);
+                        $current = max($current, self::normalizeDurationValue($task, $value));
                     }
                 }
             }
@@ -83,7 +86,8 @@ final class EraWatchProgress
                     continue;
                 }
 
-                $current = max($current, (int)($indicator['cur_value'] ?? $indicator['current_val'] ?? 0));
+                $value = (int)($indicator['cur_value'] ?? $indicator['current_val'] ?? 0);
+                $current = max($current, self::normalizeDurationValue($task, $value));
             }
         }
 
@@ -97,7 +101,8 @@ final class EraWatchProgress
                     continue;
                 }
 
-                $current = max($current, (int)($indicator['cur_value'] ?? $indicator['current_val'] ?? 0));
+                $value = (int)($indicator['cur_value'] ?? $indicator['current_val'] ?? 0);
+                $current = max($current, self::normalizeDurationValue($task, $value));
             }
         }
 
@@ -156,6 +161,25 @@ final class EraWatchProgress
         }
 
         return 30;
+    }
+
+    private static function normalizeDurationValue(EraTaskSnapshot $task, int $value): int
+    {
+        if ($value <= 0) {
+            return 0;
+        }
+
+        if (!self::shouldTreatWatchLiveValueAsMinutes($task, $value)) {
+            return $value;
+        }
+
+        return $value * 60;
+    }
+
+    private static function shouldTreatWatchLiveValueAsMinutes(EraTaskSnapshot $task, int $value): bool
+    {
+        return $task->capability() === 'watch_live'
+            && $value <= self::WATCH_LIVE_MINUTE_THRESHOLD;
     }
 }
 
