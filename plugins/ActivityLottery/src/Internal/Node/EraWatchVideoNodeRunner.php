@@ -251,6 +251,12 @@ final class EraWatchVideoNodeRunner implements NodeRunnerInterface
             return null;
         }
 
+        foreach (['topic_id', 'topic_sort_by', 'topic_source', 'published_at'] as $key) {
+            if (array_key_exists($key, $archives[$index])) {
+                $archive[$key] = $archives[$index][$key];
+            }
+        }
+
         $state['topic_archive_index'] = $index;
         return ['archive' => $archive, 'state' => $state];
     }
@@ -355,4 +361,3 @@ final class EraWatchVideoNodeRunner implements NodeRunnerInterface
         }
     }
 }
-

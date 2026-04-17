@@ -7,9 +7,11 @@ final class EraPageParser
     /**
      * 初始化 EraPageParser
      * @param EraTaskCapabilityResolver $capabilityResolver
+     * @param callable|null $linkedPageHtmlFetcher
      */
     public function __construct(
         private readonly EraTaskCapabilityResolver $capabilityResolver = new EraTaskCapabilityResolver(),
+        private readonly mixed $linkedPageHtmlFetcher = null,
     ) {
     }
 
@@ -69,59 +71,110 @@ final class EraPageParser
         $pageVideoIds = $this->collectVideoIds($state);
         $pageVideoArchives = $this->collectVideoArchives($state);
         $pageLiveRoomIds = $this->collectLiveRoomIds($state);
+        $linkedPageFollowTargetsCache = [];
 
-        foreach (['EraTasklist', 'EraTasklistPc'] as $componentKey) {
-            foreach (($state[$componentKey] ?? []) as $component) {
-                if (!is_array($component)) {
-                    continue;
-                }
+        foreach ($this->taskEntries($state) as $task) {
+            $taskName = trim((string)($task['taskName'] ?? $task['task_name'] ?? ''));
+            $jumpLink = trim((string)($task['jumpLink'] ?? $task['jump_link'] ?? ''));
+            $topicId = trim((string)($task['topicID'] ?? $task['topicId'] ?? $task['topic_id'] ?? ''));
+            if ($topicId === '') {
+                $topicId = $this->extractTopicIdFromLink($jumpLink);
+            }
 
-                foreach (($component['tasklist'] ?? []) as $task) {
-                    if (!is_array($task)) {
-                        continue;
-                    }
+            $targetUids = $this->extractTargetUids($taskName, $jumpLink, $task, $pageFollowTargets, $linkedPageFollowTargetsCache);
+            $targetVideoIds = $this->extractTargetVideoIds($taskName, $jumpLink, $task, $pageVideoIds);
+            $targetArchives = $this->extractTargetArchives($taskName, $task, $pageVideoArchives);
+            $targetRoomIds = $this->extractTargetRoomIds($taskName, $task, $pageLiveRoomIds);
+            $liveAreaTarget = $this->extractLiveAreaTarget($jumpLink, $task);
 
-                    $taskName = trim((string)($task['taskName'] ?? $task['task_name'] ?? ''));
-                    $jumpLink = trim((string)($task['jumpLink'] ?? $task['jump_link'] ?? ''));
-                    $topicId = trim((string)($task['topicID'] ?? $task['topicId'] ?? $task['topic_id'] ?? ''));
-                    if ($topicId === '') {
-                        $topicId = $this->extractTopicIdFromLink($jumpLink);
-                    }
+            $taskRow = [
+                'task_id' => trim((string)($task['taskId'] ?? $task['task_id'] ?? '')),
+                'task_name' => $taskName,
+                'task_status' => (int)($task['taskStatus'] ?? $task['task_status'] ?? 0),
+                'task_award_type' => (int)($task['taskAwardType'] ?? $task['task_award_type'] ?? 0),
+                'counter' => trim((string)($task['counter'] ?? '')),
+                'jump_link' => $jumpLink,
+                'topic_id' => $topicId,
+                'award_name' => trim((string)($task['awardName'] ?? $task['award_name'] ?? '')),
+                'required_watch_seconds' => $this->extractRequiredWatchSeconds($taskName, $task),
+                'target_uids' => $targetUids,
+                'target_video_ids' => $targetVideoIds,
+                'target_room_ids' => $targetRoomIds,
+                'target_archives' => $targetArchives,
+                'target_area_id' => $liveAreaTarget['area_id'],
+                'target_parent_area_id' => $liveAreaTarget['parent_area_id'],
+                'checkpoints' => $this->normalizeCheckpointList($task['checkpoints'] ?? []),
+                'btn_behavior' => $this->normalizeBehavior($task['btnBehavior'] ?? $task['btn_behavior'] ?? []),
+            ];
+            $capability = $this->capabilityResolver->resolve($taskRow);
+            $taskRow['capability'] = $capability;
+            $taskRow['support_level'] = $this->capabilityResolver->resolveSupportLevel($taskRow, $capability);
+            $tasks[] = $taskRow;
+        }
 
-                    $targetUids = $this->extractTargetUids($taskName, $jumpLink, $task, $pageFollowTargets);
-                    $targetVideoIds = $this->extractTargetVideoIds($taskName, $jumpLink, $task, $pageVideoIds);
-                    $targetArchives = $this->extractTargetArchives($taskName, $task, $pageVideoArchives);
-                    $targetRoomIds = $this->extractTargetRoomIds($taskName, $task, $pageLiveRoomIds);
-                    $liveAreaTarget = $this->extractLiveAreaTarget($jumpLink, $task);
+        return $tasks;
+    }
 
-                    $taskRow = [
-                        'task_id' => trim((string)($task['taskId'] ?? $task['task_id'] ?? '')),
-                        'task_name' => $taskName,
-                        'task_status' => (int)($task['taskStatus'] ?? $task['task_status'] ?? 0),
-                        'task_award_type' => (int)($task['taskAwardType'] ?? $task['task_award_type'] ?? 0),
-                        'counter' => trim((string)($task['counter'] ?? '')),
-                        'jump_link' => $jumpLink,
-                        'topic_id' => $topicId,
-                        'award_name' => trim((string)($task['awardName'] ?? $task['award_name'] ?? '')),
-                        'required_watch_seconds' => $this->extractRequiredWatchSeconds($taskName, $task),
-                        'target_uids' => $targetUids,
-                        'target_video_ids' => $targetVideoIds,
-                        'target_room_ids' => $targetRoomIds,
-                        'target_archives' => $targetArchives,
-                        'target_area_id' => $liveAreaTarget['area_id'],
-                        'target_parent_area_id' => $liveAreaTarget['parent_area_id'],
-                        'checkpoints' => $this->normalizeCheckpointList($task['checkpoints'] ?? []),
-                        'btn_behavior' => $this->normalizeBehavior($task['btnBehavior'] ?? $task['btn_behavior'] ?? []),
-                    ];
-                    $capability = $this->capabilityResolver->resolve($taskRow);
-                    $taskRow['capability'] = $capability;
-                    $taskRow['support_level'] = $this->capabilityResolver->resolveSupportLevel($taskRow, $capability);
-                    $tasks[] = $taskRow;
+    /**
+     * @return iterable<array<string, mixed>>
+     */
+    private function taskEntries(array $state): iterable
+    {
+        $seen = [];
+
+        foreach ($this->legacyTaskEntries($state) as $task) {
+            $normalizedTask = $this->normalizeTaskEntry($task);
+            if ((int)($normalizedTask['taskAwardType'] ?? $normalizedTask['task_award_type'] ?? 0) !== 3) {
+                continue;
+            }
+
+            $taskId = trim((string)($normalizedTask['taskId'] ?? $normalizedTask['task_id'] ?? ''));
+            $key = $taskId !== '' ? 'task:' . $taskId : md5(json_encode($normalizedTask, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '');
+            if (isset($seen[$key])) {
+                continue;
+            }
+
+            $seen[$key] = true;
+            yield $normalizedTask;
+        }
+    }
+
+    /**
+     * @return iterable<array<string, mixed>>
+     */
+    private function legacyTaskEntries(array $state): iterable
+    {
+        foreach (($state['EraTasklistPc'] ?? []) as $component) {
+            if (!is_array($component)) {
+                continue;
+            }
+
+            foreach (($component['tasklist'] ?? []) as $task) {
+                if (is_array($task)) {
+                    yield $task;
                 }
             }
         }
 
-        return $tasks;
+        foreach (($state['EvaTaskButton'] ?? []) as $task) {
+            if (is_array($task)) {
+                yield $task;
+            }
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $task
+     * @return array<string, mixed>
+     */
+    private function normalizeTaskEntry(array $task): array
+    {
+        $taskItem = is_array($task['taskItem'] ?? null) ? $task['taskItem'] : [];
+        if ($taskItem === []) {
+            return $task;
+        }
+
+        return array_replace($task, $taskItem);
     }
 
     /**
@@ -332,9 +385,10 @@ final class EraPageParser
     /**
      * @param array<string, mixed> $task
      * @param array<int, array{uid: string, uname: string, add_lottery_times: bool}> $pageFollowTargets
+     * @param array<string, array<int, array{uid: string, uname: string, add_lottery_times: bool}>> $linkedPageFollowTargetsCache
      * @return string[]
      */
-    private function extractTargetUids(string $taskName, string $jumpLink, array $task, array $pageFollowTargets): array
+    private function extractTargetUids(string $taskName, string $jumpLink, array $task, array $pageFollowTargets, array &$linkedPageFollowTargetsCache): array
     {
         $targetUids = $this->normalizeStringList($task['target_uids'] ?? $task['targetUids'] ?? []);
         if ($targetUids !== []) {
@@ -346,10 +400,32 @@ final class EraPageParser
         }
 
         if (str_contains($taskName, '关注')) {
-            return $this->matchFollowTargetUids($taskName, $pageFollowTargets);
+            $matched = $this->matchFollowTargetUids($taskName, $pageFollowTargets);
+            if ($matched !== []) {
+                return $matched;
+            }
+
+            return $this->extractTargetUidsFromLinkedEraPage($jumpLink, $linkedPageFollowTargetsCache);
         }
 
         return [];
+    }
+
+    /**
+     * @param array<string, array<int, array{uid: string, uname: string, add_lottery_times: bool}>> $linkedPageFollowTargetsCache
+     * @return string[]
+     */
+    private function extractTargetUidsFromLinkedEraPage(string $jumpLink, array &$linkedPageFollowTargetsCache): array
+    {
+        $targets = $this->collectLinkedPageFollowTargets($jumpLink, $linkedPageFollowTargetsCache);
+        if ($targets === []) {
+            return [];
+        }
+
+        return $this->normalizeStringList(array_map(
+            static fn (array $target): string => (string)($target['uid'] ?? ''),
+            $targets,
+        ));
     }
 
     /**
@@ -519,6 +595,115 @@ final class EraPageParser
         }
 
         return array_values(array_unique($normalized));
+    }
+
+    /**
+     * @param array<string, array<int, array{uid: string, uname: string, add_lottery_times: bool}>> $cache
+     * @return array<int, array{uid: string, uname: string, add_lottery_times: bool}>
+     */
+    private function collectLinkedPageFollowTargets(string $jumpLink, array &$cache): array
+    {
+        $url = $this->normalizeEraPageLink($jumpLink);
+        if ($url === '') {
+            return [];
+        }
+        if (array_key_exists($url, $cache)) {
+            return $cache[$url];
+        }
+
+        $html = $this->fetchLinkedPageHtml($url);
+        if ($html === '') {
+            $cache[$url] = [];
+            return [];
+        }
+
+        $state = $this->extractAssignedJson($html, 'window.__initialState');
+        if (!is_array($state)) {
+            $cache[$url] = [];
+            return [];
+        }
+
+        $targets = $this->collectFollowTargets($state);
+        if ($targets === []) {
+            $targets = $this->collectAnchorCarouselFollowTargets($state);
+        }
+
+        $cache[$url] = $this->deduplicateFollowTargets($targets);
+        return $cache[$url];
+    }
+
+    /**
+     * @return array<int, array{uid: string, uname: string, add_lottery_times: bool}>
+     */
+    private function collectAnchorCarouselFollowTargets(array $state): array
+    {
+        $targets = [];
+        foreach (($state['EvaAnchorCarousel'] ?? []) as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            foreach (($item['anchorConfigList'] ?? []) as $anchor) {
+                if (!is_array($anchor)) {
+                    continue;
+                }
+
+                $uid = trim((string)($anchor['uid'] ?? ''));
+                if ($uid === '') {
+                    continue;
+                }
+
+                $targets[] = [
+                    'uid' => $uid,
+                    'uname' => trim((string)($anchor['uname'] ?? $anchor['nickname'] ?? $anchor['name'] ?? '')),
+                    'add_lottery_times' => false,
+                ];
+            }
+        }
+
+        return $targets;
+    }
+
+    /**
+     * 仅允许解析站内 ERA 推荐页，避免把普通跳转页误当成关注列表。
+     */
+    private function normalizeEraPageLink(string $jumpLink): string
+    {
+        $decoded = trim(html_entity_decode($jumpLink, ENT_QUOTES | ENT_HTML5));
+        if ($decoded === '') {
+            return '';
+        }
+
+        $parts = parse_url($decoded);
+        if (!is_array($parts)) {
+            return '';
+        }
+
+        $host = strtolower((string)($parts['host'] ?? ''));
+        $path = (string)($parts['path'] ?? '');
+        if ($host !== 'www.bilibili.com' && $host !== 'bilibili.com') {
+            return '';
+        }
+        if (preg_match('~^/blackboard/era/[^/?#]+\.html$~', $path) !== 1) {
+            return '';
+        }
+
+        return $decoded;
+    }
+
+    private function fetchLinkedPageHtml(string $url): string
+    {
+        if (!is_callable($this->linkedPageHtmlFetcher)) {
+            return '';
+        }
+
+        try {
+            $html = ($this->linkedPageHtmlFetcher)($url);
+        } catch (\Throwable) {
+            return '';
+        }
+
+        return is_string($html) ? trim($html) : '';
     }
 
     /**

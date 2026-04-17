@@ -76,6 +76,7 @@ final class ParseEraPageNodeRunner implements NodeRunnerInterface
 
         $contextPatch = [
             'era_page_snapshot' => $pageSnapshot->toArray(),
+            'era_linked_page_follow_uid_count' => $this->countLinkedPageFollowUids($pageSnapshot),
         ];
         if ($progressSnapshot !== []) {
             $contextPatch['era_task_progress_snapshot'] = $progressSnapshot;
@@ -108,6 +109,54 @@ final class ParseEraPageNodeRunner implements NodeRunnerInterface
         }
 
         return '';
+    }
+
+    private function countLinkedPageFollowUids(\Bhp\Plugin\Builtin\ActivityLottery\Internal\Page\EraPageSnapshot $pageSnapshot): int
+    {
+        $uids = [];
+        foreach ($pageSnapshot->tasks() as $task) {
+            if (!$task instanceof \Bhp\Plugin\Builtin\ActivityLottery\Internal\Page\EraTaskSnapshot) {
+                continue;
+            }
+
+            if ($task->capability() !== 'follow') {
+                continue;
+            }
+
+            if (!$this->looksLikeEraLinkedPage($task->jumpLink())) {
+                continue;
+            }
+
+            foreach ($task->targetUids() as $uid) {
+                $uid = trim((string)$uid);
+                if ($uid !== '') {
+                    $uids[$uid] = true;
+                }
+            }
+        }
+
+        return count($uids);
+    }
+
+    private function looksLikeEraLinkedPage(string $jumpLink): bool
+    {
+        $decoded = trim(html_entity_decode($jumpLink, ENT_QUOTES | ENT_HTML5));
+        if ($decoded === '') {
+            return false;
+        }
+
+        $parts = parse_url($decoded);
+        if (!is_array($parts)) {
+            return false;
+        }
+
+        $host = strtolower((string)($parts['host'] ?? ''));
+        $path = (string)($parts['path'] ?? '');
+        if ($host !== 'www.bilibili.com' && $host !== 'bilibili.com') {
+            return false;
+        }
+
+        return preg_match('~^/blackboard/era/[^/?#]+\.html$~', $path) === 1;
     }
 }
 

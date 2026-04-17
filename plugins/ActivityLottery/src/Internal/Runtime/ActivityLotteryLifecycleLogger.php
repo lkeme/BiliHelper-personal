@@ -119,6 +119,7 @@ final class ActivityLotteryLifecycleLogger
         $context['draw_times_remaining'] = max(0, (int)($stateContext['draw_times_remaining'] ?? 0));
         $context['draw_batch_size'] = max(0, (int)($stateContext['draw_batch_size'] ?? 0));
         $context['draw_batch_win_count'] = max(0, (int)($stateContext['draw_batch_win_count'] ?? 0));
+        $context['era_linked_page_follow_uid_count'] = max(0, (int)($stateContext['era_linked_page_follow_uid_count'] ?? 0));
         $context['draw_batch_win_names'] = array_values(array_filter(array_map(
             static fn (mixed $name): string => trim((string)$name),
             is_array($stateContext['draw_batch_win_names'] ?? null) ? $stateContext['draw_batch_win_names'] : [],
@@ -159,6 +160,10 @@ final class ActivityLotteryLifecycleLogger
         if (is_array($archive)) {
             $context['archive_aid'] = trim((string)($archive['aid'] ?? ''));
             $context['archive_bvid'] = trim((string)($archive['bvid'] ?? ''));
+            $context['archive_topic_id'] = trim((string)($archive['topic_id'] ?? ''));
+            $context['archive_topic_source'] = trim((string)($archive['topic_source'] ?? ''));
+            $context['archive_topic_sort_by'] = (int)($archive['topic_sort_by'] ?? 0);
+            $context['archive_published_at'] = max(0, (int)($archive['published_at'] ?? 0));
         }
         if (is_array($state['live_session'] ?? null)) {
             $liveSession = $state['live_session'];
@@ -278,6 +283,7 @@ final class ActivityLotteryLifecycleLogger
         $delay = $this->formatDelaySuffix((int)($context['wait_delay_seconds'] ?? 0));
 
         return match ($nodeType) {
+            'parse_era_page' => $this->buildParseEraPageResultMessage($fallback, $context),
             'era_task_follow' => $this->buildFollowResultMessage($afterNode, $context, $fallback, $delay),
             'era_task_watch_video_fixed', 'era_task_watch_video_topic' => $this->buildWatchVideoResultMessage($afterNode, $context, $fallback, $delay),
             'era_task_watch_live' => $this->buildWatchLiveResultMessage($afterNode, $context, $fallback, $delay),
@@ -297,6 +303,7 @@ final class ActivityLotteryLifecycleLogger
         array $context,
     ): string {
         return match ($nodeType) {
+            'parse_era_page' => $this->buildParseEraPageSummaryMessage($afterNode, $context),
             'era_task_follow' => $this->buildFollowSummaryMessage($afterNode, $context),
             'era_task_watch_video_fixed', 'era_task_watch_video_topic' => $this->buildWatchVideoSummaryMessage($afterNode, $context),
             'era_task_watch_live' => $this->buildWatchLiveSummaryMessage($afterNode, $context),
@@ -447,6 +454,38 @@ final class ActivityLotteryLifecycleLogger
     /**
      * @param array<string, mixed> $context
      */
+    private function buildParseEraPageResultMessage(string $fallback, array $context): string
+    {
+        $count = max(0, (int)($context['era_linked_page_follow_uid_count'] ?? 0));
+        if ($count > 0) {
+            return sprintf('ERA 页面解析成功，从二级推荐页解析到 %d 个 UID', $count);
+        }
+
+        return $fallback;
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private function buildParseEraPageSummaryMessage(
+        \Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNode $afterNode,
+        array $context,
+    ): string {
+        if ($afterNode->status() !== ActivityNodeStatus::SUCCEEDED) {
+            return '';
+        }
+
+        $count = max(0, (int)($context['era_linked_page_follow_uid_count'] ?? 0));
+        if ($count > 0) {
+            return sprintf('解析活动任务页，从二级推荐页解析到 %d 个 UID', $count);
+        }
+
+        return '';
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
     private function buildWatchVideoResultMessage(
         \Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNode $afterNode,
         array $context,
@@ -458,8 +497,8 @@ final class ActivityLotteryLifecycleLogger
         $progress = $targetSeconds > 0
             ? sprintf('%d/%d 秒', $currentSeconds, $targetSeconds)
             : sprintf('%d 秒', $currentSeconds);
-        $archiveLabel = $this->archiveLabel($context);
-        $archivePrefix = $archiveLabel !== '' ? sprintf('稿件 %s，', $archiveLabel) : '';
+        $archiveDetail = $this->archiveDetail($context);
+        $archivePrefix = $archiveDetail !== '' ? sprintf('稿件 %s，', $archiveDetail) : '';
 
         if ($afterNode->status() === ActivityNodeStatus::WAITING) {
             if (str_contains($fallback, '视频观看继续推进')) {
@@ -654,8 +693,8 @@ final class ActivityLotteryLifecycleLogger
         $currentSeconds = max(0, (int)($context['local_watch_seconds'] ?? 0));
         $targetSeconds = max(0, (int)($context['display_target_seconds'] ?? 0));
         $progress = $targetSeconds > 0 ? sprintf('%d/%d 秒', $currentSeconds, $targetSeconds) : sprintf('%d 秒', $currentSeconds);
-        $archiveLabel = $this->archiveLabel($context);
-        $prefix = $archiveLabel !== '' ? sprintf('观看视频，稿件 %s，', $archiveLabel) : '观看视频，';
+        $archiveDetail = $this->archiveDetail($context);
+        $prefix = $archiveDetail !== '' ? sprintf('观看视频，稿件 %s，', $archiveDetail) : '观看视频，';
 
         if ($afterNode->status() === ActivityNodeStatus::WAITING) {
             return sprintf('%s当前累计 %s%s', $prefix, $progress, $this->formatDelaySuffix((int)($context['wait_delay_seconds'] ?? 0)));
@@ -781,6 +820,37 @@ final class ActivityLotteryLifecycleLogger
     }
 
     /**
+     * @param array<string, mixed> $context
+     */
+    private function archiveDetail(array $context): string
+    {
+        $label = $this->archiveLabel($context);
+        $topicId = trim((string)($context['archive_topic_id'] ?? ''));
+        $source = trim((string)($context['archive_topic_source'] ?? ''));
+        $sortBy = (int)($context['archive_topic_sort_by'] ?? 0);
+        $publishedAt = max(0, (int)($context['archive_published_at'] ?? 0));
+
+        $parts = [];
+        if ($topicId !== '') {
+            $parts[] = '话题=' . $topicId;
+        }
+        if ($source !== '') {
+            $parts[] = '来源=' . $source;
+            $parts[] = 'sort_by=' . $sortBy;
+        }
+        if ($publishedAt > 0) {
+            $parts[] = '发布时间=' . date('Y-m-d', $publishedAt);
+        }
+
+        if ($parts === []) {
+            return $label;
+        }
+
+        $detail = implode('，', $parts);
+        return $label !== '' ? sprintf('%s（%s）', $label, $detail) : $detail;
+    }
+
+    /**
      * 解析Wait延迟Seconds
      * @param ActivityFlow $flow
      * @return int
@@ -892,6 +962,10 @@ final class ActivityLotteryLifecycleLogger
             'follow_total_count' => $context['follow_total_count'] ?? 0,
             'archive_bvid' => $context['archive_bvid'] ?? '',
             'archive_aid' => $context['archive_aid'] ?? '',
+            'archive_topic_id' => $context['archive_topic_id'] ?? '',
+            'archive_topic_source' => $context['archive_topic_source'] ?? '',
+            'archive_topic_sort_by' => $context['archive_topic_sort_by'] ?? 0,
+            'archive_published_at' => $context['archive_published_at'] ?? 0,
             'room_id' => $context['room_id'] ?? 0,
             'local_watch_seconds' => $context['local_watch_seconds'] ?? 0,
             'display_target_seconds' => $context['display_target_seconds'] ?? 0,

@@ -32,6 +32,7 @@ use Bhp\Plugin\Builtin\ActivityLottery\Internal\Node\EraWatchVideoNodeRunner;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Node\EraUnfollowNodeRunner;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Pool\ActivityFlowBudget;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Pool\ActivityFlowPool;
+use Bhp\Plugin\Builtin\ActivityLottery\Internal\Page\EraPageParser;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Runtime\ActivityLotteryClock;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Runtime\ActivityLotteryRuntime;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Runtime\ActivityLotteryWindow;
@@ -78,8 +79,6 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
             return $this->runtimeInstance;
         }
 
-        $remoteResourceResolver = new RemoteResourceResolver($this->appContext());
-        $remoteCatalogUrls = $remoteResourceResolver->resourceRawUrls('plugins/ActivityLottery/catalog.json');
         $logger = function (string $level, string $message, array $context = []): void {
             $context = array_replace(['caller' => 'ActivityLottery'], $context);
             switch (strtolower(trim($level))) {
@@ -101,14 +100,6 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
             }
         };
         $remoteCatalogFetcher = fn (string $url): string => $this->appContext()->request()->getText('other', $url);
-        $sources = [
-            new RemoteCatalogSource(
-                $remoteCatalogUrls,
-                true,
-                new LocalCatalogSource($this->activityInfosLocalPath()),
-                $remoteCatalogFetcher,
-            ),
-        ];
         $noticePusher = function (string $channel, string $message): void {
             $this->notify($channel, $message);
         };
@@ -149,9 +140,26 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
         $windowStartAt = $this->pluginWindowStartAt();
         $windowEndAt = $this->pluginWindowEndAt();
         $definition = $this->pluginDefinition();
+        $useTestCatalog = (bool)($definition['use_test_catalog'] ?? false);
         $taskEndAt = (string)($definition['task_end'] ?? '23:00:00');
         $drawStartAt = (string)($definition['draw_start'] ?? '00:00:00');
         $drawEndAt = (string)($definition['draw_end'] ?? '01:00:00');
+        if ($useTestCatalog) {
+            $sources = [
+                new LocalCatalogSource($this->activityInfosLocalPath(true, $logger)),
+            ];
+        } else {
+            $remoteResourceResolver = new RemoteResourceResolver($this->appContext());
+            $remoteCatalogUrls = $remoteResourceResolver->resourceRawUrls('plugins/ActivityLottery/catalog.json');
+            $sources = [
+                new RemoteCatalogSource(
+                    $remoteCatalogUrls,
+                    true,
+                    new LocalCatalogSource($this->activityInfosLocalPath()),
+                    $remoteCatalogFetcher,
+                ),
+            ];
+        }
 
         $this->runtimeInstance = new ActivityLotteryRuntime(
             new ActivityCatalogLoader($sources, new ActivityCatalogValidator($logger), 86400),
@@ -164,7 +172,12 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
             $windowEndAt,
             [
                 new \Bhp\Plugin\Builtin\ActivityLottery\Internal\Node\LoadActivitySnapshotNodeRunner($activityGateway),
-                new \Bhp\Plugin\Builtin\ActivityLottery\Internal\Node\ParseEraPageNodeRunner(taskProgressGateway: $taskProgressGateway),
+                new \Bhp\Plugin\Builtin\ActivityLottery\Internal\Node\ParseEraPageNodeRunner(
+                    taskProgressGateway: $taskProgressGateway,
+                    pageParser: new EraPageParser(
+                        linkedPageHtmlFetcher: static fn (string $url): string => $activityGateway->fetchActivityPageHtml($url),
+                    ),
+                ),
                 new \Bhp\Plugin\Builtin\ActivityLottery\Internal\Node\EraShareNodeRunner($activityApi),
                 new EraFollowNodeRunner(apiRelation: $relationApi),
                 new EraUnfollowNodeRunner(apiRelation: $relationApi),
@@ -196,9 +209,25 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
      * 处理activityInfosLocalPath
      * @return string
      */
-    private function activityInfosLocalPath(): string
+    private function activityInfosLocalPath(bool $useTestCatalog = false, ?callable $logger = null): string
     {
-        return rtrim(str_replace('\\', '/', $this->appContext()->appRoot()), '/') . '/resources/plugins/ActivityLottery/catalog.json';
+        $basePath = rtrim(str_replace('\\', '/', $this->appContext()->appRoot()), '/') . '/resources/plugins/ActivityLottery';
+        if (!$useTestCatalog) {
+            return $basePath . '/catalog.json';
+        }
+
+        $testPath = $basePath . '/catalog_test.json';
+        if (is_file($testPath)) {
+            return $testPath;
+        }
+
+        if (is_callable($logger)) {
+            $logger('warning', 'ActivityLottery 测试目录文件不存在，已回退到 catalog.json', [
+                'catalog_path' => $testPath,
+            ]);
+        }
+
+        return $basePath . '/catalog.json';
     }
 }
 

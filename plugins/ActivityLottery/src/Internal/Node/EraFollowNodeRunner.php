@@ -114,9 +114,16 @@ final class EraFollowNodeRunner implements NodeRunnerInterface
         }
 
         $temporaryUids = is_array($state['temporary_follow_uids'] ?? null)
-            ? $state['temporary_follow_uids']
+            ? array_values(array_filter(array_map('strval', $state['temporary_follow_uids']), static fn (string $value): bool => trim($value) !== ''))
             : [];
-        $temporaryUids[] = $uid;
+        if ($this->shouldTrackTemporaryFollow($response)) {
+            $temporaryUids[] = $uid;
+        } else {
+            $temporaryUids = array_values(array_filter(
+                $temporaryUids,
+                static fn (string $trackedUid): bool => trim($trackedUid) !== $uid
+            ));
+        }
 
         $nextState = array_replace($state, [
             'follow_target_index' => $index + 1,
@@ -145,6 +152,18 @@ final class EraFollowNodeRunner implements NodeRunnerInterface
         $code = (int)($response['code'] ?? -1);
         $message = trim((string)($response['message'] ?? $response['msg'] ?? ''));
         return $code === 0 || $code === 22014 || str_contains($message, '已关注');
+    }
+
+    /**
+     * 仅把本次任务实际新关注成功的 UID 纳入回收列表，避免误取消用户原本已关注的账号。
+     *
+     * @param array<string, mixed> $response
+     */
+    private function shouldTrackTemporaryFollow(array $response): bool
+    {
+        $code = (int)($response['code'] ?? -1);
+        $message = trim((string)($response['message'] ?? $response['msg'] ?? ''));
+        return $code === 0 && !str_contains($message, '已关注');
     }
 }
 

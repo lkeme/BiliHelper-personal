@@ -10,6 +10,10 @@ use Bhp\Util\Exceptions\RequestException;
 
 final class WatchVideoGateway
 {
+    private const TOPIC_SORT_BY_HOT = 0;
+    private const TOPIC_SORT_BY_LATEST = 3;
+    private const TOPIC_ARCHIVE_RECENT_SECONDS = 90 * 86400;
+
     private readonly ApiPlayer $apiPlayer;
     private readonly ApiTopic $apiTopic;
     /**
@@ -225,16 +229,64 @@ final class WatchVideoGateway
      */
     private function defaultFetchTopicArchives(string $topicId, int $limit = 20): array
     {
-        $response = $this->apiTopic->feed($topicId, 0, '', $limit);
+        $latestArchives = $this->extractTopicArchives(
+            $this->fetchTopicFeed($topicId, self::TOPIC_SORT_BY_LATEST, $limit),
+            $limit,
+        );
+        $recentArchives = $this->filterRecentTopicArchives($latestArchives, time());
+        if ($recentArchives !== []) {
+            return $this->tagTopicArchives(
+                array_slice($recentArchives, 0, $limit),
+                $topicId,
+                self::TOPIC_SORT_BY_LATEST,
+                'latest_recent',
+            );
+        }
+        if ($latestArchives !== []) {
+            return $this->tagTopicArchives(
+                array_slice($latestArchives, 0, $limit),
+                $topicId,
+                self::TOPIC_SORT_BY_LATEST,
+                'latest_fallback',
+            );
+        }
+
+        return $this->tagTopicArchives(
+            $this->extractTopicArchives(
+            $this->fetchTopicFeed($topicId, self::TOPIC_SORT_BY_HOT, $limit),
+            $limit,
+            ),
+            $topicId,
+            self::TOPIC_SORT_BY_HOT,
+            'hot_fallback',
+        );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function fetchTopicFeed(string $topicId, int $sortBy, int $limit): array
+    {
+        $response = $this->apiTopic->feed($topicId, $sortBy, '', $limit);
         if (($response['code'] ?? -1) !== 0) {
             throw new RequestException(sprintf(
-                'ERA话题稿件接口异常 topic=%s code=%s message=%s',
+                'ERA话题稿件接口异常 topic=%s sort_by=%d code=%s message=%s',
                 $topicId !== '' ? $topicId : '-',
+                $sortBy,
                 (string)($response['code'] ?? ''),
                 (string)($response['message'] ?? $response['msg'] ?? '')
             ));
         }
 
+        return $response;
+    }
+
+    /**
+     * @param array<string, mixed> $response
+     * @return array<int, array<string, mixed>>
+     */
+    private function extractTopicArchives(array $response, int $limit): array
+    {
         $items = $response['data']['topic_card_list']['items'] ?? [];
         if (!is_array($items)) {
             return [];
@@ -261,10 +313,19 @@ final class WatchVideoGateway
                 continue;
             }
 
+            $publishedAt = max(
+                0,
+                (int)($archive['pubdate'] ?? 0),
+                (int)($archive['pub_time'] ?? 0),
+                (int)($archive['ctime'] ?? 0),
+                (int)($dynamic['modules']['module_author']['pub_ts'] ?? 0),
+            );
+
             $archives[] = [
                 'aid' => $aid,
                 'bvid' => trim((string)($archive['bvid'] ?? '')),
                 'title' => trim((string)($archive['title'] ?? '')),
+                'published_at' => $publishedAt,
             ];
 
             if (count($archives) >= $limit) {
@@ -273,6 +334,36 @@ final class WatchVideoGateway
         }
 
         return $archives;
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $archives
+     * @return array<int, array<string, mixed>>
+     */
+    private function filterRecentTopicArchives(array $archives, int $now): array
+    {
+        $cutoff = max(0, $now - self::TOPIC_ARCHIVE_RECENT_SECONDS);
+        $recent = array_values(array_filter($archives, static function (array $archive) use ($cutoff): bool {
+            $publishedAt = (int)($archive['published_at'] ?? 0);
+            return $publishedAt > 0 && $publishedAt >= $cutoff;
+        }));
+
+        return $recent !== [] ? $recent : [];
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $archives
+     * @return array<int, array<string, mixed>>
+     */
+    private function tagTopicArchives(array $archives, string $topicId, int $sortBy, string $source): array
+    {
+        return array_values(array_map(static function (array $archive) use ($topicId, $sortBy, $source): array {
+            $archive['topic_id'] = $topicId;
+            $archive['topic_sort_by'] = $sortBy;
+            $archive['topic_source'] = $source;
+
+            return $archive;
+        }, $archives));
     }
 
     /**
