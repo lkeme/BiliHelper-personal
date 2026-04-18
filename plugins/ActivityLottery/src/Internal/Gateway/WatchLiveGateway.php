@@ -334,9 +334,26 @@ final class WatchLiveGateway
 
         try {
             $html = (string)($this->areaTagPageFetcher)($url);
-            if (preg_match('/"access_id":"([^"]+)"/', $html, $matches) === 1) {
-                return $this->areaWebIds[$cacheKey] = trim((string)$matches[1]);
+            $webId = $this->extractAreaWebIdFromHtml($html);
+            if ($webId !== '') {
+                $this->log('debug', sprintf(
+                    'ERA直播分区页 access_id 获取成功 area=%d parent=%d access=%s',
+                    $areaId,
+                    $parentAreaId,
+                    substr($webId, 0, 16)
+                ));
+
+                return $this->areaWebIds[$cacheKey] = $webId;
             }
+
+            $htmlSnippet = preg_replace('/\s+/', ' ', trim(substr($html, 0, 240)));
+            $this->log('debug', sprintf(
+                'ERA直播分区页 access_id 缺失 area=%d parent=%d render_data=%d body=%s',
+                $areaId,
+                $parentAreaId,
+                str_contains($html, '__RENDER_DATA__') ? 1 : 0,
+                is_string($htmlSnippet) && $htmlSnippet !== '' ? $htmlSnippet : '<empty>'
+            ));
         } catch (RequestException $exception) {
             $this->log('debug', sprintf(
                 'ERA直播分区页 access_id 获取失败 area=%d parent=%d message=%s',
@@ -354,6 +371,47 @@ final class WatchLiveGateway
         }
 
         return $this->areaWebIds[$cacheKey] = '';
+    }
+
+    private function extractAreaWebIdFromHtml(string $html): string
+    {
+        if ($html === '') {
+            return '';
+        }
+
+        if (preg_match('/"access_id":"([^"]+)"/', $html, $matches) === 1) {
+            return trim((string)$matches[1]);
+        }
+
+        if (preg_match('/<script[^>]+id="__RENDER_DATA__"[^>]*>(.*?)<\/script>/si', $html, $matches) !== 1) {
+            return '';
+        }
+
+        $rawRenderData = trim((string)$matches[1]);
+        if ($rawRenderData === '') {
+            return '';
+        }
+
+        $candidates = [
+            $rawRenderData,
+            html_entity_decode($rawRenderData, ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+        ];
+
+        foreach ($candidates as $candidate) {
+            foreach ([$candidate, rawurldecode($candidate), urldecode($candidate)] as $decodedCandidate) {
+                $payload = json_decode($decodedCandidate, true);
+                if (!is_array($payload)) {
+                    continue;
+                }
+
+                $webId = trim((string)($payload['access_id'] ?? ''));
+                if ($webId !== '') {
+                    return $webId;
+                }
+            }
+        }
+
+        return '';
     }
 
     /**

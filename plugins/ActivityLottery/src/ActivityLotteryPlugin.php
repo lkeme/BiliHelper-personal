@@ -99,7 +99,13 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
                     return;
             }
         };
-        $remoteCatalogFetcher = fn (string $url): string => $this->appContext()->request()->getText('other', $url);
+        $request = $this->appContext()->request();
+        $remoteCatalogFetcher = fn (string $url): string => $request->getText('other', $url);
+        $pcPageFetcher = fn (string $url): string => $request->getText('pc', $url, [], [
+            'Accept-Encoding' => 'identity',
+            'Origin' => 'https://live.bilibili.com',
+            'Referer' => $url,
+        ]);
         $noticePusher = function (string $channel, string $message): void {
             $this->notify($channel, $message);
         };
@@ -108,7 +114,6 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
             noticePusher: $noticePusher,
         );
         $userAgentResolver = fn (): string => (string)$this->appContext()->device('platform.headers.pc_ua');
-        $request = $this->appContext()->request();
         $activityApi = new ApiActivity($request);
         $missionApi = new ApiMission($request);
         $taskApi = new EraTaskApi($request);
@@ -127,7 +132,7 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
             apiRecommend: $liveRecommendApi,
             apiIndex: $liveIndexApi,
             watchService: new LiveWatchService($liveIndexApi, $liveTraceApi, $userAgentResolver),
-            areaTagPageFetcher: $remoteCatalogFetcher,
+            areaTagPageFetcher: $pcPageFetcher,
             logger: $logger,
         );
         $watchVideoGateway = new WatchVideoGateway(

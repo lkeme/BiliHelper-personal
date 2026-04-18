@@ -303,18 +303,35 @@ final class EraWatchVideoNodeRunner implements NodeRunnerInterface
     {
         if ($this->nodeType === 'era_task_watch_video_fixed') {
             $archives = $this->fixedArchives($task);
+            if ($archives === []) {
+                return $state;
+            }
+
             $index = max(0, (int)($state['fixed_archive_index'] ?? 0));
             if (isset($archives[$index + 1])) {
                 $state['fixed_archive_index'] = $index + 1;
+            } else {
+                $state['fixed_archive_index'] = 0;
             }
 
             return $state;
         }
 
-        $archives = is_array($state['topic_archives'] ?? null) ? $state['topic_archives'] : [];
+        $archives = $this->normalizeArchives(
+            is_array($state['topic_archives'] ?? null) ? $state['topic_archives'] : [],
+        );
+        if ($archives === []) {
+            unset($state['topic_archives']);
+            $state['topic_archive_index'] = 0;
+            return $state;
+        }
+
         $index = max(0, (int)($state['topic_archive_index'] ?? 0));
         if (isset($archives[$index + 1])) {
             $state['topic_archive_index'] = $index + 1;
+        } else {
+            unset($state['topic_archives']);
+            $state['topic_archive_index'] = 0;
         }
 
         return $state;

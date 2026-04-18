@@ -83,6 +83,7 @@ class HttpClient
         try {
             $response = $client->request($request, $cancellation);
             $body = $this->consumeBody($response->getBody(), $context->options->sink, $cancellation);
+            $body = $this->decodeResponseBody($body, $response->getHeaders(), $context->options->sink);
             $durationMs = (hrtime(true) - $startedAt) / 1000000;
 
             $httpResponse = new HttpResponse(
@@ -180,6 +181,40 @@ class HttpClient
         }
 
         return '';
+    }
+
+    /**
+     * 按响应头自动解压文本响应，避免上层把 gzip 原文当普通字符串处理。
+     * @param string $body
+     * @param array<string, array<int, string>> $headers
+     * @param string|null $sink
+     * @return string
+     */
+    protected function decodeResponseBody(string $body, array $headers, ?string $sink): string
+    {
+        if ($body === '' || $sink !== null) {
+            return $body;
+        }
+
+        $encoding = strtolower(trim((string)($headers['content-encoding'][0] ?? '')));
+        if ($encoding === '') {
+            return $body;
+        }
+
+        return match (true) {
+            str_contains($encoding, 'gzip') => $this->tryDecodeBody($body, static fn (string $raw): string|false => gzdecode($raw)),
+            str_contains($encoding, 'deflate') => $this->tryDecodeBody($body, static fn (string $raw): string|false => zlib_decode($raw)),
+            default => $body,
+        };
+    }
+
+    /**
+     * @param callable(string): string|false $decoder
+     */
+    private function tryDecodeBody(string $body, callable $decoder): string
+    {
+        $decoded = @$decoder($body);
+        return is_string($decoded) && $decoded !== '' ? $decoded : $body;
     }
 
     /**
