@@ -24,8 +24,6 @@ final class WatchLiveGateway
     /** @var array<int, true> */
     private array $excludedRoomIds = [];
     private bool $preferRecommendOnly = false;
-    /** @var array<string, string> */
-    private array $areaWebIds = [];
     /**
      * @var callable(array<int, string>, int, int): ?array<string, mixed>
      */
@@ -321,11 +319,6 @@ final class WatchLiveGateway
      */
     private function resolveAreaWebId(int $areaId, int $parentAreaId): string
     {
-        $cacheKey = $parentAreaId . ':' . $areaId;
-        if (isset($this->areaWebIds[$cacheKey])) {
-            return $this->areaWebIds[$cacheKey];
-        }
-
         $url = sprintf(
             'https://live.bilibili.com/p/eden/area-tags?areaId=%d&parentAreaId=%d',
             $areaId,
@@ -343,7 +336,7 @@ final class WatchLiveGateway
                     substr($webId, 0, 16)
                 ));
 
-                return $this->areaWebIds[$cacheKey] = $webId;
+                return $webId;
             }
 
             $htmlSnippet = preg_replace('/\s+/', ' ', trim(substr($html, 0, 240)));
@@ -370,7 +363,7 @@ final class WatchLiveGateway
             ));
         }
 
-        return $this->areaWebIds[$cacheKey] = '';
+        return '';
     }
 
     private function extractAreaWebIdFromHtml(string $html): string
