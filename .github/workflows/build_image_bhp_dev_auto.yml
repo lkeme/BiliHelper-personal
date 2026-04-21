@@ -1,8 +1,9 @@
-name: "BiliHelper-personal Docker Image Build Dev Auto"
+name: "BiliHelper-personal Docker Image Build Auto"
 
 on:
   push:
     branches:
+      - master
       - dev
 
 jobs:
@@ -14,6 +15,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set Docker tag
+        id: docker_tag
+        run: |
+          if [ "${{ github.ref_name }}" = "master" ]; then
+            echo "tag=latest" >> $GITHUB_OUTPUT
+          else
+            echo "tag=test" >> $GITHUB_OUTPUT
+          fi
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -34,6 +44,6 @@ jobs:
           file: docker/Dockerfile
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           push: true
-          tags: lkeme/bilihelper-personal:test
+          tags: lkeme/bilihelper-personal:${{ steps.docker_tag.outputs.tag }}
           build-args: |
             DEFAULT_BRANCH=${{ github.ref_name }}
