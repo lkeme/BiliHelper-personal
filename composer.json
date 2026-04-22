@@ -25,11 +25,6 @@
             "description": "TencentCloud",
             "type": "composer",
             "url": "https://mirrors.tencent.com/composer/"
-        },
-        {
-            "description": "AliCloud",
-            "type": "composer",
-            "url": "https://mirrors.aliyun.com/composer/"
         }
     ],
     "require": {

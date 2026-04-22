@@ -581,7 +581,6 @@ class Request
             'headers' => $this->getRequest($requestId, 'headers'),
             'timeout' => $timeout,
             'http_errors' => false,
-            'verify' => $this->context()->config('network_ssl.verify', false, 'bool'),
         ];
         if ($this->context()->enabled('network_proxy')) {
             $defaultOptions['proxy'] = (string)$this->context()->config('network_proxy.proxy');

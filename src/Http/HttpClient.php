@@ -27,8 +27,12 @@ class HttpClient
         private readonly HttpClientInterceptorRegistry $interceptorRegistry,
     ) {
         $verifyPeer = $this->context->config('network_ssl.verify', true, 'bool');
-        $this->client = HttpClientFactory::create(true, (bool)$verifyPeer);
-        $this->noRedirectClient = HttpClientFactory::create(false, (bool)$verifyPeer);
+        $proxyUri = $this->context->enabled('network_proxy')
+            ? (string)$this->context->config('network_proxy.proxy')
+            : null;
+
+        $this->client = HttpClientFactory::create(true, (bool)$verifyPeer, $proxyUri);
+        $this->noRedirectClient = HttpClientFactory::create(false, (bool)$verifyPeer, $proxyUri);
     }
 
     /**

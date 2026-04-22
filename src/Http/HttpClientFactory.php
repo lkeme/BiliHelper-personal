@@ -15,14 +15,18 @@ final class HttpClientFactory
      * 处理create
      * @param bool $followRedirects
      * @param bool $verifyPeer
+ * @param string|null $proxyUri
      * @return HttpClient
      */
-    public static function create(bool $followRedirects = true, bool $verifyPeer = true): HttpClient
+    public static function create(bool $followRedirects = true, bool $verifyPeer = true, ?string $proxyUri = null): HttpClient
     {
         $builder = new HttpClientBuilder();
         $builder = $builder->usingPool(
             new UnlimitedConnectionPool(
-                new DefaultConnectionFactory(null, self::createConnectContext($verifyPeer))
+                new DefaultConnectionFactory(
+                    self::createSocketConnector($proxyUri, $verifyPeer),
+                    self::createConnectContext($verifyPeer)
+                )
             )
         );
         if (!$followRedirects) {
@@ -45,5 +49,14 @@ final class HttpClientFactory
         }
 
         return (new ConnectContext())->withTlsContext($tlsContext);
+    }
+
+    private static function createSocketConnector(?string $proxyUri, bool $verifyPeer): ?HttpTunnelSocketConnector
+    {
+        if ($proxyUri === null || \trim($proxyUri) === '') {
+            return null;
+        }
+
+        return new HttpTunnelSocketConnector($proxyUri, $verifyPeer);
     }
 }

@@ -17,9 +17,9 @@ final class LoginResponseService
         return match ($code) {
             0 => $this->decideSuccessStatus($mode, $response),
             -105 => LoginDecision::captchaRequired((string)($response['data']['url'] ?? '')),
-            -629 => LoginDecision::failure("$mode 登录失败: {$message}", 24 * 3600),
-            -2100 => LoginDecision::failure("$mode 登录失败: 账号启用了设备锁或异地登录需验证手机号", 24 * 3600),
-            default => LoginDecision::failure("$mode 登录失败: {$message} (code={$code})", 600),
+            -629 => LoginDecision::failure($message, 24 * 3600),
+            -2100 => LoginDecision::failure('账号启用了设备锁或异地登录，需先完成手机号验证', 24 * 3600),
+            default => LoginDecision::failure("{$message} (code={$code})", 600),
         };
     }
 
@@ -28,30 +28,30 @@ final class LoginResponseService
      */
     private function decideSuccessStatus(string $mode, array $response): LoginDecision
     {
-        if (!$this->hasUsableLoginPayload($response)) {
-            return LoginDecision::failure(
-                "$mode 登录失败: 登录响应缺少有效凭据",
-                600,
-            );
-        }
-
         $status = $response['data']['status'] ?? null;
         if ($status === null) {
+            if (!$this->hasUsableLoginPayload($response)) {
+                return LoginDecision::failure(
+                    $this->describeMissingCredentialResponse($response),
+                    600,
+                );
+            }
+
             return LoginDecision::success("$mode 登录成功");
         }
 
         return match ((int)$status) {
             0 => LoginDecision::success("$mode 登录成功"),
             2 => LoginDecision::failure(
-                "$mode 登录失败: " . (string)($response['data']['message'] ?? '您的账号存在高危异常行为'),
+                $this->describeRiskVerification($response),
                 24 * 3600,
             ),
             3 => LoginDecision::failure(
-                "$mode 登录失败: 需要验证手机号: " . (string)($response['data']['url'] ?? ''),
+                $this->describePhoneVerification($response),
                 24 * 3600,
             ),
             default => LoginDecision::failure(
-                "$mode 登录失败: 未知错误: " . json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                $this->describeUnexpectedStatusResponse($response),
                 24 * 3600,
             ),
         };
@@ -76,5 +76,75 @@ final class LoginResponseService
         }
 
         return is_array($cookies) && $cookies !== [];
+    }
+
+    /**
+     * @param array<string, mixed> $response
+     */
+    private function describeRiskVerification(array $response): string
+    {
+        $message = trim((string)($response['data']['message'] ?? ''));
+        $url = trim((string)($response['data']['url'] ?? ''));
+        $summary = '账号触发安全风控，请先完成手机号验证后再重试';
+
+        if ($message !== '' && !\str_contains($message, '高危异常行为')) {
+            $summary .= '，原因: ' . $message;
+        }
+
+        return $url === ''
+            ? $summary
+            : $summary . '。验证页: ' . $url;
+    }
+
+    /**
+     * @param array<string, mixed> $response
+     */
+    private function describePhoneVerification(array $response): string
+    {
+        $url = trim((string)($response['data']['url'] ?? ''));
+        $summary = '需要先完成手机号验证';
+
+        return $url === ''
+            ? $summary
+            : $summary . '。验证页: ' . $url;
+    }
+
+    /**
+     * @param array<string, mixed> $response
+     */
+    private function describeMissingCredentialResponse(array $response): string
+    {
+        $code = (int)($response['code'] ?? -1);
+        $message = trim((string)($response['message'] ?? ''));
+        $parts = ['登录响应缺少有效凭据'];
+
+        if ($message !== '') {
+            $parts[] = 'message=' . $message;
+        }
+
+        $parts[] = 'code=' . $code;
+
+        return \implode('，', $parts);
+    }
+
+    /**
+     * @param array<string, mixed> $response
+     */
+    private function describeUnexpectedStatusResponse(array $response): string
+    {
+        $status = (int)($response['data']['status'] ?? -1);
+        $message = trim((string)($response['data']['message'] ?? $response['message'] ?? '未知错误'));
+        $url = trim((string)($response['data']['url'] ?? ''));
+        $parts = ['未知登录状态 status=' . $status];
+
+        if ($message !== '') {
+            $parts[] = 'message=' . $message;
+        }
+
+        if ($url !== '') {
+            $parts[] = 'url=' . $url;
+        }
+
+        return \implode('，', $parts);
     }
 }

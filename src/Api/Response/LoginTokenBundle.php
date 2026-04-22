@@ -64,7 +64,7 @@ final class LoginTokenBundle
         $accessToken = (string)($tokenInfo['access_token'] ?? '');
         $refreshToken = (string)($tokenInfo['refresh_token'] ?? '');
         if ($accessToken === '' || $refreshToken === '' || $cookieString === '') {
-            throw new \UnexpectedValueException('登录响应缺少有效凭据');
+            throw new \UnexpectedValueException(self::describeInvalidCredentialResponse($response));
         }
 
         return new self(
@@ -75,5 +75,33 @@ final class LoginTokenBundle
             $csrf,
             $sid,
         );
+    }
+
+    /**
+     * @param array<string, mixed> $response
+     */
+    private static function describeInvalidCredentialResponse(array $response): string
+    {
+        $code = (int)($response['code'] ?? -1);
+        $status = isset($response['data']['status']) ? (int)$response['data']['status'] : null;
+        $message = trim((string)($response['data']['message'] ?? $response['message'] ?? ''));
+        $url = trim((string)($response['data']['url'] ?? ''));
+        $parts = ['登录响应缺少有效凭据'];
+
+        $parts[] = 'code=' . $code;
+
+        if ($status !== null) {
+            $parts[] = 'status=' . $status;
+        }
+
+        if ($message !== '') {
+            $parts[] = 'message=' . $message;
+        }
+
+        if ($url !== '') {
+            $parts[] = 'url=' . $url;
+        }
+
+        return \implode('，', $parts);
     }
 }
