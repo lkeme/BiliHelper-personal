@@ -199,6 +199,7 @@ final class ActivityLotteryLifecycleLogger
             'notify_draw_result' => '通知抽奖结果',
             'final_claim_reward' => '收尾领奖',
             'finalize_flow' => '收尾活动流',
+            'cleanup_unfollow_queue' => '回收待取关队列',
             'era_task_follow' => '关注任务',
             'era_task_share' => '分享任务',
             'era_task_watch_video_fixed', 'era_task_watch_video_topic' => '观看视频任务',

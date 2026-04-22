@@ -26,6 +26,7 @@ use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityFlowStore;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityFlowPlanner;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Gateway\WatchVideoGateway;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Gateway\WatchLiveGateway;
+use Bhp\Plugin\Builtin\ActivityLottery\Internal\Node\CleanupUnfollowQueueNodeRunner;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Node\EraFollowNodeRunner;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Node\EraWatchLiveNodeRunner;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Node\EraWatchVideoNodeRunner;
@@ -33,6 +34,7 @@ use Bhp\Plugin\Builtin\ActivityLottery\Internal\Node\EraUnfollowNodeRunner;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Pool\ActivityFlowBudget;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Pool\ActivityFlowPool;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Page\EraPageParser;
+use Bhp\Plugin\Builtin\ActivityLottery\Internal\Queue\UnfollowQueueStore;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Runtime\ActivityLotteryClock;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Runtime\ActivityLotteryRuntime;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Runtime\ActivityLotteryWindow;
@@ -149,6 +151,11 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
         $taskEndAt = (string)($definition['task_end'] ?? '23:00:00');
         $drawStartAt = (string)($definition['draw_start'] ?? '00:00:00');
         $drawEndAt = (string)($definition['draw_end'] ?? '01:00:00');
+        $cleanupStartAt = (string)($definition['cleanup_start'] ?? $taskEndAt);
+        $cleanupEndAt = (string)($definition['cleanup_end'] ?? '00:00:00');
+        $cacheDatabasePath = rtrim(str_replace('\\', '/', $this->appContext()->cachePath()), '/') . '/cache.sqlite3';
+        $accountKey = $this->uid();
+        $unfollowQueueStore = new UnfollowQueueStore($cacheDatabasePath, 'ActivityLottery');
         if ($useTestCatalog) {
             $sources = [
                 new LocalCatalogSource($this->activityInfosLocalPath(true, $logger)),
@@ -169,7 +176,7 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
         $this->runtimeInstance = new ActivityLotteryRuntime(
             new ActivityCatalogLoader($sources, new ActivityCatalogValidator($logger), 86400),
             new ActivityFlowStore(
-                rtrim(str_replace('\\', '/', $this->appContext()->cachePath()), '/') . '/cache.sqlite3',
+                $cacheDatabasePath,
                 'ActivityLottery',
             ),
             new ActivityLotteryWindow($windowStartAt, $windowEndAt),
@@ -184,8 +191,17 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
                     ),
                 ),
                 new \Bhp\Plugin\Builtin\ActivityLottery\Internal\Node\EraShareNodeRunner($activityApi),
-                new EraFollowNodeRunner(apiRelation: $relationApi),
+                new EraFollowNodeRunner(
+                    apiRelation: $relationApi,
+                    unfollowQueueStore: $unfollowQueueStore,
+                    accountKey: $accountKey,
+                ),
                 new EraUnfollowNodeRunner(apiRelation: $relationApi),
+                new CleanupUnfollowQueueNodeRunner(
+                    queueStore: $unfollowQueueStore,
+                    accountKey: $accountKey,
+                    apiRelation: $relationApi,
+                ),
                 new \Bhp\Plugin\Builtin\ActivityLottery\Internal\Node\EraClaimRewardNodeRunner($eraTaskGateway),
                 new EraWatchVideoNodeRunner('era_task_watch_video_fixed', $watchVideoGateway),
                 new EraWatchVideoNodeRunner('era_task_watch_video_topic', $watchVideoGateway),
@@ -205,6 +221,9 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
             $logger,
             new ActivityLotteryWindow($windowStartAt, $taskEndAt),
             new ActivityLotteryWindow($drawStartAt, $drawEndAt),
+            $unfollowQueueStore,
+            $accountKey,
+            new ActivityLotteryWindow($cleanupStartAt, $cleanupEndAt),
         );
 
         return $this->runtimeInstance;

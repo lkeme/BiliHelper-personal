@@ -8,6 +8,7 @@ use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityFlow;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNode;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNodeResult;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNodeStatus;
+use Bhp\Plugin\Builtin\ActivityLottery\Internal\Queue\UnfollowQueueStore;
 use Bhp\Util\Exceptions\RequestException;
 
 final class EraFollowNodeRunner implements NodeRunnerInterface
@@ -22,6 +23,8 @@ final class EraFollowNodeRunner implements NodeRunnerInterface
     private readonly mixed $followAction;
     private readonly AuthFailureClassifier $authFailureClassifier;
     private readonly ?ApiRelation $apiRelation;
+    private readonly ?UnfollowQueueStore $unfollowQueueStore;
+    private readonly string $accountKey;
 
     /**
      * 初始化 EraFollowNodeRunner
@@ -29,9 +32,16 @@ final class EraFollowNodeRunner implements NodeRunnerInterface
      * @param AuthFailureClassifier $authFailureClassifier
      * @param ApiRelation $apiRelation
      */
-    public function __construct(?callable $followAction = null, ?AuthFailureClassifier $authFailureClassifier = null, ?ApiRelation $apiRelation = null)
-    {
+    public function __construct(
+        ?callable $followAction = null,
+        ?AuthFailureClassifier $authFailureClassifier = null,
+        ?ApiRelation $apiRelation = null,
+        ?UnfollowQueueStore $unfollowQueueStore = null,
+        string $accountKey = '',
+    ) {
         $this->apiRelation = $apiRelation;
+        $this->unfollowQueueStore = $unfollowQueueStore;
+        $this->accountKey = trim($accountKey);
         $this->followAction = $followAction ?? function (int $uid): array {
             if (!$this->apiRelation instanceof ApiRelation) {
                 throw new \LogicException('EraFollowNodeRunner requires an ApiRelation dependency.');
@@ -82,6 +92,15 @@ final class EraFollowNodeRunner implements NodeRunnerInterface
         }
 
         $state = $taskView->taskRuntime();
+        [$state, $queueFlushError] = $this->flushPendingCleanupQueue($state, $flow->bizDate());
+        if ($queueFlushError !== null) {
+            return new ActivityNodeResult(false, '关注任务已暂存待取关 UID，稍后重试入队: ' . $queueFlushError, [
+                'node_status' => ActivityNodeStatus::WAITING,
+                'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
+                'context_patch' => $taskView->replaceTaskRuntime($state),
+            ], $now);
+        }
+
         $index = max(0, (int)($state['follow_target_index'] ?? 0));
         if (!isset($uids[$index])) {
             return new ActivityNodeResult(true, '关注任务已完成', [
@@ -113,22 +132,26 @@ final class EraFollowNodeRunner implements NodeRunnerInterface
             ], $now);
         }
 
-        $temporaryUids = is_array($state['temporary_follow_uids'] ?? null)
-            ? array_values(array_filter(array_map('strval', $state['temporary_follow_uids']), static fn (string $value): bool => trim($value) !== ''))
-            : [];
+        $temporaryUids = $this->normalizedUidList($state['temporary_follow_uids'] ?? null);
         if ($this->shouldTrackTemporaryFollow($response)) {
             $temporaryUids[] = $uid;
-        } else {
-            $temporaryUids = array_values(array_filter(
-                $temporaryUids,
-                static fn (string $trackedUid): bool => trim($trackedUid) !== $uid
-            ));
         }
 
         $nextState = array_replace($state, [
             'follow_target_index' => $index + 1,
             'temporary_follow_uids' => array_values(array_unique(array_map('strval', $temporaryUids))),
         ]);
+        [$nextState, $queueFlushError] = $this->flushPendingCleanupQueue($nextState, $flow->bizDate(), [
+            'activity_id' => trim((string)($taskView->activity()['activity_id'] ?? '')),
+            'task_id' => $taskView->taskId(),
+        ]);
+        if ($queueFlushError !== null) {
+            return new ActivityNodeResult(false, '关注任务成功，但待取关队列写入失败，稍后重试: ' . $queueFlushError, [
+                'node_status' => ActivityNodeStatus::WAITING,
+                'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
+                'context_patch' => $taskView->replaceTaskRuntime($nextState),
+            ], $now);
+        }
 
         if (($index + 1) < count($uids)) {
             return new ActivityNodeResult(true, '关注任务已推进到下一目标', [
@@ -164,6 +187,61 @@ final class EraFollowNodeRunner implements NodeRunnerInterface
         $code = (int)($response['code'] ?? -1);
         $message = trim((string)($response['message'] ?? $response['msg'] ?? ''));
         return $code === 0 && !str_contains($message, '已关注');
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     * @param array<string, mixed> $meta
+     * @return array{0: array<string, mixed>, 1: ?string}
+     */
+    private function flushPendingCleanupQueue(array $state, string $bizDate, array $meta = []): array
+    {
+        if (!$this->unfollowQueueStore instanceof UnfollowQueueStore || $this->accountKey === '') {
+            return [$state, null];
+        }
+
+        $temporaryUids = $this->normalizedUidList($state['temporary_follow_uids'] ?? null);
+        if ($temporaryUids === []) {
+            $state['cleanup_enqueued_uids'] = [];
+            return [$state, null];
+        }
+
+        $enqueuedUids = array_values(array_intersect(
+            $this->normalizedUidList($state['cleanup_enqueued_uids'] ?? null),
+            $temporaryUids,
+        ));
+
+        foreach ($temporaryUids as $uid) {
+            if (in_array($uid, $enqueuedUids, true)) {
+                continue;
+            }
+
+            try {
+                $this->unfollowQueueStore->enqueue($this->accountKey, $uid, $bizDate, $meta);
+                $enqueuedUids[] = $uid;
+            } catch (\Throwable $throwable) {
+                $state['cleanup_enqueued_uids'] = array_values(array_unique($enqueuedUids));
+                return [$state, $throwable->getMessage()];
+            }
+        }
+
+        $state['cleanup_enqueued_uids'] = array_values(array_unique($enqueuedUids));
+        return [$state, null];
+    }
+
+    /**
+     * @return string[]
+     */
+    private function normalizedUidList(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        return array_values(array_filter(array_map(
+            static fn (mixed $uid): string => trim((string)$uid),
+            $value,
+        ), static fn (string $uid): bool => $uid !== ''));
     }
 }
 

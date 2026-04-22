@@ -140,6 +140,7 @@ final class ActivityFlowPlanner
             'notify_draw_result' => ['default_lane' => 'task_status', 'allowed_lanes' => ['task_status', 'draw_notify'], 'default_status' => ActivityNodeStatus::PENDING],
             'final_claim_reward' => ['default_lane' => 'claim_reward', 'allowed_lanes' => ['claim_reward'], 'default_status' => ActivityNodeStatus::PENDING],
             'finalize_flow' => ['default_lane' => 'task_status', 'allowed_lanes' => ['task_status', 'draw_finalize'], 'default_status' => ActivityNodeStatus::PENDING],
+            'cleanup_unfollow_queue' => ['default_lane' => 'unfollow_cleanup', 'allowed_lanes' => ['unfollow_cleanup'], 'default_status' => ActivityNodeStatus::PENDING],
             'era_task_skipped' => ['default_lane' => 'task_status', 'allowed_lanes' => ['task_status'], 'default_status' => ActivityNodeStatus::SKIPPED],
         ];
 
@@ -204,6 +205,23 @@ final class ActivityFlowPlanner
         return ActivityFlowFactory::create($item, $bizDate, $nodes, 'draw');
     }
 
+    public function planCleanup(string $bizDate, string $accountKey): ActivityFlow
+    {
+        $normalizedAccountKey = trim($accountKey);
+        if ($normalizedAccountKey === '') {
+            throw new RuntimeException('cleanup flow 缺少 accountKey');
+        }
+
+        return ActivityFlowFactory::createVirtual([
+            'activity_id' => 'cleanup:' . $normalizedAccountKey,
+            'title' => '临时关注回收队列',
+            'flow_kind' => 'cleanup',
+            'account_key' => $normalizedAccountKey,
+        ], $bizDate, [
+            $this->nodeByContract('cleanup_unfollow_queue'),
+        ], 'cleanup');
+    }
+
     /**
      * @return ActivityNode[]
      */
@@ -223,10 +241,6 @@ final class ActivityFlowPlanner
     private function taskTailNodes(): array
     {
         $nodes = [$this->nodeByContract('final_claim_reward')];
-        $nodes[] = new ActivityNode('era_task_unfollow', [
-            'lane' => $this->defaultLaneForNodeType('era_task_unfollow'),
-            'cleanup_scope' => 'temporary_follow_uids',
-        ]);
         $nodes[] = $this->nodeByContract('finalize_flow');
 
         return $nodes;
