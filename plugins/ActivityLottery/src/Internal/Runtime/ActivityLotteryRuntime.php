@@ -9,6 +9,7 @@ use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityFlowPlanner;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityFlowStatus;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityFlowStore;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNodeStatus;
+use Bhp\Plugin\Builtin\ActivityLottery\Internal\Node\CleanupUnfollowQueueNodeRunner;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Node\EraClaimRewardNodeRunner;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Node\EraFollowNodeRunner;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Node\EraShareNodeRunner;
@@ -28,6 +29,7 @@ use Bhp\Plugin\Builtin\ActivityLottery\Internal\Node\RefreshDrawTimesNodeRunner;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Node\ResolvedActivityView;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Node\ResolvedEraTaskView;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Node\ValidateActivityNodeRunner;
+use Bhp\Plugin\Builtin\ActivityLottery\Internal\Queue\UnfollowQueueStore;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Page\EraPageSnapshot;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Page\EraTaskSnapshot;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Pool\ActivityFlowBudget;
@@ -64,6 +66,9 @@ final class ActivityLotteryRuntime
      * @param callable $logger
      * @param ActivityLotteryWindow|null $taskWindow
      * @param ActivityLotteryWindow|null $drawWindow
+     * @param UnfollowQueueStore|null $unfollowQueueStore
+     * @param string $cleanupAccountKey
+     * @param ActivityLotteryWindow|null $cleanupWindow
      */
     public function __construct(
         private readonly ActivityCatalogLoader $catalogLoader,
@@ -78,6 +83,9 @@ final class ActivityLotteryRuntime
         ?callable $logger = null,
         private readonly ?ActivityLotteryWindow $taskWindow = null,
         private readonly ?ActivityLotteryWindow $drawWindow = null,
+        private readonly ?UnfollowQueueStore $unfollowQueueStore = null,
+        private readonly string $cleanupAccountKey = '',
+        private readonly ?ActivityLotteryWindow $cleanupWindow = null,
     ) {
         $this->logger = $logger !== null
             ? \Closure::fromCallable($logger)
@@ -101,21 +109,27 @@ final class ActivityLotteryRuntime
     }
 
     /**
-     * 判断是否为抽奖 flow
+     * 解析 flow 类型
      * @param ActivityFlow $flow
-     * @return bool
+     * @return string
      */
-    private function isDrawFlow(ActivityFlow $flow): bool
+    private function flowKind(ActivityFlow $flow): string
     {
+        $kind = trim((string)($flow->activity()['flow_kind'] ?? ''));
+        if ($kind !== '') {
+            return $kind;
+        }
+
         foreach ($flow->nodes() as $node) {
             if ($node->type() === 'refresh_draw_times') {
-                return true;
+                return 'draw';
             }
             if ($node->type() === 'parse_era_page') {
-                return false;
+                return 'task';
             }
         }
-        return false;
+
+        return 'task';
     }
 
     /**
@@ -140,14 +154,17 @@ final class ActivityLotteryRuntime
         $catalog = $this->catalogLoader->load();
         $plannedCatalogFlows = $this->plannedCatalogFlows($catalog, $bizDate);
         $flows = $this->loadFlowsForBizDate($bizDate);
+        if ($this->unfollowQueueStore instanceof UnfollowQueueStore) {
+            $this->unfollowQueueStore->pruneFinished($now - 7 * 86400);
+        }
 
         $loadedFlowCount = count($flows);
         $prunedFlowCount = 0;
         if ($plannedCatalogFlows !== []) {
-            $flows = array_filter(
-                $flows,
-                fn (ActivityFlow $flow): bool => isset($plannedCatalogFlows[$flow->id()]),
-            );
+            $flows = array_filter($flows, function (ActivityFlow $flow) use ($plannedCatalogFlows): bool {
+                return $this->flowKind($flow) === 'cleanup'
+                    || isset($plannedCatalogFlows[$flow->id()]);
+            });
             $prunedFlowCount = $loadedFlowCount - count($flows);
         }
         $existingFlowCount = count($flows);
@@ -160,16 +177,14 @@ final class ActivityLotteryRuntime
             }
         }
 
-        $allFlows = $flows;
-        if ($this->taskWindow !== null && $this->drawWindow !== null) {
-            $eligibleFlows = array_filter($flows, function (ActivityFlow $flow) use ($now): bool {
-                return $this->isDrawFlow($flow)
-                    ? $this->drawWindow->contains($now)
-                    : $this->taskWindow->contains($now);
-            });
-        } else {
-            $eligibleFlows = $flows;
+        $cleanupFlow = $this->planCleanupFlow($flows, $bizDate, $now);
+        if ($cleanupFlow instanceof ActivityFlow) {
+            $flows[$cleanupFlow->id()] = $cleanupFlow;
+            $newFlowCount++;
         }
+
+        $allFlows = $flows;
+        $eligibleFlows = array_filter($flows, fn (ActivityFlow $flow): bool => $this->isFlowEligible($flow, $now));
 
         $tickStartedAtMs = (int)round(microtime(true) * 1000);
         $pickedFlows = $this->flowPool->pick(array_values($eligibleFlows), $now, $tickStartedAtMs);
@@ -249,6 +264,52 @@ final class ActivityLotteryRuntime
             new RecordDrawResultNodeRunner(),
             new FinalizeFlowNodeRunner(),
         ];
+    }
+
+    private function isFlowEligible(ActivityFlow $flow, int $now): bool
+    {
+        return match ($this->flowKind($flow)) {
+            'draw' => $this->drawWindow?->contains($now) ?? true,
+            'cleanup' => $this->cleanupWindow?->contains($now) ?? false,
+            default => $this->taskWindow?->contains($now) ?? true,
+        };
+    }
+
+    /**
+     * @param array<string, ActivityFlow> $flows
+     */
+    private function planCleanupFlow(array $flows, string $bizDate, int $now): ?ActivityFlow
+    {
+        if (
+            !$this->unfollowQueueStore instanceof UnfollowQueueStore
+            || $this->cleanupWindow === null
+            || trim($this->cleanupAccountKey) === ''
+            || !$this->cleanupWindow->contains($now)
+            || !$this->unfollowQueueStore->hasPending($this->cleanupAccountKey)
+        ) {
+            return null;
+        }
+
+        $planned = $this->planner->planCleanup($bizDate, $this->cleanupAccountKey);
+        $existing = $flows[$planned->id()] ?? null;
+        if (!$existing instanceof ActivityFlow) {
+            return $planned;
+        }
+
+        if ($this->flowKind($existing) !== 'cleanup') {
+            return $planned;
+        }
+
+        if (in_array($existing->status(), [
+            ActivityFlowStatus::COMPLETED,
+            ActivityFlowStatus::SKIPPED,
+            ActivityFlowStatus::EXPIRED,
+            ActivityFlowStatus::FAILED,
+        ], true)) {
+            return $planned;
+        }
+
+        return null;
     }
 
     /**

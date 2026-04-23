@@ -14,6 +14,8 @@
     "end": "01:00:00",
     "use_test_catalog": false,
     "task_end": "23:00:00",
+    "cleanup_start": "23:00:00",
+    "cleanup_end": "00:00:00",
     "draw_start": "00:00:00",
     "draw_end": "01:00:00",
     "php_min": "8.5.0",

@@ -62,11 +62,13 @@ final class EraUnfollowNodeRunner implements NodeRunnerInterface
         $taskView = ResolvedEraTaskView::fromFlowAndNode($flow, $node);
         $task = $taskView->task();
 
-        if ($task !== null && $taskView->taskId() !== '') {
-            return $this->runExplicitUnfollow($taskView, $task, $now);
+        if ($task === null || $taskView->taskId() === '') {
+            return new ActivityNodeResult(true, '取消关注任务缺少 task_id 或快照，已跳过', [
+                'node_status' => ActivityNodeStatus::SKIPPED,
+            ], $now);
         }
 
-        return $this->runTemporaryFollowCleanup($flow, $now);
+        return $this->runExplicitUnfollow($taskView, $task, $now);
     }
 
     /**
@@ -139,116 +141,6 @@ final class EraUnfollowNodeRunner implements NodeRunnerInterface
             'node_status' => ActivityNodeStatus::SUCCEEDED,
             'context_patch' => $taskView->replaceTaskRuntime($nextState),
         ], $now);
-    }
-
-    /**
-     * 处理运行TemporaryFollowCleanup
-     * @param ActivityFlow $flow
-     * @param int $now
-     * @return ActivityNodeResult
-     */
-    private function runTemporaryFollowCleanup(ActivityFlow $flow, int $now): ActivityNodeResult
-    {
-        $context = $flow->context()->toArray();
-        $runtimeMap = is_array($context['era_task_runtime'] ?? null) ? $context['era_task_runtime'] : [];
-        $targets = [];
-        foreach ($runtimeMap as $taskState) {
-            if (!is_array($taskState)) {
-                continue;
-            }
-
-            foreach (is_array($taskState['temporary_follow_uids'] ?? null) ? $taskState['temporary_follow_uids'] : [] as $uid) {
-                $uid = trim((string)$uid);
-                if ($uid !== '') {
-                    $targets[$uid] = true;
-                }
-            }
-        }
-
-        if ($targets === []) {
-            return new ActivityNodeResult(true, '没有待取消关注的账号', [
-                'node_status' => ActivityNodeStatus::SKIPPED,
-            ], $now);
-        }
-
-        $done = [];
-        foreach (is_array($context['follow_cleanup_done_uids'] ?? null) ? $context['follow_cleanup_done_uids'] : [] as $uid) {
-            $uid = trim((string)$uid);
-            if ($uid !== '') {
-                $done[$uid] = true;
-            }
-        }
-
-        $pending = array_values(array_filter(array_keys($targets), static fn (string $uid): bool => !isset($done[$uid])));
-        if ($pending === []) {
-            return new ActivityNodeResult(true, '临时关注回收完成', [
-                'node_status' => ActivityNodeStatus::SUCCEEDED,
-                'context_patch' => $this->cleanupTemporaryFollowContext($context, array_keys($targets)),
-            ], $now);
-        }
-
-        $uid = (string)$pending[0];
-        try {
-            $response = (array)($this->unfollowAction)((int)$uid);
-        } catch (RequestException $exception) {
-            return new ActivityNodeResult(false, '临时关注回收失败: ' . $exception->getMessage(), [
-                'node_status' => ActivityNodeStatus::WAITING,
-                'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
-            ], $now);
-        }
-
-        $this->authFailureClassifier->assertNotAuthFailure($response, '回收临时关注时账号未登录');
-        $code = (int)($response['code'] ?? -1);
-        if ($code === -500) {
-            return new ActivityNodeResult(false, '临时关注回收失败，稍后重试', [
-                'node_status' => ActivityNodeStatus::WAITING,
-                'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
-            ], $now);
-        }
-        if (!$this->isSuccessfulResponse($response)) {
-            return new ActivityNodeResult(false, '临时关注回收失败', [
-                'node_status' => ActivityNodeStatus::FAILED,
-            ], $now);
-        }
-
-        $done[$uid] = true;
-        if (count($done) < count($targets)) {
-            return new ActivityNodeResult(true, '临时关注回收到下一目标', [
-                'node_status' => ActivityNodeStatus::WAITING,
-                'next_run_at' => $now + self::STEP_DELAY_SECONDS,
-                'context_patch' => [
-                    'follow_cleanup_done_uids' => array_values(array_keys($done)),
-                ],
-            ], $now);
-        }
-
-        return new ActivityNodeResult(true, '临时关注回收完成', [
-            'node_status' => ActivityNodeStatus::SUCCEEDED,
-            'context_patch' => $this->cleanupTemporaryFollowContext($context, array_keys($targets)),
-        ], $now);
-    }
-
-    /**
-     * @param array<string, mixed> $context
-     * @param string[] $targets
-     * @return array<string, mixed>
-     */
-    private function cleanupTemporaryFollowContext(array $context, array $targets): array
-    {
-        $runtimeMap = is_array($context['era_task_runtime'] ?? null) ? $context['era_task_runtime'] : [];
-        foreach ($runtimeMap as $taskId => $taskState) {
-            if (!is_array($taskState)) {
-                continue;
-            }
-
-            unset($taskState['temporary_follow_uids']);
-            $runtimeMap[$taskId] = $taskState;
-        }
-
-        return [
-            'era_task_runtime' => $runtimeMap,
-            'follow_cleanup_done_uids' => array_values($targets),
-        ];
     }
 
     /**

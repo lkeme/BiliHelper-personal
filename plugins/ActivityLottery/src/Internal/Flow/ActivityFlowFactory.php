@@ -12,12 +12,21 @@ final class ActivityFlowFactory
      */
     public static function create(ActivityCatalogItem $item, string $bizDate, array $nodes, string $phase = ''): ActivityFlow
     {
+        return self::createVirtual($item->toArray(), $bizDate, $nodes, $phase);
+    }
+
+    /**
+     * @param ActivityNode[] $nodes
+     * @param array<string, mixed> $activity
+     */
+    public static function createVirtual(array $activity, string $bizDate, array $nodes, string $phase = ''): ActivityFlow
+    {
         if ($nodes === []) {
             throw new RuntimeException('ActivityFlowFactory 不允许创建空节点 flow');
         }
 
         $now = time();
-        $activity = $item->toArray();
+        $activity['flow_kind'] = self::resolveFlowKind($phase, $activity);
         $stableKey = self::resolveStableActivityKey($activity);
         $normalizedBizDate = ActivityFlow::normalizeBizDate($bizDate);
         $flowId = self::buildFlowId($stableKey, $normalizedBizDate, $phase);
@@ -36,6 +45,23 @@ final class ActivityFlowFactory
             $now,
             $now,
         );
+    }
+
+    /**
+     * @param array<string, mixed> $activity
+     */
+    private static function resolveFlowKind(string $phase, array $activity): string
+    {
+        $kind = trim((string)($activity['flow_kind'] ?? ''));
+        if ($kind !== '') {
+            return $kind;
+        }
+
+        return match (trim($phase)) {
+            'draw' => 'draw',
+            'cleanup' => 'cleanup',
+            default => 'task',
+        };
     }
 
     /**

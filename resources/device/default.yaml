@@ -1,8 +1,8 @@
 app:
   bili_a:
     package: "tv.danmaku.bili"
-    version: "8.90.2"
-    build: "8902100"
+    version: "8.91.1"
+    build: "8911100"
     channel: "bili"
     device: "phone"
     mobi_app: "android"
