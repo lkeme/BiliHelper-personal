@@ -612,6 +612,19 @@ final class ActivityLotteryLifecycleLogger
         $batchWinNames = is_array($context['draw_batch_win_names'] ?? null) ? $context['draw_batch_win_names'] : [];
         $resultName = trim((string)($context['last_draw_gift_name'] ?? ''));
         $resultLabel = $resultName !== '' ? $resultName : '结果缺少奖品名';
+        $errorDetail = $this->buildDrawExecuteErrorDetail($afterNode);
+
+        if ($afterNode->status() === ActivityNodeStatus::FAILED) {
+            return $errorDetail !== '' ? sprintf('%s，原因：%s', $fallback, $errorDetail) : $fallback;
+        }
+
+        if (
+            $afterNode->status() === ActivityNodeStatus::WAITING
+            && $this->looksLikeFailureMessage($fallback)
+            && $errorDetail !== ''
+        ) {
+            return sprintf('%s，原因：%s%s', $fallback, $errorDetail, $delay);
+        }
 
         if ($batchSize > 1) {
             $batchSummary = $batchWinCount > 0
@@ -636,6 +649,33 @@ final class ActivityLotteryLifecycleLogger
         }
 
         return $fallback;
+    }
+
+    private function buildDrawExecuteErrorDetail(
+        \Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNode $afterNode,
+    ): string {
+        $payload = $afterNode->result()?->payload() ?? [];
+        $response = is_array($payload['draw_execute_response'] ?? null) ? $payload['draw_execute_response'] : [];
+        if ($response === []) {
+            return '';
+        }
+
+        $parts = [];
+        if (array_key_exists('code', $response)) {
+            $parts[] = 'code=' . (string)$response['code'];
+        }
+
+        $message = trim((string)($response['message'] ?? $response['msg'] ?? ''));
+        if ($message !== '') {
+            $parts[] = 'message=' . $message;
+        }
+
+        $errtype = trim((string)($response['errtype'] ?? ''));
+        if ($errtype !== '') {
+            $parts[] = 'errtype=' . $errtype;
+        }
+
+        return implode(', ', $parts);
     }
 
     /**

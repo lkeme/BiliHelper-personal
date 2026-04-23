@@ -8,29 +8,35 @@
 
 [comment]: <> (</details>)
 
-## v3.0.0.260414 alpha (2026-04-14)
+## v3.0.2.260423 alpha (2026-04-23)
 
 ### Added
 
--
+- ActivityLottery 新增独立待取关队列与 cleanup flow，临时关注回收改为在 `23:00-00:00` 独立消费，不再挂在任务主流程尾部。
+- ActivityLottery 抽奖执行失败日志补充接口返回详情，失败时可直接看到 `code`、`message`、`errtype`。
 
 ### Changed
 
-- 
+- 增强网络层代理支持，并补充登录诊断输出，便于定位代理链路与认证异常。
+- 更新内置活动目录，补充近期活动条目并刷新活动更新时间。
+- 更新默认 Android 端设备版本到 `8.91.1`，同步修正文档中的覆盖示例。
 
 ### Fixed
 
-- 
+- 修复 ActivityLottery 在 `23:00` 后无法继续处理临时关注回收的问题，避免长任务把回收逻辑直接截断。
+- 优化 ActivityLottery 抽奖失败日志缺少具体原因的问题，降低线上排障成本。
 
 ### Remarks
 
--
+- 发布版本提升至 `3.0.2.260423`，同步更新 `README` 与 `resources/version.json`。
 
 
 # 历史版本
 
 <details>
 <summary><strong>更新历史</strong><kbd>ver *.*.*.****</kbd></summary>
+
+## v3.0.0.260414 alpha (2026-04-14)
 
 ## v2.5.1.250904 alpha (2025-09-04)
 
