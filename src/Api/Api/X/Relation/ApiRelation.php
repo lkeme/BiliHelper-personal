@@ -108,6 +108,26 @@ class ApiRelation extends AbstractApiClient
         return $this->decodeGet('pc', $url, $payload, $headers, 'relation.tag');
     }
 
+    /**
+     * 查询用户与当前账号的互相关系
+     * @param int $uid
+     * @return array
+     */
+    public function relationWithSelf(int $uid): array
+    {
+        $currentUid = $this->request()->uidValue();
+        $url = 'https://api.bilibili.com/x/web-interface/relation';
+        $headers = [
+            'origin' => 'https://space.bilibili.com',
+            'referer' => "https://space.bilibili.com/{$currentUid}",
+        ];
+        $payload = [
+            'mid' => $uid,
+        ];
+
+        return $this->decodeGet('pc', $url, $payload, $headers, 'relation.self');
+    }
+
 
     /**
      * 取关

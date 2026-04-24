@@ -34,6 +34,7 @@ use Bhp\Plugin\Builtin\ActivityLottery\Internal\Node\EraUnfollowNodeRunner;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Pool\ActivityFlowBudget;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Pool\ActivityFlowPool;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Page\EraPageParser;
+use Bhp\Plugin\Builtin\ActivityLottery\Internal\Queue\TemporaryFollowStore;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Queue\UnfollowQueueStore;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Runtime\ActivityLotteryClock;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Runtime\ActivityLotteryRuntime;
@@ -155,6 +156,7 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
         $cleanupEndAt = (string)($definition['cleanup_end'] ?? '00:00:00');
         $cacheDatabasePath = rtrim(str_replace('\\', '/', $this->appContext()->cachePath()), '/') . '/cache.sqlite3';
         $accountKey = $this->uid();
+        $temporaryFollowStore = new TemporaryFollowStore($cacheDatabasePath, 'ActivityLottery');
         $unfollowQueueStore = new UnfollowQueueStore($cacheDatabasePath, 'ActivityLottery');
         if ($useTestCatalog) {
             $sources = [
@@ -193,6 +195,7 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
                 new \Bhp\Plugin\Builtin\ActivityLottery\Internal\Node\EraShareNodeRunner($activityApi),
                 new EraFollowNodeRunner(
                     apiRelation: $relationApi,
+                    temporaryFollowStore: $temporaryFollowStore,
                     unfollowQueueStore: $unfollowQueueStore,
                     accountKey: $accountKey,
                 ),
@@ -201,6 +204,7 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
                     queueStore: $unfollowQueueStore,
                     accountKey: $accountKey,
                     apiRelation: $relationApi,
+                    temporaryFollowStore: $temporaryFollowStore,
                 ),
                 new \Bhp\Plugin\Builtin\ActivityLottery\Internal\Node\EraClaimRewardNodeRunner($eraTaskGateway),
                 new EraWatchVideoNodeRunner('era_task_watch_video_fixed', $watchVideoGateway),
@@ -221,6 +225,7 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
             $logger,
             new ActivityLotteryWindow($windowStartAt, $taskEndAt),
             new ActivityLotteryWindow($drawStartAt, $drawEndAt),
+            $temporaryFollowStore,
             $unfollowQueueStore,
             $accountKey,
             new ActivityLotteryWindow($cleanupStartAt, $cleanupEndAt),
@@ -254,4 +259,3 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
         return $basePath . '/catalog.json';
     }
 }
-
