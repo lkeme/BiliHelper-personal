@@ -18,7 +18,7 @@ final class LoginResponseService
             0 => $this->decideSuccessStatus($mode, $response),
             -105 => LoginDecision::captchaRequired((string)($response['data']['url'] ?? '')),
             -629 => LoginDecision::failure($message, 24 * 3600),
-            -2100 => LoginDecision::failure('账号启用了设备锁或异地登录，需先完成手机号验证', 24 * 3600),
+            -2100 => $this->decideRiskVerification($response, '账号启用了设备锁或异地登录，需先完成手机号验证'),
             default => LoginDecision::failure("{$message} (code={$code})", 600),
         };
     }
@@ -42,14 +42,8 @@ final class LoginResponseService
 
         return match ((int)$status) {
             0 => LoginDecision::success("$mode 登录成功"),
-            2 => LoginDecision::failure(
-                $this->describeRiskVerification($response),
-                24 * 3600,
-            ),
-            3 => LoginDecision::failure(
-                $this->describePhoneVerification($response),
-                24 * 3600,
-            ),
+            2 => $this->decideRiskVerification($response, $this->describeRiskVerification($response)),
+            3 => $this->decideRiskVerification($response, $this->describePhoneVerification($response)),
             default => LoginDecision::failure(
                 $this->describeUnexpectedStatusResponse($response),
                 24 * 3600,
@@ -146,5 +140,18 @@ final class LoginResponseService
         }
 
         return \implode('，', $parts);
+    }
+
+    /**
+     * @param array<string, mixed> $response
+     */
+    private function decideRiskVerification(array $response, string $message): LoginDecision
+    {
+        $url = trim((string)($response['data']['url'] ?? ''));
+        if ($url === '') {
+            return LoginDecision::failure($message, 24 * 3600);
+        }
+
+        return LoginDecision::riskVerificationRequired($message);
     }
 }

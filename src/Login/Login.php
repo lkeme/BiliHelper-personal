@@ -19,6 +19,7 @@ namespace Bhp\Login;
 
 use Bhp\Api\Passport\ApiLogin;
 use Bhp\Api\Passport\ApiOauth2;
+use Bhp\Api\Passport\ApiRiskVerification;
 use Bhp\Api\Response\LoginDecision;
 use Bhp\Api\Response\LoginTokenBundle;
 use Bhp\Api\WWW\ApiMain;
@@ -56,6 +57,7 @@ class Login extends BasePlugin implements PluginTaskInterface
     private ?LoginModeExecutor $modeExecutor = null;
     private ?LoginPromptService $promptService = null;
     private ?LoginResponseService $responseService = null;
+    private ?LoginRiskVerificationService $riskVerificationService = null;
     private ?LoginSmsService $smsService = null;
     private ?LoginPendingFlowStore $pendingFlowStore = null;
     private ?LoginSessionCoordinator $sessionCoordinator = null;
@@ -64,6 +66,7 @@ class Login extends BasePlugin implements PluginTaskInterface
     private ?LoginGateStateService $gateStateService = null;
     private ?ApiLogin $apiLogin = null;
     private ?ApiOauth2 $apiOauth2 = null;
+    private ?ApiRiskVerification $apiRiskVerification = null;
     private ?ApiMain $apiMain = null;
     private bool $notifyOnCurrentLoginFailure = false;
     private bool $runtimeReloginFailureHandled = false;
@@ -526,6 +529,18 @@ class Login extends BasePlugin implements PluginTaskInterface
     }
 
     /**
+     * 处理风控验证服务
+     * @return LoginRiskVerificationService
+     */
+    protected function riskVerificationService(): LoginRiskVerificationService
+    {
+        return $this->riskVerificationService ??= new LoginRiskVerificationService(
+            $this->captchaService(),
+            $this->apiRiskVerification(),
+        );
+    }
+
+    /**
      * 处理待处理流程存储
      * @return LoginPendingFlowStore
      */
@@ -675,6 +690,25 @@ class Login extends BasePlugin implements PluginTaskInterface
                 function (string $captchaUrl, string $message): void {
                     $this->handleCaptchaChallenge($captchaUrl, $message);
                 },
+                function (array $riskResponse, string $message): void {
+                    $this->warning($message);
+                    $oauthResponse = $this->riskVerificationService()->handle(
+                        $riskResponse,
+                        fn (string $prompt): string => $this->cliInput($prompt),
+                        fn (string $info): void => $this->info($info),
+                        fn (string $warning): void => $this->warning($warning),
+                        fn (string $notice): void => $this->notice($notice),
+                    );
+
+                    $decision = $this->responseService()->decide('账密模式(安全验证)', $oauthResponse);
+                    if (!$decision->isSuccess()) {
+                        throw new LoginException($decision->message, $decision->retryAfterSeconds);
+                    }
+
+                    $this->info($decision->message);
+                    $this->updateLoginInfo($oauthResponse);
+                    $this->info('生成信息配置完毕');
+                },
             );
         });
     }
@@ -805,6 +839,15 @@ class Login extends BasePlugin implements PluginTaskInterface
             (string)($this->username ?? ''),
             (string)($this->password ?? ''),
         );
+    }
+
+    /**
+     * 处理风控验证Api
+     * @return ApiRiskVerification
+     */
+    protected function apiRiskVerification(): ApiRiskVerification
+    {
+        return $this->apiRiskVerification ??= new ApiRiskVerification($this->request());
     }
 
     /**
