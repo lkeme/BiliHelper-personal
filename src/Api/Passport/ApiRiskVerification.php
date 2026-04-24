@@ -100,10 +100,12 @@ final class ApiRiskVerification extends AbstractApiClient
             'type' => 'loginTelCheck',
             'code' => $smsCode,
             'tmp_code' => $tmpCode,
-            'request_id' => $requestId,
             'source' => $source,
             'captcha_key' => $captchaKey,
         ];
+        if ($requestId !== '') {
+            $payload['request_id'] = $requestId;
+        }
 
         return $this->decodePost(
             'app',

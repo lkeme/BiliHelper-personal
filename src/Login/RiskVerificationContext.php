@@ -9,8 +9,8 @@ final class RiskVerificationContext
     public function __construct(
         public readonly string $verifyUrl,
         public readonly string $tmpToken,
-        public readonly string $requestId,
-        public readonly string $source,
+        public readonly string $requestId = '',
+        public readonly string $source = 'risk',
         public readonly string $hideTel = '',
         public readonly string $captchaKey = '',
     ) {
@@ -40,8 +40,8 @@ final class RiskVerificationContext
         $tmpToken = trim((string)($params['tmp_token'] ?? ''));
         $requestId = trim((string)($params['request_id'] ?? ''));
         $source = trim((string)($params['source'] ?? 'risk'));
-        if ($tmpToken === '' || $requestId === '') {
-            throw new LoginException('风控验证参数缺失，无法继续手机号验证', 24 * 3600);
+        if ($tmpToken === '') {
+            throw new LoginException('风控验证参数缺失 tmp_token，无法继续手机号验证', 24 * 3600);
         }
 
         return new self($verifyUrl, $tmpToken, $requestId, $source);

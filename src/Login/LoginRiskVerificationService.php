@@ -60,6 +60,10 @@ final class LoginRiskVerificationService
             throw new LoginException('短信验证码不能为空', 3600);
         }
 
+        if ($context->requestId === '') {
+            $warning('当前风控链接未提供 request_id，将尝试兼容模式提交短信验证码');
+        }
+
         $info('正在校验短信验证码');
         $verifyResponse = $this->apiRiskVerification->verifySms(
             $code,
