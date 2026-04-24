@@ -32,7 +32,7 @@
         </div>
 
         <div id="assist-mode" class="hide">
-            <div class="panel">
+            <div class="panel panel-assist">
                 <div class="status-card">
                     <div class="status-top">
                         <div class="status-label" id="flow-type">等待处理</div>
@@ -50,7 +50,7 @@
         </div>
 
         <div id="manual-mode" class="hide">
-            <div class="panel">
+            <div class="panel panel-manual">
                 <div class="result-title">手动极验验证</div>
                 <div class="form-grid">
                     <div class="form">
@@ -81,20 +81,20 @@
         </div>
 
         <div id="code-box" class="hide">
-            <div class="panel">
+            <div class="panel panel-code">
                 <div class="result-title">短信验证码</div>
                 <div class="form">
                     <label class="form-label">验证码</label>
-                    <input type="text" class="form-control form-control-code" id="sms-code" placeholder="请输入收到的短信验证码" maxlength="12">
+                    <input type="text" class="form-control form-control-code" id="sms-code" placeholder="请输入 6 位短信验证码" maxlength="6" inputmode="numeric" pattern="[0-9]{6}" autocomplete="one-time-code">
                 </div>
                 <div class="btn" id="code-submit-btn">提交验证码</div>
             </div>
         </div>
 
         <div id="result" class="hide">
-            <div class="panel">
+            <div class="panel panel-result">
                 <div class="result-title">验证结果</div>
-                <div class="form-grid">
+                <div class="form-grid form-grid-result">
                     <div class="form">
                         <label class="form-label">new-challenge</label>
                         <input type="text" class="form-control" id="new-challenge" style="cursor: text;" disabled>

@@ -96,6 +96,10 @@ window.onload = function () {
         }
     }
 
+    smsCodeInput.addEventListener("input", () => {
+        smsCodeInput.value = normalizeSmsCode(smsCodeInput.value);
+    });
+
     genBtn.onclick = () => {
         const gt = gtInput.value;
         const challenge = challengeInput.value;
@@ -176,9 +180,14 @@ window.onload = function () {
             return;
         }
 
-        const code = smsCodeInput.value.trim();
+        const code = normalizeSmsCode(smsCodeInput.value);
+        smsCodeInput.value = code;
         if (code === "") {
-            showToastBox("请输入短信验证码", 3000);
+            showToastBox("请输入 6 位短信验证码", 3000);
+            return;
+        }
+        if (!isValidSmsCode(code)) {
+            showToastBox("短信验证码必须是 6 位纯数字", 3000);
             return;
         }
 
@@ -349,6 +358,14 @@ window.onload = function () {
             default:
                 return "等待处理";
         }
+    }
+
+    function normalizeSmsCode(value) {
+        return String(value || "").replace(/\D/g, "").slice(0, 6);
+    }
+
+    function isValidSmsCode(value) {
+        return /^\d{6}$/.test(value);
     }
 
     let timer = null;

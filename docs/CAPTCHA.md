@@ -19,13 +19,13 @@ url = "http://127.0.0.1:50001"
 
 以外部挂载配置文件为例
 
-> 命令行中只会显示填入的值，`localhost`一般本地使用，容器或者外部使用`0.0.0.0`，访问时请替换成对应的地址。
+> 本地访问地址统一使用`127.0.0.1`；Docker 容器内服务监听请使用`0.0.0.0`，浏览器访问时再替换成宿主机上的`127.0.0.1`或对应内网地址。
 
 ```bash
-docker run -itd --rm -e CAPTCHA=1 -e CAPTCHA_HOST=localhost -e CAPTCHA_PORT=50002 -p 50002:50002 -v /path/to/your/confFilePath:/app/profile/user lkeme/bilihelper-personal
+docker run -itd --rm -e CAPTCHA=1 -e CAPTCHA_HOST=0.0.0.0 -e CAPTCHA_PORT=50002 -p 50002:50002 -v /path/to/your/confFilePath:/app/profile/user lkeme/bilihelper-personal
 
 -e CAPTCHA=1 # 开启登录助手服务  默认 0
--e CAPTCHA_HOST=localhost # 默认 0.0.0.0
+-e CAPTCHA_HOST=0.0.0.0 # 容器内监听地址，浏览器访问时请使用宿主机的 127.0.0.1 或对应内网地址
 -e CAPTCHA_PORT=50002 # 登录助手服务地址  默认 50001 需要注意端口映射关系
 ```
 
@@ -35,7 +35,7 @@ docker run -itd --rm -e CAPTCHA=1 -e CAPTCHA_HOST=localhost -e CAPTCHA_PORT=5000
 
 ```bash
 cd captcha && php -S 127.0.0.1:50001
-cd captcha && php -S localhost:50002
+cd captcha && php -S 127.0.0.1:50002
 ```
 
 > 当前登录助手服务仍位于`captcha`目录下，目录名暂未调整，但其职责已经扩展为统一处理登录人工步骤。
@@ -57,6 +57,6 @@ cd captcha && php -S localhost:50002
 - 如果本次登录失败、超时、进程退出或容器重启，下次必须重新开始完整登录
 - 不支持恢复到上一次挂起步骤
 
-> 0.0.0.0是指所有地址，本地以及外网都可以访问，如果你只想本地访问，可以使用`localhost`或者其他内网地址。
+> 0.0.0.0 是指监听所有地址；如果你只想本机访问，请在本地直接使用 `127.0.0.1`，如果是局域网访问，请替换成对应内网地址。
 
 > 注意：`该部分没做任何安全上的处理，不要长时间暴露于公网上。开在外网，请使用时再打开，不使用时最好关闭或仅放在内网中`。
