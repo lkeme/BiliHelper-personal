@@ -42,13 +42,27 @@ class LoginCaptchaService
      */
     public function buildManualCaptchaUrl(array $captchaInfo): string
     {
-        $baseUrl = rtrim((string)$this->context->config('login_captcha.url'), '/');
+        $baseUrl = $this->serviceBaseUrl();
         return sprintf(
             '%s/geetest?gt=%s&challenge=%s',
             $baseUrl,
             rawurlencode($captchaInfo['gt']),
             rawurlencode($captchaInfo['challenge']),
         );
+    }
+
+    public function buildManualAssistUrl(string $flowId): string
+    {
+        return sprintf(
+            '%s/assist?id=%s',
+            $this->serviceBaseUrl(),
+            rawurlencode($flowId),
+        );
+    }
+
+    public function serviceBaseUrl(): string
+    {
+        return rtrim((string)$this->context->config('login_captcha.url'), '/');
     }
 
     /**

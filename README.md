@@ -22,7 +22,7 @@
 
 <p align=center>
 
-<img src="https://img.shields.io/badge/Version-3.0.2.260423-orange.svg?longCache=true&style=for-the-badge" alt="">
+<img src="https://img.shields.io/badge/Version-3.0.4.260425-orange.svg?longCache=true&style=for-the-badge" alt="">
 <img src="https://img.shields.io/badge/PHP-8.5+-green.svg?longCache=true&style=for-the-badge" alt="">
 <img src="https://img.shields.io/badge/Composer-latest-blueviolet.svg?longCache=true&style=for-the-badge" alt="">
 <img src="https://img.shields.io/badge/License-mit-blue.svg?longCache=true&style=for-the-badge" alt="">
@@ -31,6 +31,12 @@
 
 ## 📌 公告通知
 
+> 提示：当前 `3.x` 版本暂不兼容 `2.x` 版本的 `profile` 配置，无法无感升级。
+> 如你是从 `2.x` 升级到 `3.x`，请重新部署并初始化 `profile`。
+
+<details>
+<summary><strong>声明</strong></summary>
+
 代码开源，本地化99.9%，项目不收集或使用任何敏感信息，兴趣所致，一切只为学习。
 
 ```notice
@@ -38,6 +44,8 @@
 ---- 只有花大价钱去买到的东西，才会令人信任。
 ---- 本项目仅供学习交流使用，请勿用于非法用途！* 3
 ```
+
+</details>
 
 ## 👤 游客访问
 

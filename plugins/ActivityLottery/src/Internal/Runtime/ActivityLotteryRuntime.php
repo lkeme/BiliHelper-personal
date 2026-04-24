@@ -29,6 +29,7 @@ use Bhp\Plugin\Builtin\ActivityLottery\Internal\Node\RefreshDrawTimesNodeRunner;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Node\ResolvedActivityView;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Node\ResolvedEraTaskView;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Node\ValidateActivityNodeRunner;
+use Bhp\Plugin\Builtin\ActivityLottery\Internal\Queue\TemporaryFollowStore;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Queue\UnfollowQueueStore;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Page\EraPageSnapshot;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Page\EraTaskSnapshot;
@@ -66,6 +67,7 @@ final class ActivityLotteryRuntime
      * @param callable $logger
      * @param ActivityLotteryWindow|null $taskWindow
      * @param ActivityLotteryWindow|null $drawWindow
+     * @param TemporaryFollowStore|null $temporaryFollowStore
      * @param UnfollowQueueStore|null $unfollowQueueStore
      * @param string $cleanupAccountKey
      * @param ActivityLotteryWindow|null $cleanupWindow
@@ -83,6 +85,7 @@ final class ActivityLotteryRuntime
         ?callable $logger = null,
         private readonly ?ActivityLotteryWindow $taskWindow = null,
         private readonly ?ActivityLotteryWindow $drawWindow = null,
+        private readonly ?TemporaryFollowStore $temporaryFollowStore = null,
         private readonly ?UnfollowQueueStore $unfollowQueueStore = null,
         private readonly string $cleanupAccountKey = '',
         private readonly ?ActivityLotteryWindow $cleanupWindow = null,
@@ -154,6 +157,9 @@ final class ActivityLotteryRuntime
         $catalog = $this->catalogLoader->load();
         $plannedCatalogFlows = $this->plannedCatalogFlows($catalog, $bizDate);
         $flows = $this->loadFlowsForBizDate($bizDate);
+        if ($this->temporaryFollowStore instanceof TemporaryFollowStore) {
+            $this->temporaryFollowStore->pruneFinished($now - 7 * 86400);
+        }
         if ($this->unfollowQueueStore instanceof UnfollowQueueStore) {
             $this->unfollowQueueStore->pruneFinished($now - 7 * 86400);
         }
@@ -280,12 +286,16 @@ final class ActivityLotteryRuntime
      */
     private function planCleanupFlow(array $flows, string $bizDate, int $now): ?ActivityFlow
     {
+        $hasUnfollowQueueWork = $this->unfollowQueueStore instanceof UnfollowQueueStore
+            && $this->unfollowQueueStore->hasPending($this->cleanupAccountKey);
+        $hasRecoverableTemporaryFollow = $this->temporaryFollowStore instanceof TemporaryFollowStore
+            && trim($this->cleanupAccountKey) !== ''
+            && $this->temporaryFollowStore->hasRecoverable($this->cleanupAccountKey);
         if (
-            !$this->unfollowQueueStore instanceof UnfollowQueueStore
+            (!$hasUnfollowQueueWork && !$hasRecoverableTemporaryFollow)
             || $this->cleanupWindow === null
             || trim($this->cleanupAccountKey) === ''
             || !$this->cleanupWindow->contains($now)
-            || !$this->unfollowQueueStore->hasPending($this->cleanupAccountKey)
         ) {
             return null;
         }

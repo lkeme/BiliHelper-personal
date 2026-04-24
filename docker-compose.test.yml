@@ -33,6 +33,8 @@ services:
       - "50001:50001"
     environment:
       BRANCH: dev
-      CAPTCHA: 0
+      CAPTCHA: 1
+      CAPTCHA_HOST: 0.0.0.0
+      CAPTCHA_PORT: 50001
       RESET_CACHE: 0
       PURGE_AUTH: 0

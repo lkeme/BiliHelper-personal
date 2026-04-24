@@ -18,7 +18,9 @@ namespace Bhp\Login;
  */
 
 use Bhp\Api\Passport\ApiLogin;
+use Bhp\Api\Passport\ApiCaptcha;
 use Bhp\Api\Passport\ApiOauth2;
+use Bhp\Api\Passport\ApiRiskVerification;
 use Bhp\Api\Response\LoginDecision;
 use Bhp\Api\Response\LoginTokenBundle;
 use Bhp\Api\WWW\ApiMain;
@@ -56,14 +58,17 @@ class Login extends BasePlugin implements PluginTaskInterface
     private ?LoginModeExecutor $modeExecutor = null;
     private ?LoginPromptService $promptService = null;
     private ?LoginResponseService $responseService = null;
+    private ?LoginRiskVerificationService $riskVerificationService = null;
     private ?LoginSmsService $smsService = null;
     private ?LoginPendingFlowStore $pendingFlowStore = null;
+    private ?LoginManualAssistService $manualAssistService = null;
     private ?LoginSessionCoordinator $sessionCoordinator = null;
     private ?LoginTokenLifecycleService $tokenLifecycleService = null;
     private ?LoginRuntimeState $runtimeState = null;
     private ?LoginGateStateService $gateStateService = null;
     private ?ApiLogin $apiLogin = null;
     private ?ApiOauth2 $apiOauth2 = null;
+    private ?ApiRiskVerification $apiRiskVerification = null;
     private ?ApiMain $apiMain = null;
     private bool $notifyOnCurrentLoginFailure = false;
     private bool $runtimeReloginFailureHandled = false;
@@ -315,7 +320,7 @@ class Login extends BasePlugin implements PluginTaskInterface
             return;
         }
 
-        $code = $this->cliInput('请输入收到的短信验证码: ');
+        $code = $this->requestSmsCodeViaBestAvailableChannel('短信验证码已发送，请在登录助手页面输入验证码后继续');
         if ($code === '') {
             throw new LoginException('短信验证码不能为空', 3600);
         }
@@ -335,6 +340,25 @@ class Login extends BasePlugin implements PluginTaskInterface
         $this->warning($message);
         $this->captchaService()->assertCaptchaServiceReady();
         $captchaInfo = $this->captchaService()->matchCaptcha($targetUrl);
+        if ($this->manualAssistService()->enabled()) {
+            $flow = $this->manualAssistService()->openGeetestFlow(
+                $captchaInfo,
+                '登录行为验证码',
+                $message,
+            );
+            $this->info('登录助手页: ' . $flow['url']);
+            $this->info('请在浏览器中打开登录助手页面完成验证，当前进程会继续等待结果');
+            $captcha = $this->manualAssistService()->waitForGeetestResult(
+                $flow,
+                function (string $progress): void {
+                    $this->info($progress);
+                },
+            );
+            $this->notice('行为验证码处理成功，继续登录流程');
+
+            return $captcha;
+        }
+
         $manualCaptchaUrl = $this->captchaService()->buildManualCaptchaUrl($captchaInfo);
         $expiresAt = time() + 120;
         $nextProgressLogAt = time() + 10;
@@ -526,12 +550,37 @@ class Login extends BasePlugin implements PluginTaskInterface
     }
 
     /**
+     * 处理风控验证服务
+     * @return LoginRiskVerificationService
+     */
+    protected function riskVerificationService(): LoginRiskVerificationService
+    {
+        return $this->riskVerificationService ??= new LoginRiskVerificationService(
+            $this->captchaService(),
+            $this->apiRiskVerification(),
+        );
+    }
+
+    /**
      * 处理待处理流程存储
      * @return LoginPendingFlowStore
      */
     protected function pendingFlowStore(): LoginPendingFlowStore
     {
         return $this->pendingFlowStore ??= new LoginPendingFlowStore($this->cache());
+    }
+
+    /**
+     * 处理登录助手服务
+     * @return LoginManualAssistService
+     */
+    protected function manualAssistService(): LoginManualAssistService
+    {
+        return $this->manualAssistService ??= new LoginManualAssistService(
+            $this->captchaService(),
+            $this->pendingFlowStore(),
+            new ApiCaptcha($this->appContext()->request()),
+        );
     }
 
     /**
@@ -675,6 +724,31 @@ class Login extends BasePlugin implements PluginTaskInterface
                 function (string $captchaUrl, string $message): void {
                     $this->handleCaptchaChallenge($captchaUrl, $message);
                 },
+                function (array $riskResponse, string $message): void {
+                    $this->warning($message);
+                    $oauthResponse = $this->riskVerificationService()->handle(
+                        $riskResponse,
+                        fn (string $prompt, string $maskedPhone): string => $this->requestRiskSmsCodeViaBestAvailableChannel($prompt, $maskedPhone),
+                        function (string $info): void {
+                            $this->info($info);
+                        },
+                        function (string $warning): void {
+                            $this->warning($warning);
+                        },
+                        function (string $notice): void {
+                            $this->notice($notice);
+                        },
+                    );
+
+                    $decision = $this->responseService()->decide('账密模式(安全验证)', $oauthResponse);
+                    if (!$decision->isSuccess()) {
+                        throw new LoginException($decision->message, $decision->retryAfterSeconds);
+                    }
+
+                    $this->info($decision->message);
+                    $this->updateLoginInfo($oauthResponse);
+                    $this->info('生成信息配置完毕');
+                },
             );
         });
     }
@@ -746,7 +820,7 @@ class Login extends BasePlugin implements PluginTaskInterface
             function (string $phone, string $countryCode, string $targetUrl): void {
                 $this->beginSmsCaptchaLogin($phone, $countryCode, $targetUrl);
             },
-            fn (string $message): string => $this->cliInput($message),
+            fn (string $message): string => $this->requestSmsCodeViaBestAvailableChannel($message),
             function (array $payload, string $code) use ($mode): void {
                 $response = $this->authenticationService()->submitSmsLogin($payload, $code);
                 $this->completeLoginResponse($mode, $response);
@@ -774,6 +848,49 @@ class Login extends BasePlugin implements PluginTaskInterface
     protected function cliInput(string $msg, int $max_char = 100): string
     {
         return $this->promptService()->prompt($msg, $max_char);
+    }
+
+    protected function requestSmsCodeViaBestAvailableChannel(string $message): string
+    {
+        if (!$this->manualAssistService()->enabled()) {
+            return $this->cliInput($message);
+        }
+
+        $flow = $this->manualAssistService()->openSmsCodeFlow(
+            '登录短信验证码',
+            $message,
+        );
+        $this->info('登录助手页: ' . $flow['url']);
+        $this->info('请在浏览器中打开登录助手页面输入短信验证码，当前进程会继续等待结果');
+
+        return $this->manualAssistService()->waitForCodeResult(
+            $flow,
+            function (string $progress): void {
+                $this->info($progress);
+            },
+        );
+    }
+
+    protected function requestRiskSmsCodeViaBestAvailableChannel(string $message, string $maskedPhone = ''): string
+    {
+        if (!$this->manualAssistService()->enabled()) {
+            return $this->cliInput($message);
+        }
+
+        $flow = $this->manualAssistService()->openRiskSmsCodeFlow(
+            '安全验证短信验证码',
+            $message,
+            $maskedPhone,
+        );
+        $this->info('登录助手页: ' . $flow['url']);
+        $this->info('请在浏览器中打开登录助手页面输入安全验证短信验证码，当前进程会继续等待结果');
+
+        return $this->manualAssistService()->waitForCodeResult(
+            $flow,
+            function (string $progress): void {
+                $this->info($progress);
+            },
+        );
     }
 
     /**
@@ -805,6 +922,15 @@ class Login extends BasePlugin implements PluginTaskInterface
             (string)($this->username ?? ''),
             (string)($this->password ?? ''),
         );
+    }
+
+    /**
+     * 处理风控验证Api
+     * @return ApiRiskVerification
+     */
+    protected function apiRiskVerification(): ApiRiskVerification
+    {
+        return $this->apiRiskVerification ??= new ApiRiskVerification($this->request());
     }
 
     /**

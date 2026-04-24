@@ -41,6 +41,16 @@ final class LoginDecision
     }
 
     /**
+     * 处理风控验证Required
+     * @param string $message
+     * @return self
+     */
+    public static function riskVerificationRequired(string $message = '此次登录需要手机号安全验证'): self
+    {
+        return new self('risk_verification_required', $message);
+    }
+
+    /**
      * 处理失败
      * @param string $message
      * @param int $retryAfterSeconds
@@ -67,6 +77,15 @@ final class LoginDecision
     public function requiresCaptcha(): bool
     {
         return $this->action === 'captcha_required';
+    }
+
+    /**
+     * 判断requires风控验证
+     * @return bool
+     */
+    public function requiresRiskVerification(): bool
+    {
+        return $this->action === 'risk_verification_required';
     }
 
     /**

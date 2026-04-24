@@ -1,61 +1,119 @@
 <!DOCTYPE html>
 <html lang="zh_CN">
-
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>极验手动验证</title>
+    <title>登录助手</title>
 
     <link href="/static/css/style.css" rel="stylesheet" type="text/css">
     <script src="/static/js/gt.js"></script>
     <script src="/static/js/index.js"></script>
 </head>
-
 <body>
-<div class="box">
-    <div class="title">极验手动验证</div>
-    <div class="form">
-        <label class="form-label">gt</label>
-        <input type="text" class="form-control" id="gt" placeholder="请输入 gt">
-    </div>
-    <div class="form">
-        <label class="form-label">challenge</label>
-        <input type="text" class="form-control" id="challenge" placeholder="请输入 challenge">
-    </div>
+<div class="page-shell">
+    <div class="ambient ambient-left"></div>
+    <div class="ambient ambient-right"></div>
 
-    <div id="captcha">
-        <div id="gen" class="btn">生成验证码</div>
-        <div id="success" class="btn hide">验证成功</div>
-        <div id="wait" class="hide">
-            <div class="loading">
-                <div class="loading-dot"></div>
-                <div class="loading-dot"></div>
-                <div class="loading-dot"></div>
-                <div class="loading-dot"></div>
+    <div class="box">
+        <div class="hero">
+            <div class="eyebrow">BHP Login Assistant</div>
+            <div class="title">登录助手</div>
+            <div class="sub-title">在浏览器中完成行为验证码、短信验证码等人工步骤。当前 flow 仅对这一次登录有效，超时或失败后需要重新发起完整登录。</div>
+        </div>
+
+        <div class="panel panel-note">
+            <div class="panel-title">使用说明</div>
+            <div class="tips">
+                <div class="tip-item">只处理当前这次登录，不会恢复到历史挂起步骤。</div>
+                <div class="tip-item">提交成功后请保持页面打开，等待主程序继续处理。</div>
+                <div class="tip-item">如果页面显示已过期，请返回程序重新发起完整登录。</div>
             </div>
         </div>
-    </div>
 
-    <div id="result" class="hide">
-        <div class="result-title">验证结果</div>
-        <div class="form">
-            <label class="form-label">new-challenge</label>
-            <input type="text" class="form-control" id="new-challenge" style="cursor: text;" disabled>
+        <div id="assist-mode" class="hide">
+            <div class="panel panel-assist">
+                <div class="status-card">
+                    <div class="status-top">
+                        <div class="status-label" id="flow-type">等待处理</div>
+                        <div class="status-dot"></div>
+                    </div>
+                    <div class="status-title" id="flow-title">登录助手</div>
+                    <div class="status-message" id="flow-message">正在加载当前登录步骤...</div>
+                </div>
+
+                <div class="form hide" id="masked-phone-box">
+                    <label class="form-label">接收号码</label>
+                    <input type="text" class="form-control" id="masked-phone" disabled>
+                </div>
+            </div>
         </div>
-        <div class="form">
-            <label class="form-label">validate</label>
-            <input type="text" class="form-control" id="validate" style="cursor: text;" disabled>
+
+        <div id="manual-mode" class="hide">
+            <div class="panel panel-manual">
+                <div class="result-title">手动极验验证</div>
+                <div class="form-grid">
+                    <div class="form">
+                        <label class="form-label">gt</label>
+                        <input type="text" class="form-control" id="gt" placeholder="请输入 gt">
+                    </div>
+                    <div class="form">
+                        <label class="form-label">challenge</label>
+                        <input type="text" class="form-control" id="challenge" placeholder="请输入 challenge">
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="form">
-            <label class="form-label">seccode</label>
-            <input type="text" class="form-control" id="seccode" style="cursor: text;" disabled>
+
+        <div class="panel panel-action">
+            <div id="captcha">
+                <div id="gen" class="btn">开始处理</div>
+                <div id="success" class="btn hide">处理成功</div>
+                <div id="wait" class="hide">
+                    <div class="loading">
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="btn" id="result-btn">提交反馈结果</div>
+
+        <div id="code-box" class="hide">
+            <div class="panel panel-code">
+                <div class="result-title">短信验证码</div>
+                <div class="form">
+                    <label class="form-label">验证码</label>
+                    <input type="text" class="form-control form-control-code" id="sms-code" placeholder="请输入 6 位短信验证码" maxlength="6" inputmode="numeric" pattern="[0-9]{6}" autocomplete="one-time-code">
+                </div>
+                <div class="btn" id="code-submit-btn">提交验证码</div>
+            </div>
+        </div>
+
+        <div id="result" class="hide">
+            <div class="panel panel-result">
+                <div class="result-title">验证结果</div>
+                <div class="form-grid form-grid-result">
+                    <div class="form">
+                        <label class="form-label">new-challenge</label>
+                        <input type="text" class="form-control" id="new-challenge" style="cursor: text;" disabled>
+                    </div>
+                    <div class="form">
+                        <label class="form-label">validate</label>
+                        <input type="text" class="form-control" id="validate" style="cursor: text;" disabled>
+                    </div>
+                    <div class="form">
+                        <label class="form-label">seccode</label>
+                        <input type="text" class="form-control" id="seccode" style="cursor: text;" disabled>
+                    </div>
+                </div>
+                <div class="btn" id="result-btn">提交验证结果</div>
+            </div>
+        </div>
     </div>
 </div>
 
 <div class="toast-box">消息</div>
 </body>
-
 </html>
