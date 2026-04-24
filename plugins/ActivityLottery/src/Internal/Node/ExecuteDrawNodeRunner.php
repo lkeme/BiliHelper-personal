@@ -12,6 +12,7 @@ use Bhp\Util\Exceptions\RequestException;
 final class ExecuteDrawNodeRunner implements NodeRunnerInterface
 {
     private const RETRY_DELAY_SECONDS = 300;
+    private const RATE_LIMIT_RETRY_DELAY_SECONDS = 60;
 
     /**
      * 初始化 ExecuteDrawNodeRunner
@@ -92,6 +93,20 @@ final class ExecuteDrawNodeRunner implements NodeRunnerInterface
             return new ActivityNodeResult(false, '执行抽奖失败，稍后重试', [
                 'node_status' => ActivityNodeStatus::WAITING,
                 'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
+                'draw_execute_response' => $response,
+                'context_patch' => [
+                    'draw_times_remaining' => $remaining,
+                    'draw_results' => $drawResults,
+                    'draw_batch_size' => 0,
+                    'draw_batch_win_count' => 0,
+                    'draw_batch_win_names' => [],
+                ],
+            ], $now);
+        }
+        if ($code === -702) {
+            return new ActivityNodeResult(false, '执行抽奖触发频率限制，稍后重试', [
+                'node_status' => ActivityNodeStatus::WAITING,
+                'next_run_at' => $now + self::RATE_LIMIT_RETRY_DELAY_SECONDS,
                 'draw_execute_response' => $response,
                 'context_patch' => [
                     'draw_times_remaining' => $remaining,
