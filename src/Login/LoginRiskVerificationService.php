@@ -15,7 +15,7 @@ final class LoginRiskVerificationService
 
     /**
      * @param array<string, mixed> $loginResponse
-     * @param callable(string):string $promptCode
+     * @param callable(string, string):string $requestCode
      * @param callable(string):void $info
      * @param callable(string):void $warning
      * @param callable(string):void $notice
@@ -23,7 +23,7 @@ final class LoginRiskVerificationService
      */
     public function handle(
         array $loginResponse,
-        callable $promptCode,
+        callable $requestCode,
         callable $info,
         callable $warning,
         callable $notice,
@@ -55,7 +55,7 @@ final class LoginRiskVerificationService
         );
         $notice('短信验证码已发送，请查收');
 
-        $code = trim($promptCode('请输入收到的短信验证码: '));
+        $code = trim($requestCode('请输入收到的短信验证码: ', $context->hideTel));
         if ($code === '') {
             throw new LoginException('短信验证码不能为空', 3600);
         }

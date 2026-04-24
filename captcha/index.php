@@ -144,6 +144,8 @@ class JsonFileManager
 
 class HttpServer
 {
+    private const MANUAL_FLOW_KEY = '__manual_flows';
+
     private JsonFileManager $json;
     protected string $filename = __DIR__ . '/data.json';
 
@@ -199,11 +201,198 @@ class HttpServer
      */
     protected function handleRequest(?string $path, string $method): void
     {
+        if ($path === '/assist' && $method === 'GET') {
+            header('Content-Type: text/html; charset=utf-8');
+            include __DIR__ . '/static/index.html';
+            exit();
+        }
+
         // 如果是 /geetest 路径，返回静态页面
         if ($path === '/geetest' && $method === 'GET') {
             header('Content-Type: text/html; charset=utf-8');
             include __DIR__ . '/static/index.html';
             exit();
+        }
+
+        if ($path === '/api/manual-flow/open' && $method === 'POST') {
+            $flowId = $this->requestString($_POST, 'id');
+            $type = $this->requestString($_POST, 'type');
+            $title = $this->requestString($_POST, 'title');
+            $message = $this->requestString($_POST, 'message');
+            $maskedPhone = $this->requestString($_POST, 'masked_phone');
+            $gt = $this->requestString($_POST, 'gt');
+            $challenge = $this->requestString($_POST, 'challenge');
+            $expiresAt = (int)$this->requestString($_POST, 'expires_at');
+            if (
+                !$this->isValidFlowId($flowId)
+                || !$this->isValidFlowType($type)
+                || !$this->isReasonableOptionalField($title, 80)
+                || !$this->isReasonableOptionalField($message, 300)
+                || !$this->isReasonableOptionalField($maskedPhone, 50)
+                || ($gt !== '' && !$this->isValidChallenge($gt))
+                || ($challenge !== '' && !$this->isValidChallenge($challenge))
+                || $expiresAt <= time()
+            ) {
+                $this->toResponse(10011, '登录助手流程参数错误');
+                return;
+            }
+
+            $data = $this->json->update(function (array $data) use ($flowId, $type, $title, $message, $maskedPhone, $gt, $challenge, $expiresAt): array {
+                $data = $this->pruneManualFlows($data);
+                $flows = $this->manualFlows($data);
+                $flows[$flowId] = [
+                    'id' => $flowId,
+                    'type' => $type,
+                    'status' => 'pending',
+                    'title' => $title,
+                    'message' => $message,
+                    'masked_phone' => $maskedPhone,
+                    'gt' => $gt,
+                    'challenge' => $challenge,
+                    'submitted_code' => '',
+                    'result' => [],
+                    'created_at' => time(),
+                    'expires_at' => $expiresAt,
+                ];
+                $data[self::MANUAL_FLOW_KEY] = $flows;
+
+                return $data;
+            });
+
+            $flows = $this->manualFlows($data);
+            $this->toResponse(10010, '登录助手流程已创建', $flows[$flowId] ?? []);
+            return;
+        }
+
+        if ($path === '/api/manual-flow' && $method === 'GET') {
+            $flowId = $this->requestString($_GET, 'id');
+            if (!$this->isValidFlowId($flowId)) {
+                $this->toResponse(10021, '登录助手流程不存在');
+                return;
+            }
+
+            $data = $this->json->update(fn (array $data): array => $this->pruneManualFlows($data));
+            $flows = $this->manualFlows($data);
+            if (!isset($flows[$flowId]) || !is_array($flows[$flowId])) {
+                $this->toResponse(10021, '登录助手流程不存在');
+                return;
+            }
+
+            $flow = $flows[$flowId];
+            if (($flow['expires_at'] ?? 0) < time()) {
+                $flow['status'] = 'expired';
+            }
+
+            $this->toResponse(10020, '成功获取登录助手流程', $flow);
+            return;
+        }
+
+        if ($path === '/api/manual-flow/code' && $method === 'POST') {
+            $flowId = $this->requestString($_POST, 'id');
+            $code = $this->requestString($_POST, 'code');
+            if (!$this->isValidFlowId($flowId) || !$this->isReasonableField($code, 32)) {
+                $this->toResponse(10031, '短信验证码参数错误');
+                return;
+            }
+
+            $updated = false;
+            $data = $this->json->update(function (array $data) use ($flowId, $code, &$updated): array {
+                $data = $this->pruneManualFlows($data);
+                $flows = $this->manualFlows($data);
+                if (!isset($flows[$flowId]) || !is_array($flows[$flowId])) {
+                    return $data;
+                }
+
+                if (($flows[$flowId]['expires_at'] ?? 0) < time()) {
+                    $flows[$flowId]['status'] = 'expired';
+                } else {
+                    $flows[$flowId]['status'] = 'submitted';
+                    $flows[$flowId]['submitted_code'] = $code;
+                }
+                $updated = true;
+                $data[self::MANUAL_FLOW_KEY] = $flows;
+
+                return $data;
+            });
+
+            if (!$updated) {
+                $this->toResponse(10021, '登录助手流程不存在');
+                return;
+            }
+
+            $flows = $this->manualFlows($data);
+            $this->toResponse(10030, '短信验证码提交成功', $flows[$flowId] ?? []);
+            return;
+        }
+
+        if ($path === '/api/manual-flow/geetest' && $method === 'POST') {
+            $flowId = $this->requestString($_POST, 'id');
+            $challenge = $this->requestString($_POST, 'challenge');
+            $newChallenge = $this->requestString($_POST, 'new_challenge');
+            $validate = $this->requestString($_POST, 'validate');
+            $seccode = $this->requestString($_POST, 'seccode');
+            if (
+                !$this->isValidFlowId($flowId)
+                || !$this->isValidChallenge($challenge)
+                || !$this->isReasonableField($newChallenge, 256)
+                || !$this->isReasonableField($validate, 512)
+                || !$this->isReasonableField($seccode, 1024)
+            ) {
+                $this->toResponse(10041, '行为验证码参数错误');
+                return;
+            }
+
+            $updated = false;
+            $data = $this->json->update(function (array $data) use ($flowId, $challenge, $newChallenge, $validate, $seccode, &$updated): array {
+                $data = $this->pruneManualFlows($data);
+                $flows = $this->manualFlows($data);
+                if (!isset($flows[$flowId]) || !is_array($flows[$flowId])) {
+                    return $data;
+                }
+
+                if (($flows[$flowId]['expires_at'] ?? 0) < time()) {
+                    $flows[$flowId]['status'] = 'expired';
+                } else {
+                    $flows[$flowId]['status'] = 'resolved';
+                    $flows[$flowId]['result'] = [
+                        'challenge' => $newChallenge,
+                        'validate' => $validate,
+                        'seccode' => $seccode,
+                    ];
+                    $data[$challenge] = $flows[$flowId]['result'];
+                }
+                $updated = true;
+                $data[self::MANUAL_FLOW_KEY] = $flows;
+
+                return $data;
+            });
+
+            if (!$updated) {
+                $this->toResponse(10021, '登录助手流程不存在');
+                return;
+            }
+
+            $flows = $this->manualFlows($data);
+            $this->toResponse(10040, '行为验证码提交成功', $flows[$flowId] ?? []);
+            return;
+        }
+
+        if ($path === '/api/manual-flow/clear' && $method === 'POST') {
+            $flowId = $this->requestString($_POST, 'id');
+            if (!$this->isValidFlowId($flowId)) {
+                $this->toResponse(10021, '登录助手流程不存在');
+                return;
+            }
+
+            $this->json->update(function (array $data) use ($flowId): array {
+                $flows = $this->manualFlows($data);
+                unset($flows[$flowId]);
+                $data[self::MANUAL_FLOW_KEY] = $flows;
+
+                return $data;
+            });
+            $this->toResponse(10050, '登录助手流程已清理');
+            return;
         }
 
         // 如果是 /geetest 路径，POST请求，处理验证
@@ -301,6 +490,57 @@ class HttpServer
     protected function isReasonableField(string $value, int $maxLength): bool
     {
         return $value !== '' && strlen($value) <= $maxLength;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @return array<string, array<string, mixed>>
+     */
+    protected function manualFlows(array $data): array
+    {
+        $flows = $data[self::MANUAL_FLOW_KEY] ?? [];
+        return is_array($flows) ? $flows : [];
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
+     */
+    protected function pruneManualFlows(array $data): array
+    {
+        $flows = $this->manualFlows($data);
+        $now = time();
+        foreach ($flows as $flowId => $flow) {
+            if (!is_string($flowId) || !is_array($flow)) {
+                unset($flows[$flowId]);
+                continue;
+            }
+
+            $expiresAt = isset($flow['expires_at']) && is_numeric($flow['expires_at']) ? (int)$flow['expires_at'] : 0;
+            if ($expiresAt > 0 && $expiresAt >= $now) {
+                continue;
+            }
+
+            unset($flows[$flowId]);
+        }
+
+        $data[self::MANUAL_FLOW_KEY] = $flows;
+        return $data;
+    }
+
+    protected function isValidFlowId(string $value): bool
+    {
+        return preg_match('/^[a-f0-9]{32}$/i', $value) === 1;
+    }
+
+    protected function isValidFlowType(string $value): bool
+    {
+        return in_array($value, ['geetest', 'sms_code', 'risk_sms_code'], true);
+    }
+
+    protected function isReasonableOptionalField(string $value, int $maxLength): bool
+    {
+        return $value === '' || strlen($value) <= $maxLength;
     }
 
 

@@ -18,6 +18,7 @@ namespace Bhp\Login;
  */
 
 use Bhp\Api\Passport\ApiLogin;
+use Bhp\Api\Passport\ApiCaptcha;
 use Bhp\Api\Passport\ApiOauth2;
 use Bhp\Api\Passport\ApiRiskVerification;
 use Bhp\Api\Response\LoginDecision;
@@ -60,6 +61,7 @@ class Login extends BasePlugin implements PluginTaskInterface
     private ?LoginRiskVerificationService $riskVerificationService = null;
     private ?LoginSmsService $smsService = null;
     private ?LoginPendingFlowStore $pendingFlowStore = null;
+    private ?LoginManualAssistService $manualAssistService = null;
     private ?LoginSessionCoordinator $sessionCoordinator = null;
     private ?LoginTokenLifecycleService $tokenLifecycleService = null;
     private ?LoginRuntimeState $runtimeState = null;
@@ -318,7 +320,7 @@ class Login extends BasePlugin implements PluginTaskInterface
             return;
         }
 
-        $code = $this->cliInput('请输入收到的短信验证码: ');
+        $code = $this->requestSmsCodeViaBestAvailableChannel('短信验证码已发送，请在登录助手页面输入验证码后继续');
         if ($code === '') {
             throw new LoginException('短信验证码不能为空', 3600);
         }
@@ -338,6 +340,25 @@ class Login extends BasePlugin implements PluginTaskInterface
         $this->warning($message);
         $this->captchaService()->assertCaptchaServiceReady();
         $captchaInfo = $this->captchaService()->matchCaptcha($targetUrl);
+        if ($this->manualAssistService()->enabled()) {
+            $flow = $this->manualAssistService()->openGeetestFlow(
+                $captchaInfo,
+                '登录行为验证码',
+                $message,
+            );
+            $this->info('登录助手页: ' . $flow['url']);
+            $this->info('请在浏览器中打开登录助手页面完成验证，当前进程会继续等待结果');
+            $captcha = $this->manualAssistService()->waitForGeetestResult(
+                $flow,
+                function (string $progress): void {
+                    $this->info($progress);
+                },
+            );
+            $this->notice('行为验证码处理成功，继续登录流程');
+
+            return $captcha;
+        }
+
         $manualCaptchaUrl = $this->captchaService()->buildManualCaptchaUrl($captchaInfo);
         $expiresAt = time() + 120;
         $nextProgressLogAt = time() + 10;
@@ -550,6 +571,19 @@ class Login extends BasePlugin implements PluginTaskInterface
     }
 
     /**
+     * 处理登录助手服务
+     * @return LoginManualAssistService
+     */
+    protected function manualAssistService(): LoginManualAssistService
+    {
+        return $this->manualAssistService ??= new LoginManualAssistService(
+            $this->captchaService(),
+            $this->pendingFlowStore(),
+            new ApiCaptcha($this->appContext()->request()),
+        );
+    }
+
+    /**
      * 处理会话Coordinator
      * @return LoginSessionCoordinator
      */
@@ -694,10 +728,16 @@ class Login extends BasePlugin implements PluginTaskInterface
                     $this->warning($message);
                     $oauthResponse = $this->riskVerificationService()->handle(
                         $riskResponse,
-                        fn (string $prompt): string => $this->cliInput($prompt),
-                        fn (string $info): void => $this->info($info),
-                        fn (string $warning): void => $this->warning($warning),
-                        fn (string $notice): void => $this->notice($notice),
+                        fn (string $prompt, string $maskedPhone): string => $this->requestRiskSmsCodeViaBestAvailableChannel($prompt, $maskedPhone),
+                        function (string $info): void {
+                            $this->info($info);
+                        },
+                        function (string $warning): void {
+                            $this->warning($warning);
+                        },
+                        function (string $notice): void {
+                            $this->notice($notice);
+                        },
                     );
 
                     $decision = $this->responseService()->decide('账密模式(安全验证)', $oauthResponse);
@@ -780,7 +820,7 @@ class Login extends BasePlugin implements PluginTaskInterface
             function (string $phone, string $countryCode, string $targetUrl): void {
                 $this->beginSmsCaptchaLogin($phone, $countryCode, $targetUrl);
             },
-            fn (string $message): string => $this->cliInput($message),
+            fn (string $message): string => $this->requestSmsCodeViaBestAvailableChannel($message),
             function (array $payload, string $code) use ($mode): void {
                 $response = $this->authenticationService()->submitSmsLogin($payload, $code);
                 $this->completeLoginResponse($mode, $response);
@@ -808,6 +848,49 @@ class Login extends BasePlugin implements PluginTaskInterface
     protected function cliInput(string $msg, int $max_char = 100): string
     {
         return $this->promptService()->prompt($msg, $max_char);
+    }
+
+    protected function requestSmsCodeViaBestAvailableChannel(string $message): string
+    {
+        if (!$this->manualAssistService()->enabled()) {
+            return $this->cliInput($message);
+        }
+
+        $flow = $this->manualAssistService()->openSmsCodeFlow(
+            '登录短信验证码',
+            $message,
+        );
+        $this->info('登录助手页: ' . $flow['url']);
+        $this->info('请在浏览器中打开登录助手页面输入短信验证码，当前进程会继续等待结果');
+
+        return $this->manualAssistService()->waitForCodeResult(
+            $flow,
+            function (string $progress): void {
+                $this->info($progress);
+            },
+        );
+    }
+
+    protected function requestRiskSmsCodeViaBestAvailableChannel(string $message, string $maskedPhone = ''): string
+    {
+        if (!$this->manualAssistService()->enabled()) {
+            return $this->cliInput($message);
+        }
+
+        $flow = $this->manualAssistService()->openRiskSmsCodeFlow(
+            '安全验证短信验证码',
+            $message,
+            $maskedPhone,
+        );
+        $this->info('登录助手页: ' . $flow['url']);
+        $this->info('请在浏览器中打开登录助手页面输入安全验证短信验证码，当前进程会继续等待结果');
+
+        return $this->manualAssistService()->waitForCodeResult(
+            $flow,
+            function (string $progress): void {
+                $this->info($progress);
+            },
+        );
     }
 
     /**

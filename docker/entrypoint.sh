@@ -162,9 +162,9 @@ require_profile() {
 
 start_application() {
   if [ "${CAPTCHA:-0}" = "1" ]; then
-    print_block "${GREEN_BG} 正在使用验证码服务 ${FONT_RESET}"
+    print_block "${GREEN_BG} 正在使用登录助手服务 ${FONT_RESET}"
     printf ' ======== \n'
-    printf ' %s %s %s \n' "${INFO_LABEL}" "${GREEN_BG} 验证码服务地址：http://${CAPTCHA_HOST}:${CAPTCHA_PORT} ${FONT_RESET}" "${FONT_RESET}"
+    printf ' %s %s %s \n' "${INFO_LABEL}" "${GREEN_BG} 登录助手地址：http://${CAPTCHA_HOST}:${CAPTCHA_PORT} ${FONT_RESET}" "${FONT_RESET}"
     printf ' ======== \n'
     (
       cd "${APP_ROOT}/captcha"

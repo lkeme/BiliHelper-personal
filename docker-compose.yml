@@ -33,7 +33,9 @@ services:
       - "50001:50001" # 50001替换为自己的端口 user.ini->login_captcha->url
     environment:
       BRANCH: master # 远程资源分支。优先于 profile 里的 app.branch
-      CAPTCHA: 0 # docs/CAPTCHA.md
+      CAPTCHA: 1 # 推荐开启登录助手，方便在浏览器中处理验证码与短信验证码
+      CAPTCHA_HOST: 0.0.0.0
+      CAPTCHA_PORT: 50001
       RESET_CACHE: 0 # 1 等价于追加 --reset-cache
       PURGE_AUTH: 0 # 仅与 RESET_CACHE=1 联用，等价于追加 --purge-auth
 

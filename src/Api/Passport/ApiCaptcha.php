@@ -54,4 +54,39 @@ class ApiCaptcha extends AbstractApiClient
             'challenge' => $challenge,
         ], [], 'captcha.fetch', null, 3);
     }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @return array<string, mixed>
+     */
+    public function openManualFlow(string $url, array $payload): array
+    {
+        $url = rtrim($url, '/') . '/api/manual-flow/open';
+
+        return $this->decodePost('other', $url, $payload, [], 'captcha.manual_flow.open', null, 3);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function fetchManualFlow(string $url, string $flowId): array
+    {
+        $url = rtrim($url, '/') . '/api/manual-flow';
+
+        return $this->decodeGet('other', $url, [
+            'id' => $flowId,
+        ], [], 'captcha.manual_flow.fetch', null, 3);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function clearManualFlow(string $url, string $flowId): array
+    {
+        $url = rtrim($url, '/') . '/api/manual-flow/clear';
+
+        return $this->decodePost('other', $url, [
+            'id' => $flowId,
+        ], [], 'captcha.manual_flow.clear', null, 3);
+    }
 }
