@@ -307,7 +307,9 @@ final class CleanupUnfollowQueueNodeRunner implements NodeRunnerInterface
             return [false, '关系查询响应缺少 be_relation.attribute'];
         }
 
-        return [in_array((int)$attribute, [2, 6], true), null];
+        // attribute 是 bitmask: bit0(1)=我关注对方, bit1(2)=对方关注我, 128=悄悄关注
+        $attr = (int)$attribute;
+        return [($attr & 1) === 1 || $attr === 128, null];
     }
 
     /**
