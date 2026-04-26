@@ -8,7 +8,6 @@ use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityFlow;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNode;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNodeResult;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNodeStatus;
-use Bhp\Plugin\Builtin\ActivityLottery\Internal\Gateway\EraTaskProgressGateway;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Queue\TemporaryFollowStore;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Queue\UnfollowQueueStore;
 use Bhp\Util\Exceptions\RequestException;
@@ -34,7 +33,6 @@ final class EraFollowNodeRunner implements NodeRunnerInterface
     private readonly mixed $followAction;
     private readonly AuthFailureClassifier $authFailureClassifier;
     private readonly ?ApiRelation $apiRelation;
-    private readonly ?EraTaskProgressGateway $taskProgressGateway;
     private readonly ?TemporaryFollowStore $temporaryFollowStore;
     private readonly ?UnfollowQueueStore $unfollowQueueStore;
     private readonly string $accountKey;
@@ -49,13 +47,11 @@ final class EraFollowNodeRunner implements NodeRunnerInterface
         ?callable $followAction = null,
         ?AuthFailureClassifier $authFailureClassifier = null,
         ?ApiRelation $apiRelation = null,
-        ?EraTaskProgressGateway $taskProgressGateway = null,
         ?TemporaryFollowStore $temporaryFollowStore = null,
         ?UnfollowQueueStore $unfollowQueueStore = null,
         string $accountKey = '',
     ) {
         $this->apiRelation = $apiRelation;
-        $this->taskProgressGateway = $taskProgressGateway;
         $this->temporaryFollowStore = $temporaryFollowStore;
         $this->unfollowQueueStore = $unfollowQueueStore;
         $this->accountKey = trim($accountKey);
@@ -108,15 +104,8 @@ final class EraFollowNodeRunner implements NodeRunnerInterface
             ], $now);
         }
 
-        // 独立完成检测：从服务端刷新 task_status，绕过冻结快照。
-        // task_status=3 表示任务已完成且不随取关重置，是跨天完成检测的可靠信号。
-        $serverResult = $this->probeTaskStatusFromServer($taskView->taskId(), $now);
-        if ($serverResult !== null) {
-            return $serverResult;
-        }
-
-        // 次要完成检测：探测所有目标 UID 的关注关系，绕过冻结快照。
-        // 仅当 totalv2 API 无数据时作为同天内（取关前）的兜底。
+        // 同天完成检测：探测所有目标 UID 的关注关系，绕过冻结快照。
+        // 跨天场景由 resolvedTaskStatus() 覆盖（Day 2 的 parse_era_page 会刷新 totalv2 快照）。
         $allFollowedResult = $this->probeAllTargetUidsFollowed($uids);
         if ($allFollowedResult !== null) {
             return $allFollowedResult;
@@ -360,47 +349,7 @@ final class EraFollowNodeRunner implements NodeRunnerInterface
     }
 
     /**
-     * 从服务端刷新 task_status 检测任务完成状态。
-     * task_status=3 表示已完成，task_status=2 表示已完成待领奖，均不应重新关注。
-     * 若 totalv2 API 无数据或请求失败则返回 null，交由后续检测兜底。
-     */
-    private function probeTaskStatusFromServer(string $taskId, int $now): ?ActivityNodeResult
-    {
-        if (!$this->taskProgressGateway instanceof EraTaskProgressGateway || trim($taskId) === '') {
-            return null;
-        }
-
-        try {
-            $snapshots = $this->taskProgressGateway->fetchSnapshots([trim($taskId)]);
-        } catch (RequestException) {
-            return null;
-        } catch (\Throwable) {
-            return null;
-        }
-
-        $snapshot = $snapshots[trim($taskId)] ?? null;
-        if (!is_array($snapshot)) {
-            return null;
-        }
-
-        $taskStatus = (int)($snapshot['task_status'] ?? $snapshot['taskStatus'] ?? 0);
-        if ($taskStatus === 3) {
-            return new ActivityNodeResult(true, '关注任务服务端确认已完成（task_status=3）', [
-                'node_status' => ActivityNodeStatus::SUCCEEDED,
-            ], $now);
-        }
-
-        if ($taskStatus === 2) {
-            return new ActivityNodeResult(true, '关注任务服务端确认已完成待领奖（task_status=2）', [
-                'node_status' => ActivityNodeStatus::SUCCEEDED,
-            ], $now);
-        }
-
-        return null;
-    }
-
-    /**
-     * 独立完成检测：探测所有目标 UID 的关注关系，绕过冻结快照。
+     * 同天完成检测：探测所有目标 UID 的关注关系，绕过冻结快照。
      * 全部已关注 → SUCCEEDED；任一探针失败 → null（保守，不阻断主逻辑）；任一未关注 → null
      * @param string[] $uids
      * @return ?ActivityNodeResult
