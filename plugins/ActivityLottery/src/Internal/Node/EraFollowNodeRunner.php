@@ -16,7 +16,16 @@ final class EraFollowNodeRunner implements NodeRunnerInterface
 {
     private const STEP_DELAY_SECONDS = 15;
     private const RETRY_DELAY_SECONDS = 300;
+    private const MAX_RETRY_COUNT = 8;
     private const RELATION_SOURCE_ACTIVITY_PAGE = 222;
+
+    /** @var int[] B站关注 API 永久性错误码：不可通过重试解决 */
+    private const PERMANENT_FAILURE_CODES = [
+        22003, // 关注上限
+        22009, // 对方拒绝关注
+        22013, // 被对方拉黑
+        22015, // 关注过于频繁
+    ];
 
     /**
      * @var callable(int): array<string, mixed>
@@ -93,6 +102,12 @@ final class EraFollowNodeRunner implements NodeRunnerInterface
             return new ActivityNodeResult(true, '关注任务缺少目标 UID，已跳过', [
                 'node_status' => ActivityNodeStatus::SKIPPED,
             ], $now);
+        }
+
+        // 独立完成检测：直接探测所有目标 UID 的关注关系，绕过冻结快照
+        $allFollowedResult = $this->probeAllTargetUidsFollowed($uids);
+        if ($allFollowedResult !== null) {
+            return $allFollowedResult;
         }
 
         $state = $taskView->taskRuntime();
@@ -208,8 +223,15 @@ final class EraFollowNodeRunner implements NodeRunnerInterface
 
         $this->authFailureClassifier->assertNotAuthFailure($response, '关注任务执行时账号未登录');
         $code = (int)($response['code'] ?? -1);
+        $responseMessage = trim((string)($response['message'] ?? $response['msg'] ?? ''));
         if ($code === -500) {
             return $this->buildWaitingResult($taskView, $state, $now, '关注任务执行失败，稍后重试');
+        }
+        if ($this->isPermanentFailureCode($code)) {
+            return new ActivityNodeResult(true, sprintf('关注任务 UID=%s 永久性失败（code=%d），已跳过: %s', $uid, $code, $responseMessage), [
+                'node_status' => ActivityNodeStatus::SKIPPED,
+                'context_patch' => $taskView->replaceTaskRuntime($state),
+            ], $now);
         }
         if (!$this->isSuccessfulResponse($response)) {
             [$isFollowing, $relationError] = $this->probeFollowingState((int)$uid);
@@ -292,6 +314,11 @@ final class EraFollowNodeRunner implements NodeRunnerInterface
         return $code === 0 || $code === 22014 || str_contains($message, '已关注');
     }
 
+    private function isPermanentFailureCode(int $code): bool
+    {
+        return in_array($code, self::PERMANENT_FAILURE_CODES, true);
+    }
+
     /**
      * @return array{0: bool, 1: ?string}
      */
@@ -315,7 +342,42 @@ final class EraFollowNodeRunner implements NodeRunnerInterface
             return [false, '关系查询响应缺少 be_relation.attribute'];
         }
 
-        return [in_array((int)$attribute, [2, 6], true), null];
+        // attribute 是 bitmask: bit0(1)=我关注对方, bit1(2)=对方关注我, 128=悄悄关注
+        $attr = (int)$attribute;
+        return [($attr & 1) === 1 || $attr === 128, null];
+    }
+
+    /**
+     * 独立完成检测：探测所有目标 UID 的关注关系，绕过冻结快照。
+     * 全部已关注 → SUCCEEDED；任一探针失败 → null（保守，不阻断主逻辑）；任一未关注 → null
+     * @param string[] $uids
+     * @return ?ActivityNodeResult
+     */
+    private function probeAllTargetUidsFollowed(array $uids): ?ActivityNodeResult
+    {
+        if (!$this->apiRelation instanceof ApiRelation) {
+            return null;
+        }
+
+        foreach ($uids as $uid) {
+            $uid = trim((string)$uid);
+            if ($uid === '') {
+                continue;
+            }
+
+            [$isFollowing, $relationError] = $this->probeFollowingState((int)$uid);
+            if ($relationError !== null) {
+                return null;
+            }
+
+            if (!$isFollowing) {
+                return null;
+            }
+        }
+
+        return new ActivityNodeResult(true, '关注任务所有目标 UID 均已关注，任务已完成', [
+            'node_status' => ActivityNodeStatus::SUCCEEDED,
+        ], 0);
     }
 
     private function temporaryFollowState(
@@ -420,6 +482,7 @@ final class EraFollowNodeRunner implements NodeRunnerInterface
     {
         return array_replace($state, [
             'follow_target_index' => $index + 1,
+            'follow_retry_count' => 0,
         ]);
     }
 
@@ -458,10 +521,22 @@ final class EraFollowNodeRunner implements NodeRunnerInterface
         int $now,
         string $message,
     ): ActivityNodeResult {
+        $retryCount = (int)($state['follow_retry_count'] ?? 0) + 1;
+        if ($retryCount >= self::MAX_RETRY_COUNT) {
+            return new ActivityNodeResult(true, '关注任务重试超限（' . $retryCount . '次），已跳过: ' . $message, [
+                'node_status' => ActivityNodeStatus::SKIPPED,
+                'context_patch' => $taskView->replaceTaskRuntime(array_replace($state, [
+                    'follow_retry_count' => $retryCount,
+                ])),
+            ], $now);
+        }
+
         return new ActivityNodeResult(false, $message, [
             'node_status' => ActivityNodeStatus::WAITING,
             'next_run_at' => $now + self::RETRY_DELAY_SECONDS,
-            'context_patch' => $taskView->replaceTaskRuntime($state),
+            'context_patch' => $taskView->replaceTaskRuntime(array_replace($state, [
+                'follow_retry_count' => $retryCount,
+            ])),
         ], $now);
     }
 
