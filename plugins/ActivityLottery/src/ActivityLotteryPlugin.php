@@ -195,6 +195,7 @@ final class ActivityLotteryPlugin extends BasePlugin implements PluginTaskInterf
                 new \Bhp\Plugin\Builtin\ActivityLottery\Internal\Node\EraShareNodeRunner($activityApi),
                 new EraFollowNodeRunner(
                     apiRelation: $relationApi,
+                    taskProgressGateway: $taskProgressGateway,
                     temporaryFollowStore: $temporaryFollowStore,
                     unfollowQueueStore: $unfollowQueueStore,
                     accountKey: $accountKey,
