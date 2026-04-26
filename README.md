@@ -58,6 +58,7 @@
 有疑问一定要先看看文档或Issue里是否存在相同的问题，再考虑其他渠道咨询。
 
 * [使用文档 / DOC.md](./docs/DOC.md)
+* [Windows 部署指南 / SETUP_WINDOWS.md](./docs/SETUP_WINDOWS.md)
 * [验证码文档 / CAPTCHA.md](./docs/CAPTCHA.md)
 * [推送文档 / NOTIFY.md](./docs/NOTIFY.md)
 * [更新日志 / CHANGELOG.md](./docs/CHANGELOG.md)
