@@ -211,4 +211,93 @@ trait CommonTaskInfo
 
         return true;
     }
+
+    /**
+     * 处理complete观看正片 (ogvwatchnew)
+     * @param array $data
+     * @param string $name
+     * @param string $title
+     * @param string $code
+     * @return bool
+     */
+    protected function completeOgvWatch(array $data, string $name, string $title, string $code): bool
+    {
+        $action = $this->getTask(self::VIEW_DELAY_TASK_KEY);
+        if (is_array($action) && ($action['task_code'] ?? null) === $code && ($action['type'] ?? null) === 'ogv_watch') {
+            $remaining = max(0, (int)(($action['execute_at'] ?? time()) - time()));
+            if ($remaining > 0) {
+                $this->scheduleAfter((float)$remaining);
+
+                return false;
+            }
+
+            $context = $action['context'] ?? [];
+            $taskId = (string)($context['task_id'] ?? '');
+            $token = (string)($context['token'] ?? '');
+            $this->setTask(self::VIEW_DELAY_TASK_KEY, null);
+
+            $timestamp = (string)(int)(microtime(true) * 1000);
+            $taskSign = md5("{$timestamp}#df2a46fd53&{$token}");
+            $response = $this->vipPointDeliverTaskApi()->completeWatch($taskId, $token, $taskSign, $timestamp);
+            $this->assertVipPointAuthFailure($response, "大会员积分@{$name}: {$code} 任务执行时账号未登录");
+            if ($response['code']) {
+                $this->warning("大会员积分@{$name}: {$code} 任务执行失败 " . json_encode($response));
+
+                return false;
+            }
+            $this->notice("大会员积分@{$name}: {$code} 任务执行成功");
+
+            return true;
+        }
+
+        $item = $this->getTaskInfo($data, $title, $code);
+        if ($item['state'] == 0) {
+            $response = $this->vipPointScoreTaskApi()->receive($code);
+            $this->assertVipPointAuthFailure($response, "大会员积分@{$name}: {$code} 任务领取时账号未登录");
+            if ($response['code']) {
+                $this->warning("大会员积分@{$name}: {$code} 任务领取失败 " . json_encode($response));
+
+                return false;
+            }
+            $this->notice("大会员积分@{$name}: {$code} 任务领取成功");
+        }
+
+        $drama = $this->getRandomDrama();
+        $this->info("大会员积分@{$name}: {$code} 观看《{$drama['name']}》");
+        $response = $this->vipPointDeliverTaskApi()->materialReceive($drama['ep_id'], $drama['season_id']);
+        $this->assertVipPointAuthFailure($response, "大会员积分@{$name}: {$code} 素材接收时账号未登录");
+        if ($response['code']) {
+            $this->warning("大会员积分@{$name}: {$code} 素材接收失败 " . json_encode($response));
+
+            return false;
+        }
+
+        $countdown = $response['data']['watch_count_down_cfg'] ?? null;
+        if ($countdown === null) {
+            $this->warning("大会员积分@{$name}: {$code} 素材接收响应缺少 watch_count_down_cfg");
+
+            return false;
+        }
+
+        $delaySeconds = (int)ceil(($countdown['milliseconds'] ?? 600000) / 1000) + mt_rand(30, 60);
+        $this->setTask(self::VIEW_DELAY_TASK_KEY, [
+            'task_code' => $code,
+            'type' => 'ogv_watch',
+            'context' => [
+                'task_id' => (string)$countdown['task_id'],
+                'token' => (string)$countdown['token'],
+            ],
+            'execute_at' => time() + $delaySeconds,
+        ]);
+        $this->info("大会员积分@{$name}: {$code} 任务等待 {$delaySeconds}s 后继续执行");
+        $this->scheduleAfter((float)$delaySeconds);
+
+        return false;
+    }
+
+    /**
+     * 随机获取番剧条目
+     * @return array{season_id: string, ep_id: string, name: string}
+     */
+    abstract protected function getRandomDrama(): array;
 }

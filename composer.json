@@ -37,7 +37,8 @@
         "monolog/monolog": "dev-main",
         "symfony/yaml": "8.1.x-dev",
         "amphp/amp": "3.x-dev",
-        "amphp/http-client": "5.x-dev"
+        "amphp/http-client": "5.x-dev",
+        "laravel/prompts": "dev-main"
     },
     "autoload": {
         "psr-4": {

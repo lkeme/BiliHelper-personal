@@ -35,4 +35,34 @@ class ApiTask extends AbstractApiClient
             'csrf' => $this->request()->csrfValue(),
         ], true), self::HEADERS, 'pgc.deliver.complete');
     }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function materialReceive(string $epId, string $seasonId): array
+    {
+        return $this->decodePost('app', 'https://api.bilibili.com/pgc/activity/deliver/material/receive', $this->request()->signCommonPayload([
+            'csrf' => $this->request()->csrfValue(),
+            'spmid' => 'united.player-video-detail.0.0',
+            'season_id' => $seasonId,
+            'activity_code' => '',
+            'ep_id' => $epId,
+            'from_spmid' => 'search.search-result.0.0',
+        ], true), self::HEADERS, 'pgc.deliver.material.receive');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function completeWatch(string $taskId, string $token, string $taskSign, string $timestamp): array
+    {
+        return $this->decodePost('app', 'https://api.bilibili.com/pgc/activity/deliver/task/complete', $this->request()->signCommonPayload([
+            'disable_rcmd' => '0',
+            'task_id' => $taskId,
+            'token' => $token,
+            'task_sign' => $taskSign,
+            'timestamp' => $timestamp,
+            'csrf' => $this->request()->csrfValue(),
+        ], true), self::HEADERS, 'pgc.deliver.complete.watch');
+    }
 }

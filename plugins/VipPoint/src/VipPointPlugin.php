@@ -77,7 +77,7 @@ class VipPointPlugin extends BasePlugin implements PluginTaskInterface
         'viewAnimate' => '浏览追番频道页10秒',
         'viewFilmChannel' => '浏览影视频道页10秒',
         'viewVipMall' => '浏览会员购页面10秒',
-        'viewVideo' => '观看任意正片内容',
+        'viewVideo' => '观看剧集内容',
         'buyVipVideo' => '购买单点付费影片',
         'buyVipProduct' => '购买指定大会员产品',
         'buyVipMall' => '购买指定会员购商品',

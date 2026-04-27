@@ -18,6 +18,10 @@ use Bhp\Util\Exceptions\NoLoginException;
 class MainSitePlugin extends BasePlugin implements PluginTaskInterface
 {
     protected const MAX_NEWLIST_ATTEMPTS = 3;
+    protected const COIN_FETCH_REDUNDANCY_MULTIPLIER = 3;
+    protected const COIN_FETCH_MIN_SIZE = 10;
+    protected const COIN_FETCH_MAX_SIZE = 30;
+    protected const COIN_ALREADY_LIMIT_CODE = 34005;
 
     protected ?MainSiteRuntimeState $state = null;
 
@@ -102,6 +106,8 @@ class MainSitePlugin extends BasePlugin implements PluginTaskInterface
         if (!$this->config('main_site.add_coin', false, 'bool')) {
             return true;
         }
+
+        return $this->runCoinTaskFlow($key);
 
         $state = $this->state();
         if ($this->config('main_site.when_lv6_stop_coin', false, 'bool')) {
@@ -191,6 +197,198 @@ class MainSitePlugin extends BasePlugin implements PluginTaskInterface
      * 获取CoinAlready
      * @return int
      */
+    /**
+     * @throws NoLoginException
+     */
+    protected function runCoinTaskFlow(string $key): bool
+    {
+        $taskKey = $this->getKey();
+        $state = $this->state();
+        $state->syncCoinSession($taskKey);
+
+        if ($this->config('main_site.when_lv6_stop_coin', false, 'bool')) {
+            $userInfo = $this->userProfiles()->navInfo();
+            if ($userInfo->level_info->current_level >= 6) {
+                $this->notice('涓荤珯浠诲姟: 宸叉弧6绾? 鍋滄鎶曞竵');
+
+                return true;
+            }
+        }
+
+        if ($state->hasMarker($key, $taskKey)) {
+            return true;
+        }
+
+        $remaining = $state->coinSessionRemaining($taskKey);
+        if ($remaining === null) {
+            $remaining = $this->initializeCoinSession($key, $taskKey);
+            if ($remaining <= 0) {
+                return true;
+            }
+        }
+
+        $pendingCoins = $state->pendingCoins();
+        if ($pendingCoins === []) {
+            $pendingCoins = $this->buildCoinPendingQueue($remaining, $taskKey);
+            if ($pendingCoins === []) {
+                $this->scheduleAfter(60.0);
+
+                return false;
+            }
+
+            $state->setPendingCoins($pendingCoins);
+        }
+
+        $aid = $pendingCoins[0] ?? null;
+        if (!is_string($aid)) {
+            $this->scheduleAfter(60.0);
+
+            return false;
+        }
+
+        $code = $this->rewardCode($aid);
+        if ($code === self::COIN_ALREADY_LIMIT_CODE) {
+            $state->addRejectedCoin($taskKey, $aid);
+            array_shift($pendingCoins);
+            $this->notice("涓荤珯浠诲姟: $aid 宸茶揪鎶曞竵涓婇檺锛岃烦杩囧綋鍓嶇浠?");
+
+            return $this->advanceCoinQueue($key, $taskKey, $pendingCoins, $remaining);
+        }
+
+        if ($code !== 0) {
+            $state->setPendingCoins($pendingCoins);
+            $this->scheduleAfter(60.0);
+
+            return false;
+        }
+
+        $remaining = $state->decreaseCoinSessionRemaining($taskKey);
+        array_shift($pendingCoins);
+
+        return $this->advanceCoinQueue($key, $taskKey, $pendingCoins, $remaining);
+    }
+
+    protected function initializeCoinSession(string $key, string $taskKey): int
+    {
+        $remaining = $this->resolveCoinRemaining();
+        $state = $this->state();
+        $state->startCoinSession($taskKey, $remaining);
+        if ($remaining > 0) {
+            return $remaining;
+        }
+
+        $this->notice('涓荤珯浠诲姟: 浠婃棩鎶曞竵涓婇檺宸叉弧');
+        $state->markCompleted($key, $taskKey);
+        $state->clearCoinSession($taskKey);
+
+        return 0;
+    }
+
+    protected function resolveCoinRemaining(): int
+    {
+        $estimateNum = $this->config('main_site.add_coin_num', 0, 'int');
+        $stockNum = $this->getCoinStock();
+        $alreadyNum = $this->getCoinAlready();
+        $actualNum = intval(min($estimateNum, $stockNum)) - $alreadyNum;
+
+        $this->info("涓荤珯浠诲姟: 纭竵搴撳瓨 $stockNum 棰勬姇 $estimateNum 宸叉姇 $alreadyNum 杩橀渶鎶曞竵 $actualNum");
+
+        return max(0, $actualNum);
+    }
+
+    /**
+     * @return string[]
+     */
+    protected function buildCoinPendingQueue(int $remaining, string $taskKey): array
+    {
+        $archives = $this->fetchCustomArchives($this->resolveCoinFetchSize($remaining));
+        $rejectedCoins = $this->state()->rejectedCoins($taskKey);
+        $aids = [];
+
+        foreach ($archives as $archive) {
+            if (!is_array($archive)) {
+                continue;
+            }
+
+            $aid = $this->extractArchiveAid($archive);
+            if ($aid === '' || in_array($aid, $rejectedCoins, true) || in_array($aid, $aids, true)) {
+                continue;
+            }
+
+            $aids[] = $aid;
+        }
+
+        if ($aids !== []) {
+            $this->info('涓荤珯浠诲姟: 棰勬姇甯佺浠?' . implode(' ', $aids));
+        }
+
+        return $aids;
+    }
+
+    protected function resolveCoinFetchSize(int $remaining): int
+    {
+        return min(
+            self::COIN_FETCH_MAX_SIZE,
+            max(self::COIN_FETCH_MIN_SIZE, $remaining * self::COIN_FETCH_REDUNDANCY_MULTIPLIER)
+        );
+    }
+
+    /**
+     * @param string[] $pendingCoins
+     */
+    protected function advanceCoinQueue(string $key, string $taskKey, array $pendingCoins, int $remaining): bool
+    {
+        $state = $this->state();
+        if ($remaining <= 0) {
+            $state->markCompleted($key, $taskKey);
+            $state->clearCoinSession($taskKey);
+
+            return true;
+        }
+
+        if ($pendingCoins !== []) {
+            $state->setPendingCoins($pendingCoins);
+            $this->scheduleAfter(1.0);
+
+            return false;
+        }
+
+        $state->clearPendingCoins();
+        $pendingCoins = $this->buildCoinPendingQueue($remaining, $taskKey);
+        if ($pendingCoins === []) {
+            $this->scheduleAfter(60.0);
+
+            return false;
+        }
+
+        $state->setPendingCoins($pendingCoins);
+        $this->scheduleAfter(1.0);
+
+        return false;
+    }
+
+    /**
+     * @throws NoLoginException
+     */
+    protected function rewardCode(string $aid): int
+    {
+        $response = $this->coinApi()->appCoin($aid);
+        $code = (int)($response['code'] ?? -1);
+        $message = is_string($response['message'] ?? null) ? $response['message'] : 'unknown';
+        switch ($code) {
+            case -101:
+                throw new NoLoginException($message);
+            case 0:
+                $this->notice("涓荤珯浠诲姟: $aid 鎶曞竵鎴愬姛");
+
+                return 0;
+            default:
+                $this->warning("涓荤珯浠诲姟: $aid 鎶曞竵澶辫触 {$code} -> {$message}");
+
+                return $code;
+        }
+    }
+
     protected function getCoinAlready(): int
     {
         $response = $this->coinApi()->addLog();

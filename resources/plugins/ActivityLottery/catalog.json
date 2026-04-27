@@ -24,7 +24,10 @@
         "https://www.bilibili.com/blackboard/era/CjEXafdbwDori56o.html",
         "https://www.bilibili.com/blackboard/era/lGJSwxxSX6BCb3vQ.html",
         "https://www.bilibili.com/blackboard/era/hkefjzotVNAEUZNi.html",
-        "https://www.bilibili.com/blackboard/era/j0IzIwc1hGVnb5vy.html"
+        "https://www.bilibili.com/blackboard/era/j0IzIwc1hGVnb5vy.html",
+        "https://www.bilibili.com/blackboard/era/Kadwkf1DomvclulB.html",
+        "https://www.bilibili.com/blackboard/era/yy1592bNyiWDaTyW.html",
+        "https://www.bilibili.com/blackboard/era/2026yixueshengH5.html"
     ],
     "data": [
         {
@@ -35,7 +38,7 @@
             "lottery_id": "4ERA4wloghvzci00",
             "start_time": 1774317600,
             "end_time": 1777996799,
-            "update_time": "2026-04-23 10:53:10"
+            "update_time": "2026-04-26 17:42:07"
         },
         {
             "title": "鸣潮3.2版本创作激励计划",
@@ -45,7 +48,7 @@
             "lottery_id": "4ERA4wloghvli900",
             "start_time": 1773885600,
             "end_time": 1777478399,
-            "update_time": "2026-04-23 10:53:11"
+            "update_time": "2026-04-26 17:42:07"
         },
         {
             "title": "洛克王国世界正式上线S1激励活动-游戏赛道",
@@ -55,7 +58,7 @@
             "lottery_id": "4ERA4wloghvz3500",
             "start_time": 1774454400,
             "end_time": 1777219199,
-            "update_time": "2026-04-23 10:53:11"
+            "update_time": "2026-04-26 17:42:07"
         },
         {
             "title": "寻找好拍档",
@@ -65,7 +68,7 @@
             "lottery_id": "4ERA4wloghvv6t00",
             "start_time": 1774886400,
             "end_time": 1782748800,
-            "update_time": "2026-04-23 10:53:12"
+            "update_time": "2026-04-26 17:42:07"
         },
         {
             "title": "爱瓦就来AI瓦",
@@ -75,7 +78,7 @@
             "lottery_id": "4ERA4wloghvbkz00",
             "start_time": 1775275200,
             "end_time": 1778428800,
-            "update_time": "2026-04-23 10:53:12"
+            "update_time": "2026-04-26 17:42:08"
         },
         {
             "title": "校园小剧场.寻找你的开学搭子",
@@ -85,7 +88,7 @@
             "lottery_id": "4ERA4wloghvli800",
             "start_time": 1773935999,
             "end_time": 1777046399,
-            "update_time": "2026-04-23 10:53:12"
+            "update_time": "2026-04-26 17:42:08"
         },
         {
             "title": "屏实力 出手了",
@@ -95,7 +98,7 @@
             "lottery_id": "4ERA4wloghvkcn00",
             "start_time": 1774368000,
             "end_time": 1777392000,
-            "update_time": "2026-04-23 10:53:12"
+            "update_time": "2026-04-26 17:42:08"
         },
         {
             "title": "假面骑士55周年官方二创大赛",
@@ -105,7 +108,7 @@
             "lottery_id": "4ERA4wloghvbv800",
             "start_time": 1775188800,
             "end_time": 1780243199,
-            "update_time": "2026-04-23 10:53:12"
+            "update_time": "2026-04-26 17:42:08"
         },
         {
             "title": "给投资镀个金",
@@ -115,17 +118,7 @@
             "lottery_id": "4ERA4wloghv0tr00",
             "start_time": 1768492800,
             "end_time": 1777564799,
-            "update_time": "2026-04-23 10:53:13"
-        },
-        {
-            "title": "健康新知计划·2026医学生科普微视频大赛",
-            "url": "https://www.bilibili.com/blackboard/era/2026yixueshengH5.html",
-            "page_id": "3ERAcwloghvjwo00",
-            "activity_id": "1ERAxwloghvtad00",
-            "lottery_id": "4ERA4wloghvlja00",
-            "start_time": 1774627200,
-            "end_time": 1781452799,
-            "update_time": "2026-04-23 10:53:13"
+            "update_time": "2026-04-26 17:42:09"
         },
         {
             "title": "共建敲级部落",
@@ -135,7 +128,7 @@
             "lottery_id": "4ERA4wloghvvt100",
             "start_time": 1775534400,
             "end_time": 1778169599,
-            "update_time": "2026-04-23 10:53:13"
+            "update_time": "2026-04-26 17:42:09"
         },
         {
             "title": "崩坏星穹铁道4.2版本激励计划",
@@ -145,7 +138,7 @@
             "lottery_id": "4ERA4wloghvcgm00",
             "start_time": 1776826800,
             "end_time": 1780243199,
-            "update_time": "2026-04-23 10:53:13"
+            "update_time": "2026-04-26 17:42:09"
         },
         {
             "title": "明日方舟：终末地UP主应援计划-春晓时",
@@ -155,7 +148,7 @@
             "lottery_id": "4ERA4wloghvbhv00",
             "start_time": 1776398400,
             "end_time": 1780588799,
-            "update_time": "2026-04-23 10:53:14"
+            "update_time": "2026-04-26 17:42:10"
         },
         {
             "title": "脆脆鲨一起脆翻天挑战",
@@ -165,7 +158,7 @@
             "lottery_id": "4ERA4wloghvvz700",
             "start_time": 1776614400,
             "end_time": 1780243199,
-            "update_time": "2026-04-23 10:53:14"
+            "update_time": "2026-04-26 17:42:10"
         },
         {
             "title": "装修新思路分享小会",
@@ -175,7 +168,7 @@
             "lottery_id": "4ERA4wloghvv4l00",
             "start_time": 1776614400,
             "end_time": 1788105540,
-            "update_time": "2026-04-23 10:53:14"
+            "update_time": "2026-04-26 17:42:11"
         },
         {
             "title": "春天可不能被喷嚏打断",
@@ -185,17 +178,7 @@
             "lottery_id": "4ERA4wloghvblc00",
             "start_time": 1775577600,
             "end_time": 1777564800,
-            "update_time": "2026-04-23 10:53:14"
-        },
-        {
-            "title": "坎公玩家团激励计划",
-            "url": "https://www.bilibili.com/blackboard/era/yy1592bNyiWDaTyW.html",
-            "page_id": "3ERA3wloghvz1100",
-            "activity_id": "1ERA2wloghvszu00",
-            "lottery_id": "4ERA4wloghvvdw00",
-            "start_time": 1776873600,
-            "end_time": 1779292799,
-            "update_time": "2026-04-23 10:53:15"
+            "update_time": "2026-04-26 17:42:11"
         },
         {
             "title": "ThinkPad小想法大学",
@@ -205,7 +188,7 @@
             "lottery_id": "4ERA4wloghvcg100",
             "start_time": 1776787200,
             "end_time": 1784476799,
-            "update_time": "2026-04-23 10:53:15"
+            "update_time": "2026-04-26 17:42:11"
         },
         {
             "title": "黑白调为健康撑腰",
@@ -215,7 +198,57 @@
             "lottery_id": "4ERA4wloghvvb400",
             "start_time": 1776873600,
             "end_time": 1780588799,
-            "update_time": "2026-04-23 10:53:15"
+            "update_time": "2026-04-26 17:42:11"
+        },
+        {
+            "title": "立直麻将大赛S3",
+            "url": "https://live.bilibili.com/blackboard/era/WKjSMler3H5T0OGr.html",
+            "page_id": "3ERAcwloghvx3v00",
+            "activity_id": "1ERAxwloghvrir00",
+            "lottery_id": "4ERA4wloghvva000",
+            "start_time": 1776787200,
+            "end_time": 1779724800,
+            "update_time": "2026-04-26 17:42:12"
+        },
+        {
+            "title": "火影忍者手游疾风传十周年",
+            "url": "https://www.bilibili.com/blackboard/era/0CCn4JGJuB7NhBbe.html",
+            "page_id": "3ERAcwloghvzrm00",
+            "activity_id": "1ERAxwloghvo4o00",
+            "lottery_id": "4ERA4wloghvv1700",
+            "start_time": 1777003200,
+            "end_time": 1780243199,
+            "update_time": "2026-04-26 17:42:12"
+        },
+        {
+            "title": "bilibili火影手游师徒杯",
+            "url": "https://www.bilibili.com/blackboard/era/o0pKRiQh6nhsuwvl.html",
+            "page_id": "3ERAcwloghvzyk00",
+            "activity_id": "1ERAxwloghvtxx00",
+            "lottery_id": "4ERA4wloghvbbe00",
+            "start_time": 1776398400,
+            "end_time": 1779033599,
+            "update_time": "2026-04-26 17:42:12"
+        },
+        {
+            "title": "王者荣耀UP主杯S4热血开赛！",
+            "url": "https://live.bilibili.com/blackboard/era/cjV9CoTHAJpAy2lH.html",
+            "page_id": "3ERAcwloghvz2800",
+            "activity_id": "1ERAxwloghvrmk00",
+            "lottery_id": "4ERA4wloghvbyn00",
+            "start_time": 1777046400,
+            "end_time": 1778428799,
+            "update_time": "2026-04-26 17:42:13"
+        },
+        {
+            "title": "从容应对自有一套",
+            "url": "https://www.bilibili.com/blackboard/era/1AzZgwv6Sy4K96jB.html",
+            "page_id": "3ERAcwloghvzfa00",
+            "activity_id": "1ERAxwloghvppk00",
+            "lottery_id": "4ERA4wloghvvo100",
+            "start_time": 1776873600,
+            "end_time": 1779551999,
+            "update_time": "2026-04-26 17:42:13"
         }
     ]
 }
