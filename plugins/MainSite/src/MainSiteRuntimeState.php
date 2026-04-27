@@ -42,6 +42,7 @@ final class MainSiteRuntimeState
 
         $this->normalizePendingWatch();
         $this->normalizePendingCoins();
+        $this->normalizeCoinSession();
 
         return $this;
     }
@@ -148,6 +149,82 @@ final class MainSiteRuntimeState
         $this->records['coin_pending'] = [];
     }
 
+    public function syncCoinSession(string $key): void
+    {
+        $this->normalizeCoinSession();
+        if ($this->records['coin_session_key'] === $key) {
+            return;
+        }
+
+        $this->records['coin_session_key'] = $key;
+        $this->records['coin_remaining'] = null;
+        $this->records['coin_rejected'] = [];
+        $this->clearPendingCoins();
+    }
+
+    public function coinSessionRemaining(string $key): ?int
+    {
+        $this->normalizeCoinSession();
+        if ($this->records['coin_session_key'] !== $key) {
+            return null;
+        }
+
+        return $this->records['coin_remaining'];
+    }
+
+    public function startCoinSession(string $key, int $remaining): void
+    {
+        $this->records['coin_session_key'] = $key;
+        $this->records['coin_remaining'] = max(0, $remaining);
+        $this->records['coin_rejected'] = [];
+        $this->normalizeCoinSession();
+    }
+
+    public function decreaseCoinSessionRemaining(string $key, int $delta = 1): int
+    {
+        $remaining = $this->coinSessionRemaining($key) ?? 0;
+        $remaining = max(0, $remaining - max(0, $delta));
+        $this->records['coin_session_key'] = $key;
+        $this->records['coin_remaining'] = $remaining;
+        $this->normalizeCoinSession();
+
+        return $this->records['coin_remaining'];
+    }
+
+    /**
+     * @return string[]
+     */
+    public function rejectedCoins(string $key): array
+    {
+        $this->normalizeCoinSession();
+        if ($this->records['coin_session_key'] !== $key) {
+            return [];
+        }
+
+        return $this->records['coin_rejected'];
+    }
+
+    public function addRejectedCoin(string $key, string $aid): void
+    {
+        $this->normalizeCoinSession();
+        if ($this->records['coin_session_key'] !== $key) {
+            $this->records['coin_rejected'] = [];
+        }
+
+        $this->records['coin_session_key'] = $key;
+        $this->records['coin_rejected'][] = $aid;
+        $this->normalizeCoinSession();
+    }
+
+    public function clearCoinSession(string $key): void
+    {
+        $this->records['coin_session_key'] = $key;
+        $this->records['coin_remaining'] = 0;
+        $this->records['coin_rejected'] = [];
+        $this->clearPendingCoins();
+        $this->normalizeCoinSession();
+    }
+
     /**
      * 标准化待处理观看
      * @return void
@@ -183,6 +260,25 @@ final class MainSiteRuntimeState
 
         $this->records['coin_pending'] = array_values(array_unique(array_filter(
             $pending,
+            static fn (mixed $value): bool => is_string($value)
+        )));
+    }
+
+    private function normalizeCoinSession(): void
+    {
+        $sessionKey = $this->records['coin_session_key'] ?? '';
+        $this->records['coin_session_key'] = is_string($sessionKey) ? $sessionKey : '';
+
+        $remaining = $this->records['coin_remaining'] ?? null;
+        $this->records['coin_remaining'] = is_int($remaining) ? max(0, $remaining) : null;
+
+        $rejected = $this->records['coin_rejected'] ?? [];
+        if (!is_array($rejected)) {
+            $rejected = [];
+        }
+
+        $this->records['coin_rejected'] = array_values(array_unique(array_filter(
+            $rejected,
             static fn (mixed $value): bool => is_string($value)
         )));
     }

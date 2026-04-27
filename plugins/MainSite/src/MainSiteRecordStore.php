@@ -48,6 +48,9 @@ final class MainSiteRecordStore
             'coin' => [],
             'watch_pending' => null,
             'coin_pending' => [],
+            'coin_session_key' => '',
+            'coin_remaining' => null,
+            'coin_rejected' => [],
         ];
     }
 }
