@@ -8,6 +8,24 @@
 
 [comment]: <> (</details>)
 
+## v3.0.7.260427 alpha (2026-04-27)
+
+### Added
+
+- 新增 `BigPointExchange` script 插件，支持通过交互式流程浏览大会员积分商城并发起兑换。
+
+### Changed
+
+- `composer.json` / `composer.lock` 的 Composer 仓库元数据恢复为 TencentCloud 镜像源。
+
+### Fixed
+
+- 修复 `MainSite` 投币任务在命中已投过币稿件时反复重试的问题，改为冗余取稿、跳过当前稿件，并在候选队列耗尽后自动重新获取稿件列表。
+
+### Remarks
+
+- 发布版本提升至 `3.0.7.260427`，同步更新 `README`、`docs/CHANGELOG.md` 与 `resources/version.json`。
+
 ## v3.0.4.260425 alpha (2026-04-25)
 
 ### Added

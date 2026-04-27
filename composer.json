@@ -22,9 +22,9 @@
     },
     "repositories": [
         {
-            "description": "Packagist",
+            "description": "TencentCloud",
             "type": "composer",
-            "url": "https://repo.packagist.org"
+            "url": "https://mirrors.tencent.com/composer/"
         }
     ],
     "require": {
