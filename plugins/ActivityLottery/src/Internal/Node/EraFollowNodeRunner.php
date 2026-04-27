@@ -343,9 +343,9 @@ final class EraFollowNodeRunner implements NodeRunnerInterface
             return [false, '关系查询响应缺少 be_relation.attribute'];
         }
 
-        // attribute 是 bitmask: bit0(1)=我关注对方, bit1(2)=对方关注我, 128=悄悄关注
+        // attribute 是枚举值：0=未关注，1=悄悄关注（历史值），2=已关注，6=已互粉，128=已拉黑
         $attr = (int)$attribute;
-        return [($attr & 1) === 1 || $attr === 128, null];
+        return [ApiRelation::isFollowingAttribute($attr), null];
     }
 
     /**

@@ -25,6 +25,12 @@ class ApiRelation extends AbstractApiClient
     public const ACTION_FOLLOW = 1;
     public const ACTION_UNFOLLOW = 2;
 
+    public const ATTRIBUTE_NONE = 0;
+    public const ATTRIBUTE_SECRET_FOLLOW = 1;
+    public const ATTRIBUTE_FOLLOWING = 2;
+    public const ATTRIBUTE_MUTUAL_FOLLOW = 6;
+    public const ATTRIBUTE_BLOCKED = 128;
+
     public const SOURCE_DEFAULT = 11;
     public const SOURCE_CREATOR_INCENTIVE = 192;
     public const SOURCE_ACTIVITY_PAGE = 222;
@@ -148,6 +154,19 @@ class ApiRelation extends AbstractApiClient
     public function follow(int $uid, int $source = self::SOURCE_ACTIVITY_PAGE): array
     {
         return $this->act($uid, self::ACTION_FOLLOW, $source);
+    }
+
+    /**
+     * B 站 relation attribute 为枚举值，不是 bitmask。
+     * 1=悄悄关注（已下线，兼容历史值），2=已关注，6=已互粉。
+     */
+    public static function isFollowingAttribute(int $attribute): bool
+    {
+        return in_array($attribute, [
+            self::ATTRIBUTE_SECRET_FOLLOW,
+            self::ATTRIBUTE_FOLLOWING,
+            self::ATTRIBUTE_MUTUAL_FOLLOW,
+        ], true);
     }
 
     /**
