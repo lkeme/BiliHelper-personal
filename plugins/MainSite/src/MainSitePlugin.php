@@ -108,89 +108,6 @@ class MainSitePlugin extends BasePlugin implements PluginTaskInterface
         }
 
         return $this->runCoinTaskFlow($key);
-
-        $state = $this->state();
-        if ($this->config('main_site.when_lv6_stop_coin', false, 'bool')) {
-            $userInfo = $this->userProfiles()->navInfo();
-            if ($userInfo->level_info->current_level >= 6) {
-                $this->notice('主站任务: 已满6级, 停止投币');
-
-                return true;
-            }
-        }
-
-        if ($state->hasMarker($key, $this->getKey())) {
-            return true;
-        }
-
-        $pendingCoins = $state->pendingCoins();
-        if ($pendingCoins === []) {
-            $estimateNum = $this->config('main_site.add_coin_num', 0, 'int');
-            $stockNum = $this->getCoinStock();
-            $alreadyNum = $this->getCoinAlready();
-            $actualNum = intval(min($estimateNum, $stockNum)) - $alreadyNum;
-
-            $this->info("主站任务: 硬币库存 $stockNum 预投 $estimateNum 已投 $alreadyNum 还需投币 $actualNum");
-            if ($actualNum <= 0) {
-                $this->notice('主站任务: 今日投币上限已满');
-                $state->markCompleted($key, $this->getKey());
-
-                return true;
-            }
-
-            $aids = $this->fetchCustomArchives($actualNum);
-            $aids = array_map('strval', array_column($aids, 'aid'));
-
-            $this->info('主站任务: 预投币稿件 ' . implode(' ', $aids));
-            $state->setPendingCoins($aids);
-            $pendingCoins = $state->pendingCoins();
-        }
-
-        if ($pendingCoins === []) {
-            return false;
-        }
-
-        $aid = $pendingCoins[0];
-        if (!$this->reward((string) $aid)) {
-            $this->scheduleAfter(60.0);
-
-            return false;
-        }
-
-        array_shift($pendingCoins);
-        if ($pendingCoins !== []) {
-            $state->setPendingCoins($pendingCoins);
-            $this->scheduleAfter(1.0);
-
-            return false;
-        }
-
-        $state->clearPendingCoins();
-        $state->markCompleted($key, $this->getKey());
-
-        return true;
-    }
-
-    /**
-     * @throws NoLoginException
-     */
-    protected function reward(string $aid): bool
-    {
-        $response = $this->coinApi()->appCoin($aid);
-        $code = (int)($response['code'] ?? -1);
-        $message = is_string($response['message'] ?? null) ? $response['message'] : 'unknown';
-        switch ($code) {
-            case -101:
-                throw new NoLoginException($message);
-            case 0:
-                $this->notice("主站任务: $aid 投币成功");
-
-                return true;
-            default:
-                $this->warning("主站任务: $aid 投币失败 {$code} -> {$message}");
-
-                return false;
-        }
     }
 
     /**
@@ -209,7 +126,7 @@ class MainSitePlugin extends BasePlugin implements PluginTaskInterface
         if ($this->config('main_site.when_lv6_stop_coin', false, 'bool')) {
             $userInfo = $this->userProfiles()->navInfo();
             if ($userInfo->level_info->current_level >= 6) {
-                $this->notice('涓荤珯浠诲姟: 宸叉弧6绾? 鍋滄鎶曞竵');
+                $this->notice('主站任务: 已满6级，停止投币');
 
                 return true;
             }
@@ -250,7 +167,7 @@ class MainSitePlugin extends BasePlugin implements PluginTaskInterface
         if ($code === self::COIN_ALREADY_LIMIT_CODE) {
             $state->addRejectedCoin($taskKey, $aid);
             array_shift($pendingCoins);
-            $this->notice("涓荤珯浠诲姟: $aid 宸茶揪鎶曞竵涓婇檺锛岃烦杩囧綋鍓嶇浠?");
+            $this->notice("主站任务: $aid 已达投币上限，跳过当前稿件");
 
             return $this->advanceCoinQueue($key, $taskKey, $pendingCoins, $remaining);
         }
@@ -277,7 +194,7 @@ class MainSitePlugin extends BasePlugin implements PluginTaskInterface
             return $remaining;
         }
 
-        $this->notice('涓荤珯浠诲姟: 浠婃棩鎶曞竵涓婇檺宸叉弧');
+        $this->notice('主站任务: 今日投币上限已满');
         $state->markCompleted($key, $taskKey);
         $state->clearCoinSession($taskKey);
 
@@ -291,7 +208,7 @@ class MainSitePlugin extends BasePlugin implements PluginTaskInterface
         $alreadyNum = $this->getCoinAlready();
         $actualNum = intval(min($estimateNum, $stockNum)) - $alreadyNum;
 
-        $this->info("涓荤珯浠诲姟: 纭竵搴撳瓨 $stockNum 棰勬姇 $estimateNum 宸叉姇 $alreadyNum 杩橀渶鎶曞竵 $actualNum");
+        $this->info("主站任务: 硬币库存 $stockNum 预投 $estimateNum 已投 $alreadyNum 还需投币 $actualNum");
 
         return max(0, $actualNum);
     }
@@ -319,7 +236,7 @@ class MainSitePlugin extends BasePlugin implements PluginTaskInterface
         }
 
         if ($aids !== []) {
-            $this->info('涓荤珯浠诲姟: 棰勬姇甯佺浠?' . implode(' ', $aids));
+            $this->info('主站任务: 预投币稿件 ' . implode(' ', $aids));
         }
 
         return $aids;
@@ -379,11 +296,11 @@ class MainSitePlugin extends BasePlugin implements PluginTaskInterface
             case -101:
                 throw new NoLoginException($message);
             case 0:
-                $this->notice("涓荤珯浠诲姟: $aid 鎶曞竵鎴愬姛");
+                $this->notice("主站任务: $aid 投币成功");
 
                 return 0;
             default:
-                $this->warning("涓荤珯浠诲姟: $aid 鎶曞竵澶辫触 {$code} -> {$message}");
+                $this->warning("主站任务: $aid 投币失败 {$code} -> {$message}");
 
                 return $code;
         }
