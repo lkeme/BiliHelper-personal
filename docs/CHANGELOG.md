@@ -8,6 +8,22 @@
 
 [comment]: <> (</details>)
 
+## v3.1.0.260514 alpha (2026-05-14)
+
+### Changed
+
+- 更新 Composer 依赖锁定版本，同步刷新 Amp、Symfony、PHPUnit 等依赖。
+- 默认 BiliDroid 设备参数更新至 `8.94.0`，build 更新至 `8940300`。
+
+### Fixed
+
+- 修复 `LiveReservation` 在当日专栏数据源缺失时持续重试的问题，改为记录当日未就绪并进入次日调度。
+- 修复 `VipPoint` 每日签到接口响应异常时误判失败的问题，对齐前端 JSON POST 请求，并在响应异常后复查签到状态。
+
+### Remarks
+
+- 发布版本提升至 `3.1.0.260514`，同步更新 `README`、`docs/CHANGELOG.md`、`resources/version.json` 与默认设备参数。
+
 ## v3.0.7.260427 alpha (2026-04-27)
 
 ### Added
