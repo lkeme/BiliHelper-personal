@@ -16,9 +16,7 @@ trait SignIn
             return true;
         }
 
-        $this->_signIn($name);
-
-        return false;
+        return $this->_signIn($name);
     }
 
     /**
@@ -31,11 +29,18 @@ trait SignIn
         $response = $this->vipPointScoreTaskApi()->sign();
         $this->assertVipPointAuthFailure($response, "大会员积分@{$name}: 签到时账号未登录");
         if ($response['code']) {
-            if (($response['message'] ?? null) == '签到失败，请刷新重试') {
+            if ($this->isAlreadySignedResponse($response)) {
                 $this->warning("大会员积分@{$name}: 今日已签到，重复签到");
 
                 return true;
             }
+
+            if ((int)$response['code'] === -500 && $this->_isSignIn([], $name)) {
+                $this->warning("大会员积分@{$name}: 签到响应异常，但复查已完成签到");
+
+                return true;
+            }
+
             $this->warning("大会员积分@{$name}: 签到失败，错误码 {$response['code']} " . json_encode($response, JSON_UNESCAPED_UNICODE));
 
             return false;
@@ -83,5 +88,16 @@ trait SignIn
     protected function isSignIn(array $data, string $name): bool
     {
         return $this->_isSignIn($data, $name);
+    }
+
+    /**
+     * 判断是否已签到响应
+     * @param array<string, mixed> $response
+     * @return bool
+     */
+    private function isAlreadySignedResponse(array $response): bool
+    {
+        return (int)($response['code'] ?? 0) === 6007000
+            && str_contains((string)($response['message'] ?? ''), '签到失败');
     }
 }

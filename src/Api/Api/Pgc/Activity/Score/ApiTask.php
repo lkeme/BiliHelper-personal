@@ -12,6 +12,7 @@ class ApiTask extends AbstractApiClient
      */
     private const PC_HEADERS = [
         'Referer' => 'https://big.bilibili.com/mobile/bigPoint?navhide=1&closable=1',
+        'Content-Type' => 'application/json',
     ];
 
     /**
@@ -37,8 +38,9 @@ class ApiTask extends AbstractApiClient
      */
     public function sign(): array
     {
-        return $this->decodePost('pc', 'https://api.bilibili.com/pgc/activity/score/task/sign2', [
+        return $this->decodePostJson('pc', 'https://api.bilibili.com/pgc/activity/score/task/sign2', [
             'csrf' => $this->request()->csrfValue(),
+            't' => (int)round(microtime(true) * 1000),
         ], self::PC_HEADERS, 'pgc.score.sign');
     }
 
