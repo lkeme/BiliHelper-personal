@@ -73,14 +73,14 @@ final class SpaceArticleSourceService
     {
         $candidates = $this->fetchTodayCandidates($fetchedAt);
         if ($candidates === []) {
-            return SpaceArticleDailySnapshot::pending($bizDate, $fetchedAt);
+            return SpaceArticleDailySnapshot::empty($bizDate, $fetchedAt);
         }
 
         $reservationCandidate = $this->selectLatestCandidate($candidates, $this->config->rules()['reservation']);
         $lotteryCandidate = $this->selectLatestCandidate($candidates, $this->config->rules()['lottery']);
 
         if (!$reservationCandidate instanceof SpaceArticleCandidate && !$lotteryCandidate instanceof SpaceArticleCandidate) {
-            return SpaceArticleDailySnapshot::pending($bizDate, $fetchedAt);
+            return SpaceArticleDailySnapshot::empty($bizDate, $fetchedAt);
         }
 
         $reservationIds = [];

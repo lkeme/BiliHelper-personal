@@ -65,27 +65,36 @@ final class LiveReservationPlugin extends BasePlugin implements PluginTaskInterf
 
         if (!$state->sourceSynced()) {
             $snapshot = $this->articleSource()->snapshotForToday();
-            if (!$snapshot->fetchAttempted) {
-                $this->warning('预约直播: 当日稿件源暂未就绪，稍后重试');
-                $this->stateStore()->save($state->all());
-
-                return TaskResult::after($this->randomDelay(self::DELAY_AFTER_FETCH_EMPTY_MIN, self::DELAY_AFTER_FETCH_EMPTY_MAX));
-            }
-
-            $remoteUpMids = $snapshot->liveReservationUpMids;
             $configuredUpMids = $this->parseConfiguredVmids((string)$this->config('live_reservation.vmids', ''));
-            $mergedUpMids = array_values(array_unique(array_merge($remoteUpMids, $configuredUpMids)));
-            $this->info(sprintf(
-                '预约直播: 获取数据成功，远程源 %d，本地源 %d，总 %d',
-                count($remoteUpMids),
-                count($configuredUpMids),
-                count($mergedUpMids),
-            ));
-            $state->seedUpMidQueue(
-                $snapshot->reservationSourceCvId,
-                $remoteUpMids,
-                $configuredUpMids,
-            );
+            if (!$snapshot->fetchAttempted) {
+                if ($configuredUpMids !== []) {
+                    $this->warning('预约直播: 当日稿件源暂未就绪，将仅使用本地源');
+                    $state->seedUpMidQueue(
+                        null,
+                        [],
+                        $configuredUpMids,
+                    );
+                } else {
+                    $this->warning('预约直播: 当日稿件源暂未就绪，稍后重试');
+                    $this->stateStore()->save($state->all());
+
+                    return TaskResult::after($this->randomDelay(self::DELAY_AFTER_FETCH_EMPTY_MIN, self::DELAY_AFTER_FETCH_EMPTY_MAX));
+                }
+            } else {
+                $remoteUpMids = $snapshot->liveReservationUpMids;
+                $mergedUpMids = array_values(array_unique(array_merge($remoteUpMids, $configuredUpMids)));
+                $this->info(sprintf(
+                    '预约直播: 获取数据成功，远程源 %d，本地源 %d，总 %d',
+                    count($remoteUpMids),
+                    count($configuredUpMids),
+                    count($mergedUpMids),
+                ));
+                $state->seedUpMidQueue(
+                    $snapshot->reservationSourceCvId,
+                    $remoteUpMids,
+                    $configuredUpMids,
+                );
+            }
         }
 
         if ($state->pendingReservationCount() > 0) {

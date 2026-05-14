@@ -38,8 +38,8 @@
 ```yaml
 app:
   bili_a:
-    version: "8.91.1"
-    build: "8911100"
+    version: "8.94.0"
+    build: "8940300"
     channel: "bili"
 platform:
   system:
@@ -86,8 +86,8 @@ platform:
 
 最终效果：
 
-- `app.bili_a.version` 从 `8.91.1` 变成 `8.80.0`
-- `app.bili_a.build` 从 `8911100` 变成 `8800000`
+- `app.bili_a.version` 从 `8.94.0` 变成 `8.80.0`
+- `app.bili_a.build` 从 `8940300` 变成 `8800000`
 - `platform.system.model` 从 `MuMu` 变成 `Pixel 7`
 - `platform.system.os_ver` 从 `7.1.2` 变成 `9`
 - 其他未写的字段仍然继承 `resources/device/default.yaml`
