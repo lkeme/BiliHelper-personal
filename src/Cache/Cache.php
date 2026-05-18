@@ -92,6 +92,14 @@ class Cache
     }
 
     /**
+     * @return string[]
+     */
+    public function scopes(): array
+    {
+        return $this->store()->scopes();
+    }
+
+    /**
      * 处理ensureScopeInitialized
      * @param string $classname
      * @return string

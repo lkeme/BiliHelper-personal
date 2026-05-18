@@ -583,6 +583,7 @@ class Scheduler
     private function recordTaskOutcome(ScheduledTask $task, TaskResult $result, float $referenceNs): void
     {
         if ($result->success) {
+            $this->warnIfSuspiciousSuccessfulResult($task, $result);
             $task->failureCount = 0;
             return;
         }
@@ -602,6 +603,49 @@ class Scheduler
             'plugin' => $task->hook,
             'task' => 'scheduler.circuit',
         ]);
+    }
+
+    private function warnIfSuspiciousSuccessfulResult(ScheduledTask $task, TaskResult $result): void
+    {
+        $message = trim((string)$result->message);
+        if ($message === '' || !$this->isFailureLikeMessage($message)) {
+            return;
+        }
+
+        $this->log->recordWarning("[SCHEDULER] {$task->name} returned successful TaskResult with failure-like message: {$message}", [
+            'plugin' => $task->hook,
+            'task' => 'scheduler.result_semantics',
+        ]);
+    }
+
+    private function isFailureLikeMessage(string $message): bool
+    {
+        $normalized = strtolower($message);
+        foreach ([
+            '失败',
+            '异常',
+            '错误',
+            '未登录',
+            '请先登录',
+            '账号未登录',
+            'csrf',
+            'error',
+            'failed',
+            'failure',
+            'exception',
+            'timeout',
+            'timed out',
+            'unauthorized',
+            'unauthenticated',
+            'not login',
+            'login required',
+        ] as $needle) {
+            if ($needle !== '' && str_contains($normalized, strtolower($needle))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

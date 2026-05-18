@@ -58,6 +58,8 @@ class DynamicLotteryReservationExecutor
     {
         try {
             $raw = $this->request->postText('pc', $url, $payload, $headers);
+        } catch (NoLoginException $exception) {
+            throw $exception;
         } catch (Throwable $throwable) {
             return [
                 'code' => -500,

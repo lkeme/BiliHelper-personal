@@ -11,6 +11,11 @@ interface CacheStoreInterface
     public function databasePath(): string;
 
     /**
+     * @return string[]
+     */
+    public function scopes(): array;
+
+    /**
      * 处理get
      * @param string $scope
      * @param string $key

@@ -26,6 +26,52 @@ final class SqliteCacheStore implements CacheStoreInterface
     }
 
     /**
+     * @return string[]
+     */
+    public function scopes(): array
+    {
+        if (!is_file($this->databasePath) && !$this->connection instanceof \SQLite3) {
+            return [];
+        }
+
+        $connection = null;
+        $result = null;
+
+        try {
+            $connection = $this->connection instanceof \SQLite3
+                ? $this->connection
+                : $this->openExistingConnection();
+            if (!$connection instanceof \SQLite3 || !$this->hasCacheEntriesTable($connection)) {
+                return [];
+            }
+
+            $result = $connection->query('SELECT DISTINCT scope FROM cache_entries ORDER BY scope');
+            if (!$result instanceof \SQLite3Result) {
+                return [];
+            }
+
+            $scopes = [];
+            while (($row = $result->fetchArray(SQLITE3_ASSOC)) !== false) {
+                $scope = trim((string)($row['scope'] ?? ''));
+                if ($scope !== '') {
+                    $scopes[] = $scope;
+                }
+            }
+
+            return $scopes;
+        } catch (\Throwable) {
+            return [];
+        } finally {
+            if ($result instanceof \SQLite3Result) {
+                $result->finalize();
+            }
+            if ($connection instanceof \SQLite3 && $connection !== $this->connection) {
+                $connection->close();
+            }
+        }
+    }
+
+    /**
      * 处理get
      * @param string $scope
      * @param string $key
@@ -153,6 +199,39 @@ final class SqliteCacheStore implements CacheStoreInterface
         $this->schemaManager->ensureCacheSchema($connection);
 
         return $this->connection = $connection;
+    }
+
+    private function openExistingConnection(): ?\SQLite3
+    {
+        if (!is_file($this->databasePath)) {
+            return null;
+        }
+
+        $connection = new \SQLite3($this->databasePath, SQLITE3_OPEN_READONLY);
+        $connection->busyTimeout(5000);
+        $connection->enableExceptions(true);
+
+        return $connection;
+    }
+
+    private function hasCacheEntriesTable(\SQLite3 $connection): bool
+    {
+        $statement = $connection->prepare(
+            "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'cache_entries' LIMIT 1"
+        );
+        if (!$statement instanceof \SQLite3Stmt) {
+            return false;
+        }
+
+        $result = $statement->execute();
+        if (!$result instanceof \SQLite3Result) {
+            return false;
+        }
+
+        $row = $result->fetchArray(SQLITE3_ASSOC);
+        $result->finalize();
+
+        return is_array($row) && ($row['name'] ?? '') === 'cache_entries';
     }
 
     /**
