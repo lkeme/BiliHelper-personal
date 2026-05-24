@@ -6,6 +6,7 @@ use Bhp\Bootstrap\Bootstrap;
 use Bhp\Bootstrap\StartupSelfCheck;
 use Bhp\Cache\Cache;
 use Bhp\Config\Config;
+use Bhp\Console\Cli\RuntimeException as CliRuntimeException;
 use Bhp\Console\Console;
 use Bhp\Console\Command\AppCommand;
 use Bhp\Console\Command\DebugCommand;
@@ -36,6 +37,7 @@ use Bhp\Plugin\Plugin;
 use Bhp\Profile\ProfileCacheResetService;
 use Bhp\Profile\ProfileContext;
 use Bhp\Profile\ProfileInspector;
+use Bhp\Profile\ProfileRuntimeLock;
 use Bhp\Request\Request;
 use Bhp\Request\RequestRetryPolicy;
 use Bhp\Runtime\AppContext;
@@ -44,6 +46,7 @@ use Bhp\Runtime\RuntimeContext;
 use Bhp\Scheduler\Scheduler;
 use Bhp\Scheduler\SchedulerStateStore;
 use Bhp\WbiSign\WbiSign;
+use RuntimeException;
 
 final class AppKernel
 {
@@ -72,10 +75,20 @@ final class AppKernel
         $profileName = Console::parse($this->argv);
         $runtimeMode = Console::resolveMode($this->argv);
         $profileContext = ProfileContext::fromAppRoot($this->appRoot, $profileName);
+        $runtimeLock = new ProfileRuntimeLock($profileContext);
+        if (!$readOnlyRequest) {
+            try {
+                $runtimeLock->acquire('mode:' . $runtimeMode);
+            } catch (RuntimeException $exception) {
+                throw new CliRuntimeException($exception->getMessage(), 0, $exception);
+            }
+        }
+
         $container = new ServiceContainer();
 
         $container->setInstance(ServiceContainer::class, $container);
         $container->setInstance(ProfileContext::class, $profileContext);
+        $container->setInstance(ProfileRuntimeLock::class, $runtimeLock);
         $container->set(Core::class, static fn (ServiceContainer $services): Core => new Core($profileContext));
         $container->set(Config::class, static fn (ServiceContainer $services): Config => new Config($profileContext));
         $container->set(Cache::class, static fn (ServiceContainer $services): Cache => new Cache($profileContext));
@@ -190,7 +203,7 @@ final class AppKernel
             $this->argv,
             $profileContext->appRoot(),
             static fn (): Plugin => $services->get(Plugin::class),
-            static fn (): ProfileCacheResetService => $services->get(ProfileCacheResetService::class)
+            static fn (): ProfileCacheResetService => $services->get(ProfileCacheResetService::class),
         ));
         $container->set(Console::class, fn (ServiceContainer $services): Console => new Console(
             $this->argv,

@@ -29,3 +29,10 @@ worktrees/
 
 .phpunit.*
 captcha/data.json
+
+# Local AI/Trellis tooling
+.ace-tool/
+.agents/
+.codex/
+.trellis/
+AGENTS.md

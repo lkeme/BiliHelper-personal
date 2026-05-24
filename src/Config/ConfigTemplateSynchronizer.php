@@ -24,7 +24,7 @@ final class ConfigTemplateSynchronizer
 
         $backupPath = null;
         if ($targetExists) {
-            $backupPath = $targetPath . '.bak';
+            $backupPath = $this->nextBackupPath($targetPath);
             file_put_contents($backupPath, $targetContent);
         }
 
@@ -126,6 +126,24 @@ final class ConfigTemplateSynchronizer
         }
 
         return "\n";
+    }
+
+    private function nextBackupPath(string $targetPath): string
+    {
+        $timestamp = date('YmdHis');
+        $basePath = $targetPath . '.' . $timestamp . '.bak';
+        if (!is_file($basePath)) {
+            return $basePath;
+        }
+
+        for ($index = 1; $index < 1000; $index++) {
+            $candidate = $targetPath . '.' . $timestamp . '.' . $index . '.bak';
+            if (!is_file($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return $targetPath . '.' . $timestamp . '.' . bin2hex(random_bytes(4)) . '.bak';
     }
 
     /**

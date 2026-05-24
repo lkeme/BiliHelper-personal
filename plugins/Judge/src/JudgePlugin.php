@@ -11,6 +11,10 @@ use Bhp\Scheduler\TaskResult;
 
 class JudgePlugin extends BasePlugin implements PluginTaskInterface
 {
+    private const VOTE_RESULT_SUCCESS = 'success';
+    private const VOTE_RESULT_RETRY = 'retry';
+    private const VOTE_RESULT_SKIP = 'skip';
+
     private AuthFailureClassifier $authFailureClassifier;
     private ?ApiJury $juryApi = null;
 
@@ -74,7 +78,8 @@ class JudgePlugin extends BasePlugin implements PluginTaskInterface
             return;
         }
 
-        if (!$this->vote($case['id'], $case['vote'])) {
+        $voteResult = $this->vote($case['id'], $case['vote']);
+        if ($voteResult === self::VOTE_RESULT_RETRY) {
             $this->scheduleAfter(60.0);
 
             return;
@@ -106,10 +111,19 @@ class JudgePlugin extends BasePlugin implements PluginTaskInterface
 
         $vote = $voteInfo['vote'];
         $voteText = $voteInfo['vote_text'];
-        $this->wait_case[] = ['id' => $caseId, 'vote' => $vote];
         $this->info("風機委員: 案件{$caseId}的預測投票結果 {$vote}({$voteText})");
-        $this->vote($caseId, 0);
-        $this->scheduleAfter(65);
+
+        $voteResult = $this->vote($caseId, 0, 0);
+        if ($voteResult === self::VOTE_RESULT_SUCCESS) {
+            $this->wait_case[] = ['id' => $caseId, 'vote' => $vote];
+            $this->scheduleAfter(65);
+
+            return false;
+        }
+
+        if ($voteResult === self::VOTE_RESULT_RETRY) {
+            $this->scheduleAfter(60.0);
+        }
 
         return false;
     }
@@ -118,20 +132,37 @@ class JudgePlugin extends BasePlugin implements PluginTaskInterface
      * 处理vote
      * @param string $caseId
      * @param int $vote
-     * @return bool
+     * @return self::VOTE_RESULT_*
      */
-    private function vote(string $caseId, int $vote): bool
+    private function vote(string $caseId, int $vote, ?int $insiders = null): string
     {
-        $response = $this->juryApi()->vote($caseId, $vote, '', 0, array_rand([0, 1]));
+        $response = $this->juryApi()->vote($caseId, $vote, '', 0, $insiders ?? array_rand([0, 1]));
         $this->authFailureClassifier->assertNotAuthFailure($response, "風機委員: 案件{$caseId}投票时账号未登录");
 
-        if ($response['code']) {
-            $this->warning("風機委員: 案件{$caseId}投票失败 {$response['code']} -> {$response['message']}");
-            return false;
-        } else {
+        $code = (int)($response['code'] ?? -500);
+        $message = trim((string)($response['message'] ?? ''));
+
+        if ($code === 0) {
             $this->notice("風機委員: 案件{$caseId}投票成功");
-            return true;
+
+            return self::VOTE_RESULT_SUCCESS;
         }
+
+        $logMessage = "風機委員: 案件{$caseId}投票失败 {$code} -> {$message}";
+        if ($this->isTerminalVoteFailure($code, $message)) {
+            $this->warning($logMessage . '，跳过该案件');
+
+            return self::VOTE_RESULT_SKIP;
+        }
+
+        $this->warning($logMessage);
+
+        return self::VOTE_RESULT_RETRY;
+    }
+
+    private function isTerminalVoteFailure(int $code, string $message): bool
+    {
+        return in_array($code, [25009, 25018], true) || str_contains($message, '不能进行此操作');
     }
 
     /**
