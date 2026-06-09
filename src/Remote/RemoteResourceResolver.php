@@ -115,19 +115,24 @@ final class RemoteResourceResolver
             $branch,
             $normalizedPath,
         );
-        $staticalyUrl = sprintf(
-            'https://cdn.staticaly.com/gh/%s/%s/%s/%s',
-            $owner,
-            $repository,
-            $branch,
-            $normalizedPath,
-        );
-
         return array_values(array_unique(array_filter([
             $this->ghProxy->mirror($directRawUrl),
             $directRawUrl,
-            $staticalyUrl,
+            ...$this->jsDelivrUrls($owner, $repository, $branch, $normalizedPath),
         ])));
+    }
+
+    /**
+     * @return string[]
+     */
+    private function jsDelivrUrls(string $owner, string $repository, string $branch, string $path): array
+    {
+        $resource = sprintf('%s/%s@%s/%s', $owner, $repository, $branch, $path);
+
+        return [
+            sprintf('https://fastly.jsdelivr.net/gh/%s', $resource),
+            sprintf('https://cdn.jsdelivr.net/gh/%s', $resource),
+        ];
     }
 
     /**
