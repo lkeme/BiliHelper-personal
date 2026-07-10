@@ -2,8 +2,17 @@
 
 namespace Bhp\Plugin\Builtin\ActivityInfoUpdate\Internal;
 
+use Bhp\Activity\Era\EraPagePayloadExtractor;
+
 final class EraActivityPageParser
 {
+    private readonly EraPagePayloadExtractor $payloadExtractor;
+
+    public function __construct(?EraPagePayloadExtractor $payloadExtractor = null)
+    {
+        $this->payloadExtractor = $payloadExtractor ?? new EraPagePayloadExtractor();
+    }
+
     /**
      * 处理解析
      * @param string $html
@@ -11,12 +20,12 @@ final class EraActivityPageParser
      */
     public function parse(string $html): ?EraActivityPage
     {
-        $initialState = $this->extractAssignedJson($html, 'window.__initialState');
+        $initialState = $this->payloadExtractor->extractState($html);
         if ($initialState === null) {
             return null;
         }
 
-        $pageInfo = $this->extractAssignedJson($html, 'window.__BILIACT_PAGEINFO__') ?? [];
+        $pageInfo = $this->payloadExtractor->extractPageInfo($html);
 
         $topicIds = $this->collectTopicIds($initialState);
         $followTargets = $this->collectFollowTargets($initialState);
@@ -44,88 +53,6 @@ final class EraActivityPageParser
             $liveRoomIds,
             $tasks,
         );
-    }
-
-    /**
-     * @return array<string, mixed>|null
-     */
-    private function extractAssignedJson(string $html, string $assignment): ?array
-    {
-        $position = strpos($html, $assignment);
-        if ($position === false) {
-            return null;
-        }
-
-        $start = strpos($html, '{', $position);
-        if ($start === false) {
-            return null;
-        }
-
-        $json = $this->extractJsonObject($html, $start);
-        if ($json === null) {
-            return null;
-        }
-
-        $decoded = json_decode($json, true);
-
-        return is_array($decoded) ? $decoded : null;
-    }
-
-    /**
-     * 处理extractJSONObject
-     * @param string $source
-     * @param int $start
-     * @return ?string
-     */
-    private function extractJsonObject(string $source, int $start): ?string
-    {
-        $length = strlen($source);
-        $depth = 0;
-        $inString = false;
-        $escaped = false;
-
-        for ($index = $start; $index < $length; $index++) {
-            $char = $source[$index];
-
-            if ($inString) {
-                if ($escaped) {
-                    $escaped = false;
-                    continue;
-                }
-
-                if ($char === '\\') {
-                    $escaped = true;
-                    continue;
-                }
-
-                if ($char === '"') {
-                    $inString = false;
-                }
-
-                continue;
-            }
-
-            if ($char === '"') {
-                $inString = true;
-                continue;
-            }
-
-            if ($char === '{') {
-                $depth++;
-                continue;
-            }
-
-            if ($char !== '}') {
-                continue;
-            }
-
-            $depth--;
-            if ($depth === 0) {
-                return substr($source, $start, $index - $start + 1);
-            }
-        }
-
-        return null;
     }
 
     /**
