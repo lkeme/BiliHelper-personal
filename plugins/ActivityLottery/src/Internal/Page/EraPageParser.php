@@ -2,17 +2,24 @@
 
 namespace Bhp\Plugin\Builtin\ActivityLottery\Internal\Page;
 
+use Bhp\Activity\Era\EraPagePayloadExtractor;
+
 final class EraPageParser
 {
+    private readonly EraPagePayloadExtractor $payloadExtractor;
+
     /**
      * 初始化 EraPageParser
      * @param EraTaskCapabilityResolver $capabilityResolver
      * @param callable|null $linkedPageHtmlFetcher
+     * @param EraPagePayloadExtractor|null $payloadExtractor
      */
     public function __construct(
         private readonly EraTaskCapabilityResolver $capabilityResolver = new EraTaskCapabilityResolver(),
         private readonly mixed $linkedPageHtmlFetcher = null,
+        ?EraPagePayloadExtractor $payloadExtractor = null,
     ) {
+        $this->payloadExtractor = $payloadExtractor ?? new EraPagePayloadExtractor();
     }
 
     /**
@@ -22,12 +29,12 @@ final class EraPageParser
      */
     public function parse(string $html): ?EraPageSnapshot
     {
-        $initialState = $this->extractAssignedJson($html, 'window.__initialState');
+        $initialState = $this->payloadExtractor->extractState($html);
         if ($initialState === null) {
             return null;
         }
 
-        $pageInfo = $this->extractAssignedJson($html, 'window.__BILIACT_PAGEINFO__') ?? [];
+        $pageInfo = $this->payloadExtractor->extractPageInfo($html);
 
         $activityId = trim((string)(
             $this->extractNested($initialState, ['EraLottery', 'config', 'activity_id'])
@@ -617,7 +624,7 @@ final class EraPageParser
             return [];
         }
 
-        $state = $this->extractAssignedJson($html, 'window.__initialState');
+        $state = $this->payloadExtractor->extractState($html);
         if (!is_array($state)) {
             $cache[$url] = [];
             return [];
@@ -790,82 +797,6 @@ final class EraPageParser
         }
 
         return array_values($unique);
-    }
-
-    /**
-     * @return array<string, mixed>|null
-     */
-    private function extractAssignedJson(string $html, string $assignment): ?array
-    {
-        $position = strpos($html, $assignment);
-        if ($position === false) {
-            return null;
-        }
-
-        $start = strpos($html, '{', $position);
-        if ($start === false) {
-            return null;
-        }
-
-        $json = $this->extractJsonObject($html, $start);
-        if ($json === null) {
-            return null;
-        }
-
-        $decoded = json_decode($json, true);
-        return is_array($decoded) ? $decoded : null;
-    }
-
-    /**
-     * 处理extractJSONObject
-     * @param string $source
-     * @param int $start
-     * @return ?string
-     */
-    private function extractJsonObject(string $source, int $start): ?string
-    {
-        $length = strlen($source);
-        $depth = 0;
-        $inString = false;
-        $escaped = false;
-
-        for ($i = $start; $i < $length; $i++) {
-            $char = $source[$i];
-
-            if ($inString) {
-                if ($escaped) {
-                    $escaped = false;
-                    continue;
-                }
-                if ($char === '\\') {
-                    $escaped = true;
-                    continue;
-                }
-                if ($char === '"') {
-                    $inString = false;
-                }
-                continue;
-            }
-
-            if ($char === '"') {
-                $inString = true;
-                continue;
-            }
-            if ($char === '{') {
-                $depth++;
-                continue;
-            }
-            if ($char !== '}') {
-                continue;
-            }
-
-            $depth--;
-            if ($depth === 0) {
-                return substr($source, $start, $i - $start + 1);
-            }
-        }
-
-        return null;
     }
 
     /**

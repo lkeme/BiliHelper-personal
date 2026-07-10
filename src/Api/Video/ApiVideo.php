@@ -22,6 +22,30 @@ use Bhp\Request\Request;
 
 class ApiVideo extends AbstractApiClient
 {
+    private const REGION_FEED_MAX_REQUEST_COUNT = 15;
+
+    /**
+     * 新版频道 feed 的 from_region。旧国创频道已不走普通稿件 feed，合并到动画；旧生活频道合并到生活兴趣。
+     */
+    private const REGION_FEED_IDS = [
+        1005, // 动画
+        1005, // 国创
+        1003, // 音乐
+        1004, // 舞蹈
+        1008, // 游戏
+        1010, // 知识
+        1012, // 科技数码
+        1013, // 汽车
+        1030, // 生活兴趣
+        1020, // 美食
+        1024, // 动物
+        1007, // 鬼畜
+        1014, // 时尚美妆
+        1009, // 资讯
+        1002, // 娱乐
+        1001, // 影视
+    ];
+
     /**
      * 初始化 ApiVideo
      * @param Request $request
@@ -54,14 +78,89 @@ class ApiVideo extends AbstractApiClient
      */
     public function dynamicRegion(int $ps = 30): array
     {
-        // 动画1 国创168 音乐3 舞蹈129 游戏4 知识36 科技188 汽车223 生活160 美食211 动物圈127 鬼畜119 时尚155 资讯202 娱乐5 影视181
-        $rids = [1, 168, 3, 129, 4, 36, 188, 223, 160, 211, 127, 119, 155, 202, 5, 181];
-        $url = 'https://api.bilibili.com/x/web-interface/dynamic/region';
-        $payload = [
-            'ps' => $ps,
-            'rid' => $rids[array_rand($rids)],
+        $targetCount = max(1, $ps);
+        $archives = [];
+        $seenArchiveIds = [];
+        $lastResponse = null;
+        $attempts = min(
+            count(self::REGION_FEED_IDS),
+            (int)ceil($targetCount / self::REGION_FEED_MAX_REQUEST_COUNT) + 2
+        );
+
+        for ($attempt = 0; $attempt < $attempts; $attempt++) {
+            $response = $this->regionFeedRcmd(min(
+                self::REGION_FEED_MAX_REQUEST_COUNT,
+                $targetCount - count($archives)
+            ));
+            $lastResponse = $response;
+            if (($response['code'] ?? 0) !== 0) {
+                if ($archives !== []) {
+                    break;
+                }
+
+                continue;
+            }
+
+            $items = $response['data']['archives'] ?? null;
+            if (!is_array($items)) {
+                continue;
+            }
+
+            foreach ($items as $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+
+                $archiveId = $this->archiveIdentity($item);
+                if ($archiveId !== '') {
+                    if (isset($seenArchiveIds[$archiveId])) {
+                        continue;
+                    }
+
+                    $seenArchiveIds[$archiveId] = true;
+                }
+
+                $archives[] = $item;
+                if (count($archives) >= $targetCount) {
+                    break 2;
+                }
+            }
+        }
+
+        if ($archives === []) {
+            return is_array($lastResponse) ? $lastResponse : [
+                'code' => -500,
+                'message' => 'video.region_feed_rcmd 响应格式异常',
+                'data' => [],
+            ];
+        }
+
+        return [
+            'code' => 0,
+            'message' => 'OK',
+            'data' => [
+                'archives' => $archives,
+            ],
         ];
-        return $this->decodeGet('other', $url, $payload, [], 'video.dynamic_region');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function regionFeedRcmd(int $requestCount): array
+    {
+        $url = 'https://api.bilibili.com/x/web-interface/region/feed/rcmd';
+        $payload = [
+            'display_id' => 1,
+            'request_cnt' => $this->normalizeRegionFeedRequestCount($requestCount),
+            'from_region' => self::REGION_FEED_IDS[array_rand(self::REGION_FEED_IDS)],
+            'device' => 'web',
+            'plat' => 30,
+            'web_location' => '333.40138',
+        ];
+        return $this->decodeGet('other', $url, $payload, [
+            'referer' => 'https://www.bilibili.com/',
+        ], 'video.region_feed_rcmd');
     }
 
     /**
@@ -93,5 +192,24 @@ class ApiVideo extends AbstractApiClient
             'ps' => $ps,
         ];
         return $this->decodeGet('other', $url, $payload, [], 'video.top_feed_rcmd');
+    }
+
+    private function normalizeRegionFeedRequestCount(int $count): int
+    {
+        return max(1, min(self::REGION_FEED_MAX_REQUEST_COUNT, $count));
+    }
+
+    /**
+     * @param array<string, mixed> $archive
+     */
+    private function archiveIdentity(array $archive): string
+    {
+        foreach (['aid', 'id', 'bvid'] as $key) {
+            if (isset($archive[$key]) && (is_int($archive[$key]) || is_string($archive[$key]))) {
+                return (string)$archive[$key];
+            }
+        }
+
+        return '';
     }
 }
