@@ -2,7 +2,7 @@
 
 [//]: # (<p align=center><img width="300px" src="https://i.loli.net/2018/04/20/5ad97bd395912.jpeg"></p>)
 
-<div align=center> 
+<div align=center>
 
 [![](https://img.shields.io/badge/Author-Lkeme-blueviolet "作者")](https://github.com/lkeme/ )
 ![](https://img.shields.io/badge/dynamic/json?label=GitHub%20Followers&query=%24.data.totalSubs&url=https%3A%2F%2Fapi.spencerwoo.com%2Fsubstats%2F%3Fsource%3Dgithub%26queryKey%3Dlkeme&labelColor=282c34&color=181717&logo=github&longCache=true "关注数量")
@@ -22,7 +22,7 @@
 
 <p align=center>
 
-<img src="https://img.shields.io/badge/Version-3.1.0.260514-orange.svg?longCache=true&style=for-the-badge" alt="">
+<img src="https://img.shields.io/badge/Version-3.2.0.260810-orange.svg?longCache=true&style=for-the-badge" alt="">
 <img src="https://img.shields.io/badge/PHP-8.5+-green.svg?longCache=true&style=for-the-badge" alt="">
 <img src="https://img.shields.io/badge/Composer-latest-blueviolet.svg?longCache=true&style=for-the-badge" alt="">
 <img src="https://img.shields.io/badge/License-mit-blue.svg?longCache=true&style=for-the-badge" alt="">
@@ -49,7 +49,7 @@
 
 ## 👤 游客访问
 
-<p align=center> 
+<p align=center>
    <img align=center src="https://count.getloli.com/get/@:BiliHelper-personal"  alt=":BiliHelper-personal"/>
 </p>
 
@@ -87,7 +87,7 @@ Group: [602815575](https://jq.qq.com/?_wv=1027&k=UaalVexM) | **请不要来问�
 [//]: # (<details open><summary>点击展开</summary>)
 <details><summary><strong><code>已经藏起来啦~~ 点击展开 嘻嘻~</code></strong></summary>
 
-<br>  
+<br>
 
 | plugin          | version | description    | author            | pid  | cycle     | status |
 |-----------------|---------|----------------|-------------------|------|-----------|--------|
@@ -106,10 +106,8 @@ Group: [602815575](https://jq.qq.com/?_wv=1027&k=UaalVexM) | **请不要来问�
 | PolishMedal        | 0.0.1   | 直播中点赞点亮勋章   | possible318/Lkeme | 2011 | 30-60(秒)   | √      |
 | ActivityLottery    | 0.0.1   | 转盘活动           | Lkeme             | 2012 | 3-7(分钟)   | √      |
 | AwardRecords       | 0.0.1   | 获奖记录           | Lkeme             | 2013 | 5(分钟)     | √      |
-| EraSummerCarnival  | 0.0.1   | 次元奇旅暑期狂欢节     | Lkeme             | 2014 | 10-20(分钟) | √      |
 | BatchUnfollow      | 0.0.1   | 批量取消关注         | Lkeme             | 3000 | manual      | √      |
 | ActivityInfoUpdate | 0.0.1   | 更新活动索引         | Lkeme             | 3001 | manual      | √      |
-| BigPointExchange   | 0.0.1   | 大会员积分商城兑换     | Lkeme             | 3002 | manual      | √      |
 
 </details>
 

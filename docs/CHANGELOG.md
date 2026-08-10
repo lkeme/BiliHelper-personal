@@ -8,26 +8,24 @@
 
 [comment]: <> (</details>)
 
-## 未发布
+## v3.2.0.260810 alpha (2026-08-10)
 
 ### Added
 
-- 新增 `EraSummerCarnival` 插件，覆盖 2026「次元奇旅」暑期狂欢节的每日签到、累计签到领奖（7/14/30/45 天，45 天为大会员月卡）、板块内直播间观看、关注类任务与抽奖。活动配置从活动页实时解析，`CarnivalIds` 仅作兜底；manifest `valid_until` 到期后自动跳过装配。
-- 新增 `ApiEvaOperation`（`/x/activity_components/eva_operation/list`），用于获取活动运营位内的直播间与主播关注状态。
+- 新增 `EraSummerCarnival` 插件，支持 2026「次元奇旅」暑期狂欢节的每日签到、累计签到领奖、板块内直播间观看、关注任务与抽奖，默认关闭。
+- 新增 `ApiEvaOperation`，用于获取活动运营位内的直播间与主播关注状态。
 
 ### Changed
 
-- 将 `TemporaryFollowStore` / `UnfollowQueueStore` 从 `ActivityLottery` 提取到 `src/Automation/Follow/`，并抽出 `BizDate` 解除对 `ActivityFlow` 的依赖，供多个活动插件按 `scope` 共用。表名、表结构与 `scope` 语义不变，无数据迁移。
-- `README` 插件表补齐此前遗漏的 `BigPointExchange`（pid 3002）。
+- 将 `TemporaryFollowStore` / `UnfollowQueueStore` 提取到 `src/Automation/Follow/`，新增 `BizDate` 解除插件依赖，多个活动插件可按 `scope` 共用，无数据迁移。
+- `README` 插件表补齐遗漏的 `BigPointExchange`。
 
 ### Remarks
 
-- `EraSummerCarnival` 默认 `enable = false`，需手动开启。
-- 该插件的关注任务只会取关本插件自己关注的 UP 主：关注前做权威关系复核，判定为原有关注的记为 `precheck_following=true` 且不入取关队列，出队时另有第二道保险拦截；关注状态无法判定时一律跳过。
-- 幂等判据以服务端 `totalv2` 进度为准：签到 / 观看在服务端进度已满时直接跳过，本地状态丢失也不会重复执行。
-- 频率控制：manifest 声明了 `governance_hosts` / `governance_group` 等治理元数据，由调度器按主机窗口流量与治理组并发预算自动退避；观看心跳走快车道不重复查任务进度；抽奖间隔 20–40 秒随机，避免与其他插件锁步。
-- `anchorConfigList` 目标池经实测只推进「关注品牌官号」任务，该任务达成后插件停止关注，不做无进度的无效请求。两个稿件类关注任务需要 bvid→mid 目标池，需新增接口，暂未实现。
-- 该活动此前收录于 `resources/plugins/ActivityLottery/catalog.json`。插件内置接管冲突自守卫：当 `ActivityLottery` 处于启用状态且该活动仍在其 catalog 中时，本插件跳过执行并给出交接提示。
+- `EraSummerCarnival` 的关注任务只取关自己关注的 UP 主，关注前做关系复核，取关时另有二次校验，不会影响原有关注。
+- 幂等以服务端任务进度为准，本地状态丢失也不会重复签到或重复观看。
+- 通过 manifest 治理元数据限制请求频率，避免影响其他插件。
+- 发布版本提升至 `3.2.0.260810`，同步更新 `README`、`docs/CHANGELOG.md` 与 `resources/version.json`。
 
 ## v3.1.0.260514 alpha (2026-05-14)
 
