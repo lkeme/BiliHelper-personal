@@ -106,8 +106,10 @@ Group: [602815575](https://jq.qq.com/?_wv=1027&k=UaalVexM) | **请不要来问�
 | PolishMedal        | 0.0.1   | 直播中点赞点亮勋章   | possible318/Lkeme | 2011 | 30-60(秒)   | √      |
 | ActivityLottery    | 0.0.1   | 转盘活动           | Lkeme             | 2012 | 3-7(分钟)   | √      |
 | AwardRecords       | 0.0.1   | 获奖记录           | Lkeme             | 2013 | 5(分钟)     | √      |
+| EraSummerCarnival  | 0.0.1   | 次元奇旅暑期狂欢节     | Lkeme             | 2014 | 10-20(分钟) | √      |
 | BatchUnfollow      | 0.0.1   | 批量取消关注         | Lkeme             | 3000 | manual      | √      |
 | ActivityInfoUpdate | 0.0.1   | 更新活动索引         | Lkeme             | 3001 | manual      | √      |
+| BigPointExchange   | 0.0.1   | 大会员积分商城兑换     | Lkeme             | 3002 | manual      | √      |
 
 </details>
 
