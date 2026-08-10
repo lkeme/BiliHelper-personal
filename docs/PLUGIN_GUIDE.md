@@ -49,6 +49,11 @@
 - runtime 负责窗口判断、建流、落库、调度和单步推进
 - 生命周期日志由独立的 `ActivityLotteryLifecycleLogger` 负责
 - 公共观看能力放在 `src/Automation/Watch/*`，避免插件内部重复造轮子
+- 公共关注能力放在 `src/Automation/Follow/*`（临时关注记账 + 延迟取关队列），按 `scope` 构造参数在插件间隔离
+
+`EraSummerCarnival` 是同一模式的轻量版：单活动、无远程目录，runner 按任务拆分。
+
+每日时间窗口不需要插件自己实现 —— `Plugin::canItRun()` 已依据 `plugin.json` 的 `start` / `end` 做 `isWithinTimeRange` 门禁，窗口外 `runTask()` 直接返回 `keepSchedule()`。但要注意：一旦插件内调用 `pluginWindowStartAt()` / `nextPluginStartTaskResult()`，`plugin.json` 就**必须**声明 `start` / `end`，否则 `pluginScheduleTime()` 会抛 `LogicException`。
 
 ## 插件 manifest
 

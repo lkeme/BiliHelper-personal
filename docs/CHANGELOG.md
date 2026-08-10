@@ -8,6 +8,23 @@
 
 [comment]: <> (</details>)
 
+## 未发布
+
+### Added
+
+- 新增 `EraSummerCarnival` 插件，覆盖 2026「次元奇旅」暑期狂欢节的每日签到、累计签到领奖（7/14/30/45 天，45 天为大会员月卡）、板块内直播间观看、关注类任务与抽奖。活动配置从活动页实时解析，`CarnivalIds` 仅作兜底；manifest `valid_until` 到期后自动跳过装配。
+- 新增 `ApiEvaOperation`（`/x/activity_components/eva_operation/list`），用于获取活动运营位内的直播间与主播关注状态。
+
+### Changed
+
+- 将 `TemporaryFollowStore` / `UnfollowQueueStore` 从 `ActivityLottery` 提取到 `src/Automation/Follow/`，并抽出 `BizDate` 解除对 `ActivityFlow` 的依赖，供多个活动插件按 `scope` 共用。表名、表结构与 `scope` 语义不变，无数据迁移。
+- `README` 插件表补齐此前遗漏的 `BigPointExchange`（pid 3002）。
+
+### Remarks
+
+- `EraSummerCarnival` 的关注任务只会取关本插件自己关注的 UP 主：关注前做权威关系复核，判定为原有关注的记为 `precheck_following=true` 且不入取关队列，出队时另有第二道保险拦截；关注状态无法判定时一律跳过。
+- 该活动此前收录于 `resources/plugins/ActivityLottery/catalog.json`。插件内置接管冲突自守卫：当 `ActivityLottery` 处于启用状态且该活动仍在其 catalog 中时，本插件跳过执行并给出交接提示。
+
 ## v3.1.0.260514 alpha (2026-05-14)
 
 ### Changed
