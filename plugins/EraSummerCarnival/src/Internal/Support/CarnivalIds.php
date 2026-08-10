@@ -72,6 +72,21 @@ final class CarnivalIds
     }
 
     /**
+     * 主播轮播池（EvaAnchorCarousel.anchorConfigList）实际计入的关注任务。
+     *
+     * 2026-08-10 实测确认：用该池关注 2 个目标后，仅 6ERAxwloghv0ll00（关注品牌官号）
+     * 由 0/15 变为 2/15，另两个稿件类关注任务保持 0/3 未动；取关后计数不回退
+     * （与任务配置 backwardsCounters=false 一致）。
+     *
+     * 因此该池只能推进本任务。官号任务达成后若继续用该池关注，进度不可能再变，
+     * 属于纯无效写请求，FollowTaskRunner 会据此停止。
+     *
+     * 另两个稿件类任务需要「稿件 UP 主」池（候选来源为 YunqueVideoCard 的 bvid → owner.mid），
+     * 该能力需新增接口，本期未实现。
+     */
+    public const ANCHOR_POOL_TASK_ID = '6ERAxwloghv0ll00';
+
+    /**
      * 需要纳入 totalv2 批量查询的任务 ID
      *
      * @return string[]

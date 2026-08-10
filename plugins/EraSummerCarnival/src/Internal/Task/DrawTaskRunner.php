@@ -10,7 +10,11 @@ use Bhp\Plugin\Builtin\EraSummerCarnival\Internal\State\CarnivalStateStore;
  * 抽奖（R6）。
  *
  * 抽奖次数为 0 时不发起 do 请求（避免空转）。
- * 单 tick 只抽一次，仍有次数则返回 again() 让编排层短延迟继续，避免长时间占用事件循环。
+ * 单 tick 只抽一次，仍有次数则返回 again() 让编排层继续。
+ *
+ * 间隔取 20-40 秒随机：抽奖次数可能累积到几十次，若用固定短间隔会让调度器
+ * 在几分钟内被本插件高频占用并集中打同一主机，影响其他插件的请求预算。
+ * 随机化同时避免与其他插件形成锁步。
  *
  * 响应结构（取自 ActivityLottery/ExecuteDrawNodeRunner）：
  *   myTimes   → data.times
@@ -18,7 +22,8 @@ use Bhp\Plugin\Builtin\EraSummerCarnival\Internal\State\CarnivalStateStore;
  */
 final class DrawTaskRunner implements TaskRunnerInterface
 {
-    private const NEXT_DRAW_DELAY_SECONDS = 8.0;
+    private const NEXT_DRAW_MIN_DELAY_SECONDS = 20;
+    private const NEXT_DRAW_MAX_DELAY_SECONDS = 40;
 
     private readonly ApiActivity $apiActivity;
     private readonly CarnivalStateStore $stateStore;
@@ -104,8 +109,16 @@ final class DrawTaskRunner implements TaskRunnerInterface
         }
 
         return $remaining > 0
-            ? CarnivalStepResult::again(self::NEXT_DRAW_DELAY_SECONDS, "抽奖完成，剩余 {$remaining} 次")
+            ? CarnivalStepResult::again($this->nextDrawDelaySeconds(), "抽奖完成，剩余 {$remaining} 次")
             : CarnivalStepResult::done('抽奖完成，次数已用尽');
+    }
+
+    /**
+     * 下次抽奖间隔（随机化，避免高频集中打同一主机、也避免与其他插件锁步）
+     */
+    private function nextDrawDelaySeconds(): float
+    {
+        return (float)mt_rand(self::NEXT_DRAW_MIN_DELAY_SECONDS, self::NEXT_DRAW_MAX_DELAY_SECONDS);
     }
 
     /**

@@ -22,7 +22,11 @@
 
 ### Remarks
 
-- `EraSummerCarnival` 的关注任务只会取关本插件自己关注的 UP 主：关注前做权威关系复核，判定为原有关注的记为 `precheck_following=true` 且不入取关队列，出队时另有第二道保险拦截；关注状态无法判定时一律跳过。
+- `EraSummerCarnival` 默认 `enable = false`，需手动开启。
+- 该插件的关注任务只会取关本插件自己关注的 UP 主：关注前做权威关系复核，判定为原有关注的记为 `precheck_following=true` 且不入取关队列，出队时另有第二道保险拦截；关注状态无法判定时一律跳过。
+- 幂等判据以服务端 `totalv2` 进度为准：签到 / 观看在服务端进度已满时直接跳过，本地状态丢失也不会重复执行。
+- 频率控制：manifest 声明了 `governance_hosts` / `governance_group` 等治理元数据，由调度器按主机窗口流量与治理组并发预算自动退避；观看心跳走快车道不重复查任务进度；抽奖间隔 20–40 秒随机，避免与其他插件锁步。
+- `anchorConfigList` 目标池经实测只推进「关注品牌官号」任务，该任务达成后插件停止关注，不做无进度的无效请求。两个稿件类关注任务需要 bvid→mid 目标池，需新增接口，暂未实现。
 - 该活动此前收录于 `resources/plugins/ActivityLottery/catalog.json`。插件内置接管冲突自守卫：当 `ActivityLottery` 处于启用状态且该活动仍在其 catalog 中时，本插件跳过执行并给出交接提示。
 
 ## v3.1.0.260514 alpha (2026-05-14)

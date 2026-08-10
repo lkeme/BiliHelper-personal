@@ -59,7 +59,7 @@ final class EraSummerCarnivalPlugin extends BasePlugin implements PluginTaskInte
     {
         $this->resetTaskResult();
 
-        if (!$this->enabled(self::CONFIG_KEY, true)) {
+        if (!$this->enabled(self::CONFIG_KEY)) {
             return TaskResult::keepSchedule();
         }
 

@@ -7,6 +7,7 @@ use Bhp\Automation\Follow\TemporaryFollowStore;
 use Bhp\Automation\Follow\UnfollowQueueStore;
 use Bhp\Login\AuthFailureClassifier;
 use Bhp\Plugin\Builtin\EraSummerCarnival\Internal\Follow\FollowStateResolver;
+use Bhp\Plugin\Builtin\EraSummerCarnival\Internal\Support\CarnivalIds;
 use Bhp\Plugin\Builtin\EraSummerCarnival\Internal\Support\TaskStatus;
 
 /**
@@ -87,10 +88,19 @@ final class FollowTaskRunner implements TaskRunnerInterface
             return CarnivalStepResult::skipped('关注: 关注类任务均已达成');
         }
 
-        // counter 变动观察：任务↔目标池对应关系尚未证实，逐轮记录以便回溯
+        // 记账与停止判据都必须绑定「当前目标池实际计入的那个任务」。
+        // 实测 anchorConfigList 池只推进 ANCHOR_POOL_TASK_ID；若该任务已达成，
+        // 继续用同一池关注不会让任何 counter 变动，属于纯无效写请求，必须停。
+        $taskId = CarnivalIds::ANCHOR_POOL_TASK_ID;
+        if (!in_array($taskId, $pendingTaskIds, true)) {
+            return CarnivalStepResult::skipped(
+                '关注: 当前目标池对应的任务已达成；其余关注任务需要稿件 UP 主池（本期未实现），跳过'
+            );
+        }
+
+        // counter 变动观察：逐轮记录三个任务进度，便于回溯归属
         $this->logCounterSnapshot($context);
 
-        $taskId = $pendingTaskIds[0];
         $activityId = $snapshot->activityId;
         $processed = 0;
         $stateChecks = 0;

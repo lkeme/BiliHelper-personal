@@ -79,6 +79,15 @@ final class WatchLiveTaskRunner implements TaskRunnerInterface
             return CarnivalStepResult::skipped('观看直播: 今日任务已达成');
         }
 
+        // 服务端进度已满但 task_status 尚未翻转时同样不再观看，
+        // 避免本地 watch_progress 丢失（换机、清缓存）后重复刷满一遍。
+        $taskLimit = $context->taskLimit($taskId);
+        if ($taskLimit > 0 && $context->taskCurrentValue($taskId) >= $taskLimit) {
+            $this->stateStore->clearWatchSession();
+
+            return CarnivalStepResult::skipped('观看直播: 服务端进度已满，今日无需再看');
+        }
+
         $target = max(1, $snapshot->watchLiveTargetSeconds);
         $watched = $this->stateStore->watchedSeconds($context->bizDate);
         if ($watched >= $target) {

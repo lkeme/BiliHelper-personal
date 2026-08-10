@@ -179,12 +179,20 @@ final class CarnivalPageResolver
     /**
      * 解析任务列表（EraTasklistPc.tasklist）
      *
+     * 注意：配置快照里的 taskName 是活动上线时的名称，运营方可能在服务端改名
+     * （实测同一 taskId 配置叫「关注优质VLOG稿件UP主」、实时接口已改叫「关注暑期追更UP主」）。
+     * 分类依赖名称关键字，因此对无法归类的任务显式告警，避免改名后静默漏做。
+     *
+     * 同理，快照里的 indicators / status 是陈旧值（实测配置显示 15/15、实时接口只有 2/15），
+     * 一律不作为进度判据 —— 进度只认 totalv2。
+     *
      * @param array<string, mixed> $state
      * @return array{watch_live?: array<string, mixed>, follow?: array<string, array{counter: string, task_name: string}>}
      */
     private function resolveTasklistTasks(array $state): array
     {
         $result = ['follow' => []];
+        $unclassified = [];
 
         foreach ($this->componentPropsList($state, 'EraTasklistPc') as $props) {
             $taskList = $props['tasklist'] ?? null;
@@ -204,7 +212,7 @@ final class CarnivalPageResolver
                     continue;
                 }
 
-                // 弹幕任务本插件不实现，显式跳过而非归入未知
+                // 弹幕任务本插件不实现，显式跳过而非归入未分类
                 if (str_contains($taskName, '弹幕')) {
                     continue;
                 }
@@ -224,8 +232,17 @@ final class CarnivalPageResolver
                         'counter' => $counter,
                         'task_name' => $taskName,
                     ];
+                    continue;
                 }
+
+                $unclassified[] = "{$taskId}({$taskName})";
             }
+        }
+
+        if ($unclassified !== []) {
+            $this->log('warning', '次元奇旅: 存在无法归类的活动任务，本插件不会执行它们', [
+                'tasks' => implode(', ', $unclassified),
+            ]);
         }
 
         return $result;

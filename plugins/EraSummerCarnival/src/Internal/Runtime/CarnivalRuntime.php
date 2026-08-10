@@ -91,6 +91,18 @@ final class CarnivalRuntime
             return TaskResult::after(3600.0, '活动配置不可用');
         }
 
+        // 观看会话续跑快车道：只发一次心跳后立即返回。
+        // 此路径刻意不查 totalv2 —— 心跳间隔约 60s，5 分钟要跑 ~10 轮，
+        // 每轮都查一次任务进度纯属浪费，且会挤占其他插件的请求预算。
+        // 当日进度由本地 watch_progress 精确累计（心跳是本插件自己发的），
+        // 达标后会清空会话，下一个完整 tick 再走权威校验。
+        if ($this->stateStore->watchSession() !== null) {
+            $fastPath = $this->runWatchHeartbeat(new CarnivalContext($snapshot, [], $bizDate, $now));
+            if ($fastPath instanceof TaskResult) {
+                return $fastPath;
+            }
+        }
+
         try {
             $taskDetails = $this->taskProgressGateway->fetch($snapshot->trackedTaskIds());
         } catch (RequestException $exception) {
@@ -105,6 +117,30 @@ final class CarnivalRuntime
     }
 
     /**
+     * 观看心跳快车道。
+     *
+     * 返回 TaskResult 表示本 tick 就此结束；返回 null 表示会话已收尾，
+     * 应继续走完整流程（查进度 + 其余 runner）。
+     */
+    private function runWatchHeartbeat(CarnivalContext $context): ?TaskResult
+    {
+        $watchRunner = $this->findRunner(WatchLiveTaskRunner::class);
+        if ($watchRunner === null) {
+            return null;
+        }
+
+        $result = $this->runOne($watchRunner, $context);
+        if ($result->failed) {
+            return TaskResult::retryAfter($result->delaySeconds ?? 900.0, (string)$result->message);
+        }
+        if ($result->delaySeconds !== null) {
+            return TaskResult::after($result->delaySeconds, (string)$result->message);
+        }
+
+        return null;
+    }
+
+    /**
      * 分派 runner 并聚合结果
      */
     private function dispatch(CarnivalContext $context): TaskResult
@@ -114,27 +150,6 @@ final class CarnivalRuntime
         $executed = 0;
         $delays = [];
         $messages = [];
-
-        // 观看会话处于活跃状态时优先心跳并立即返回：
-        // 心跳间隔最小 30s，错过节奏会导致会话失效、当日进度作废。
-        if ($this->stateStore->watchSession() !== null) {
-            $watchRunner = $this->findRunner(WatchLiveTaskRunner::class);
-            if ($watchRunner !== null) {
-                $result = $this->runOne($watchRunner, $context);
-                if ($result->failed) {
-                    return TaskResult::retryAfter($result->delaySeconds ?? 900.0, (string)$result->message);
-                }
-                if ($result->delaySeconds !== null) {
-                    return TaskResult::after($result->delaySeconds, (string)$result->message);
-                }
-                // 会话已收尾（达标或清空），继续本轮其余任务
-                $executed++;
-                if ($result->message !== null) {
-                    $messages[] = (string)$result->message;
-                }
-                $steps++;
-            }
-        }
 
         foreach ($this->runners as $runner) {
             if ($steps >= self::MAX_STEPS_PER_TICK) {

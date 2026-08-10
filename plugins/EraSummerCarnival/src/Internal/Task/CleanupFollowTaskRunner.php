@@ -73,7 +73,6 @@ final class CleanupFollowTaskRunner implements TaskRunnerInterface
             return CarnivalStepResult::skipped('取关清理: 队列为空');
         }
 
-        $followTasksPending = $this->hasPendingFollowTask($context);
         $processed = 0;
         $held = 0;
         $protected = 0;
@@ -103,11 +102,14 @@ final class CleanupFollowTaskRunner implements TaskRunnerInterface
                 continue;
             }
 
-            // 当天的项在关注任务仍进行中时暂缓，避免影响计数
+            // 当天的项在「它自己归属的那个任务」仍进行中时暂缓，避免影响计数。
+            // 按项判定而非「任意关注任务仍 pending」—— 部分关注任务缺少可用目标池、
+            // 会长期停在进行中，用全局判据会把临时关注一直拖到跨天才取关。
+            //
             // 注意：暂缓不做重试上限判定 —— claimNext 每次取出都会自增 attempts，
             // 若让暂缓消耗重试次数，临时关注会在若干轮后被静默丢弃且从未取关。
             // 滞留上界由「跨天必取关」保证。
-            if ($bizDate === $context->bizDate && $followTasksPending) {
+            if ($bizDate === $context->bizDate && $this->isTaskPending($context, $taskId)) {
                 $this->unfollowQueueStore->markRetry(
                     $this->accountKey,
                     (string)$mid,
@@ -183,26 +185,27 @@ final class CleanupFollowTaskRunner implements TaskRunnerInterface
     }
 
     /**
-     * 是否仍有关注类任务在进行中
+     * 指定关注任务是否仍在进行中
+     *
+     * task_id 为空（历史数据）时按「不在进行中」处理，允许取关，避免永久滞留。
      */
-    private function hasPendingFollowTask(CarnivalContext $context): bool
+    private function isTaskPending(CarnivalContext $context, string $taskId): bool
     {
-        foreach (array_keys($context->snapshot->followTasks) as $taskId) {
-            $taskId = (string)$taskId;
-            $status = $context->taskStatus($taskId);
-            if (in_array($status, [TaskStatus::CLAIMABLE, TaskStatus::FINISHED], true)) {
-                continue;
-            }
-
-            $limit = $context->taskLimit($taskId);
-            if ($limit > 0 && $context->taskCurrentValue($taskId) >= $limit) {
-                continue;
-            }
-
-            return true;
+        if ($taskId === '' || !isset($context->snapshot->followTasks[$taskId])) {
+            return false;
         }
 
-        return false;
+        $status = $context->taskStatus($taskId);
+        if (in_array($status, [TaskStatus::CLAIMABLE, TaskStatus::FINISHED], true)) {
+            return false;
+        }
+
+        $limit = $context->taskLimit($taskId);
+        if ($limit > 0 && $context->taskCurrentValue($taskId) >= $limit) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

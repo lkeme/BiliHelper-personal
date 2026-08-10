@@ -69,6 +69,16 @@ final class SignInTaskRunner implements TaskRunnerInterface
             return CarnivalStepResult::skipped('签到: 有奖励待领取，交由领奖处理');
         }
 
+        // 签到是 period_type=1 的每日任务，limit=1。
+        // cur_value 已达 limit 表示今天这一次已经完成 —— 这是服务端权威判据，
+        // 即使本地 signin_date 丢失（换机、清缓存）也不会重复上报。
+        $limit = $context->taskLimit($taskId);
+        if ($limit > 0 && $context->taskCurrentValue($taskId) >= $limit) {
+            $this->stateStore->markSignedIn($context->bizDate);
+
+            return CarnivalStepResult::skipped('签到: 服务端进度已满，今日无需再签');
+        }
+
         if ($this->stateStore->signedInOn($context->bizDate)) {
             return CarnivalStepResult::skipped('签到: 今日已签到');
         }
