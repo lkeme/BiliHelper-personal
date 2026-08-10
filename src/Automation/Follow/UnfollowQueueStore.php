@@ -1,8 +1,7 @@
 <?php declare(strict_types=1);
 
-namespace Bhp\Plugin\Builtin\ActivityLottery\Internal\Queue;
+namespace Bhp\Automation\Follow;
 
-use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityFlow;
 use RuntimeException;
 use SQLite3;
 use SQLite3Result;
@@ -20,7 +19,7 @@ final class UnfollowQueueStore
 
     public function __construct(
         private readonly string $databasePath,
-        private readonly string $scope = 'ActivityLottery',
+        private readonly string $scope,
     ) {
         if (trim($this->databasePath) === '') {
             throw new RuntimeException('UnfollowQueueStore 数据库路径不能为空');
@@ -41,7 +40,7 @@ final class UnfollowQueueStore
             return;
         }
 
-        $normalizedBizDate = ActivityFlow::normalizeBizDate($sourceBizDate);
+        $normalizedBizDate = BizDate::normalize($sourceBizDate);
         $now = time();
         $statement = $this->connection()->prepare(
             'INSERT INTO ' . self::TABLE_NAME . ' (
@@ -389,7 +388,7 @@ final class UnfollowQueueStore
             return;
         }
 
-        $normalizedBizDate = ActivityFlow::normalizeBizDate($sourceBizDate);
+        $normalizedBizDate = BizDate::normalize($sourceBizDate);
         $statement = $this->connection()->prepare(
             'UPDATE ' . self::TABLE_NAME . '
              SET status = :status,

@@ -1,8 +1,7 @@
 <?php declare(strict_types=1);
 
-namespace Bhp\Plugin\Builtin\ActivityLottery\Internal\Queue;
+namespace Bhp\Automation\Follow;
 
-use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityFlow;
 use RuntimeException;
 use SQLite3;
 use SQLite3Result;
@@ -22,7 +21,7 @@ final class TemporaryFollowStore
 
     public function __construct(
         private readonly string $databasePath,
-        private readonly string $scope = 'ActivityLottery',
+        private readonly string $scope,
     ) {
         if (trim($this->databasePath) === '') {
             throw new RuntimeException('TemporaryFollowStore 数据库路径不能为空');
@@ -68,7 +67,7 @@ final class TemporaryFollowStore
         $statement->bindValue(':scope', $this->scope, SQLITE3_TEXT);
         $statement->bindValue(':account_key', $normalizedAccountKey, SQLITE3_TEXT);
         $statement->bindValue(':uid', $normalizedUid, SQLITE3_TEXT);
-        $statement->bindValue(':source_biz_date', ActivityFlow::normalizeBizDate($sourceBizDate), SQLITE3_TEXT);
+        $statement->bindValue(':source_biz_date', BizDate::normalize($sourceBizDate), SQLITE3_TEXT);
         $statement->bindValue(':activity_id', $normalizedActivityId, SQLITE3_TEXT);
         $statement->bindValue(':task_id', $normalizedTaskId, SQLITE3_TEXT);
         $result = $statement->execute();
@@ -278,7 +277,7 @@ final class TemporaryFollowStore
             $update->bindValue(':scope', $this->scope, SQLITE3_TEXT);
             $update->bindValue(':account_key', $normalizedAccountKey, SQLITE3_TEXT);
             $update->bindValue(':uid', $uid, SQLITE3_TEXT);
-            $update->bindValue(':source_biz_date', ActivityFlow::normalizeBizDate($sourceBizDate), SQLITE3_TEXT);
+            $update->bindValue(':source_biz_date', BizDate::normalize($sourceBizDate), SQLITE3_TEXT);
             $update->bindValue(':activity_id', $activityId, SQLITE3_TEXT);
             $update->bindValue(':task_id', $taskId, SQLITE3_TEXT);
             $updateResult = $update->execute();
@@ -289,7 +288,7 @@ final class TemporaryFollowStore
             $connection->exec('COMMIT');
 
             $row['uid'] = $uid;
-            $row['source_biz_date'] = ActivityFlow::normalizeBizDate($sourceBizDate);
+            $row['source_biz_date'] = BizDate::normalize($sourceBizDate);
             $row['activity_id'] = $activityId;
             $row['task_id'] = $taskId;
             $row['precheck_following'] = ((int)($row['precheck_following'] ?? 0)) === 1;
@@ -359,7 +358,7 @@ final class TemporaryFollowStore
         $statement->bindValue(':scope', $this->scope, SQLITE3_TEXT);
         $statement->bindValue(':account_key', $normalizedAccountKey, SQLITE3_TEXT);
         $statement->bindValue(':uid', $normalizedUid, SQLITE3_TEXT);
-        $statement->bindValue(':source_biz_date', ActivityFlow::normalizeBizDate($sourceBizDate), SQLITE3_TEXT);
+        $statement->bindValue(':source_biz_date', BizDate::normalize($sourceBizDate), SQLITE3_TEXT);
         $statement->bindValue(':activity_id', $normalizedActivityId, SQLITE3_TEXT);
         $statement->bindValue(':task_id', $normalizedTaskId, SQLITE3_TEXT);
         $statement->bindValue(':precheck_following', $precheckFollowing ? 1 : 0, SQLITE3_INTEGER);
