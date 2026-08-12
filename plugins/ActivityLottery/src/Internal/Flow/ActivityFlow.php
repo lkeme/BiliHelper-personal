@@ -2,7 +2,7 @@
 
 namespace Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow;
 
-use DateTimeImmutable;
+use Bhp\Automation\Follow\BizDate;
 use RuntimeException;
 
 final class ActivityFlow
@@ -121,12 +121,7 @@ final class ActivityFlow
      */
     public static function normalizeBizDate(string $bizDate): string
     {
-        $normalized = trim($bizDate);
-        if (!self::isValidBizDate($normalized)) {
-            throw new RuntimeException(sprintf('ActivityFlow biz_date 格式非法: %s', $normalized));
-        }
-
-        return $normalized;
+        return BizDate::normalize($bizDate, 'ActivityFlow biz_date');
     }
 
     /**
@@ -412,16 +407,7 @@ final class ActivityFlow
      */
     private static function isValidBizDate(string $bizDate): bool
     {
-        if ($bizDate === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $bizDate)) {
-            return false;
-        }
-
-        $date = DateTimeImmutable::createFromFormat('!Y-m-d', $bizDate);
-        if (!$date instanceof DateTimeImmutable) {
-            return false;
-        }
-
-        return $date->format('Y-m-d') === $bizDate;
+        return BizDate::isValid($bizDate);
     }
 }
 

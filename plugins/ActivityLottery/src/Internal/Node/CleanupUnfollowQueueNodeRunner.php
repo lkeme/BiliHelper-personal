@@ -8,8 +8,8 @@ use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityFlow;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNode;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNodeResult;
 use Bhp\Plugin\Builtin\ActivityLottery\Internal\Flow\ActivityNodeStatus;
-use Bhp\Plugin\Builtin\ActivityLottery\Internal\Queue\TemporaryFollowStore;
-use Bhp\Plugin\Builtin\ActivityLottery\Internal\Queue\UnfollowQueueStore;
+use Bhp\Automation\Follow\TemporaryFollowStore;
+use Bhp\Automation\Follow\UnfollowQueueStore;
 use Bhp\Util\Exceptions\RequestException;
 
 final class CleanupUnfollowQueueNodeRunner implements NodeRunnerInterface

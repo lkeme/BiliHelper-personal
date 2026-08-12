@@ -8,6 +8,25 @@
 
 [comment]: <> (</details>)
 
+## v3.2.0.260810 alpha (2026-08-10)
+
+### Added
+
+- 新增 `EraSummerCarnival` 插件，支持 2026「次元奇旅」暑期狂欢节的每日签到、累计签到领奖、板块内直播间观看、关注任务与抽奖，默认关闭。
+- 新增 `ApiEvaOperation`，用于获取活动运营位内的直播间与主播关注状态。
+
+### Changed
+
+- 将 `TemporaryFollowStore` / `UnfollowQueueStore` 提取到 `src/Automation/Follow/`，新增 `BizDate` 解除插件依赖，多个活动插件可按 `scope` 共用，无数据迁移。
+- `README` 插件表补齐遗漏的 `BigPointExchange`。
+
+### Remarks
+
+- `EraSummerCarnival` 的关注任务只取关自己关注的 UP 主，关注前做关系复核，取关时另有二次校验，不会影响原有关注。
+- 幂等以服务端任务进度为准，本地状态丢失也不会重复签到或重复观看。
+- 通过 manifest 治理元数据限制请求频率，避免影响其他插件。
+- 发布版本提升至 `3.2.0.260810`，同步更新 `README`、`docs/CHANGELOG.md` 与 `resources/version.json`。
+
 ## v3.1.0.260514 alpha (2026-05-14)
 
 ### Changed
