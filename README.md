@@ -115,7 +115,7 @@ Group: [602815575](https://jq.qq.com/?_wv=1027&k=UaalVexM) | **请不要来问�
 
 ## 🖥️星图
 
-[//]: # ([![Star History Chart]&#40;https://api.star-history.com/svg?repos=lkeme/BiliHelper-personal&type=Timeline&#41;]&#40;https://star-history.com/#lkeme/BiliHelper-personal&Timeline&#41;)
+[//]: # ([![Star History Chart]&#40;https://api.star-history.dera.page/svg?repos=lkeme/BiliHelper-personal&type=Timeline&#41;]&#40;https://star-history.dera.page/#lkeme/BiliHelper-personal&Timeline&#41;)
 [![Stargazers over time](https://starchart.cc/lkeme/BiliHelper-personal.svg)](https://starchart.cc/lkeme/BiliHelper-personal)
 [![Stargazers over time](https://starchart.cc/lkeme/BiliHelper.svg)](https://starchart.cc/lkeme/BiliHelper)
 
