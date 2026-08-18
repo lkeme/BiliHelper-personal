@@ -111,7 +111,7 @@ trait CommonTaskInfo
         $response = $this->vipPointScoreTaskApi()->complete($task_code);
         $this->assertVipPointAuthFailure($response, "大会员积分@{$name}: {$task_code} 任务执行时账号未登录");
         if ($response['code']) {
-            $this->warning("大会员积分@{$name}: {$task_code} 任务执行失败 " . json_encode($response));
+            $this->warning("大会员积分@{$name}: {$task_code} 任务执行失败 " . json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
             return false;
         }
