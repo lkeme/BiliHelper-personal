@@ -19,6 +19,7 @@ final class CarnivalStateStore
     private const KEY_CLAIMED_SIDS = 'claimed_sids';
     private const KEY_WATCH_PROGRESS = 'watch_progress';
     private const KEY_WATCH_SESSION = 'watch_session';
+    private const KEY_WATCH_PROBE_BACKOFF = 'watch_probe_backoff';
     private const KEY_DRAW_STATS = 'draw_stats';
 
     private readonly string $accountKey;
@@ -144,6 +145,61 @@ final class CarnivalStateStore
     public function clearWatchSession(): void
     {
         $this->write(self::KEY_WATCH_SESSION, []);
+    }
+
+    /**
+     * 直播选房探测退避。
+     *
+     * @return array{date: string, misses: int, next_probe_at: int}|null
+     */
+    public function watchProbeBackoff(): ?array
+    {
+        $value = $this->read(self::KEY_WATCH_PROBE_BACKOFF);
+        if (!is_array($value) || $value === []) {
+            return null;
+        }
+
+        $date = trim((string)($value['date'] ?? ''));
+        $misses = $value['misses'] ?? null;
+        $nextProbeAt = $value['next_probe_at'] ?? null;
+        if (
+            $date === ''
+            || !is_numeric($misses)
+            || (float)$misses !== (float)(int)$misses
+            || (int)$misses < 1
+            || !is_numeric($nextProbeAt)
+            || (float)$nextProbeAt !== (float)(int)$nextProbeAt
+            || (int)$nextProbeAt < 1
+        ) {
+            return null;
+        }
+
+        return [
+            'date' => $date,
+            'misses' => min(3, (int)$misses),
+            'next_probe_at' => (int)$nextProbeAt,
+        ];
+    }
+
+    public function putWatchProbeBackoff(string $date, int $misses, int $nextProbeAt): void
+    {
+        $date = trim($date);
+        if ($date === '' || $nextProbeAt < 1) {
+            $this->clearWatchProbeBackoff();
+
+            return;
+        }
+
+        $this->write(self::KEY_WATCH_PROBE_BACKOFF, [
+            'date' => $date,
+            'misses' => min(3, max(1, $misses)),
+            'next_probe_at' => $nextProbeAt,
+        ]);
+    }
+
+    public function clearWatchProbeBackoff(): void
+    {
+        $this->write(self::KEY_WATCH_PROBE_BACKOFF, []);
     }
 
     /**

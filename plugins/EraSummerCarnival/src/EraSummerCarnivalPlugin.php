@@ -112,7 +112,7 @@ final class EraSummerCarnivalPlugin extends BasePlugin implements PluginTaskInte
 
         $runners = [
             new SignInTaskRunner($apiActivity, $taskProgressGateway, $stateStore, $logger),
-            new ClaimRewardTaskRunner($apiMission, $stateStore, $logger, $notifier),
+            new ClaimRewardTaskRunner($apiMission, $taskProgressGateway, $stateStore, $logger, $notifier),
             new DrawTaskRunner($apiActivity, $stateStore, $logger, $notifier),
             new WatchLiveTaskRunner(
                 $apiEvaOperation,

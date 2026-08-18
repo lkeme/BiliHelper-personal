@@ -4,8 +4,9 @@ namespace Bhp\Plugin\Builtin\EraSummerCarnival\Internal\Task;
 
 use Bhp\Api\Api\X\ActivityComponents\ApiMission;
 use Bhp\Login\AuthFailureClassifier;
+use Bhp\Plugin\Builtin\EraSummerCarnival\Internal\Gateway\TaskProgressGateway;
 use Bhp\Plugin\Builtin\EraSummerCarnival\Internal\State\CarnivalStateStore;
-use Bhp\Plugin\Builtin\EraSummerCarnival\Internal\Support\TaskStatus;
+use Bhp\Util\Exceptions\RequestException;
 
 /**
  * 累计签到领奖（R3）。
@@ -19,7 +20,11 @@ use Bhp\Plugin\Builtin\EraSummerCarnival\Internal\Support\TaskStatus;
  */
 final class ClaimRewardTaskRunner implements TaskRunnerInterface
 {
+    private const CHECKPOINT_CLAIMABLE = 2;
+    private const CHECKPOINT_CLAIMED = 3;
+
     private readonly ApiMission $apiMission;
+    private readonly TaskProgressGateway $taskProgressGateway;
     private readonly CarnivalStateStore $stateStore;
     private readonly AuthFailureClassifier $authFailureClassifier;
 
@@ -35,12 +40,14 @@ final class ClaimRewardTaskRunner implements TaskRunnerInterface
      */
     public function __construct(
         ApiMission $apiMission,
+        TaskProgressGateway $taskProgressGateway,
         CarnivalStateStore $stateStore,
         callable $logger,
         callable $notifier,
         ?AuthFailureClassifier $authFailureClassifier = null,
     ) {
         $this->apiMission = $apiMission;
+        $this->taskProgressGateway = $taskProgressGateway;
         $this->stateStore = $stateStore;
         $this->logger = \Closure::fromCallable($logger);
         $this->notifier = \Closure::fromCallable($notifier);
@@ -95,10 +102,22 @@ final class ClaimRewardTaskRunner implements TaskRunnerInterface
                 continue;
             }
 
-            // 已领过 / 无资格 —— 记入已领避免每 tick 重试
-            if ($this->isAlreadyClaimed($message)) {
+            try {
+                $recheckedStatus = $this->recheckCheckpointStatus($taskId, $sid);
+            } catch (RequestException $exception) {
+                $this->log('debug', '次元奇旅: 领奖失败后复查任务进度异常，保留原始失败', [
+                    '档位' => $checkpoint['days'] . ' 天',
+                    'code' => $code,
+                    'message' => $message,
+                    'recheck_error' => $exception->getMessage(),
+                ]);
+
+                return $this->claimFailed($checkpoint, $code, $message);
+            }
+
+            if ($recheckedStatus === self::CHECKPOINT_CLAIMED) {
                 $this->stateStore->markClaimed($sid);
-                $this->log('info', '次元奇旅: 该档奖励已领取或无资格，标记跳过', [
+                $this->log('info', '次元奇旅: 领奖接口返回异常但复查已领取，标记跳过', [
                     '档位' => $checkpoint['days'] . ' 天',
                     'code' => $code,
                     'message' => $message,
@@ -106,13 +125,18 @@ final class ClaimRewardTaskRunner implements TaskRunnerInterface
                 continue;
             }
 
-            $this->log('warning', '次元奇旅: 领奖失败', [
-                '档位' => $checkpoint['days'] . ' 天',
-                'code' => $code,
-                'message' => $message,
-            ]);
+            // 仅在复查没有当前 sid 的权威状态时，用明确的“已领取”文案末级兜底。
+            if ($recheckedStatus === null && $this->isExplicitlyAlreadyClaimed($message)) {
+                $this->stateStore->markClaimed($sid);
+                $this->log('info', '次元奇旅: 复查无有效状态但接口明确表示已领取，标记跳过', [
+                    '档位' => $checkpoint['days'] . ' 天',
+                    'code' => $code,
+                    'message' => $message,
+                ]);
+                continue;
+            }
 
-            return CarnivalStepResult::failed(1800.0, "领奖失败 {$code} -> {$message}");
+            return $this->claimFailed($checkpoint, $code, $message);
         }
 
         return $claimedCount > 0
@@ -137,25 +161,37 @@ final class ClaimRewardTaskRunner implements TaskRunnerInterface
     /**
      * 筛出可领取的 checkpoint。
      *
-     * 优先采信 totalv2 返回的 checkpoint status（3 = 可领/已达成），
-     * 无该字段时退化为「累计天数 >= 档位阈值」。
+     * 远端 checkpoint 来源存在时仅 status=2 可领取，status=3 为已领取终态。
+     * 只有远端完全未提供 checkpoint 来源字段时，才退化为累计天数判定。
      *
      * @return array<string, array{days: int, reward_name: string}>
      */
     private function resolveClaimable(CarnivalContext $context, string $taskId, int $achievedDays): array
     {
-        $remoteStatus = $this->remoteCheckpointStatus($context, $taskId);
+        $remoteStatuses = $this->checkpointStatuses($context->taskDetail($taskId));
         $claimable = [];
 
-        foreach ($context->snapshot->signInCheckpoints as $sid => $checkpoint) {
+        foreach ($context->snapshot->signInCheckpoints as $checkpointSid => $checkpoint) {
+            $sid = trim((string)$checkpointSid);
+            if ($sid === '') {
+                continue;
+            }
+
             if ($this->stateStore->isClaimed($sid)) {
                 continue;
             }
 
-            $status = $remoteStatus[$sid] ?? null;
-            if ($status !== null) {
-                // 3 表示该档已达成可领取
-                if ($status === 3) {
+            if ($remoteStatuses !== null) {
+                if (!array_key_exists($sid, $remoteStatuses)) {
+                    continue;
+                }
+
+                $status = $remoteStatuses[$sid];
+                if ($status === self::CHECKPOINT_CLAIMED) {
+                    $this->stateStore->markClaimed($sid);
+                    continue;
+                }
+                if ($status === self::CHECKPOINT_CLAIMABLE) {
                     $claimable[$sid] = $checkpoint;
                 }
                 continue;
@@ -170,12 +206,25 @@ final class ClaimRewardTaskRunner implements TaskRunnerInterface
     }
 
     /**
-     * @return array<string, int> sid => status
+     * 解析 checkpoint 状态，同时保留“来源是否存在”的语义。
+     *
+     * @param array<string, mixed> $detail
+     * @return array<string, int>|null null=两个来源字段均不存在；array=来源存在
      */
-    private function remoteCheckpointStatus(CarnivalContext $context, string $taskId): array
+    private function checkpointStatuses(array $detail): ?array
     {
-        $detail = $context->taskDetail($taskId);
-        $source = $detail['accumulative_check_points'] ?? $detail['checkpoints'] ?? null;
+        $hasAccumulativeSource = array_key_exists('accumulative_check_points', $detail);
+        $hasCompatibleSource = array_key_exists('checkpoints', $detail);
+        if (!$hasAccumulativeSource && !$hasCompatibleSource) {
+            return null;
+        }
+
+        $source = null;
+        if (is_array($detail['accumulative_check_points'] ?? null)) {
+            $source = $detail['accumulative_check_points'];
+        } elseif (is_array($detail['checkpoints'] ?? null)) {
+            $source = $detail['checkpoints'];
+        }
         if (!is_array($source)) {
             return [];
         }
@@ -187,28 +236,75 @@ final class ClaimRewardTaskRunner implements TaskRunnerInterface
             }
 
             $sid = trim((string)($checkpoint['sid'] ?? $checkpoint['ztasksid'] ?? ''));
-            if ($sid === '') {
+            $status = $checkpoint['status'] ?? null;
+            if (
+                $sid === ''
+                || !is_numeric($status)
+                || (float)$status !== (float)(int)$status
+            ) {
                 continue;
             }
 
-            $statuses[$sid] = (int)($checkpoint['status'] ?? 0);
+            $statuses[$sid] = (int)$status;
         }
 
         return $statuses;
     }
 
     /**
-     * 判断返回是否属于「已领过 / 无资格」而非真实故障
+     * 写失败后复查当前 checkpoint 的权威状态。
      */
-    private function isAlreadyClaimed(string $message): bool
+    private function recheckCheckpointStatus(string $taskId, string $sid): ?int
     {
-        foreach (['已领取', '已经领取', '已领完', '无资格', '不满足', '已参与'] as $needle) {
+        $snapshots = $this->taskProgressGateway->fetch([$taskId]);
+        $detail = $snapshots[$taskId] ?? null;
+        if (!is_array($detail)) {
+            return null;
+        }
+
+        $statuses = $this->checkpointStatuses($detail);
+        if ($statuses === null || !array_key_exists($sid, $statuses)) {
+            return null;
+        }
+
+        return $statuses[$sid];
+    }
+
+    /**
+     * 仅识别明确表示奖励已领取的文案。
+     */
+    private function isExplicitlyAlreadyClaimed(string $message): bool
+    {
+        foreach (['已领取', '已经领取', '已领完'] as $needle) {
             if ($message !== '' && str_contains($message, $needle)) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    /**
+     * @param array{days: int, reward_name: string} $checkpoint
+     */
+    private function claimFailed(array $checkpoint, int $code, string $message): CarnivalStepResult
+    {
+        $days = (int)$checkpoint['days'];
+        $displayMessage = $message !== '' ? $message : '(empty)';
+        $this->log(
+            'warning',
+            "次元奇旅: {$days} 天档领奖失败 code={$code} message={$displayMessage}",
+            [
+                '档位' => $days . ' 天',
+                'code' => $code,
+                'message' => $message,
+            ],
+        );
+
+        return CarnivalStepResult::failed(
+            1800.0,
+            "{$days} 天档领奖失败 {$code} -> {$displayMessage}",
+        );
     }
 
     /**
