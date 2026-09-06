@@ -14,6 +14,7 @@ use Bhp\Notice\Channel\SctNoticeChannel;
 use Bhp\Notice\Channel\TelegramNoticeChannel;
 use Bhp\Notice\Channel\WeComAppNoticeChannel;
 use Bhp\Notice\Channel\WeComNoticeChannel;
+use Bhp\Notice\Channel\WPushNoticeChannel;
 use Bhp\Runtime\AppContext;
 use Bhp\Util\Exceptions\RequestException;
 
@@ -137,6 +138,7 @@ final class Notice
             new FeiShuNoticeChannel($context),
             new BarkNoticeChannel($context),
             new PushDeerNoticeChannel($context),
+            new WPushNoticeChannel($context),
         ];
     }
 }
