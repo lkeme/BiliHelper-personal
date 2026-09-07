@@ -151,6 +151,21 @@ url =
 token =
 ```
 
+**WPUSH**
+
+> 文档: https://wpush.cn/docs  
+> 说明: WPUSH 推送的 `apikey`  
+> 说明: `channel` 可选，推送渠道（如 wechat）  
+> 说明: `topic_code` 可选，主题推送编码
+
+```ini
+; WPUSH|apikey|channel(可选)|topic_code(可选)|依赖USE_NOTIFY
+[notify_wpush]
+apikey = ****
+channel =
+topic_code =
+```
+
 ### 调试
 
 https://github.com/lkeme/BiliHelper-personal/blob/703184690e3180429512e5bd6890f82697e4e9f7/resources/version.json#L11
