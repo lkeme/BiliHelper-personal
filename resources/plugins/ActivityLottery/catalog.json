@@ -75,7 +75,6 @@
         "https://www.bilibili.com/blackboard/era/COhMfu9Vt5C3zLYJ.html",
         "https://www.bilibili.com/blackboard/era/liC1QI0JAoR54The.html",
         "https://www.bilibili.com/blackboard/era/6OKn8tgxTegHRXnV.html",
-        "https://www.bilibili.com/blackboard/era/pYTBdqM9TJtKpEGS.html",
         "https://www.bilibili.com/blackboard/era/FfkdHJ3tLsG1Qj18.html",
         "https://www.bilibili.com/blackboard/era/6JfYxXHaHS1SXBBv.html",
         "https://www.bilibili.com/blackboard/era/6cLOy57UlsZHS49I.html",
@@ -86,39 +85,20 @@
         "https://www.bilibili.com/blackboard/era/ROZswMIYOSV2pB5c.html",
         "https://live.bilibili.com/blackboard/era/MKHmyHXzfsMA4BPF.html",
         "https://live.bilibili.com/blackboard/era/ns4UlqpsHTFbDFSw.html",
-        "https://www.bilibili.com/blackboard/era/10PAz4dvGF72nS1c.html"
+        "https://www.bilibili.com/blackboard/era/10PAz4dvGF72nS1c.html",
+        "https://www.bilibili.com/blackboard/era/qHa1autQIBEXMCz8.html",
+        "https://www.bilibili.com/blackboard/era/ZJmHbxZlQnCtFiH2.html",
+        "https://live.bilibili.com/blackboard/era/DqXHdANIhFrcBoY9.html",
+        "https://www.bilibili.com/blackboard/era/Bbl25AA9peHgMWkA.html",
+        "https://www.bilibili.com/blackboard/era/WP9nzwTRlmihzjbo.html",
+        "https://www.bilibili.com/blackboard/era/hz5hr491vOxS8jHE.html",
+        "https://www.bilibili.com/blackboard/era/ySed4zEeypvpB4Fw.html",
+        "https://www.bilibili.com/blackboard/era/BV4aEWJEimiFwu0d.html",
+        "https://www.bilibili.com/blackboard/era/eopQWdWgmAQGdG4W.html",
+        "https://www.bilibili.com/blackboard/era/kvlDmKAEa5nj8ENY.html",
+        "https://www.bilibili.com/blackboard/era/5j9lN1bRD6d7ZvMN.html"
     ],
     "data": [
-        {
-            "title": "王者荣耀夏日盛典",
-            "url": "https://www.bilibili.com/blackboard/era/qHa1autQIBEXMCz8.html",
-            "page_id": "3ERAcwloghvu2300",
-            "activity_id": "1ERAzwloghv1i400",
-            "lottery_id": "4ERA5wloghvzwe00",
-            "start_time": 1785945600,
-            "end_time": 1789055999,
-            "update_time": "2026-08-18 19:54:57"
-        },
-        {
-            "title": "火影忍者手游8月创作激励",
-            "url": "https://www.bilibili.com/blackboard/era/ZJmHbxZlQnCtFiH2.html",
-            "page_id": "3ERAcwloghvtk100",
-            "activity_id": "1ERAzwloghvboc00",
-            "lottery_id": "4ERA5wloghvzol00",
-            "start_time": 1786420800,
-            "end_time": 1789055999,
-            "update_time": "2026-09-08 14:02:25"
-        },
-        {
-            "title": "十大洲梗打投",
-            "url": "https://live.bilibili.com/blackboard/era/DqXHdANIhFrcBoY9.html",
-            "page_id": "3ERAcwloghvy3f00",
-            "activity_id": "1ERAzwloghvmgg00",
-            "lottery_id": "4ERA5wloghvj3k00",
-            "start_time": 1788364800,
-            "end_time": 1789056000,
-            "update_time": "2026-09-08 14:02:25"
-        },
         {
             "title": "无限大定档创作者激励活动",
             "url": "https://www.bilibili.com/blackboard/era/VoyE78BIRaN95r2E.html",
@@ -127,7 +107,7 @@
             "lottery_id": "4ERA5wloghvj2v00",
             "start_time": 1787709600,
             "end_time": 1791518400,
-            "update_time": "2026-09-08 14:02:25"
+            "update_time": "2026-09-24 10:44:49"
         },
         {
             "title": "诡秘之主公测激励计划",
@@ -137,7 +117,77 @@
             "lottery_id": "4ERA4wloghvnap00",
             "start_time": 1787277600,
             "end_time": 1790783999,
-            "update_time": "2026-09-08 14:02:25"
+            "update_time": "2026-09-24 10:44:49"
+        },
+        {
+            "title": "APEX英雄x街霸6联动创作者激励计划",
+            "url": "https://www.bilibili.com/blackboard/era/BVdLuc4qMyoMHahB.html",
+            "page_id": "3ERAcwloghvplm00",
+            "activity_id": "1ERAzwloghv3z400",
+            "lottery_id": "4ERA5wloghvxc200",
+            "start_time": 1790092800,
+            "end_time": 1792771199,
+            "update_time": "2026-09-24 10:44:49"
+        },
+        {
+            "title": "第五人格S45创作者激励活动",
+            "url": "https://www.bilibili.com/blackboard/era/XM4Qo8mfKvkQdf44.html",
+            "page_id": "3ERAcwloghvuy800",
+            "activity_id": "1ERAzwloghv4kz00",
+            "lottery_id": "4ERA5wloghvvy100",
+            "start_time": 1789012800,
+            "end_time": 1793289599,
+            "update_time": "2026-09-24 10:44:49"
+        },
+        {
+            "title": "火影忍者手游9月创作激励",
+            "url": "https://www.bilibili.com/blackboard/era/nhpXbIhQDpzdGfmV.html",
+            "page_id": "3ERAcwloghvavg00",
+            "activity_id": "1ERAzwloghvn2w00",
+            "lottery_id": "4ERA5wloghvj6900",
+            "start_time": 1789056000,
+            "end_time": 1791388799,
+            "update_time": "2026-09-24 10:44:49"
+        },
+        {
+            "title": "王者万象棋创作者激励计划",
+            "url": "https://www.bilibili.com/blackboard/era/EB5BuK4gzxOEmJaa.html",
+            "page_id": "3ERAcwloghvy3e00",
+            "activity_id": "1ERAzwloghv4x100",
+            "lottery_id": "4ERA5wloghvkwj00",
+            "start_time": 1788969600,
+            "end_time": 1792857599,
+            "update_time": "2026-09-24 10:44:49"
+        },
+        {
+            "title": "粒粒的小人国定格测试创作激励计划",
+            "url": "https://www.bilibili.com/blackboard/era/pYTBdqM9TJtKpEGS.html",
+            "page_id": "3ERAcwloghvuve00",
+            "activity_id": "1ERAzwloghvn2e00",
+            "lottery_id": "4ERA5wloghvcqz00",
+            "start_time": 1790042400,
+            "end_time": 1793030399,
+            "update_time": "2026-09-24 10:44:49"
+        },
+        {
+            "title": "绮星游园会",
+            "url": "https://www.bilibili.com/blackboard/era/5gRiuk17p5iAk5pj.html",
+            "page_id": "3ERAcwloghvpb500",
+            "activity_id": "1ERAzwloghv26o00",
+            "lottery_id": "4ERA5wloghvxd700",
+            "start_time": 1790135100,
+            "end_time": 1793721599,
+            "update_time": "2026-09-24 10:44:49"
+        },
+        {
+            "title": "星布谷地创想星计划",
+            "url": "https://www.bilibili.com/blackboard/era/Bebd7hzEU7dyHFEf.html",
+            "page_id": "3ERAcwloghvuhq00",
+            "activity_id": "1ERAzwloghv39700",
+            "lottery_id": "4ERA5wloghvvq700",
+            "start_time": 1789869600,
+            "end_time": 1793030399,
+            "update_time": "2026-09-24 10:44:49"
         }
     ]
 }
