@@ -96,7 +96,10 @@
         "https://www.bilibili.com/blackboard/era/BV4aEWJEimiFwu0d.html",
         "https://www.bilibili.com/blackboard/era/eopQWdWgmAQGdG4W.html",
         "https://www.bilibili.com/blackboard/era/kvlDmKAEa5nj8ENY.html",
-        "https://www.bilibili.com/blackboard/era/5j9lN1bRD6d7ZvMN.html"
+        "https://www.bilibili.com/blackboard/era/5j9lN1bRD6d7ZvMN.html",
+        "https://www.bilibili.com/blackboard/era/7sKzg3hKvG3x9Yxu.html",
+        "https://www.bilibili.com/blackboard/era/Wt8QfDGi73KVY0i8.html",
+        "https://www.bilibili.com/blackboard/era/HZEeBgX4mmyivb7M.html"
     ],
     "data": [
         {
@@ -107,17 +110,7 @@
             "lottery_id": "4ERA5wloghvj2v00",
             "start_time": 1787709600,
             "end_time": 1791518400,
-            "update_time": "2026-09-24 10:44:49"
-        },
-        {
-            "title": "诡秘之主公测激励计划",
-            "url": "https://www.bilibili.com/blackboard/era/HZEeBgX4mmyivb7M.html",
-            "page_id": "3ERAcwloghviyt00",
-            "activity_id": "1ERAzwloghv1wn00",
-            "lottery_id": "4ERA4wloghvnap00",
-            "start_time": 1787277600,
-            "end_time": 1790783999,
-            "update_time": "2026-09-24 10:44:49"
+            "update_time": "2026-10-05 10:34:19"
         },
         {
             "title": "APEX英雄x街霸6联动创作者激励计划",
@@ -127,7 +120,7 @@
             "lottery_id": "4ERA5wloghvxc200",
             "start_time": 1790092800,
             "end_time": 1792771199,
-            "update_time": "2026-09-24 10:44:49"
+            "update_time": "2026-10-05 10:34:19"
         },
         {
             "title": "第五人格S45创作者激励活动",
@@ -137,7 +130,7 @@
             "lottery_id": "4ERA5wloghvvy100",
             "start_time": 1789012800,
             "end_time": 1793289599,
-            "update_time": "2026-09-24 10:44:49"
+            "update_time": "2026-10-05 10:34:19"
         },
         {
             "title": "火影忍者手游9月创作激励",
@@ -147,7 +140,7 @@
             "lottery_id": "4ERA5wloghvj6900",
             "start_time": 1789056000,
             "end_time": 1791388799,
-            "update_time": "2026-09-24 10:44:49"
+            "update_time": "2026-10-05 10:34:19"
         },
         {
             "title": "王者万象棋创作者激励计划",
@@ -157,7 +150,7 @@
             "lottery_id": "4ERA5wloghvkwj00",
             "start_time": 1788969600,
             "end_time": 1792857599,
-            "update_time": "2026-09-24 10:44:49"
+            "update_time": "2026-10-05 10:34:19"
         },
         {
             "title": "粒粒的小人国定格测试创作激励计划",
@@ -167,7 +160,7 @@
             "lottery_id": "4ERA5wloghvcqz00",
             "start_time": 1790042400,
             "end_time": 1793030399,
-            "update_time": "2026-09-24 10:44:49"
+            "update_time": "2026-10-05 10:34:19"
         },
         {
             "title": "绮星游园会",
@@ -177,7 +170,7 @@
             "lottery_id": "4ERA5wloghvxd700",
             "start_time": 1790135100,
             "end_time": 1793721599,
-            "update_time": "2026-09-24 10:44:49"
+            "update_time": "2026-10-05 10:34:19"
         },
         {
             "title": "星布谷地创想星计划",
@@ -187,7 +180,27 @@
             "lottery_id": "4ERA5wloghvvq700",
             "start_time": 1789869600,
             "end_time": 1793030399,
-            "update_time": "2026-09-24 10:44:49"
+            "update_time": "2026-10-05 10:34:19"
+        },
+        {
+            "title": "鸣潮3.7版本创作激励计划",
+            "url": "https://www.bilibili.com/blackboard/era/a3vbnLHDUamQSSFr.html",
+            "page_id": "3ERAcwloghvp3c00",
+            "activity_id": "1ERAzwloghv32n00",
+            "lottery_id": "4ERA5wloghvvoe00",
+            "start_time": 1790733600,
+            "end_time": 1794412799,
+            "update_time": "2026-10-05 10:34:19"
+        },
+        {
+            "title": "火影忍者手游10月创作激励",
+            "url": "https://www.bilibili.com/blackboard/era/jCaAdNbD7nMuRJh2.html",
+            "page_id": "3ERAcwloghvpgr00",
+            "activity_id": "1ERAzwloghv3lk00",
+            "lottery_id": "4ERA5wloghvci000",
+            "start_time": 1790654400,
+            "end_time": 1793289599,
+            "update_time": "2026-10-05 10:34:19"
         }
     ]
 }
