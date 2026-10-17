@@ -103,16 +103,6 @@
     ],
     "data": [
         {
-            "title": "无限大定档创作者激励活动",
-            "url": "https://www.bilibili.com/blackboard/era/VoyE78BIRaN95r2E.html",
-            "page_id": "3ERAcwloghvyiq00",
-            "activity_id": "1ERAzwloghv4kv00",
-            "lottery_id": "4ERA5wloghvj2v00",
-            "start_time": 1787709600,
-            "end_time": 1791518400,
-            "update_time": "2026-10-05 10:34:19"
-        },
-        {
             "title": "APEX英雄x街霸6联动创作者激励计划",
             "url": "https://www.bilibili.com/blackboard/era/BVdLuc4qMyoMHahB.html",
             "page_id": "3ERAcwloghvplm00",
@@ -120,7 +110,7 @@
             "lottery_id": "4ERA5wloghvxc200",
             "start_time": 1790092800,
             "end_time": 1792771199,
-            "update_time": "2026-10-05 10:34:19"
+            "update_time": "2026-10-17 21:47:01"
         },
         {
             "title": "第五人格S45创作者激励活动",
@@ -130,17 +120,7 @@
             "lottery_id": "4ERA5wloghvvy100",
             "start_time": 1789012800,
             "end_time": 1793289599,
-            "update_time": "2026-10-05 10:34:19"
-        },
-        {
-            "title": "火影忍者手游9月创作激励",
-            "url": "https://www.bilibili.com/blackboard/era/nhpXbIhQDpzdGfmV.html",
-            "page_id": "3ERAcwloghvavg00",
-            "activity_id": "1ERAzwloghvn2w00",
-            "lottery_id": "4ERA5wloghvj6900",
-            "start_time": 1789056000,
-            "end_time": 1791388799,
-            "update_time": "2026-10-05 10:34:19"
+            "update_time": "2026-10-17 21:47:01"
         },
         {
             "title": "王者万象棋创作者激励计划",
@@ -150,7 +130,7 @@
             "lottery_id": "4ERA5wloghvkwj00",
             "start_time": 1788969600,
             "end_time": 1792857599,
-            "update_time": "2026-10-05 10:34:19"
+            "update_time": "2026-10-17 21:47:01"
         },
         {
             "title": "粒粒的小人国定格测试创作激励计划",
@@ -160,7 +140,7 @@
             "lottery_id": "4ERA5wloghvcqz00",
             "start_time": 1790042400,
             "end_time": 1793030399,
-            "update_time": "2026-10-05 10:34:19"
+            "update_time": "2026-10-17 21:47:01"
         },
         {
             "title": "绮星游园会",
@@ -170,7 +150,7 @@
             "lottery_id": "4ERA5wloghvxd700",
             "start_time": 1790135100,
             "end_time": 1793721599,
-            "update_time": "2026-10-05 10:34:19"
+            "update_time": "2026-10-17 21:47:01"
         },
         {
             "title": "星布谷地创想星计划",
@@ -180,7 +160,7 @@
             "lottery_id": "4ERA5wloghvvq700",
             "start_time": 1789869600,
             "end_time": 1793030399,
-            "update_time": "2026-10-05 10:34:19"
+            "update_time": "2026-10-17 21:47:01"
         },
         {
             "title": "鸣潮3.7版本创作激励计划",
@@ -190,7 +170,7 @@
             "lottery_id": "4ERA5wloghvvoe00",
             "start_time": 1790733600,
             "end_time": 1794412799,
-            "update_time": "2026-10-05 10:34:19"
+            "update_time": "2026-10-17 21:47:01"
         },
         {
             "title": "火影忍者手游10月创作激励",
@@ -200,7 +180,37 @@
             "lottery_id": "4ERA5wloghvci000",
             "start_time": 1790654400,
             "end_time": 1793289599,
-            "update_time": "2026-10-05 10:34:19"
+            "update_time": "2026-10-17 21:47:01"
+        },
+        {
+            "title": "第五人格赛事高光秀第十九期",
+            "url": "https://www.bilibili.com/blackboard/era/InAT2Fa7Ni9mZozG.html",
+            "page_id": "3ERAcwloghvo4k00",
+            "activity_id": "1ERAzwloghv2s300",
+            "lottery_id": "4ERA5wloghvxo600",
+            "start_time": 1792036800,
+            "end_time": 1796054399,
+            "update_time": "2026-10-17 21:47:01"
+        },
+        {
+            "title": "战地风云6第5赛季创作激励",
+            "url": "https://live.bilibili.com/blackboard/era/qPMSMHhbAwly8kEv.html",
+            "page_id": "3ERAcwloghvpp800",
+            "activity_id": "1ERAzwloghv2ar00",
+            "lottery_id": "4ERA5wloghvxs800",
+            "start_time": 1791907200,
+            "end_time": 1794671999,
+            "update_time": "2026-10-17 21:47:01"
+        },
+        {
+            "title": "【百威黑金】Live现场同频共振",
+            "url": "https://www.bilibili.com/blackboard/era/8JrGYyQFYFM0Khcg.html",
+            "page_id": "3ERAcwloghvonx00",
+            "activity_id": "1ERAzwloghv11o00",
+            "lottery_id": "4ERA5wloghvvwr00",
+            "start_time": 1790136000,
+            "end_time": 1798646399,
+            "update_time": "2026-10-17 21:47:01"
         }
     ]
 }
