@@ -13,12 +13,6 @@
 | ext-mbstring |
 | ext-sqlite3 |
 
-### PHP 安全更新
-
-PHP 8.5.12 修复了可能导致未认证远程代码执行的 CVE-2026-109618 和 CVE-2026-109619，见 [PHP 官方安全公告](https://www.php.net/archive/2026.php#2026-10-21-5)。登录助手会接收 HTTP 请求，因此源码部署需升级 PHP 并重启主程序、登录助手等所有 PHP 进程，再用 `php -v` 确认版本。仅更新项目或 Composer 依赖不能修复 PHP 运行时漏洞。
-
-Docker 部署需拉取包含 PHP 8.5.12 或更新版本的镜像并重建容器，步骤见 [升级指南](#升级指南)。自行构建时运行 `docker build --pull -f docker/Dockerfile -t bilihelper-personal:local .`，避免复用旧基础镜像。Composer 和容器入口会检查 PHP 版本，请勿使用 `--ignore-platform-reqs` 绕过。
-
 ## 目录约定
 
 当前运行时以单个 `profile` 为边界，默认使用 `profile/user`。
@@ -176,8 +170,7 @@ environment:
 
 ```shell
 docker compose pull
-docker compose up -d --force-recreate
-docker compose exec bhp php -v
+docker compose up -d
 ```
 
 ### 源码部署

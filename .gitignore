@@ -27,7 +27,6 @@ worktrees/
 /profile/*
 !/profile/example
 
-.phpunit.*
 captcha/data.json
 
 # Local AI/Trellis tooling

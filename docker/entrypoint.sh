@@ -29,15 +29,6 @@ is_truthy() {
   esac
 }
 
-assert_php_version() {
-  php -r '
-    if (version_compare(PHP_VERSION, "8.5.12", "<")) {
-      fwrite(STDERR, "PHP >= 8.5.12 is required. Update PHP or rebuild the image with --pull.\n");
-      exit(1);
-    }
-  '
-}
-
 validate_branch() {
   case "${1}" in
     ''|*[!A-Za-z0-9._/-]*)
@@ -203,7 +194,6 @@ start_application() {
 }
 
 main() {
-  assert_php_version
   initialize_branch
 
   mode="${1:-run}"

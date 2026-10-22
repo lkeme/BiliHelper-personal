@@ -47,8 +47,5 @@
         "classmap": [
             "plugins/"
         ]
-    },
-    "require-dev": {
-        "phpunit/phpunit": "*@stable"
     }
 }
