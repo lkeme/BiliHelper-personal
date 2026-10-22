@@ -34,11 +34,11 @@
         "ext-zlib": "*",
         "ext-mbstring": "*",
         "ext-sqlite3": "*",
-        "monolog/monolog": "dev-main",
-        "symfony/yaml": "8.1.x-dev",
-        "amphp/amp": "3.x-dev",
-        "amphp/http-client": "5.x-dev",
-        "laravel/prompts": "dev-main"
+        "monolog/monolog": "*",
+        "symfony/yaml": "*",
+        "amphp/amp": "*",
+        "amphp/http-client": "*",
+        "laravel/prompts": "*"
     },
     "autoload": {
         "psr-4": {
@@ -49,6 +49,6 @@
         ]
     },
     "require-dev": {
-        "phpunit/phpunit": "^12.0@stable"
+        "phpunit/phpunit": "*@stable"
     }
 }
