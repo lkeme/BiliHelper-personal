@@ -105,7 +105,7 @@ class Env extends BaseResource
             throw new CliRuntimeException('Please run this script from command line .');
         }
         if (version_compare(PHP_VERSION, '8.5.12', '<')) {
-            throw new CliRuntimeException('Please upgrade PHP version >= 8.5.12 (security update for CVE-2026-109618 and CVE-2026-109619).');
+            throw new CliRuntimeException('Please upgrade PHP version >= 8.5.12.');
         }
         return $this;
     }

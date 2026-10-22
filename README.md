@@ -31,9 +31,6 @@
 
 ## 📌 公告通知
 
-> 提示：当前 `3.x` 版本暂不兼容 `2.x` 版本的 `profile` 配置，无法无感升级。
-> 如你是从 `2.x` 升级到 `3.x`，请重新部署并初始化 `profile`。
-
 <details>
 <summary><strong>声明</strong></summary>
 

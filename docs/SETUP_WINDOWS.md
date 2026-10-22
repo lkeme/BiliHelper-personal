@@ -11,10 +11,9 @@ PHP 8.5 使用 VS17 编译，运行前需安装对应版本的 Visual C++ Redist
 
 从 https://downloads.php.net/~windows/releases/ 下载 PHP 8.5.x Non Thread Safe (NTS) x64：
 
-请选择 **8.5.12 或更新版本**。8.5.12 修复了 CVE-2026-109618 和 CVE-2026-109619；已有安装也需要更新 PHP 本身，并重启登录助手等所有 PHP 进程。仅更新项目代码或 Composer 依赖无法修复 PHP 运行时漏洞。详见 [PHP 安全更新说明](./DOC.md#php-安全更新)。
+请选择 **8.5.12 或更新版本**；已有安装需更新 PHP 并重启所有 PHP 进程。原因见 [PHP 安全更新说明](./DOC.md#php-安全更新)。
 
 - 文件名格式：`php-8.5.x-nts-Win32-vs17-x64.zip`
-- 下载地址：https://downloads.php.net/~windows/releases/php-8.5.x-nts-Win32-vs17-x64.zip
 
 将 zip 解压到目标目录，例如 `C:\php`。
 
@@ -24,11 +23,11 @@ PHP 8.5 使用 VS17 编译，运行前需安装对应版本的 Visual C++ Redist
 
 ```ini
 extension=openssl
-extension=json
-extension=zlib
 extension=mbstring
 extension=sqlite3
 ```
+
+`json` 和 `zlib` 已内置于官方 Windows PHP 二进制，无需添加 `extension=` 配置。
 
 将 PHP 目录添加到系统 PATH：
 

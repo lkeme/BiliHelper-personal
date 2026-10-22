@@ -15,26 +15,9 @@
 
 ### PHP 安全更新
 
-2026-10-21 发布的 PHP 8.5.12 修复了两个可能导致未认证远程代码执行的 PHP 运行时漏洞：
+PHP 8.5.12 修复了可能导致未认证远程代码执行的 CVE-2026-109618 和 CVE-2026-109619，见 [PHP 官方安全公告](https://www.php.net/archive/2026.php#2026-10-21-5)。登录助手会接收 HTTP 请求，因此源码部署需升级 PHP 并重启主程序、登录助手等所有 PHP 进程，再用 `php -v` 确认版本。仅更新项目或 Composer 依赖不能修复 PHP 运行时漏洞。
 
-- [CVE-2026-109618：内存耗尽时的请求状态损坏](https://github.com/php/php-src/security/advisories/GHSA-w8hw-w9fx-j79w)
-- [CVE-2026-109619：跨请求残留状态导致的释放后使用](https://github.com/php/php-src/security/advisories/GHSA-6wmf-4rv5-p3rp)
-
-本项目要求 PHP **8.5.12 或更新版本**。主程序使用 CLI，登录助手则通过 `php -S` 或用户配置的 Web 服务器接收 HTTP 请求；默认 Docker Compose 配置开启登录助手并发布 50001 端口。具体利用条件取决于 PHP SAPI、扩展和配置，不能仅因主程序使用 CLI 就认为整个部署不受影响。
-
-必须升级 PHP 运行时并重启所有 PHP 进程。仅更新项目、执行 `composer update`、在请求脚本中增加版本检查或修改 `php.ini` 都不能完整修复这些漏洞，因为部分攻击路径发生在应用代码执行前。完整说明见 [PHP 官方安全公告](https://www.php.net/archive/2026.php#2026-10-21-5)。
-
-源码部署先通过 `php -v` 确认实际使用的 PHP 已更新；单独启动登录助手时，也必须使用更新后的 PHP。
-
-Docker 用户需等待维护者发布包含修复版 PHP 的新镜像，然后拉取并重建容器：
-
-```shell
-docker compose pull
-docker compose up -d --force-recreate
-docker compose exec bhp php -v
-```
-
-自行构建时使用 `docker build --pull -f docker/Dockerfile -t bilihelper-personal:local .`，避免复用旧的 PHP 基础镜像。构建时的 Composer 平台检查和容器入口版本检查会拒绝低于 8.5.12 的 PHP；请勿使用 `--ignore-platform-reqs` 绕过检查。已有旧容器必须替换，拉取镜像不会更新正在运行的容器。
+Docker 部署需拉取包含 PHP 8.5.12 或更新版本的镜像并重建容器，步骤见 [升级指南](#升级指南)。自行构建时运行 `docker build --pull -f docker/Dockerfile -t bilihelper-personal:local .`，避免复用旧基础镜像。Composer 和容器入口会检查 PHP 版本，请勿使用 `--ignore-platform-reqs` 绕过。
 
 ## 目录约定
 
@@ -76,13 +59,13 @@ composer install
 
 ### Docker 初始化
 
-当前 Docker 运行时默认不可变。首次生成 profile 需要显式执行：
+首次运行前，在宿主机复制模板并编辑 `profile/user/config/user.ini`，供 Compose 挂载：
 
 ```shell
-entrypoint.sh init_profile
+cp -r profile/example profile/user
 ```
 
-或者直接挂载已经准备好的 `profile/user`。
+已有配置可直接挂载，无需重新复制。
 
 ## 设备配置
 
@@ -163,20 +146,7 @@ php app.php m:s --plugin ActivityInfoUpdate --reset-cache
 
 ### 生产环境
 
-生产环境 Docker 运行时默认不可变，容器启动时不会再同步远程代码或刷新依赖。
-
-更新方式：
-
-```shell
-docker compose pull
-docker compose up -d
-```
-
-如需显式初始化 profile：
-
-```shell
-docker run --rm IMAGE entrypoint.sh init_profile
-```
+生产环境 Docker 运行时默认不可变，容器启动时不会同步远程代码或刷新依赖，更新方式见 [升级指南](#升级指南)。
 
 Docker 默认启动路径支持用环境变量映射现有 CLI 缓存参数：
 
@@ -206,7 +176,8 @@ environment:
 
 ```shell
 docker compose pull
-docker compose up -d
+docker compose up -d --force-recreate
+docker compose exec bhp php -v
 ```
 
 ### 源码部署

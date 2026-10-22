@@ -32,7 +32,7 @@ is_truthy() {
 assert_php_version() {
   php -r '
     if (version_compare(PHP_VERSION, "8.5.12", "<")) {
-      fwrite(STDERR, "PHP >= 8.5.12 is required (CVE-2026-109618 and CVE-2026-109619). Update PHP or rebuild the image with --pull.\n");
+      fwrite(STDERR, "PHP >= 8.5.12 is required. Update PHP or rebuild the image with --pull.\n");
       exit(1);
     }
   '

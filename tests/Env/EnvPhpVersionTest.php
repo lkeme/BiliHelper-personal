@@ -13,11 +13,6 @@ use ReflectionClass;
 use ReflectionMethod;
 use ReflectionProperty;
 
-require_once dirname(__DIR__, 2) . '/src/Console/Cli/RuntimeException.php';
-require_once dirname(__DIR__, 2) . '/src/Util/Resource/BaseResource.php';
-require_once dirname(__DIR__, 2) . '/src/Log/Log.php';
-require_once dirname(__DIR__, 2) . '/src/Env/Env.php';
-
 final class EnvPhpVersionTest extends TestCase
 {
     /** @return iterable<string, array{string, bool}> */
