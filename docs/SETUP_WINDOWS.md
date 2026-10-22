@@ -1,4 +1,4 @@
-# Windows 本地环境部署指南（PHP >= 8.5）
+# Windows 本地环境部署指南（PHP >= 8.5.12）
 
 ## 1. 安装 Visual C++ 运行时
 
@@ -10,6 +10,8 @@ PHP 8.5 使用 VS17 编译，运行前需安装对应版本的 Visual C++ Redist
 ## 2. 下载 PHP
 
 从 https://downloads.php.net/~windows/releases/ 下载 PHP 8.5.x Non Thread Safe (NTS) x64：
+
+请选择 **8.5.12 或更新版本**。8.5.12 修复了 CVE-2026-109618 和 CVE-2026-109619；已有安装也需要更新 PHP 本身，并重启登录助手等所有 PHP 进程。仅更新项目代码或 Composer 依赖无法修复 PHP 运行时漏洞。详见 [PHP 安全更新说明](./DOC.md#php-安全更新)。
 
 - 文件名格式：`php-8.5.x-nts-Win32-vs17-x64.zip`
 - 下载地址：https://downloads.php.net/~windows/releases/php-8.5.x-nts-Win32-vs17-x64.zip

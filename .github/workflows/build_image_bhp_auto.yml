@@ -43,6 +43,7 @@ jobs:
           context: .
           file: docker/Dockerfile
           platforms: linux/amd64,linux/arm64,linux/arm/v7
+          pull: true
           push: true
           tags: lkeme/bilihelper-personal:${{ steps.docker_tag.outputs.tag }}
           build-args: |
