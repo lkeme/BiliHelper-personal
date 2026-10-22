@@ -6,12 +6,35 @@
 
 | Requirement |
 |-------------|
-| PHP >= 8.5  |
+| PHP >= 8.5.12 |
 | ext-openssl |
 | ext-json    |
 | ext-zlib    |
 | ext-mbstring |
 | ext-sqlite3 |
+
+### PHP 安全更新
+
+2026-10-21 发布的 PHP 8.5.12 修复了两个可能导致未认证远程代码执行的 PHP 运行时漏洞：
+
+- [CVE-2026-109618：内存耗尽时的请求状态损坏](https://github.com/php/php-src/security/advisories/GHSA-w8hw-w9fx-j79w)
+- [CVE-2026-109619：跨请求残留状态导致的释放后使用](https://github.com/php/php-src/security/advisories/GHSA-6wmf-4rv5-p3rp)
+
+本项目要求 PHP **8.5.12 或更新版本**。主程序使用 CLI，登录助手则通过 `php -S` 或用户配置的 Web 服务器接收 HTTP 请求；默认 Docker Compose 配置开启登录助手并发布 50001 端口。具体利用条件取决于 PHP SAPI、扩展和配置，不能仅因主程序使用 CLI 就认为整个部署不受影响。
+
+必须升级 PHP 运行时并重启所有 PHP 进程。仅更新项目、执行 `composer update`、在请求脚本中增加版本检查或修改 `php.ini` 都不能完整修复这些漏洞，因为部分攻击路径发生在应用代码执行前。完整说明见 [PHP 官方安全公告](https://www.php.net/archive/2026.php#2026-10-21-5)。
+
+源码部署先通过 `php -v` 确认实际使用的 PHP 已更新；单独启动登录助手时，也必须使用更新后的 PHP。
+
+Docker 用户需等待维护者发布包含修复版 PHP 的新镜像，然后拉取并重建容器：
+
+```shell
+docker compose pull
+docker compose up -d --force-recreate
+docker compose exec bhp php -v
+```
+
+自行构建时使用 `docker build --pull -f docker/Dockerfile -t bilihelper-personal:local .`，避免复用旧的 PHP 基础镜像。构建时的 Composer 平台检查和容器入口版本检查会拒绝低于 8.5.12 的 PHP；请勿使用 `--ignore-platform-reqs` 绕过检查。已有旧容器必须替换，拉取镜像不会更新正在运行的容器。
 
 ## 目录约定
 
